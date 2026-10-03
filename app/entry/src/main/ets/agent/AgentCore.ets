@@ -394,4 +394,9 @@ export class AgentCore {
       log.warn(`logEvent failed: ${String(err)}`);
     }
   }
+
+  // Services that notice something (e.g. BetaBlockerWatch) start a conversation through here.
+  pushProactive(reply: AgentReply): void {
+    this.proactive.emit(reply);
+  }
 }

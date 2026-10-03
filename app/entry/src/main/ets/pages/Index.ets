@@ -33,6 +33,7 @@ import { clock } from '../common/Format';
 import { AgentPrompt } from '../agent/AgentPrompt';
 import { RouteRequest } from '../common/RouteRequest';
 import { AgentReply, EmergencyPayload, UiAction } from '../model/AgentTypes';
+import { BetaBlockerWatch } from '../vitals/BetaBlockerWatch';
 
 @Entry
 @ComponentV2
@@ -48,8 +49,10 @@ struct Index {
 
   aboutToAppear(): void {
     this.showOnboardingIfNeeded();
-    VitalsService.get().start('SIMULATED');
+    // The Celia watch via Supabase when a backend is configured; otherwise the labelled simulated source.
+    VitalsService.get().start('WATCH');
     WearNotifier.start();
+    BetaBlockerWatch.start();
     VitalsService.get().onAlert((a: VitalsAlert) => this.onAlert(a));
     AgentCore.get().onProactive((r: AgentReply) => this.onAgentProactive(r));
     AgentPrompt.onOpenChat(() => this.openChat());

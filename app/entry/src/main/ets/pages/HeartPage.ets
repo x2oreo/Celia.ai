@@ -214,7 +214,8 @@ export struct HeartPage {
           }
         })
 
-        // Demo controls — the emulator has no watch, so the data source is simulated and says so.
+        // Demo controls — only for the phone's own simulated source (the watch has its own Simulate page).
+        if (VitalsService.get().sourceKind() !== 'WATCH') {
         Column({ space: 12 }) {
           Row() {
             Text($r('app.string.heart_sim_controls'))
@@ -254,6 +255,7 @@ export struct HeartPage {
         .padding({ left: 16, right: 16, top: 4, bottom: this.showSim ? 16 : 4 })
         .border({ width: 1, color: $r('app.color.border'), style: BorderStyle.Dashed })
         .borderRadius($r('app.float.radius_m'))
+        }
       }
       .padding({ left: $r('app.float.space_screen'), right: $r('app.float.space_screen'), bottom: 24 })
       .width('100%')
