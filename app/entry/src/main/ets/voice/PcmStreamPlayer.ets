@@ -3,6 +3,7 @@
 
 import { audio } from '@kit.AudioKit';
 import { Logger } from '../common/Logger';
+import { pcmLevel } from './Wav';
 
 const log: Logger = new Logger('PcmStreamPlayer');
 
@@ -11,6 +12,12 @@ export class PcmStreamPlayer {
   private queue: Uint8Array[] = [];
   private head: Uint8Array = new Uint8Array(0);
   private headOffset: number = 0;
+  private levelCb: ((level: number, playing: boolean) => void) | undefined = undefined;
+
+  // Called once per renderer buffer with the loudness of what is being played (0 when silent).
+  onLevel(cb: (level: number, playing: boolean) => void): void {
+    this.levelCb = cb;
+  }
 
   async open(): Promise<void> {
     if (this.renderer !== undefined) {
@@ -86,6 +93,10 @@ export class PcmStreamPlayer {
     }
     if (written < out.length) {
       out.fill(0, written);
+    }
+    const cb: ((level: number, playing: boolean) => void) | undefined = this.levelCb;
+    if (cb !== undefined) {
+      cb(written > 0 ? pcmLevel(out.subarray(0, written)) : 0, written > 0);
     }
     return audio.AudioDataCallbackResult.VALID;
   }

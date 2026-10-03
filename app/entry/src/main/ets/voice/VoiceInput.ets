@@ -11,7 +11,8 @@ import { BusinessError } from '@kit.BasicServicesKit';
 import { util } from '@kit.ArkTS';
 import { Logger } from '../common/Logger';
 import { BackendClient } from '../agent/BackendClient';
-import { MIC_SAMPLE_RATE, concatChunks, pcmDurationMs, pcmToWav } from './Wav';
+import { Listener, Listeners } from '../common/Listeners';
+import { MIC_SAMPLE_RATE, concatChunks, pcmDurationMs, pcmLevel, pcmToWav } from './Wav';
 
 const log: Logger = new Logger('VoiceInput');
 
@@ -43,6 +44,8 @@ export class VoiceInput {
   private finalResolver: ((text: string) => void) | undefined = undefined;
   private recording: boolean = false;
   private language: string = ''; // '' = auto-detect (EN/PL users)
+  private partialListeners: Listeners<string> = new Listeners<string>();
+  private levelListeners: Listeners<number> = new Listeners<number>();
 
   static get(): VoiceInput {
     if (VoiceInput.instance === undefined) {
@@ -57,6 +60,16 @@ export class VoiceInput {
 
   isRecording(): boolean {
     return this.recording;
+  }
+
+  // Words recognised so far while recording (on-device engine only; the cloud path transcribes at the end).
+  onPartial(cb: Listener<string>): () => void {
+    return this.partialListeners.add(cb);
+  }
+
+  // Microphone loudness 0..1 while recording (cloud path only; the on-device engine owns the microphone).
+  onLevel(cb: Listener<number>): () => void {
+    return this.levelListeners.add(cb);
   }
 
   // Asks for the microphone permission and picks the best available engine. Safe to call more than once.
@@ -167,6 +180,9 @@ export class VoiceInput {
       },
       onResult: (sessionId: string, result: speechRecognizer.SpeechRecognitionResult): void => {
         this.partial = result.result;
+        if (this.recording) {
+          this.partialListeners.emit(result.result);
+        }
         if (result.isLast) {
           this.resolveFinal(result.result);
         }
@@ -220,6 +236,7 @@ export class VoiceInput {
         capturer.on('readData', (buffer: ArrayBuffer) => {
           if (this.recording && pcmDurationMs(this.totalBytes(), MIC_SAMPLE_RATE) < MAX_RECORD_MS) {
             this.chunks.push(buffer.slice(0));
+            this.levelListeners.emit(pcmLevel(new Uint8Array(buffer)));
           }
         });
       } catch (e) {

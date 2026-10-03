@@ -51,3 +51,24 @@ export function pcmToWav(pcm: Uint8Array, sampleRate: number): Uint8Array {
 export function pcmDurationMs(byteLength: number, sampleRate: number): number {
   return Math.round(byteLength / 2 / sampleRate * 1000);
 }
+
+// Loudness of a PCM16 mono buffer as 0..1 (RMS with a soft curve), for the orb. Samples every 4th frame.
+export function pcmLevel(pcm: Uint8Array): number {
+  const frames: number = Math.floor(pcm.length / 2);
+  if (frames === 0) {
+    return 0;
+  }
+  let sum: number = 0;
+  let n: number = 0;
+  for (let i = 0; i < frames; i += 4) {
+    let v: number = pcm[i * 2] | (pcm[i * 2 + 1] << 8);
+    if (v >= 32768) {
+      v -= 65536;
+    }
+    sum += v * v;
+    n++;
+  }
+  const rms: number = Math.sqrt(sum / n) / 32768;
+  // Speech sits around 0.02–0.2 RMS; the square root lifts quiet speech so the orb visibly reacts.
+  return Math.min(1, Math.sqrt(rms) * 1.6);
+}

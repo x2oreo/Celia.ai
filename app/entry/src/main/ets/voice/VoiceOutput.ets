@@ -8,8 +8,12 @@ import { audio } from '@kit.AudioKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { Logger } from '../common/Logger';
 import { BackendClient } from '../agent/BackendClient';
+import { Listener, Listeners } from '../common/Listeners';
 
 const log: Logger = new Logger('VoiceOutput');
+
+// The on-device engine doesn't report when it finishes here, so the speaking state ends after an estimate.
+const TTS_MS_PER_CHAR: number = 65;
 
 export type SpeakMode = 'ON_DEVICE' | 'CLOUD' | 'OFF';
 
@@ -26,6 +30,9 @@ export class VoiceOutput {
   private pcm: Uint8Array = new Uint8Array(0);
   private readOffset: number = 0;
   private requestSeq: number = 0;
+  private speaking: boolean = false;
+  private speakingTimer: number = -1;
+  private speakingListeners: Listeners<boolean> = new Listeners<boolean>();
 
   static get(): VoiceOutput {
     if (VoiceOutput.instance === undefined) {
@@ -36,6 +43,22 @@ export class VoiceOutput {
 
   getMode(): SpeakMode {
     return this.mode;
+  }
+
+  // true while a reply is being spoken (drives the orb).
+  onSpeaking(cb: Listener<boolean>): () => void {
+    return this.speakingListeners.add(cb);
+  }
+
+  private setSpeaking(on: boolean): void {
+    if (this.speakingTimer !== -1) {
+      clearTimeout(this.speakingTimer);
+      this.speakingTimer = -1;
+    }
+    if (this.speaking !== on) {
+      this.speaking = on;
+      this.speakingListeners.emit(on);
+    }
   }
 
   async init(preferCloud: boolean): Promise<SpeakMode> {
@@ -61,12 +84,15 @@ export class VoiceOutput {
         const params: textToSpeech.SpeakParams = { requestId: `say-${Date.now()}-${this.requestSeq++}`,
           extraParams: extra };
         this.tts.speak(clean, params);
+        this.setSpeaking(true);
+        this.speakingTimer = setTimeout(() => this.setSpeaking(false), clean.length * TTS_MS_PER_CHAR);
         return;
       }
       const req: SpeakRequest = { text: clean };
       const pcm: ArrayBuffer | undefined = await BackendClient.postForBinary('speak', JSON.stringify(req), 20000);
       if (pcm !== undefined && pcm.byteLength > 0) {
         await this.playPcm(new Uint8Array(pcm));
+        this.setSpeaking(true);
       }
     } catch (e) {
       const err: BusinessError = e as BusinessError;
@@ -88,6 +114,7 @@ export class VoiceOutput {
     }
     this.pcm = new Uint8Array(0);
     this.readOffset = 0;
+    this.setSpeaking(false);
   }
 
   private createOnDeviceEngine(): Promise<boolean> {
@@ -149,6 +176,7 @@ export class VoiceOutput {
       if (r !== undefined) {
         setTimeout(() => {
           r.stop().catch((): void => {});
+          this.setSpeaking(false);
         }, 0);
       }
       return audio.AudioDataCallbackResult.INVALID;
