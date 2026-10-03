@@ -27,7 +27,7 @@ import { VitalsAlert, VitalsSample } from '../model/Vitals';
 import { VitalsService } from '../vitals/VitalsService';
 import { WearNotifier } from '../vitals/WearNotifier';
 import { SosController } from '../emergency/SosController';
-import { askNotificationPermission } from '../common/Notify';
+import { askNotificationPermission, notify, NOTIFY_ALERT } from '../common/Notify';
 import { AppLock } from '../common/AppLock';
 import { ReminderService } from '../reminders/ReminderService';
 import { BetaBlockerWatch } from '../vitals/BetaBlockerWatch';
@@ -41,6 +41,7 @@ import { toast } from '../common/Toast';
 import { AgentPrompt } from '../agent/AgentPrompt';
 import { RouteRequest } from '../common/RouteRequest';
 import { AgentReply, EmergencyPayload, UiAction } from '../model/AgentTypes';
+import { DrugIntake, symptomAfterDrugText } from '../drugs/DrugIntake';
 
 @Entry
 @ComponentV2
@@ -125,6 +126,7 @@ struct Index {
   // An answer on the watch's "How do you feel?" counts as the same answer on the phone: it closes the check-in and
   // does exactly what the matching phone button does, so one heart-rate event never needs two answers.
   private onWatchAnswer(kind: string): void {
+    this.warnIfAfterRiskyDrug(kind);
     if (!this.checkIn && !AgentCore.get().isCheckInPending()) {
       return;
     }
@@ -135,6 +137,18 @@ struct Index {
     } else {
       AgentPrompt.ask(QUICK_REPLY_UNWELL);
     }
+  }
+
+  // A symptom on the watch within 24 h of a logged risky drug: the phone says what the watch says (same rule).
+  private async warnIfAfterRiskyDrug(kind: string): Promise<void> {
+    const now: number = Date.now();
+    const text: string = symptomAfterDrugText(kind, await DrugIntake.last(now), now);
+    if (text === '') {
+      return;
+    }
+    notify(NOTIFY_ALERT, 'Symptom after a risky medicine', text, false);
+    const reply: AgentReply = { text: text, actions: [], fallback: false };
+    AgentCore.get().pushProactive(reply);
   }
 
   // Unanswered heart-rate check-in → the agent starts an emergency; hand it to the SOS screen.

@@ -38,6 +38,7 @@ import { EMERGENCY_COUNTDOWN_SEC } from './tools/ActionTools';
 import { SosController } from '../emergency/SosController';
 import { ChatSummary, MAX_CHAT_MESSAGES, StoredChatMessage } from '../model/Chat';
 import { ChatCommands } from './ChatCommands';
+import { WatchContextSync } from '../vitals/WatchContextSync';
 
 const log: Logger = new Logger('AgentCore');
 
@@ -284,7 +285,7 @@ export class AgentCore {
     this.remember('user', input);
     const gate: GateResult = SafetyGate.classify(input, this.checkInPending);
     if (gate === 'OK') {
-      this.cancelCheckIn();
+      this.answeredOk();
     }
     return gate;
   }
@@ -325,7 +326,7 @@ export class AgentCore {
         return await this.emergency(input);
       }
       if (gate === 'OK') {
-        this.cancelCheckIn();
+        this.answeredOk();
         return this.say('Glad you\'re OK. I\'ll keep an eye on your heart rate. Sit down and rest for a few minutes.',
           [], true);
       }
@@ -457,6 +458,14 @@ export class AgentCore {
   /** True while a heart-rate check-in waits for "I'm OK" / "I feel unwell" (and its emergency timer runs). */
   isCheckInPending(): boolean {
     return this.checkInPending;
+  }
+
+  // "I'm OK" to a pending heart-rate check-in also closes the matching alert on the paired watch.
+  private answeredOk(): void {
+    if (this.checkInPending) {
+      WatchContextSync.ackAlert();
+    }
+    this.cancelCheckIn();
   }
 
   private cancelCheckIn(): void {
