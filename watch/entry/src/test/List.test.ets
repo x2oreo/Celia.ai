@@ -1,3 +1,4 @@
+import accelRateTest from './AccelRate.test';
 import heartRulesTest from './HeartRules.test';
 import syncEngineTest from './SyncEngine.test';
 import pairingFlowTest from './PairingFlow.test';
@@ -30,4 +31,5 @@ export default function testsuite() {
   pairingFlowTest();
   syncEngineTest();
   heartRulesTest();
+  accelRateTest();
 }

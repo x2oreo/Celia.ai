@@ -1,5 +1,6 @@
 import { sensor } from '@kit.SensorServiceKit';
 import { Activity, HrSourceKind } from '../model/WatchMetric';
+import { AccelRate } from '../vitals/AccelRate';
 import { ContextSensors, StepsCallback, WearCallback } from '../vitals/ContextSensors';
 import { ErrorCallback, HeartRateSource, SampleCallback } from '../vitals/HeartRateSource';
 import { MotionAnalyzer } from '../vitals/MotionAnalyzer';
@@ -32,6 +33,7 @@ export class SensorHub {
   private stillSinceMs: number = -1;
   private sensorStepsBase: number = -1;
   private simSteps: number = 0;
+  private rate: AccelRate = new AccelRate();
 
   /** True when the device has a heart-rate sensor. */
   static heartRateSensorPresent(): boolean {
@@ -58,6 +60,7 @@ export class SensorHub {
     onError: ErrorCallback, onFall: FallCallback, onWear: WearCallback, onSteps: StepsCallback): string[] {
     this.stillSinceMs = -1;
     this.motion = new MotionAnalyzer();
+    this.rate.reset();
     this.scenario = SCENARIOS[scenarioIdx];
     if (kind === 'SENSOR') {
       this.source = new SensorHeartRateSource();
@@ -68,6 +71,9 @@ export class SensorHub {
     }
     this.source.start(onSample, onError);
     const started = this.context.start((x: number, y: number, z: number, tsMs: number) => {
+      if (this.rate.onSample(x, y, z)) {
+        this.context.setAccelInterval(this.rate.intervalNs);
+      }
       if (this.motion.feed(x, y, z, tsMs)) {
         onFall();
       }
@@ -112,6 +118,13 @@ export class SensorHub {
     }
     this.stillSinceMs = -1;
     return moving;
+  }
+
+  /** Energy: once a second with the current state; slows the accelerometer after a while at rest. */
+  adaptAccelRate(activity: Activity, nowMs: number): void {
+    if (this.motionAvailable && this.rate.onActivity(activity, nowMs)) {
+      this.context.setAccelInterval(this.rate.intervalNs);
+    }
   }
 
   /** Demo cadence while active in a scenario; returns the steps added. */

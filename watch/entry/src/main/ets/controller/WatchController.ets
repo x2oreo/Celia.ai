@@ -622,6 +622,7 @@ export class WatchController implements RulesHost {
     this.monitoringSec = Math.round((now - this.monitoringSinceMs) / 1000);
     this.activity = this.currentActivity(now);
     this.applyLimits();
+    this.hub.adaptAccelRate(this.activity, now);
     if (this.hub.simulated && this.activity === 'ACTIVE') {
       this.steps += this.hub.addSimSteps(SIM_STEPS_PER_SEC);
     }
