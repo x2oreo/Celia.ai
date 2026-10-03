@@ -47,3 +47,21 @@ what it produced, how we validated it.
 - **Not yet validated:** deployed to a real Supabase project; real Twilio delivery.
 - **Worked in parallel** with the watch-app session in a separate git worktree (new files only), so neither
   session overwrote the other's work.
+
+### 2026-10-03 — Mark + Claude Code: missed beta-blocker check (branch `beta-blocker-check`)
+- **Asked:** detect possibly missed beta-blocker doses from the watch's resting heart rate, plus a watch Simulate
+  button to demo it.
+- **Design (AI, reviewed by Mark):** a fixed rule, no LLM. Baseline = median of up to 14 earlier days (at least 5);
+  ask when each of the last 2 complete days is ≥ 10 bpm above it. Only for people on a beta-blocker, and always
+  phrased as a question. The dose log picks the wording (missed / all taken / not tracked) and mentions fever and
+  illness as other causes.
+- **Produced:** `app/.../vitals/RestingTrend.ets` (rule), `RestingHistory.ets`, `BetaBlockerWatch.ets`,
+  `Net.getJson`, `AgentCore.pushProactive`, alert kind `RESTING_HR_RISE`; migrations `…220000_watch_resting_daily`
+  (daily resting HR view over watch `vitals` rows) and `…230000_resting_day_sim` (labelled simulated days via the
+  `simulate_missed_beta_blocker` RPC, called by the watch's Simulate toggle).
+- **Validated:** 13 new unit tests (70 total pass); migrations applied in order on a local Postgres 17, including
+  RPC on/off, simulated days replacing real ones and anon unable to write the table directly.
+- **Not yet validated:** end to end on Supabase with the emulator (migrations not applied there yet). The proactive
+  agent message has no chat listener yet (`onProactive`).
+- **Worked in parallel** with the watch session: the watch button was handed over as a written spec instead of
+  editing the same files, to avoid merge conflicts.
