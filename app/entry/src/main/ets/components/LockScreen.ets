@@ -3,6 +3,8 @@
 import { AppLock } from '../common/AppLock';
 import { PrimaryButton, SecondaryButton } from './Common';
 import { toast } from '../common/Toast';
+import { RouteRequest } from '../common/RouteRequest';
+import { Routes } from '../common/Routes';
 
 @ComponentV2
 export struct LockScreen {
@@ -37,6 +39,15 @@ export struct LockScreen {
         label: $r('app.string.lock_emergency'),
         icon: $r('app.media.ic_hand'),
         onTap: () => this.onEmergency()
+      })
+      // First-responder view (B5): what not to give and what to use instead, without unlocking private data.
+      SecondaryButton({
+        label: $r('app.string.em_resp_title'),
+        icon: $r('app.media.ic_doctor'),
+        onTap: () => {
+          AppLock.allowEmergency();
+          RouteRequest.open(Routes.RESPONDER);
+        }
       })
     }
     .width('100%')

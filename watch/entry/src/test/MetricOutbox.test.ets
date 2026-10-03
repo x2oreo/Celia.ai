@@ -2,6 +2,15 @@ import { describe, it, expect } from '@ohos/hypium';
 import { MemoryOutboxStore, MetricOutbox } from '../main/ets/sync/MetricOutbox';
 import { HrLiveValues, MetricRow, SymptomValues, makeRow } from '../main/ets/model/WatchMetric';
 
+class CountingStore extends MemoryOutboxStore {
+  saves: number = 0;
+
+  save(json: string): void {
+    this.saves++;
+    super.save(json);
+  }
+}
+
 function live(bpm: number): MetricRow {
   const v: HrLiveValues = { bpm: bpm, activity: 'REST' };
   return makeRow('dev', 'hr_live', v, 0, 'simulated');
@@ -40,6 +49,7 @@ export default function metricOutboxTest() {
       const store = new MemoryOutboxStore();
       const a = new MetricOutbox(store, 10);
       a.enqueue(symptom());
+      a.flush();
       const b = new MetricOutbox(store, 10);
       expect(b.size).assertEqual(1);
       expect(b.peek(1)[0].type).assertEqual('symptom');
@@ -53,6 +63,22 @@ export default function metricOutboxTest() {
       expect(box.size).assertEqual(2);
       expect(box.peek(2)[0].type).assertEqual('symptom');
       expect(box.peek(2)[1].type).assertEqual('symptom');
+    });
+
+    it('writes to the store only on flush, and only when changed', 0, () => {
+      const store = new CountingStore();
+      const box = new MetricOutbox(store, 10);
+      box.enqueue(live(1));
+      box.enqueue(live(2));
+      box.enqueue(symptom());
+      expect(store.saves).assertEqual(0);
+      expect(box.flush()).assertTrue();
+      expect(store.saves).assertEqual(1);
+      expect(box.flush()).assertFalse();
+      box.ack(1);
+      expect(box.flush()).assertTrue();
+      expect(store.saves).assertEqual(2);
+      expect(new MetricOutbox(store, 10).size).assertEqual(2);
     });
 
     it('ignores corrupt stored data', 0, () => {

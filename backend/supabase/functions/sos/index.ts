@@ -4,10 +4,11 @@
 // `{ "record": <watch_metrics row> }` and the `x-sos-secret` header. Deploy with --no-verify-jwt: the shared secret
 // is the auth, not a user JWT.
 //
-// Flow: verify secret → parse row → cooldown check → load contacts + patient context → deterministic message →
-// Twilio SMS + call per contact → audit row in sos_dispatches. Without Twilio secrets it runs in dry-run mode and
+// Flow: verify secret → parse row → cooldown check → push to the patient's own phone (Huawei Push Kit, B12) →
+// load contacts + patient context → deterministic message → Twilio SMS + call per contact → audit row in
+// sos_dispatches (with the push result). Without Twilio secrets it runs in dry-run mode and
 // only records what it would have sent, so the emulator demo never fails.
-import { createClient } from 'npm:@supabase/supabase-js@2';
+import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2';
 import {
   buildSosMessage,
   type Genotype,
@@ -19,6 +20,7 @@ import {
   SYMPTOM_WINDOW_MS,
 } from './message.ts';
 import { placeCall, type SendResult, sendSms, twilioConfigFromEnv } from './twilio.ts';
+import { pushConfigFromEnv, type PushResult, sendPush, watchSosPush } from './huaweiPush.ts';
 
 const COOLDOWN_MINUTES = 10;
 const MAX_CONTACTS = 5;
@@ -55,6 +57,35 @@ function safeEqual(a: string, b: string): boolean {
     diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
   }
   return diff === 0;
+}
+
+type Db = SupabaseClient;
+
+/**
+ * Push "SOS from your watch" to the phones of the account that owns this watch. Whose phone is decided only by the
+ * device ↔ account binding (B9, `watch_pairings.user_id`); until that exists the lookup fails and nothing is pushed:
+ * never guess a recipient. A push failure never changes the SOS status.
+ */
+async function pushToPatient(db: Db, deviceId: string, hasLocation: boolean): Promise<PushResult> {
+  const { data: pairing, error } = await db.from('watch_pairings').select('user_id').eq('device_id', deviceId)
+    .maybeSingle();
+  const userId = (pairing as { user_id?: unknown } | null)?.user_id;
+  if (error || typeof userId !== 'string') {
+    return { status: 'no_account_binding', detail: error?.message ?? 'watch not bound to an account' };
+  }
+  const { data: rows, error: tokenError } = await db.from('push_tokens').select('token').eq('user_id', userId);
+  if (tokenError) {
+    return { status: 'failed', detail: tokenError.message };
+  }
+  const tokens = (rows ?? []).map((r: { token: string }) => r.token).filter((t: unknown) => typeof t === 'string');
+  if (tokens.length === 0) {
+    return { status: 'no_tokens', detail: 'no push token registered' };
+  }
+  const cfg = pushConfigFromEnv((k) => Deno.env.get(k));
+  if (cfg === null) {
+    return { status: 'dry_run', detail: `${tokens.length} token(s), Push Kit secrets missing` };
+  }
+  return await sendPush(cfg, watchSosPush(tokens, hasLocation, new Date().toISOString()));
 }
 
 function parseRecord(body: unknown): SosRecord | null {
@@ -100,12 +131,13 @@ Deno.serve(async (req: Request): Promise<Response> => {
     auth: { persistSession: false },
   });
 
+  let push: PushResult | null = null;
   const audit = async (status: string, detail: Record<string, unknown>): Promise<void> => {
     const { error } = await db.from('sos_dispatches').insert({
       metric_id: record.id,
       device_id: record.device_id,
       status,
-      detail,
+      detail: push === null ? detail : { ...detail, push },
     });
     if (error) {
       console.error(`[sos] audit insert failed: ${error.message}`);
@@ -139,8 +171,13 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return json(429, { status: 'skipped_global_limit' });
   }
 
+  push = await pushToPatient(db, record.device_id, payload.lat !== undefined);
+  if (push.status === 'failed') {
+    console.error(`[sos] push failed: ${push.detail}`);
+  }
+
   const symptomSince = new Date(Date.now() - SYMPTOM_WINDOW_MS).toISOString();
-  const [contactsRes, contextRes, doseRes, symptomRes] = await Promise.all([
+  const [contactsRes, contextRes, doseRes, symptomRes, profileRes] = await Promise.all([
     db.from('emergency_contacts').select('name, phone').eq('device_id', record.device_id)
       .order('priority', { ascending: true }).limit(MAX_CONTACTS),
     db.from('watch_context').select('patient_name, genotype, risky_drug, risky_drug_at')
@@ -151,6 +188,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
     db.from('watch_symptoms').select('kind, bpm, recorded_at').eq('device_id', record.device_id)
       .neq('kind', 'fine').gte('recorded_at', symptomSince)
       .order('recorded_at', { ascending: false }).limit(1).maybeSingle(),
+    // The patient's first name, sent by the owner's phone with consent (migration 20261004100100). Service role only.
+    db.from('sos_profile').select('patient_name').eq('device_id', record.device_id).maybeSingle(),
   ]);
   if (contactsRes.error) {
     console.error(`[sos] contacts query failed: ${contactsRes.error.message}`);
@@ -178,7 +217,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
   const ctx: PatientContext = {
     lastDose: dose,
     recentSymptom: symptom,
-    name: c?.patient_name ?? null,
+    name: profileRes.data?.patient_name ?? c?.patient_name ?? null,
     genotype: (['LQT1', 'LQT2', 'LQT3'].includes(c?.genotype) ? c?.genotype : 'UNKNOWN') as Genotype,
     riskyDrug: drugFresh ? (c?.risky_drug ?? null) : null,
   };

@@ -58,3 +58,10 @@ export function nextDoseToTake(reminders: DoseReminder[], logs: DoseLog[], now: 
   const due: DoseReminder | undefined = sorted.find((r: DoseReminder) => doseStatus(r, logs, now) === 'DUE');
   return due ?? sorted.find((r: DoseReminder) => doseStatus(r, logs, now) === 'MISSED');
 }
+
+// "Taken" from a dose notification counts only for a dose that is due or missed today: the notification can sit in
+// the panel until tomorrow, and a tap then must not log tomorrow's dose.
+export function takeableFromNotification(r: DoseReminder, logs: DoseLog[], now: number): boolean {
+  const s: DoseStatus = doseStatus(r, logs, now);
+  return s === 'DUE' || s === 'MISSED';
+}

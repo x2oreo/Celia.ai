@@ -1,13 +1,16 @@
 // Optional AI summary at the top of the doctor brief (T13 LLM part, backend /doctor-summary). The brief is
 // deterministic and complete without it. Only non-personal lines of the brief go out (medicines with their risk
 // words, interactions, flagged checks, counts) — never the Patient section (name, notes) or symptom notes. For a
-// visit, the fixed purpose titles and the known-risk medicine names of its plan go too, never the reason the user
-// typed. The reply is checked again here (same rules as doctor-summary/logic.ts) and dropped when it fails.
+// visit, the fixed purpose titles and the known-risk medicine names of its plan go too. The reply is checked again
+// here (same rules as doctor-summary/logic.ts) and dropped when it fails.
+// `visit` (optional) adds the typed reason and worries after doctor/Redact.ets has removed names, phone numbers,
+// e-mails and links; the visit page does not send them, so the words the user typed stay on the phone.
 
 import { Config } from '../common/Config';
 import { NetResult, postJson } from '../common/Net';
-import { BriefSection, Specialty, specialtyName } from './DoctorPrep';
+import { BriefSection, Specialty, specialtyName, VisitAnswers } from './DoctorPrep';
 import { knownNames, PlanGroup } from './VisitPlan';
+import { redactPersonal } from './Redact';
 
 const SUMMARY_MAX: number = 420;
 const BANNED: RegExp =
@@ -36,7 +39,7 @@ function linesOf(sections: BriefSection[], titleStart: string): string[] {
 
 // Pure: what is sent. Exported for tests (they check that nothing personal is included).
 export function summaryFields(sections: BriefSection[], specialty: Specialty, genotype: string,
-  plan: PlanGroup[] = []): Record<string, string> {
+  plan: PlanGroup[] = [], visit?: VisitAnswers, personal: string[] = []): Record<string, string> {
   const fields: Record<string, string> = {
     'specialty': specialtyName(specialty),
     'genotype': genotype,
@@ -48,6 +51,10 @@ export function summaryFields(sections: BriefSection[], specialty: Specialty, ge
     'visitFor': plan.map((g: PlanGroup) => g.title).join('\n'),
     'avoid': knownNames(plan).join('\n')
   };
+  if (visit !== undefined) {
+    fields['reason'] = redactPersonal(visit.reason, personal);
+    fields['worries'] = redactPersonal(visit.worries, personal);
+  }
   return fields;
 }
 

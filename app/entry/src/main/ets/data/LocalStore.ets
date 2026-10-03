@@ -6,7 +6,7 @@
 
 import { relationalStore } from '@kit.ArkData';
 import { common } from '@kit.AbilityKit';
-import { Profile } from '../model/Profile';
+import { Contact, ExtraField, Genotype, Profile } from '../model/Profile';
 import { Medication } from '../model/Medication';
 import { AppEvent, AppEventKind } from '../model/AppEvent';
 import { ScanRecord, ScanVia } from '../model/ScanRecord';
@@ -53,6 +53,60 @@ export function parseStoredActions(raw: string): UiAction[] {
   }
 }
 
+function optString(v: string | undefined): string | undefined {
+  return typeof v === 'string' ? v : undefined;
+}
+
+function stringList(v: string[] | undefined): string[] {
+  return Array.isArray(v) ? v.filter((s: string) => typeof s === 'string') : [];
+}
+
+// Stored profile JSON → a Profile with every field the current code expects (Workstream B4). Profiles saved by
+// older versions lack the emergency details; lists default to [] and missing text stays undefined, so the card
+// simply hides them. Corrupt JSON → undefined (the app then treats it as no profile). Exported for tests.
+export function parseStoredProfile(json: string): Profile | undefined {
+  let raw: Profile;
+  try {
+    raw = JSON.parse(json) as Profile;
+  } catch (e) {
+    return undefined;
+  }
+  if (raw === null || typeof raw !== 'object') {
+    return undefined;
+  }
+  const genotype: Genotype = raw.genotype === 'LQT1' || raw.genotype === 'LQT2' || raw.genotype === 'LQT3' ?
+    raw.genotype : 'UNKNOWN';
+  const contacts: Contact[] = Array.isArray(raw.contacts) ? raw.contacts.filter((c: Contact) =>
+    c !== null && typeof c === 'object' && typeof c.name === 'string' && typeof c.phone === 'string') : [];
+  contacts.forEach((c: Contact) => {
+    c.relation = typeof c.relation === 'string' ? c.relation : '';
+  });
+  const extra: ExtraField[] = Array.isArray(raw.extra) ? raw.extra.filter((x: ExtraField) =>
+    x !== null && typeof x === 'object' && typeof x.label === 'string' && typeof x.value === 'string') : [];
+  const p: Profile = {
+    condition: 'LQTS',
+    genotype: genotype,
+    hasIcd: raw.hasIcd === true,
+    notes: typeof raw.notes === 'string' ? raw.notes : '',
+    contacts: contacts,
+    name: optString(raw.name),
+    country: optString(raw.country),
+    cardLanguage: optString(raw.cardLanguage),
+    dateOfBirth: optString(raw.dateOfBirth),
+    sex: raw.sex === 'FEMALE' || raw.sex === 'MALE' || raw.sex === 'OTHER' ? raw.sex : undefined,
+    bloodType: optString(raw.bloodType),
+    allergies: stringList(raw.allergies),
+    icdModel: optString(raw.icdModel),
+    cardiologistName: optString(raw.cardiologistName),
+    cardiologistPhone: optString(raw.cardiologistPhone),
+    hospital: optString(raw.hospital),
+    extra: extra,
+    hiddenOnCard: stringList(raw.hiddenOnCard),
+    updatedAt: typeof raw.updatedAt === 'number' ? raw.updatedAt : undefined
+  };
+  return p;
+}
+
 export class LocalStore {
   private static instance: LocalStore | undefined = undefined;
 
@@ -91,8 +145,13 @@ export class LocalStore {
     return this.profile;
   }
 
-  async saveProfile(profile: Profile): Promise<void> {
+  // Stamps updatedAt (the time of this local edit; profile sync is last-write-wins on it). Pass stamp=false only when
+  // storing a copy that already carries its own time, e.g. a profile restored from the account.
+  async saveProfile(profile: Profile, stamp: boolean = true): Promise<void> {
     await this.ready;
+    if (stamp) {
+      profile.updatedAt = Date.now();
+    }
     this.profile = profile;
     await this.putKv('profile', JSON.stringify(profile));
     this.changes.emit('profile');
@@ -361,7 +420,7 @@ export class LocalStore {
         const k: string = kv.getString(kv.getColumnIndex('k'));
         const v: string = kv.getString(kv.getColumnIndex('v'));
         if (k === 'profile') {
-          this.profile = JSON.parse(v) as Profile;
+          this.profile = parseStoredProfile(v);   // older profiles get the newer fields' defaults
         } else if (k.startsWith('setting.')) {
           this.settings.set(k.substring('setting.'.length), v);
         }

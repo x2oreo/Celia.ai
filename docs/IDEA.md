@@ -35,7 +35,9 @@ features are optional and every request the phone makes is listed in an on-phone
 **Digital sovereignty angle (matches the task's Oniro/Europe framing):** the deterministic core (drug
 verdicts, emergency card, profile, medicines, chats) runs and is stored on the phone and needs no network. Cloud
 features are optional: watch metrics go to our Supabase project keyed by a device id, and the agent, voice and photo
-paths go through our Edge Functions to OpenAI. Name and contacts are never uploaded in the clear. The full list is in
+paths go through our Edge Functions to OpenAI. With an account, the profile (including name and contacts) and the
+medicine list are backed up to the user's own row in our Supabase project, readable only by that login and deletable
+from Settings; without one they never leave the phone, and nothing personal ever goes to the AI. The full list is in
 `AI_FEATURES.md` §3 and the README "What leaves the phone" table.
 
 ## Who uses it

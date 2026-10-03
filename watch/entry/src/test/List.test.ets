@@ -1,3 +1,9 @@
+import accelRateTest from './AccelRate.test';
+import heartRulesTest from './HeartRules.test';
+import syncEngineTest from './SyncEngine.test';
+import pairingFlowTest from './PairingFlow.test';
+import sosFlowTest from './SosFlow.test';
+import watchControllerTest from './WatchController.test';
 import alarmRulesTest from './AlarmRules.test';
 import doseNudgeTest from './DoseNudge.test';
 import limitsTest from './Limits.test';
@@ -20,4 +26,10 @@ export default function testsuite() {
   doseNudgeTest();
   pairingTest();
   drugBadgeTest();
+  watchControllerTest();
+  sosFlowTest();
+  pairingFlowTest();
+  syncEngineTest();
+  heartRulesTest();
+  accelRateTest();
 }

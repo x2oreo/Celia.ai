@@ -27,7 +27,8 @@
               "entity.system.home"
             ],
             "actions": [
-              "action.system.home"
+              "action.system.home",
+              "ohos.want.action.home"
             ]
           }
         ]
@@ -54,6 +55,9 @@
       },
       {
         "name": "ohos.permission.VIBRATE"
+      },
+      {
+        "name": "ohos.permission.NFC_TAG"
       },
       {
         "name": "ohos.permission.PUBLISH_AGENT_REMINDER"

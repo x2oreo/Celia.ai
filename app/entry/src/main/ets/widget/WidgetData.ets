@@ -13,7 +13,14 @@ export class AlertCardData {
   facts: string = '';
   number: string = '112';
   ice: string = '';
+  // Lock-screen medical ID card (widget/MedIdData.ets, pages/MedIdCard.ets).
+  midName: string = '';
+  midIcd: string = '';
+  midMeds: string = '';
+  midOther: string = '';
 }
+
+const MID_KEYS: string[] = ['midName', 'midIcd', 'midMeds', 'midOther'];
 
 export function readAlertCard(ctx: common.Context): AlertCardData {
   const d: AlertCardData = new AlertCardData();
@@ -23,6 +30,10 @@ export function readAlertCard(ctx: common.Context): AlertCardData {
     d.facts = p.getSync('facts', d.facts) as string;
     d.number = p.getSync('number', d.number) as string;
     d.ice = p.getSync('ice', d.ice) as string;
+    d.midName = p.getSync(MID_KEYS[0], '') as string;
+    d.midIcd = p.getSync(MID_KEYS[1], '') as string;
+    d.midMeds = p.getSync(MID_KEYS[2], '') as string;
+    d.midOther = p.getSync(MID_KEYS[3], '') as string;
   } catch (e) {
     // First run or unreadable file: the card shows the generic condition and 112.
   }

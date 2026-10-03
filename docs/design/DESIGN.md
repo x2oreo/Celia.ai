@@ -664,7 +664,7 @@ later (dashed border, "Later"). Then recently checked, then the grid.
 `Call 112` tile (`surface`, 1.5 vp `danger` border, number in `risk_known_text`); **Show responder view** (ink tile,
 caps "FOR THE PERSON HELPING ME"); **Medical card** summary (caps in `risk_known_text`, condition, facts, "Inside:
 languages, read aloud, QR, share") whose "Open ›" unfolds the full card with its language row, read aloud and QR;
-contact call buttons; Pharmacy card row; NEARBY (Hospital, Pharmacy, AED); "Test SOS (nothing is sent)" last and
+contact call buttons; Pharmacy card row; Help guide row (same style, opens the bystander steps + CPR); NEARBY (Hospital, Pharmacy, AED); "Test SOS (nothing is sent)" last and
 small. Layout only: every action keeps its logic.
 
 **07 Doctor visits (pushed, three pages)**. A visit is one saved page per doctor; the old single brief with
@@ -734,7 +734,8 @@ from deterministic payloads only.
   "Defibrillator (AED)" that open a map search around the phone. "Remove this link" asks first (dialog, danger).
 - **Emergency (active / SOS)**: `bg` surface, `EMERGENCY` label, "Are you OK?" (`title-1`), a 200 vp ring in
   `risk_known` draining linearly, big seconds number, white secondary `I'm OK` (52) and danger `Send now`.
-- **Onboarding**: progress segments in `brand`, orb 96 on step 1, `title-1` per step, primary `Continue`.
+- **Onboarding**: 8 steps — see 11 "Onboarding (S3, B3)" (progress segments in `brand`, orb 96 on step 1,
+  `title-1` per step, primary `Continue`).
 - **Doctor report**: specialty chips (6.3), sections as `surface` cards with bullets, primary `Share`, secondary `Copy`.
 - **Medicines empty**: dashed empty card "No medicines yet. Add one or scan a box." + primary `Add a medicine`.
 - **I took it** (`components/IntakeCard.ets`; Check result under the verdict card, and the medicine detail sheet above
@@ -819,3 +820,97 @@ the browser; the page itself never sees anything until the key in the link's `#`
 `shadow_sheet`, `bg_clear`, `orb_light/mid/dark`, `orb_sheen`, `orb_sheen_clear`, `orb_glow`, `orb_glow_clear`,
 `orb_glow_user`, `orb_glow_user_clear`, and `card_fixed_*`
 (always-light emergency card, the same in dark mode).
+
+## 11. Workstream B screens
+
+Specs written by the Workstream B streams (`docs/workflow/b-*.md`) for the screens they added. Same tokens and
+components as above; no new colours or sizes.
+
+### Doctor visits and feeling diary (S5, B6/B15)
+
+- **Doctor visits** (pushed page, route `visits`; also "My visits" `NavRow` at the top of Doctor report): intro in
+  `body` `ink_3`, primary `Add a visit` (plus icon), then `UPCOMING` / `PAST` caps headers and one card per visit
+  (`surface`, 1 vp `border`, `radius_m`, 14 padding): specialty in `headline`, date in `body-sm` (`brand_text` when
+  upcoming, `ink_3` when past), reason in `ink_2` (2 lines), "AI summary saved" caption, a 48 vp bin button in
+  `ink_3` (asks first; Delete in `danger`). Empty: dashed card with `Add a visit`.
+  Add form (same page): `title-3` "New visit", specialty chips (6.3, selected = ink), a 48 vp date row (date in
+  `headline`, "Change date" in `brand_text`, opens the system date picker), reason input and worries area on
+  `surface_alt`, privacy caption in `ink_3`, primary `Save and build the brief`, quiet `Cancel`.
+- **Doctor report on a visit**: title "{Specialty} · {date}", no specialty chips, the visit sections first; the AI
+  block caption says the summary is saved with the visit.
+- **How are you feeling?** (route `feeling`): intro, five mood chips (44 vp, pill, ink when selected — moods are
+  not verdicts, never risk colours), a neutral `surface` card offering `Log a symptom` for Low / Unwell, note
+  area on `surface_alt`, primary `Save to diary` (inactive until a mood is picked), `RECENT` rows like the symptom log.
+- **Feeling widget (2×2)**: `surface` card, `CELIA` caption in `ink_3`, "How are you feeling?" in `headline`, ink
+  pill "Add entry" with plus icon.
+
+### SOS sent state (S4, B8)
+
+**SOS sent state** (extends 10.2 "Emergency (active / SOS)"): after the countdown (or straight away for a watch SOS)
+the page shows the title (`title-1`; "Your watch sent an SOS" when the watch sent it, else "Get help now"), the
+subtitle in `ink_3`, then a **status card**: `surface`, 1 vp `border`, `radius_m`, padding `space_m`, three rows
+separated by `divider` — caps label (`font_caption`, bold, `ink_3`: WHAT WAS SENT · TO WHOM · STILL NEEDS A TAP) over
+`font_small` `ink_2` text. Never a risk colour on the card: it is a report, not a verdict. Below it: danger "Call
+ambulance", secondary "Send SOS message", one secondary "Call {name}" per contact, secondary **For first
+responders** (doctor icon), the location line and the message preview.
+
+### Accounts (S1, B1/B2)
+
+- **Welcome** (first launch, signed out, nothing on the phone): `bg`, orb 96, "Celia" in `title-1`, tagline in
+  `body` `ink_2`, a `surface` card (1 vp `border`, `radius_l`, padding 16) with three rows (icon well 36 on
+  `surface_alt` + `font_small` text): medicine check offline, watch heart rate, emergency card offline. Bottom:
+  primary `Create an account`, secondary `I already have an account`, quiet `Set up without an account` with a caption
+  that the profile then stays on the phone, then the disclaimer caption in `ink_4`. Back does nothing.
+- **Sign up / Log in**: title in `title-1`, one `font_small` `ink_3` line on what the account is for, then the form:
+  labelled 48 vp inputs on `surface_alt` (`radius_m`), primary button (inactive until both fields have text), a
+  `brand_text` link to switch mode, disclaimer caption. Errors use the amber 6.7 strip in plain words, never red;
+  "check your email" uses the neutral strip. While working: `LoadingProgress` 28 in `brand_accent` + "One moment…".
+- **Account** (Settings → Account): signed in — `surface` card with "Signed in as" caption, email in `headline`, the
+  backup line (`font_small`; offline → neutral strip, failure → amber strip), secondary `Back up now`; secondary
+  `Sign out` (dialog: keep data / delete from this phone, the latter in `risk_known` text); "WHERE YOUR DATA IS" card;
+  a centred `risk_known` text action "Delete my data from my account" with a confirm dialog. Signed out — one body
+  line, primary `Log in`, secondary `Create an account`, the same data card.
+
+### Emergency details and first-responder view (S2, B4/B5)
+
+#### Emergency details (Settings → Emergency details)
+`bg` page, intro in `body-sm` `ink_2`. One `surface` group per field (1 vp `border`, `radius_m`, padding 16): caps
+label in `label` `ink_3` with a "Show on card" switch (`brand_accent`) on the right; inputs 48 vp on `surface_alt`,
+`radius_s`; single-choice chips 44 vp pill (selected = `ink` fill). Invalid date: one `risk_possible_text` caption
+(no red). Extra fields as label/value rows with a 48 vp delete target. Saved on change; caption "Saved on this phone".
+
+#### For first responders (route `responder`)
+Always light (`card_fixed_*`), no title bar. Header band `card_fixed_alert`: back 48 vp, card title in `label`,
+name `title-1`, condition `title-3`, chips (age, genotype) on `card_fixed_bg`, ICD line. Then on `card_fixed_bg`:
+"Do not give" panel (`card_fixed_alert_tint`, 6 vp alert rule on the left, `title-2` heading in alert colour, groups
+in `body` bold + `subtitle` names); "Use instead" groups; numbered care notes (28 vp ink circles); medicines with
+the compact risk badge (shape + word) and a tinted "Recent QT-risk medicine" box; details as caps label + `subtitle`
+value; contacts and cardiologist as 52 vp outlined call rows. Footer: source and "works offline" in `micro`.
+
+### Onboarding (S3, B3)
+
+Replaces the "Onboarding" line in 10.2.
+
+- **Onboarding** (8 steps, pushed on first launch): top: 8 progress segments (4 vp, `brand` done / `border_strong`
+  to do) and "Step N of 8" in `caption` `ink_3`. Each step: `title-1` heading + `body-sm` subtitle in `ink_3`, then
+  its fields; bottom: primary `Continue` (`Finish` on the last step; inactive until the step is valid), a row with
+  `Back` (left, from step 2) and `Skip` (right, optional steps), and the disclaimer in `caption` `ink_4`. Side margin
+  `space_screen`. Text fields: 48 vp `surface_alt`, `radius_s`. Choice chips (genotype, account mode): 44 vp,
+  selected = `ink` fill + `on_accent` text, otherwise `surface` + 1.5 vp `border_strong`.
+  1. **Welcome**: orb 96, "Your heart-safety companion", what the app does, "about two minutes", and the consent row
+     (`surface` card, checkbox + "I understand this app is not a medical device…"; the whole card toggles it, its
+     border turns `ink` when ticked).
+  2. **Account**: chips "Create account" / "I have an account" above `AuthForm`; signed in = check icon + "Signed in
+     as {email}" card. Caption: no account still works.
+  3. **About you**: name field; date of birth card (value or "Not set" in `ink_4`, quiet `Choose` button → system
+     date picker); genotype chips LQT1 / LQT2 / LQT3 / Not sure + caption from `lqts-domain`; ICD card (switch, and
+     an ICD model field when on).
+  4. **Medicines**: `AddMedForm`, then one row per medicine with its compact risk badge.
+  5. **Contacts**: name / phone / relation fields, primary `Add contact` (inactive until valid), rows with a remove ✕
+     (48 vp hit area).
+  6. **Emergency details**: country select (sets the emergency number) and `EmergencyDetailsForm`.
+  7. **Permissions**: three `surface` cards: 44 vp `brand_accent_soft` icon well (bell, mic, location in
+     `brand_text`), `headline` title, one `body-sm` sentence of why in `ink_2`, and an ink `Allow` (48 vp). Granted =
+     check + "Allowed" in `ink_2`. Refused = caption "Not allowed. You can turn it on in the phone's Settings." No
+     risk colours anywhere in onboarding.
+  8. **Watch**: secondary `Pair a watch` (opens Pair watch), caption that it can be done later, privacy caption.

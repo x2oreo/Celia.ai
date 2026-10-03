@@ -1,0 +1,248 @@
+{
+  "string": [
+    {
+      "name": "em_dob",
+      "value": "Date of birth"
+    },
+    {
+      "name": "em_dob_hint",
+      "value": "YYYY-MM-DD"
+    },
+    {
+      "name": "em_dob_invalid",
+      "value": "Use the format YYYY-MM-DD, for example 1990-04-12."
+    },
+    {
+      "name": "em_sex",
+      "value": "Sex"
+    },
+    {
+      "name": "em_sex_female",
+      "value": "Female"
+    },
+    {
+      "name": "em_sex_male",
+      "value": "Male"
+    },
+    {
+      "name": "em_sex_other",
+      "value": "Other"
+    },
+    {
+      "name": "em_not_set",
+      "value": "Not set"
+    },
+    {
+      "name": "em_blood",
+      "value": "Blood type"
+    },
+    {
+      "name": "em_blood_unknown",
+      "value": "Don't know"
+    },
+    {
+      "name": "em_allergies",
+      "value": "Allergies"
+    },
+    {
+      "name": "em_allergies_hint",
+      "value": "For example penicillin, latex"
+    },
+    {
+      "name": "em_allergies_help",
+      "value": "Separate them with commas."
+    },
+    {
+      "name": "em_icd_model",
+      "value": "ICD model"
+    },
+    {
+      "name": "em_icd_model_hint",
+      "value": "For example Medtronic Visia AF"
+    },
+    {
+      "name": "em_cardiologist",
+      "value": "Cardiologist"
+    },
+    {
+      "name": "em_name_hint",
+      "value": "Name"
+    },
+    {
+      "name": "em_phone_hint",
+      "value": "Phone"
+    },
+    {
+      "name": "em_hospital",
+      "value": "Hospital"
+    },
+    {
+      "name": "em_hospital_hint",
+      "value": "Where you are treated"
+    },
+    {
+      "name": "em_extra",
+      "value": "Anything else"
+    },
+    {
+      "name": "em_extra_help",
+      "value": "Add anything a paramedic should know, for example Pacemaker: no."
+    },
+    {
+      "name": "em_extra_label_hint",
+      "value": "Label"
+    },
+    {
+      "name": "em_extra_value_hint",
+      "value": "Details"
+    },
+    {
+      "name": "em_extra_add",
+      "value": "Add a field"
+    },
+    {
+      "name": "em_show_on_card",
+      "value": "Show on card"
+    },
+    {
+      "name": "em_card_privacy",
+      "value": "Fields you switch off stay on this phone. They are left out of the card, the QR code and the first-responder view."
+    },
+    {
+      "name": "em_profile_title",
+      "value": "Emergency details"
+    },
+    {
+      "name": "em_profile_intro",
+      "value": "What a paramedic should know about you. Empty fields are not shown on the card."
+    },
+    {
+      "name": "em_profile_saved",
+      "value": "Saved on this phone."
+    },
+    {
+      "name": "em_row_title",
+      "value": "Emergency details"
+    },
+    {
+      "name": "em_row_sub",
+      "value": "Blood type, allergies, doctor and more for the card"
+    },
+    {
+      "name": "em_resp_title",
+      "value": "For first responders"
+    },
+    {
+      "name": "em_resp_open_sub",
+      "value": "What not to give and what to use instead"
+    },
+    {
+      "name": "em_resp_avoid",
+      "value": "Do not give"
+    },
+    {
+      "name": "em_resp_avoid_sub",
+      "value": "Drugs with a known risk of torsades de pointes, and drugs to avoid in congenital long QT."
+    },
+    {
+      "name": "em_resp_instead",
+      "value": "Use instead"
+    },
+    {
+      "name": "em_resp_instead_sub",
+      "value": "Not on the QT-risk lists. Not listed doesn't guarantee safety; the treating doctor decides."
+    },
+    {
+      "name": "em_resp_instead_of",
+      "value": "Instead of %s"
+    },
+    {
+      "name": "em_resp_care",
+      "value": "Immediate care"
+    },
+    {
+      "name": "em_resp_meds",
+      "value": "Current medicines"
+    },
+    {
+      "name": "em_resp_last_risky",
+      "value": "Took %1$s at %2$s"
+    },
+    {
+      "name": "em_resp_last_risky_label",
+      "value": "Recent QT-risk medicine"
+    },
+    {
+      "name": "em_resp_details",
+      "value": "Details"
+    },
+    {
+      "name": "em_resp_contacts",
+      "value": "Emergency contacts"
+    },
+    {
+      "name": "em_resp_call",
+      "value": "Call %s"
+    },
+    {
+      "name": "em_resp_source",
+      "value": "Drug lists: CredibleMeds QTdrugs categories (crediblemeds.org), curated subset in the app. Care notes: ERC and ESC guidance. Not a medical device."
+    },
+    {
+      "name": "em_resp_offline",
+      "value": "Works offline. Nothing on this page is sent anywhere."
+    },
+    {
+      "name": "em_widget_responder",
+      "value": "Responder"
+    },
+    {
+      "name": "em_nfc_write",
+      "value": "Write to NFC tag"
+    },
+    {
+      "name": "em_nfc_hold",
+      "value": "Hold an NFC tag to the back of the phone…"
+    },
+    {
+      "name": "em_nfc_cancel",
+      "value": "Cancel"
+    },
+    {
+      "name": "em_nfc_off",
+      "value": "Turn on NFC in the phone settings first."
+    },
+    {
+      "name": "em_nfc_failed_start",
+      "value": "NFC is not available right now."
+    },
+    {
+      "name": "em_nfc_written",
+      "value": "Written. Any phone that taps this tag opens your card."
+    },
+    {
+      "name": "em_nfc_read_only",
+      "value": "This tag is locked and can't be written."
+    },
+    {
+      "name": "em_nfc_io_failed",
+      "value": "Couldn't write. Hold the tag still, or use a bigger tag (%s or larger)."
+    },
+    {
+      "name": "em_nfc_not_ndef",
+      "value": "This tag type isn't supported. Use an NTAG213, 215 or 216 sticker."
+    },
+    {
+      "name": "em_nfc_error",
+      "value": "Couldn't write the tag. Try again."
+    },
+    {
+      "name": "em_nfc_too_long",
+      "value": "This card link is too long for an NFC tag. Turn on sharing so the short link can be used."
+    },
+    {
+      "name": "em_nfc_hint",
+      "value": "Needs a %s tag or larger. Write it again after you change your card. Not yet tested with a real tag."
+    }
+  ]
+}

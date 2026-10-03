@@ -26,11 +26,13 @@ import { Routes, SosParam } from '../common/Routes';
 import { TabRequest } from '../common/TabRequest';
 import { LocalStore } from '../data/LocalStore';
 import { Profile } from '../model/Profile';
-import { VitalsAlert, VitalsSample } from '../model/Vitals';
+import { VitalsAlert, VitalsSample, WatchSos } from '../model/Vitals';
+import { LiveStatus } from '../emergency/LiveStatus';
+import { HeartOkRequest } from '../common/HeartOkRequest';
+import { pulse } from '../common/Haptics';
 import { VitalsService } from '../vitals/VitalsService';
 import { WearNotifier } from '../vitals/WearNotifier';
 import { SosController } from '../emergency/SosController';
-import { askNotificationPermission } from '../common/Notify';
 import { AppLock } from '../common/AppLock';
 import { ReminderService } from '../reminders/ReminderService';
 import { BetaBlockerWatch } from '../vitals/BetaBlockerWatch';
@@ -39,6 +41,15 @@ import { WatchSource } from '../vitals/WatchSource';
 import { TrendsPage } from './TrendsPage';
 import { MetricPage } from './MetricPage';
 import { PairWatchPage } from './PairWatchPage';
+import { WelcomePage } from './WelcomePage';
+import { AuthPage } from './AuthPage';
+import { AccountPage } from './AccountPage';
+import { EmergencyProfilePage } from './EmergencyProfilePage';
+import { ResponderPage } from './ResponderPage';
+import { FeelingPage } from './FeelingPage';
+import { Session, launchRoute } from '../account/Session';
+import { ProfileSync } from '../account/ProfileSync';
+import { SosContacts } from '../account/SosContacts';
 import { AgentCore, QUICK_REPLY_OK, QUICK_REPLY_UNWELL } from '../agent/AgentCore';
 import { CheckInSheet } from '../components/CheckInSheet';
 import { clock } from '../common/Format';
@@ -72,11 +83,11 @@ struct Index {
     WearNotifier.start();
     VitalsService.get().onAlert((a: VitalsAlert) => this.onAlert(a));
     VitalsService.get().onWatchAnswer((kind: string) => this.onWatchAnswer(kind));
+    HeartOkRequest.onSend(() => this.onNotifyOk());
     AgentCore.get().onProactive((r: AgentReply) => this.onAgentProactive(r));
     AgentPrompt.onOpenChat(() => this.openChat());
     RouteRequest.onOpen((route: string) => this.openRoute(route));
     this.openRoute(RouteRequest.take());
-    askNotificationPermission(this.getUIContext().getHostContext() as common.UIAbilityContext);
     TravelService.detect();   // only with location already allowed; never asks
     AppLock.onLockChange((locked: boolean) => {
       this.locked = locked;
@@ -88,10 +99,25 @@ struct Index {
     }, 30000);
   }
 
+  // Launch routing (B1): a stored session goes straight in, offline too; a fresh install sees Welcome. Signed in with
+  // no profile on the phone (new phone, or onboarding not finished): try to restore it first, else onboarding.
   private async showOnboardingIfNeeded(): Promise<void> {
-    const profile: Profile | undefined = await LocalStore.get().getProfile();
+    await Session.load();
+    ProfileSync.start();
+    await WatchPairing.load();
+    WatchPairing.startAccountBinding();   // B9: a paired watch is readable only by its signed-in owner
+    SosContacts.start();                  // B10: contacts to the server, only with consent
+    let profile: Profile | undefined = await LocalStore.get().getProfile();
+    if (launchRoute(Session.isSignedIn(), profile !== undefined) === 'WELCOME') {
+      this.navStack.pushPathByName(Routes.WELCOME, null, false);
+      return;
+    }
     if (profile === undefined) {
-      this.navStack.pushPathByName(Routes.ONBOARDING, null, false);
+      await ProfileSync.syncNow();
+      profile = await LocalStore.get().getProfile();
+      if (profile === undefined) {
+        this.navStack.pushPathByName(Routes.ONBOARDING, null, false);
+      }
     }
   }
 
@@ -125,6 +151,10 @@ struct Index {
 
   // CRITICAL heart alert → wrist/phone alert + SOS countdown (unless one is running or in cooldown).
   private onAlert(a: VitalsAlert): void {
+    if (a.watchSos !== undefined) {
+      this.onWatchSos(a.watchSos);
+      return;
+    }
     WearNotifier.vitalsAlert(a);
     if (a.severity !== 'CRITICAL' || !SosController.get().canAutoStart(Date.now())) {
       return;
@@ -133,6 +163,29 @@ struct Index {
       a.kind.toLowerCase().replace(/_/g, ' ');
     this.checkIn = false;
     this.navStack.pushPathByName(Routes.SOS, new SosParam(false, reason, true));
+  }
+
+  // The watch counted down and sent its SOS already: show what was sent and what still needs a tap, never a second
+  // countdown (B8). An SOS page that is already open picks the new state up on its next tick.
+  private onWatchSos(w: WatchSos): void {
+    SosController.get().watchSent(Date.now(), w.withLocation);
+    LiveStatus.watchSos();
+    pulse(600);
+    this.checkIn = false;
+    if (this.navStack.getAllPathName().includes(Routes.SOS)) {
+      return;
+    }
+    const reason: string = w.reason === 'fall' ? 'a fall with no answer on your watch' : 'you asked for help on your watch';
+    this.navStack.pushPathByName(Routes.SOS, new SosParam(false, reason, true, 'WATCH'));
+  }
+
+  // "I'm OK" on a heart-alert notification answers an open check-in like the sheet's "I'm fine".
+  private onNotifyOk(): void {
+    if (!this.checkIn && !AgentCore.get().isCheckInPending()) {
+      return;
+    }
+    this.checkIn = false;
+    AgentCore.get().send(QUICK_REPLY_OK);
   }
 
   // An answer on the watch's "How do you feel?" counts as the same answer on the phone: it closes the check-in and
@@ -250,6 +303,18 @@ struct Index {
       TrendsPage()
     } else if (name === Routes.METRIC) {
       MetricPage()
+    } else if (name === Routes.WELCOME) {
+      WelcomePage()
+    } else if (name === Routes.AUTH) {
+      AuthPage()
+    } else if (name === Routes.ACCOUNT) {
+      AccountPage()
+    } else if (name === Routes.EMERGENCY_PROFILE) {
+      EmergencyProfilePage()
+    } else if (name === Routes.RESPONDER) {
+      ResponderPage()
+    } else if (name === Routes.FEELING) {
+      FeelingPage()
     }
   }
 

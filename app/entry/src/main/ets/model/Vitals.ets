@@ -25,4 +25,12 @@ export interface VitalsAlert {
   hr: number;
   message: string;
   severity?: AlertSeverity;   // CRITICAL starts the SOS countdown (F-27)
+  // Set only for the watch's own `sos` row: the watch already counted down and sent it, so the phone must not
+  // start a second countdown (B8).
+  watchSos?: WatchSos;
+}
+
+export interface WatchSos {
+  reason: string;          // 'fall' | 'need_help'
+  withLocation: boolean;   // the row carried lat/lon
 }

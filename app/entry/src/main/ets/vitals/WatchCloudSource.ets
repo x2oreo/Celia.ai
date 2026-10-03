@@ -147,7 +147,9 @@ export class WatchCloudSource {
     switch (r.type) {
       case 'sos': {
         const why: string = str(p, 'reason') === 'fall' ? 'after a fall with no answer' : 'the wearer asked for help';
-        return alertOf(ts, hr, 'CRITICAL', `SOS from your watch: ${why}. Check on them now.`);
+        const a: VitalsAlert = alertOf(ts, hr, 'CRITICAL', `SOS from your watch: ${why}. Check on them now.`);
+        a.watchSos = { reason: str(p, 'reason'), withLocation: num(p, 'lat') !== undefined && num(p, 'lon') !== undefined };
+        return a;
       }
       case 'fall_detected': {
         const resp: string = str(p, 'response');

@@ -9,12 +9,15 @@ import { WatchSource } from '../vitals/WatchSource';
 import { Logger } from '../common/Logger';
 import { LocalStore, StoreTopic } from './LocalStore';
 import { Profile } from '../model/Profile';
+import { Listeners } from '../common/Listeners';
+import { Session } from '../account/Session';
 
 const log: Logger = new Logger('WatchPairing');
 
 const KEY_DEVICE: string = 'watchPairDevice';
 const KEY_TOKEN: string = 'watchPairToken';
 const KEY_AT: string = 'watchPairAt';
+const KEY_BOUND: string = 'watchPairBoundTo';   // user id the pairing is bound to on the server ('' = not bound)
 const CODE_RE: RegExp = new RegExp('^\\d{6}$');
 const DEVICE_RE: RegExp = new RegExp('^[A-Za-z0-9._-]{3,64}$');
 
@@ -65,7 +68,21 @@ export function shortId(deviceId: string): string {
   return deviceId.length > 8 ? deviceId.substring(0, 8) : deviceId;
 }
 
+// Whether a paired watch's data can be read: since migration 20261004100200 only the signed-in owner can.
+export type WatchAccess = 'DEMO' | 'OWNER' | 'SIGN_IN_NEEDED';
+
+export function watchAccess(paired: boolean, signedIn: boolean): WatchAccess {
+  if (!paired) {
+    return 'DEMO';
+  }
+  return signedIn ? 'OWNER' : 'SIGN_IN_NEEDED';
+}
+
 export class WatchPairing {
+  // Emits the watch id once the pairing is bound to the signed-in account (SOS contacts can then be sent).
+  static readonly bound: Listeners<string> = new Listeners<string>();
+  private static binding: boolean = false;
+
   /** Call once at launch, before the watch source starts: applies a saved pairing to Config. */
   static async load(): Promise<void> {
     const dev: string = await LocalStore.get().getSetting(KEY_DEVICE, '');
@@ -144,9 +161,14 @@ export class WatchPairing {
       await LocalStore.get().setSetting(KEY_DEVICE, r.deviceId);
       await LocalStore.get().setSetting(KEY_TOKEN, row.token ?? '');
       await LocalStore.get().setSetting(KEY_AT, `${Date.now()}`);
+      // Claimed with the user's JWT (common/Net.ets adds it on /rest/v1/), so the server bound it to this account.
+      await LocalStore.get().setSetting(KEY_BOUND, Session.userId());
       Config.WATCH_DEVICE_ID = r.deviceId;
       log.info(`paired with watch ${shortId(r.deviceId)}`);
       await WatchPairing.syncGenotype();
+      if (Session.isSignedIn()) {
+        WatchPairing.bound.emit(r.deviceId);
+      }
     }
     return r;
   }
@@ -156,7 +178,56 @@ export class WatchPairing {
     await LocalStore.get().setSetting(KEY_DEVICE, '');
     await LocalStore.get().setSetting(KEY_TOKEN, '');
     await LocalStore.get().setSetting(KEY_AT, '0');
+    await LocalStore.get().setSetting(KEY_BOUND, '');
     Config.WATCH_DEVICE_ID = Config.DEFAULT_WATCH_DEVICE_ID;
+  }
+
+  /**
+   * Keeps the pairing bound to the signed-in account (pairing_bind with the stored token): pairings made before
+   * accounts or while signed out become readable once the user signs in. Call once at launch after load().
+   */
+  static startAccountBinding(): void {
+    Session.onChange((signedIn: boolean) => {
+      if (signedIn) {
+        WatchPairing.bindToAccount();
+      }
+    });
+    WatchPairing.bindToAccount();
+  }
+
+  static async bindToAccount(): Promise<boolean> {
+    const uid: string = Session.userId();
+    if (!WatchPairing.isPaired() || uid === '' || !Config.hasWatchCloud() || WatchPairing.binding) {
+      return false;
+    }
+    const token: string = await LocalStore.get().getSetting(KEY_TOKEN, '');
+    if (token === '' || await LocalStore.get().getSetting(KEY_BOUND, '') === uid) {
+      return token !== '';
+    }
+    WatchPairing.binding = true;
+    try {
+      await Session.freshToken();
+      const fields: Record<string, string> = { 'p_token': token };
+      const res: NetResult = await postJson('/rest/v1/rpc/pairing_bind', fields, Config.DRUG_CHECK_TIMEOUT_MS);
+      if (!res.ok) {
+        log.warn(`pairing_bind HTTP ${res.status}`);
+        return false;
+      }
+      const dev: string | null = JSON.parse(res.body) as string | null;
+      if (dev !== Config.WATCH_DEVICE_ID) {
+        log.warn('pairing_bind: this phone is no longer the paired phone');
+        return false;
+      }
+      await LocalStore.get().setSetting(KEY_BOUND, uid);
+      await WatchPairing.syncGenotype();
+      WatchPairing.bound.emit(dev);
+      return true;
+    } catch (e) {
+      log.warn(`pairing_bind failed: ${JSON.stringify(e)}`);
+      return false;
+    } finally {
+      WatchPairing.binding = false;
+    }
   }
 
   /**

@@ -10,6 +10,8 @@ import { validPhone } from './OnboardingPage';
 import { toast } from '../common/Toast';
 import { WatchPairing, shortId } from '../data/WatchPairing';
 import { Config } from '../common/Config';
+import { Session } from '../account/Session';
+import { cloneProfile } from '../emergency/EmergencyDetails';
 
 const GENOTYPES: Genotype[] = ['LQT1', 'LQT2', 'LQT3', 'UNKNOWN'];
 
@@ -26,9 +28,20 @@ export struct SettingsPage {
   @Local showAddContact: boolean = false;
   @Local watchPaired: boolean = false;
   @Local watchShort: string = '';
+  @Local accountEmail: string = '';   // '' = signed out
+  private stopAccount: () => void = () => {
+  };
 
   aboutToAppear(): void {
     this.load();
+    this.accountEmail = Session.email();
+    this.stopAccount = Session.onChange(() => {
+      this.accountEmail = Session.email();
+    });
+  }
+
+  aboutToDisappear(): void {
+    this.stopAccount();
   }
 
   // Back from the Pair watch page: show the new pairing state.
@@ -49,16 +62,8 @@ export struct SettingsPage {
     if (this.profile === undefined) {
       return;
     }
-    const p: Profile = {
-      condition: this.profile.condition,
-      genotype: this.profile.genotype,
-      hasIcd: this.profile.hasIcd,
-      notes: this.profile.notes,
-      contacts: this.profile.contacts.slice(),
-      name: this.profile.name,
-      country: this.profile.country,
-      cardLanguage: this.profile.cardLanguage
-    };
+    // Start from the stored profile (another page may have changed it) and copy every field.
+    const p: Profile = cloneProfile((await LocalStore.get().getProfile()) ?? this.profile);
     mutate(p);
     this.profile = p;
     await LocalStore.get().saveProfile(p);
@@ -254,6 +259,15 @@ export struct SettingsPage {
             SectionHeader({ title: $r('app.string.settings_contacts') })
             this.contactsGroup()
 
+            NavRow({
+              icon: $r('app.media.ic_tab_emergency'),
+              title: $r('app.string.em_row_title'),
+              subtitle: $r('app.string.em_row_sub'),
+              onTap: () => {
+                this.navStack.pushPathByName(Routes.EMERGENCY_PROFILE, null);
+              }
+            })
+
             SectionHeader({ title: $r('app.string.settings_region') })
             Column({ space: 12 }) {
               Select(EMERGENCY_NUMBERS.map((e: EmergencyInfo) => {
@@ -273,6 +287,17 @@ export struct SettingsPage {
             .backgroundColor($r('app.color.surface'))
             .border({ width: 1, color: $r('app.color.border') })
             .borderRadius($r('app.float.radius_m'))
+
+            SectionHeader({ title: $r('app.string.acc_nav') })
+            NavRow({
+              icon: $r('app.media.ic_lock'),
+              title: $r('app.string.acc_nav'),
+              subtitle: this.accountEmail !== '' ? $r('app.string.acc_row_signed_in', this.accountEmail) :
+                $r('app.string.acc_row_signed_out'),
+              onTap: () => {
+                this.navStack.pushPathByName(Routes.ACCOUNT, null);
+              }
+            })
 
             SectionHeader({ title: $r('app.string.pair_nav') })
             NavRow({

@@ -23,6 +23,17 @@ import drugCheckClientTest from './DrugCheckClient.test';
 import boxIdentifyTest from './BoxIdentify.test';
 import trendsTest from './Trends.test';
 import metricsTest from './Metrics.test';
+import visitsTest from './Visits.test';
+import diaryTest from './Diary.test';
+import notifySosTest from './NotifySos.test';
+import liveStatusTest from './LiveStatus.test';
+import accountTest from './Account.test';
+import sosContactsTest from './SosContacts.test';
+import emergencyProfileTest from './EmergencyProfile.test';
+import responderTest from './Responder.test';
+import cardPayloadTest from './CardPayload.test';
+import nfcCardTest from './NfcCard.test';
+import onboardingTest from './Onboarding.test';
 import { Config } from '../main/ets/common/Config';
 
 export default function testsuite() {
@@ -53,4 +64,15 @@ export default function testsuite() {
   medInfoTest();
   drugCheckClientTest();
   boxIdentifyTest();
+  visitsTest();
+  diaryTest();
+  notifySosTest();
+  liveStatusTest();
+  accountTest();
+  sosContactsTest();
+  emergencyProfileTest();
+  responderTest();
+  cardPayloadTest();
+  nfcCardTest();
+  onboardingTest();
 }

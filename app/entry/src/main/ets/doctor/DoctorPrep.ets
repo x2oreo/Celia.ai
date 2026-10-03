@@ -12,6 +12,7 @@ import { DrugChecker } from '../drugs/DrugChecker';
 import { medsInteractions } from '../drugs/MedsReview';
 import { RiskUi } from '../common/RiskUi';
 import { fullDate } from '../common/Format';
+import { FeelingEntry, Mood, MOODS, moodLabel, parseFeeling } from '../diary/Diary';
 
 export type Specialty = 'GP' | 'CARDIOLOGIST' | 'DENTIST' | 'SURGEON' | 'ANESTHESIOLOGIST' | 'PSYCHIATRIST' |
   'EMERGENCY';
@@ -88,13 +89,70 @@ export class BriefSection {
   }
 }
 
+// The patient's own answers for one visit (B6, doctor/Visit.ets DoctorVisit extends this).
+export interface VisitAnswers {
+  date: string;      // YYYY-MM-DD
+  reason: string;
+  worries: string;
+}
+
+function textLines(t: string): string[] {
+  return t.split('\n').map((l: string) => l.trim()).filter((l: string) => l.length > 0);
+}
+
+// 'YYYY-MM-DD' → '20 Oct 2026' (the date part of common/Format fullDate).
+export function visitDay(ymd: string): string {
+  const when: number = new Date(`${ymd}T12:00:00`).getTime();
+  return isNaN(when) ? ymd : fullDate(when).split(',')[0];
+}
+
+// "Date" + reason, then the worries as their own section. Shown first, after the patient line.
+export function visitSections(v: VisitAnswers): BriefSection[] {
+  const out: BriefSection[] = [];
+  const lines: string[] = [`Date: ${visitDay(v.date)}.`];
+  textLines(v.reason).forEach((l: string, i: number) => {
+    lines.push(i === 0 ? `Reason: ${l}` : l);
+  });
+  out.push(new BriefSection('This visit', lines));
+  const worries: string[] = textLines(v.worries);
+  if (worries.length > 0) {
+    out.push(new BriefSection('What worries me', worries));
+  }
+  return out;
+}
+
+// Diary moods in the window as counts only ("12 entries: 5 good, 4 okay, 3 low"); notes stay out of the brief.
+export function diaryLine(events: AppEvent[], since: number): string {
+  const counts: number[] = MOODS.map((m: Mood) => 0);
+  let total: number = 0;
+  for (const e of events) {
+    if (e.ts >= since && e.kind === 'FEELING') {
+      const f: FeelingEntry | undefined = parseFeeling(e.detail);
+      if (f !== undefined) {
+        counts[MOODS.indexOf(f.mood)]++;
+        total++;
+      }
+    }
+  }
+  if (total === 0) {
+    return '';
+  }
+  const parts: string[] = [];
+  MOODS.forEach((m: Mood, i: number) => {
+    if (counts[i] > 0) {
+      parts.push(`${counts[i]} ${moodLabel(m).toLowerCase()}`);
+    }
+  });
+  return `${total} ${total === 1 ? 'entry' : 'entries'}: ${parts.join(', ')}.`;
+}
+
 function isRiskyScan(s: ScanRecord): boolean {
   return s.risk === 'KNOWN_RISK' || s.risk === 'POSSIBLE_RISK' || s.risk === 'CONDITIONAL_RISK' ||
     s.combo !== 'NONE';
 }
 
 export function buildBrief(p: Profile, meds: Medication[], scans: ScanRecord[], events: AppEvent[],
-  s: Specialty, now: number): BriefSection[] {
+  s: Specialty, now: number, visit?: VisitAnswers): BriefSection[] {
   const out: BriefSection[] = [];
   const since: number = now - 90 * 86400000;
 
@@ -103,6 +161,11 @@ export function buildBrief(p: Profile, meds: Medication[], scans: ScanRecord[], 
     `${p.name !== undefined && p.name.length > 0 ? `${p.name}: ` : ''}long QT syndrome (${gt}).`,
     `Implanted defibrillator (ICD): ${p.hasIcd ? 'yes' : 'no'}.`
   ].concat(p.notes.length > 0 ? [`Notes: ${p.notes}`] : [])));
+  if (visit !== undefined) {
+    visitSections(visit).forEach((sec: BriefSection) => {
+      out.push(sec);
+    });
+  }
 
   const medLines: string[] = meds.map((m: Medication) => {
     const v: DrugVerdict = DrugChecker.get().checkSync(m.ingredient !== '' ? m.ingredient : m.name);
@@ -129,6 +192,10 @@ export function buildBrief(p: Profile, meds: Medication[], scans: ScanRecord[], 
   }
   if (symptoms.length > 0) {
     out.push(new BriefSection('Symptoms I logged', symptoms.slice(-10)));
+  }
+  const diary: string = diaryLine(events, since);
+  if (diary !== '') {
+    out.push(new BriefSection('How I felt (diary, last 90 days)', [diary]));
   }
 
   out.push(new BriefSection(`For the ${specialtyName(s).toLowerCase()}`, watchOuts(s).concat(WATCH_OUTS_ALL)));

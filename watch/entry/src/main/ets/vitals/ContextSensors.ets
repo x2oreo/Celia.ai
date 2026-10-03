@@ -1,13 +1,11 @@
 import { sensor } from '@kit.SensorServiceKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { Logger } from '../common/Logger';
+import { ACCEL_ACTIVE_NS } from './AccelRate';
 
 export type MotionCallback = (x: number, y: number, z: number, tsMs: number) => void;
 export type WearCallback = (onWrist: boolean) => void;
 export type StepsCallback = (steps: number) => void;
-
-/** 25 Hz is enough for activity and impact detection and cheap on battery. */
-const ACCEL_INTERVAL_NS = 40000000;
 
 /**
  * Accelerometer, wear detection and step counter. Each is optional: the emulator has some of them, and the app
@@ -17,16 +15,18 @@ export class ContextSensors {
   private accelOn: boolean = false;
   private wearOn: boolean = false;
   private stepsOn: boolean = false;
+  private onMotion: MotionCallback | undefined = undefined;
+  private accelIntervalNs: number = ACCEL_ACTIVE_NS;
 
   /** Returns which sensors started, e.g. for the log. */
   start(onMotion: MotionCallback, onWear: WearCallback, onSteps: StepsCallback, canCountSteps: boolean): string[] {
     this.stop();
     const started: string[] = [];
+    this.onMotion = onMotion;
+    this.accelIntervalNs = ACCEL_ACTIVE_NS;
     try {
       sensor.getSingleSensorSync(sensor.SensorId.ACCELEROMETER);
-      sensor.on(sensor.SensorId.ACCELEROMETER, (d: sensor.AccelerometerResponse) => {
-        onMotion(d.x, d.y, d.z, Date.now());
-      }, { interval: ACCEL_INTERVAL_NS });
+      this.subscribeAccel();
       this.accelOn = true;
       started.push('motion');
     } catch (e) {
@@ -55,6 +55,35 @@ export class ContextSensors {
       }
     }
     return started;
+  }
+
+  /**
+   * Changes the accelerometer report interval (energy: slower at rest). Resubscribes, since the interval is fixed per
+   * subscription.
+   */
+  setAccelInterval(intervalNs: number): void {
+    if (!this.accelOn || intervalNs === this.accelIntervalNs) {
+      return;
+    }
+    this.accelIntervalNs = intervalNs;
+    try {
+      sensor.off(sensor.SensorId.ACCELEROMETER);
+      this.subscribeAccel();
+      Logger.info(`accelerometer every ${intervalNs / 1000000} ms`);
+    } catch (e) {
+      this.accelOn = false;
+      Logger.warn(`accelerometer interval change failed: ${(e as BusinessError).code}`);
+    }
+  }
+
+  /** Throws like sensor.on; callers catch. */
+  private subscribeAccel(): void {
+    const onMotion = this.onMotion;
+    sensor.on(sensor.SensorId.ACCELEROMETER, (d: sensor.AccelerometerResponse) => {
+      if (onMotion !== undefined) {
+        onMotion(d.x, d.y, d.z, Date.now());
+      }
+    }, { interval: this.accelIntervalNs });
   }
 
   stop(): void {

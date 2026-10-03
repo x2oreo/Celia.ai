@@ -3,7 +3,7 @@
 #   app/scripts/emu.sh up              start the phone emulator when hdc sees no device
 #   app/scripts/emu.sh lock <who>      wait for the lock (a lock older than 15 min is taken over)
 #   app/scripts/emu.sh unlock          release it
-#   app/scripts/emu.sh who             print the holder, if any
+#   app/scripts/emu.sh who | status   print the holder, if any
 set -uo pipefail
 
 APP_DIR="$(cd "$(dirname "$0")/.." && pwd)"
@@ -54,7 +54,7 @@ case "${1:-}" in
     rm -rf "$LOCK"
     echo "Emulator released."
     ;;
-  who)
+  who|status)
     cat "$LOCK/who" 2>/dev/null || echo "free"
     ;;
   *)

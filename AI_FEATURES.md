@@ -92,7 +92,12 @@ stores ciphertext only and the key stays in the link — no AI is involved in th
 rejects anything outside that shape.
 
 The relay uses `previous_response_id` within a turn, so OpenAI keeps the response under its standard API retention.
-The profile, contacts, notes and saved chats stay in on-device storage (beyond the fields listed above).
+No AI path receives the profile, contacts, notes or saved chats (beyond the fields listed above).
+
+**Not AI: the account backup.** When the user is signed in, the profile (including name, emergency contacts and
+notes) and the medicine list are backed up as one document to the `profiles` table in our Supabase project, readable
+only by that user (RLS `auth.uid() = user_id`). This path is a named ledger exception (`PROFILE_SYNC`, and
+`ACCOUNT_AUTH` for the email at sign-in) and never goes to OpenAI. Without an account nothing of this leaves the phone.
 
 **Not AI, but also leaves the devices:** when a watch is linked, the watch app uploads its readings to our Supabase
 project as `watch_metrics` rows keyed by a device id (heart rate, alerts, symptoms, doses taken, falls, wear state,

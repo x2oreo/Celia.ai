@@ -23,6 +23,23 @@ export class Routes {
   static readonly PAIR_WATCH: string = 'pairWatch';
   static readonly TRENDS: string = 'trends';
   static readonly METRIC: string = 'metric';             // one health metric; param: MetricParam
+  // Workstream B: accounts, emergency details, first-responder view, feeling diary.
+  static readonly WELCOME: string = 'welcome';                    // first launch, signed out
+  static readonly AUTH: string = 'auth';                          // param: AuthParam
+  static readonly ACCOUNT: string = 'account';                    // Settings → Account
+  static readonly EMERGENCY_PROFILE: string = 'emergencyProfile'; // edit the emergency details (B4)
+  static readonly RESPONDER: string = 'responder';                // first-responder view (B5)
+  static readonly FEELING: string = 'feeling';                    // "How are you feeling?" diary entry (B15)
+}
+
+export type AuthMode = 'SIGN_UP' | 'LOG_IN';
+
+export class AuthParam {
+  mode: AuthMode;
+
+  constructor(mode: AuthMode) {
+    this.mode = mode;
+  }
 }
 
 // Tab indexes of components/MainTabs.ets. The first tab is the agent conversation itself; Routes.AGENT_CHAT only
@@ -66,10 +83,15 @@ export class SosParam {
   reason: string;   // e.g. "heart rate 165 at rest" — shown on screen and in the message
   auto: boolean;    // started by a vitals alert (true) or by the user (false)
 
-  constructor(test: boolean, reason: string, auto: boolean = false) {
+  // 'WATCH': the watch already sent the SOS (SosController.watchSent), so the page opens in its sent state with no
+  // countdown. 'PHONE': the phone's own countdown.
+  sentBy: string;
+
+  constructor(test: boolean, reason: string, auto: boolean = false, sentBy: string = 'PHONE') {
     this.test = test;
     this.reason = reason;
     this.auto = auto;
+    this.sentBy = sentBy;
   }
 }
 
