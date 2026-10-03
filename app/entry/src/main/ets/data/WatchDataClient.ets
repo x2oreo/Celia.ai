@@ -5,6 +5,7 @@
 
 import { Config } from '../common/Config';
 import { getJson, NetResult, NetTarget } from '../common/Net';
+import { WatchSource } from '../vitals/WatchSource';
 import { Logger } from '../common/Logger';
 import {
   WatchDaySummary, WatchDose, WatchInsight, WatchInsightKind, WatchInsightSeverity, WatchStatus, WatchSymptom,
@@ -208,17 +209,14 @@ export class WatchDataClient {
     return encodeURIComponent(Config.WATCH_DEVICE_ID);
   }
 
-  // `target` set: read from that project (Trends reads the deployed project while the AI backend is a local dev
-  // server). Not set: the app backend, and only when it is the Supabase project.
+  // Reads from `target`, or from the project that holds the watch tables (WatchSource.target: the app backend when
+  // it is the Supabase project, the deployed project while the AI backend is a local dev server).
   private static async get(path: string, ledger: boolean, target?: NetTarget): Promise<string | undefined> {
-    if (target !== undefined) {
-      const direct: NetResult = await getJson(path, Config.DRUG_CHECK_TIMEOUT_MS, ledger, target);
-      return direct.ok ? direct.body : undefined;
+    const to: NetTarget | undefined = target !== undefined ? target : WatchSource.target();
+    if (to === undefined) {
+      return undefined;
     }
-    if (!Config.hasWatchCloud()) {
-      return undefined;   // watch data lives in the Supabase database, not on a local dev backend
-    }
-    const res: NetResult = await getJson(path, Config.DRUG_CHECK_TIMEOUT_MS, ledger);
+    const res: NetResult = await getJson(path, Config.DRUG_CHECK_TIMEOUT_MS, ledger, to);
     return res.ok ? res.body : undefined;
   }
 

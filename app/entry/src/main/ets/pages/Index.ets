@@ -35,6 +35,7 @@ import { AppLock } from '../common/AppLock';
 import { ReminderService } from '../reminders/ReminderService';
 import { BetaBlockerWatch } from '../vitals/BetaBlockerWatch';
 import { WatchPairing } from '../data/WatchPairing';
+import { WatchSource } from '../vitals/WatchSource';
 import { TrendsPage } from './TrendsPage';
 import { PairWatchPage } from './PairWatchPage';
 import { AgentCore, QUICK_REPLY_OK, QUICK_REPLY_UNWELL } from '../agent/AgentCore';
@@ -61,7 +62,8 @@ struct Index {
     this.showOnboardingIfNeeded();
     // The Celia watch via Supabase when a backend is configured; otherwise the labelled simulated source.
     // The paired watch's id (if any) is loaded first, so nothing ever polls the wrong watch.
-    WatchPairing.load().then(() => {
+    WatchPairing.load().then(async () => {
+      await WatchSource.load();   // the source picked on the Health tab
       VitalsService.get().start('WATCH');
       BetaBlockerWatch.start();
       WatchPairing.startGenotypeSync();

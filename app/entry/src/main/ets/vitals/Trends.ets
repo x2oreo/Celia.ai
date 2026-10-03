@@ -1,13 +1,15 @@
 // Trends (Heart → Trends): resting heart rate per day with dose and symptom marks, from the watch's daily summary.
 // The maths is pure and unit-tested. Resting heart rate only: never QT, never a diagnosis.
 
-import { Config } from '../common/Config';
 import { dayKey } from '../reminders/DoseSchedule';
 import { WatchDataClient } from '../data/WatchDataClient';
 import { WatchDaySummary, WatchInsight } from '../model/WatchData';
 import { DailyResting } from './RestingTrend';
 import { demoHistory } from './RestingHistory';
-import { NetTarget, shareTarget } from '../common/Net';
+import { NetTarget } from '../common/Net';
+import { trendsRoute, TrendsRoute, WatchSource } from './WatchSource';
+
+export { trendsRoute, TrendsRoute };
 
 const DAY_MS: number = 24 * 60 * 60 * 1000;
 
@@ -143,30 +145,14 @@ function demoDays(now: number): TrendDay[] {
   return out;
 }
 
-// Which project the watch history is read from.
-//   BACKEND  the app backend is the Supabase project (release build): same URL and key as everything else.
-//   SHARE    the AI backend is a local dev server (127.0.0.1) that has no watch tables: read the deployed project
-//            (Config.SHARE_BACKEND_URL) with its own public client key (LocalConfig.SHARE_ANON_KEY).
-//   DEMO     no backend, or no key for the deployed project: built-in demo history, labelled SIMULATED.
-export type TrendsRoute = 'BACKEND' | 'SHARE' | 'DEMO';
-
-export function trendsRoute(hasWatchCloud: boolean, hasBackend: boolean, shareUrl: string, shareKey: string,
-  backendKey: string): TrendsRoute {
-  if (hasWatchCloud) {
-    return 'BACKEND';
-  }
-  // Without its own key the share key falls back to the local backend's key, which the project rejects.
-  return hasBackend && shareUrl !== '' && shareKey !== '' && shareKey !== backendKey ? 'SHARE' : 'DEMO';
-}
-
+// The watch's history when the watch is the picked source and its project can be reached (WatchSource); otherwise
+// the built-in demo history, labelled SIMULATED.
 export async function loadTrends(now: number, span: number): Promise<TrendData> {
-  const route: TrendsRoute = trendsRoute(Config.hasWatchCloud(), Config.hasBackend(), Config.SHARE_BACKEND_URL,
-    Config.SHARE_ANON_KEY, Config.SUPABASE_ANON_KEY);
-  if (route === 'DEMO') {
+  const target: NetTarget | undefined = WatchSource.activeTarget();
+  if (target === undefined) {
     const demo: TrendData = { days: fillDays(demoDays(now), now, span), insights: [], source: 'DEMO', simulated: true };
     return demo;
   }
-  const target: NetTarget | undefined = route === 'SHARE' ? shareTarget() : undefined;
   const rows: WatchDaySummary[] | undefined = await WatchDataClient.dailySummary(span, true, target);
   if (rows === undefined) {
     const off: TrendData = { days: fillDays([], now, span), insights: [], source: 'OFFLINE', simulated: false };

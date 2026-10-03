@@ -9,7 +9,7 @@ import { LocalStore, StoreTopic } from '../data/LocalStore';
 import { AlarmRules } from './AlarmRules';
 import { ScenarioName, scenarioSample } from './SimulatedSource';
 import { WatchCloudSource } from './WatchCloudSource';
-import { Config } from '../common/Config';
+import { WatchSource } from './WatchSource';
 
 const log: Logger = new Logger('Vitals');
 
@@ -33,6 +33,8 @@ export class VitalsService {
   private recent: VitalsSample[] = [];
   private recentAlerts: VitalsAlert[] = [];
   private watch: WatchCloudSource | undefined = undefined;
+  private offStore: () => void = () => {
+  };
 
   static get(): VitalsService {
     if (VitalsService.instance === undefined) {
@@ -45,14 +47,15 @@ export class VitalsService {
     if (this.source !== undefined) {
       return;
     }
-    if (source === 'WATCH' && !Config.hasWatchCloud()) {
-      // The watch reaches the phone through Supabase; without it (no backend, or the local AI-only dev backend)
-      // fall back, clearly labelled.
-      log.warn('WATCH source needs a Supabase backend (LocalConfig.ets) — using SIMULATED');
+    if (source === 'WATCH' && !WatchSource.available()) {
+      // The watch reaches the phone through Supabase; without a project to read (no backend, or the local AI-only
+      // dev backend with no SHARE_ANON_KEY) fall back, clearly labelled.
+      log.warn('WATCH source needs a Supabase project (LocalConfig.ets) — using SIMULATED');
     }
-    this.source = source === 'WATCH' && Config.hasWatchCloud() ? 'WATCH' : 'SIMULATED';
+    // The user's pick on the Health tab (WatchSource) wins over the requested source.
+    this.source = source === 'WATCH' ? WatchSource.active() : 'SIMULATED';
     this.loadGenotype();
-    LocalStore.get().onChange((t: StoreTopic) => {
+    this.offStore = LocalStore.get().onChange((t: StoreTopic) => {
       if (t === 'profile') {
         this.loadGenotype();
       }
@@ -82,7 +85,17 @@ export class VitalsService {
       clearInterval(this.timer);
       this.timer = -1;
     }
+    this.offStore();
     this.source = undefined;
+  }
+
+  /** After the source was switched (WatchSource.set) or another watch was paired: drop the old readings, start again. */
+  restart(): void {
+    this.stop();
+    this.recent = [];
+    this.scenario = 'normal';
+    this.rules.reset();
+    this.start('WATCH');
   }
 
   isRunning(): boolean {

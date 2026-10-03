@@ -1,9 +1,10 @@
 // Tells the Celia watch app (watch/) about the user's genotype and a risky medicine just taken, through the
-// `watch_context` row it polls every 60 s (T15 cloud path — no Wear Engine approval needed). Only with the cloud
-// backend (Config.hasWatchCloud). Sends no personal data: device id, genotype, ingredient, risk level, time.
+// `watch_context` row it polls every 60 s (T15 cloud path — no Wear Engine approval needed). Only when the
+// watch's Supabase project can be reached (WatchSource.target). Sends no personal data: device id, genotype, ingredient, risk level, time.
 
 import { Config } from '../common/Config';
-import { NetResult, upsertJson } from '../common/Net';
+import { NetResult, NetTarget, upsertJson } from '../common/Net';
+import { WatchSource } from './WatchSource';
 import { Logger } from '../common/Logger';
 
 const log: Logger = new Logger('WatchContext');
@@ -24,11 +25,12 @@ export function watchContextRow(deviceId: string, genotype: string, drug: string
 export class WatchContextSync {
   // `at` = when it was taken (drugs/DrugIntake.ets); the watch's 72 h window starts there.
   static async riskyDrug(genotype: string, drug: string, risk: string, at: number = Date.now()): Promise<boolean> {
-    if (!Config.hasWatchCloud() || !['KNOWN_RISK', 'POSSIBLE_RISK', 'CONDITIONAL_RISK'].includes(risk)) {
+    const target: NetTarget | undefined = WatchSource.target();
+    if (target === undefined || !['KNOWN_RISK', 'POSSIBLE_RISK', 'CONDITIONAL_RISK'].includes(risk)) {
       return false;
     }
     const res: NetResult = await upsertJson('/rest/v1/watch_context',
-      watchContextRow(Config.WATCH_DEVICE_ID, genotype, drug, risk, at), 8000);
+      watchContextRow(Config.WATCH_DEVICE_ID, genotype, drug, risk, at), 8000, target);
     if (!res.ok) {
       log.warn(`watch_context upsert failed: HTTP ${res.status}`);
     }

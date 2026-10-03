@@ -811,3 +811,23 @@ The tap-to-talk fallback is also untested end to end.
   In one typed turn the agent answered a symptom-log question and also re-opened the dentist brief from earlier in
   the chat; that needs an eval case before the prompt is called stable.
 
+### 2026-10-04 (morning) — Kaloyan + Claude Code: real watch data on the phone, with a Watch / Simulated switch (branch `kaloyan/agent-home`)
+
+- **Goal:** the owner saw only simulated numbers on the phone and wanted the real watch data, already uploaded to
+  Supabase, pulled in and charted, with a way to switch between the two.
+- **What the AI found:** the views, the client and the charts were there. The dev phone talks to a local AI backend
+  (`127.0.0.1`) that has no watch tables, and had no key for the deployed project, so every watch read fell back to
+  the demo. Live polling, pairing and the resting history only worked when the app backend itself was Supabase.
+- **What changed:** new `vitals/WatchSource.ets`: one place that says which project holds the watch tables (app
+  backend, or the deployed project while the AI backend is local) and which source the user picked (kept in
+  settings, Watch by default). `WatchCloudSource`, `WatchDataClient`, `RestingHistory`, `Trends`, `MetricHistory`,
+  `WatchPairing` and `WatchContextSync` read through it; `VitalsService.restart()` switches the live source. Health
+  tab → Demo controls has a "Data source" pair of chips; scenarios only show for the simulated source (DESIGN.md
+  §10.1a 04 extended first).
+- **Validated:** 268 phone tests green, HAP build, and on the emulator against the deployed project: Watch shows the
+  watch's resting heart rate and its fixed-rule finding; Simulated brings back the live demo line, the demo history
+  and the scenarios; switching back clears them.
+- **Not validated:** a watch uploading live during the test (the shared demo watch was offline, so the live line
+  stayed empty and the app raised its "no data from the watch" alert, as designed); pairing a real watch from a
+  phone on the local backend. `watch_vitals_daily` is still not deployed, so HRV, oxygen, breathing, sleep, steps and
+  stress show "No data" in Watch mode.

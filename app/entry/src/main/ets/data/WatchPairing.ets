@@ -4,7 +4,8 @@
 // Unpaired, the app keeps the shared demo id (Config.DEFAULT_WATCH_DEVICE_ID).
 
 import { Config } from '../common/Config';
-import { NetResult, postJson } from '../common/Net';
+import { NetResult, NetTarget, postJson } from '../common/Net';
+import { WatchSource } from '../vitals/WatchSource';
 import { Logger } from '../common/Logger';
 import { LocalStore, StoreTopic } from './LocalStore';
 import { Profile } from '../model/Profile';
@@ -92,7 +93,8 @@ export class WatchPairing {
 
   /** Sends the profile genotype to the paired watch. No-op when unpaired (the shared demo row isn't ours). */
   static async syncGenotype(): Promise<void> {
-    if (!WatchPairing.isPaired() || !Config.hasWatchCloud()) {
+    const target: NetTarget | undefined = WatchSource.target();
+    if (!WatchPairing.isPaired() || target === undefined) {
       return;
     }
     const p: Profile | undefined = await LocalStore.get().getProfile();
@@ -100,7 +102,8 @@ export class WatchPairing {
       'p_device_id': Config.WATCH_DEVICE_ID,
       'p_genotype': p?.genotype ?? 'UNKNOWN'
     };
-    const res: NetResult = await postJson('/rest/v1/rpc/set_watch_genotype', fields, Config.DRUG_CHECK_TIMEOUT_MS);
+    const res: NetResult = await postJson('/rest/v1/rpc/set_watch_genotype', fields, Config.DRUG_CHECK_TIMEOUT_MS,
+      target);
     if (!res.ok) {
       log.warn(`set_watch_genotype HTTP ${res.status}`);
     }
@@ -123,12 +126,13 @@ export class WatchPairing {
       const bad: PairResult = { outcome: 'INVALID_CODE', deviceId: '' };
       return bad;
     }
-    if (!Config.hasWatchCloud()) {
+    const target: NetTarget | undefined = WatchSource.target();
+    if (target === undefined) {
       const none: PairResult = { outcome: 'NO_BACKEND', deviceId: '' };
       return none;
     }
     const fields: Record<string, string> = { 'p_code': c };
-    const res: NetResult = await postJson('/rest/v1/rpc/pairing_claim', fields, Config.DRUG_CHECK_TIMEOUT_MS);
+    const res: NetResult = await postJson('/rest/v1/rpc/pairing_claim', fields, Config.DRUG_CHECK_TIMEOUT_MS, target);
     if (!res.ok) {
       log.warn(`pairing_claim HTTP ${res.status}`);
       const offline: PairResult = { outcome: 'OFFLINE', deviceId: '' };
@@ -161,12 +165,13 @@ export class WatchPairing {
    */
   static async stillPaired(): Promise<boolean | undefined> {
     const token: string = await LocalStore.get().getSetting(KEY_TOKEN, '');
-    if (token === '' || !Config.hasWatchCloud()) {
+    const target: NetTarget | undefined = WatchSource.target();
+    if (token === '' || target === undefined) {
       return undefined;
     }
     // POST: the privacy ledger records field names only, so the token never shows up there (a GET URL would).
     const fields: Record<string, string> = { 'p_token': token };
-    const res: NetResult = await postJson('/rest/v1/rpc/pairing_device', fields, Config.DRUG_CHECK_TIMEOUT_MS);
+    const res: NetResult = await postJson('/rest/v1/rpc/pairing_device', fields, Config.DRUG_CHECK_TIMEOUT_MS, target);
     if (!res.ok) {
       return undefined;
     }

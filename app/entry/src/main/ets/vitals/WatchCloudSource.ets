@@ -5,7 +5,8 @@
 
 import { AlertSeverity, VitalsAlert, VitalsSample, VitalsSourceKind } from '../model/Vitals';
 import { Config } from '../common/Config';
-import { getJson, NetResult } from '../common/Net';
+import { getJson, NetResult, NetTarget } from '../common/Net';
+import { WatchSource } from './WatchSource';
 import { Logger } from '../common/Logger';
 
 const log: Logger = new Logger('WatchCloud');
@@ -182,15 +183,16 @@ export class WatchCloudSource {
   }
 
   private async poll(): Promise<void> {
-    if (this.inFlight || this.cb === undefined) {
+    const target: NetTarget | undefined = WatchSource.target();
+    if (this.inFlight || this.cb === undefined || target === undefined) {
       return;
     }
     this.inFlight = true;
     try {
       if (this.lastId < 0) {
-        await this.bootstrap();
+        await this.bootstrap(target);
       } else {
-        await this.fetchNew();
+        await this.fetchNew(target);
       }
     } finally {
       this.inFlight = false;
@@ -198,10 +200,10 @@ export class WatchCloudSource {
   }
 
   // Start after the newest existing row (no replay of old alerts), but pick up the latest extras.
-  private async bootstrap(): Promise<void> {
+  private async bootstrap(target: NetTarget): Promise<void> {
     const dev: string = Config.WATCH_DEVICE_ID;
     const res: NetResult = await getJson(`/rest/v1/watch_metrics?device_id=eq.${dev}&select=id&order=id.desc&limit=1`,
-      Config.DRUG_CHECK_TIMEOUT_MS, !this.ledgered);
+      Config.DRUG_CHECK_TIMEOUT_MS, !this.ledgered, target);
     this.ledgered = true;
     if (!res.ok) {
       return;
@@ -214,16 +216,16 @@ export class WatchCloudSource {
       return;
     }
     const v: NetResult = await getJson(`/rest/v1/watch_metrics_latest?device_id=eq.${dev}&type=eq.vitals` +
-      '&select=id,type,payload,recorded_at,source', Config.DRUG_CHECK_TIMEOUT_MS, false);
+      '&select=id,type,payload,recorded_at,source', Config.DRUG_CHECK_TIMEOUT_MS, false, target);
     if (v.ok) {
       this.apply(v.body, false);
     }
   }
 
-  private async fetchNew(): Promise<void> {
+  private async fetchNew(target: NetTarget): Promise<void> {
     const path: string = `/rest/v1/watch_metrics?device_id=eq.${Config.WATCH_DEVICE_ID}&id=gt.${this.lastId}` +
       `&select=id,type,payload,recorded_at,source&order=id.asc&limit=${BATCH}`;
-    const res: NetResult = await getJson(path, Config.DRUG_CHECK_TIMEOUT_MS, false);
+    const res: NetResult = await getJson(path, Config.DRUG_CHECK_TIMEOUT_MS, false, target);
     if (res.ok) {
       this.apply(res.body, true);
     }

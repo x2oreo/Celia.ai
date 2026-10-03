@@ -3,7 +3,8 @@
 // built-in demo history so the emulator can still show the missed-dose question; every demo day is `simulated`.
 
 import { Config } from '../common/Config';
-import { getJson, NetResult } from '../common/Net';
+import { getJson, NetResult, NetTarget } from '../common/Net';
+import { WatchSource } from './WatchSource';
 import { Logger } from '../common/Logger';
 import { dayKey } from '../reminders/DoseSchedule';
 import { DailyResting } from './RestingTrend';
@@ -52,10 +53,11 @@ export function demoHistory(now: number): DailyResting[] {
 }
 
 export async function loadRestingHistory(now: number): Promise<DailyResting[]> {
-  if (Config.hasWatchCloud()) {
+  const target: NetTarget | undefined = WatchSource.activeTarget();
+  if (target !== undefined) {
     const path: string = `/rest/v1/watch_resting_daily?device_id=eq.${Config.WATCH_DEVICE_ID}` +
       `&select=day,resting_bpm,rest_minutes,simulated&order=day.desc&limit=${DAYS_TO_LOAD}`;
-    const res: NetResult = await getJson(path, Config.DRUG_CHECK_TIMEOUT_MS);
+    const res: NetResult = await getJson(path, Config.DRUG_CHECK_TIMEOUT_MS, true, target);
     if (!res.ok) {
       return [];
     }
@@ -66,6 +68,6 @@ export async function loadRestingHistory(now: number): Promise<DailyResting[]> {
       return [];
     }
   }
-  log.info('no backend — using built-in demo history (SIMULATED)');
+  log.info('no watch source — using built-in demo history (SIMULATED)');
   return demoHistory(now);
 }

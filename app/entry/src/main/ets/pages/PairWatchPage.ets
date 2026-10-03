@@ -36,8 +36,7 @@ export struct PairWatchPage {
   // The watch source reads the device id once per poll; restarting it also resets its "newest row" cursor.
   private restartWatchSource(): void {
     if (VitalsService.get().sourceKind() === 'WATCH') {
-      VitalsService.get().stop();
-      VitalsService.get().start('WATCH');
+      VitalsService.get().restart();
     }
   }
 
