@@ -3,6 +3,7 @@
     { "name": "ntf_btn_im_ok", "value": "I'm OK" },
     { "name": "ntf_btn_open", "value": "Open" },
     { "name": "ntf_btn_taken", "value": "Taken" },
+    { "name": "ntf_sos_countdown_text", "value": "Tap I'm OK if you are fine. Otherwise Celia helps you call for help." },
     { "name": "ntf_dose_text", "value": "Tap Taken when you have taken it." },
     { "name": "ntf_watch_sos_title", "value": "SOS from your watch" },
     { "name": "ntf_watch_sos_text", "value": "Your watch asked for help. Open Celia to call the ambulance and your contacts." },

@@ -4,6 +4,7 @@
 
 import { notificationManager } from '@kit.NotificationKit';
 import { common, wantAgent, WantAgent } from '@kit.AbilityKit';
+import { BusinessError } from '@kit.BasicServicesKit';
 import { Logger } from './Logger';
 import {
   buttonsFor, KEY_ACTION, KEY_ID, KEY_KIND, KEY_REMINDER, kindForId, NotifyActionId, NotifyButton, NotifyKind,
@@ -107,7 +108,7 @@ export async function notify(id: number, title: string, text: string, ongoing: b
       notificationSlotType: slotType(slotFor(kind)),
       content: {
         notificationContentType: notificationManager.ContentType.NOTIFICATION_CONTENT_BASIC_TEXT,
-        normal: { title: title, text: text }
+        normal: { title: title, text: text.length > 0 ? text : title }   // empty text is rejected (401)
       },
       isOngoing: ongoing,
       tapDismissed: !ongoing,
@@ -118,7 +119,8 @@ export async function notify(id: number, title: string, text: string, ongoing: b
     };
     await notificationManager.publish(request);
   } catch (e) {
-    log.warn(`publish failed: ${JSON.stringify(e)}`);
+    const err: BusinessError = e as BusinessError;
+    log.warn(`publish ${id} failed: ${err.code} ${err.message}`);
   }
 }
 

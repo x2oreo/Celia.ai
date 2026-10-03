@@ -22,12 +22,17 @@ export class LiveStatus {
       liveViewData: {
         primary: {
           title: `SOS in ${seconds} s — tap if you are OK`,
-          content: [{ text: LiveStatus.reason.length > 0 ? LiveStatus.reason : 'Emergency contacts will be alerted' }],
+          content: [{ text: LiveStatus.detail() }],
           keepTime: 1
         }
       }
     };
     return v;
+  }
+
+  // The system rejects a notification with empty text (401), and a manual SOS has no reason.
+  private static detail(): string {
+    return LiveStatus.reason.length > 0 ? LiveStatus.reason : notifyText('ntf_sos_countdown_text');
   }
 
   static async startSos(seconds: number, reason: string): Promise<void> {
@@ -43,7 +48,7 @@ export class LiveStatus {
       log.info(`Live View not available, using notification: ${JSON.stringify(e)}`);
       LiveStatus.useLiveView = false;
     }
-    await notify(NOTIFY_SOS, `SOS in ${seconds} s — open to say you are OK`, reason, true);
+    await notify(NOTIFY_SOS, `SOS in ${seconds} s — open to say you are OK`, LiveStatus.detail(), true);
   }
 
   static async updateSos(seconds: number): Promise<void> {
@@ -58,7 +63,7 @@ export class LiveStatus {
       if (LiveStatus.useLiveView) {
         await liveViewManager.updateLiveView(LiveStatus.view(seconds));
       } else {
-        await notify(NOTIFY_SOS, `SOS in ${seconds} s — open to say you are OK`, LiveStatus.reason, true);
+        await notify(NOTIFY_SOS, `SOS in ${seconds} s — open to say you are OK`, LiveStatus.detail(), true);
       }
     } catch (e) {
       log.warn(`update failed: ${JSON.stringify(e)}`);
