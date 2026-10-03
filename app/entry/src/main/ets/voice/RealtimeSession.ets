@@ -19,7 +19,7 @@ import { AgentCore } from '../agent/AgentCore';
 import { BackendClient } from '../agent/BackendClient';
 import { RelayContext } from '../agent/AgentClient';
 import { TurnState } from '../agent/ToolTypes';
-import { hasReassurance } from '../agent/ResponseValidator';
+import { hasReassurance, mentionsMedicine } from '../agent/ResponseValidator';
 import { verdictText } from '../agent/VerdictText';
 import { GateResult } from '../safety/SafetyGate';
 import { AgentReply, VerdictCardPayload } from '../model/AgentTypes';
@@ -29,7 +29,6 @@ import { PcmStreamPlayer } from './PcmStreamPlayer';
 const log: Logger = new Logger('Realtime');
 
 const REALTIME_URL: string = 'wss://api.openai.com/v1/realtime';
-const MEDICINE_WORDS: RegExp = /\b(medicine|medication|drug|tablet|pill|take|taking)\b/i;
 
 export type RealtimeStatus = 'IDLE' | 'CONNECTING' | 'LIVE' | 'CLOSED' | 'FAILED';
 
@@ -264,7 +263,7 @@ export class RealtimeSession {
     this.transcript += delta;
     const turn: TurnState | undefined = this.turn;
     const aboutMedicine: boolean = (turn !== undefined && turn.verdicts.length > 0) ||
-      MEDICINE_WORDS.test(this.transcript);
+      mentionsMedicine(this.transcript);
     if (aboutMedicine && hasReassurance(this.transcript)) {
       log.warn('realtime: model reassured about a medicine — cancelling response');
       this.cancelResponse();

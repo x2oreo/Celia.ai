@@ -9,14 +9,13 @@
 // Cost: usage from every response.done, all tokens billed at audio rates ($32 / $64 per 1M) as a worst case.
 
 import {
-  addSpend, assertBudget, checkDrugOutput, checkFinalText, DEFAULT_CONTEXT, hasReassurance, KLACID_KNOWN_RISK, PRICE,
+  addSpend, assertBudget, checkDrugOutput, checkFinalText, DEFAULT_CONTEXT, hasReassurance, KLACID_KNOWN_RISK, mentionsMedicine, PRICE,
   spent, startFn, usd, VerdictCardPayload, verdictCard,
 } from './lib.ts';
 
 const PHASE = 'realtime';
 const PHASE_CAP_USD = 0.5;
 const SESSION_TIMEOUT_MS = 60_000;
-const MEDICINE_WORDS = /\b(medicine|medication|drug|tablet|pill|take|taking)\b/i; // RealtimeSession.ets
 
 // Event names RealtimeSession.ets switches on. The first group must occur in a text-only session.
 const REQUIRED = ['response.created', 'response.output_audio.delta', 'response.output_audio_transcript.delta',
@@ -152,7 +151,7 @@ const done = new Promise<string>((resolve) => {
       case 'response.output_audio_transcript.delta': {
         current += ev.delta ?? '';
         // Port of RealtimeSession.onModelWords: would the device cancel this response mid-sentence?
-        const aboutMedicine = toolCalls.length > 0 || MEDICINE_WORDS.test(current);
+        const aboutMedicine = toolCalls.length > 0 || mentionsMedicine(current);
         if (aboutMedicine && hasReassurance(current)) streamingCancel = true;
         break;
       }

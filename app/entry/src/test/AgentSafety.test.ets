@@ -106,6 +106,13 @@ export default function agentSafetyTest() {
       }
     });
 
+    it('typographicApostrophesStillTrigger', 0, () => {
+      expect(SafetyGate.classify('I can\u2019t breathe', false)).assertEqual('EMERGENCY');
+      expect(SafetyGate.classify('it\u2019s an emergency', false)).assertEqual('EMERGENCY');
+      expect(SafetyGate.classify('I don\u2019t feel well', true)).assertEqual('UNWELL');
+      expect(SafetyGate.classify('I\u2019m OK', true)).assertEqual('OK');
+    });
+
     it('checkInAnswersOnlyCountWhenPending', 0, () => {
       expect(SafetyGate.classify('I feel unwell', true)).assertEqual('UNWELL');
       expect(SafetyGate.classify("I'm OK", true)).assertEqual('OK');
@@ -150,6 +157,46 @@ export default function agentSafetyTest() {
       expect(hasReassurance('There is no QT risk.')).assertTrue();
       expect(hasReassurance('Klacid is not safe for you.')).assertFalse();
       expect(hasReassurance("It isn't okay to take it without asking.")).assertFalse();
+    });
+
+    it('typographicApostrophesAreNormalised', 0, () => {
+      expect(hasReassurance('It\u2019s safe for you.')).assertTrue();
+      expect(hasReassurance('Ibuprofen isn\u2019t harmless for everyone.')).assertFalse();
+    });
+
+    it('deniedReassuranceIsNotReassurance', 0, () => {
+      expect(hasReassurance('That does not mean the combination is safe.')).assertFalse();
+      expect(hasReassurance('It is not on the lists, but that doesn\u2019t mean it\u2019s safe.')).assertFalse();
+      expect(hasReassurance('It is not on the list. It is safe.')).assertTrue();
+      const c: TextCheck = checkFinalText('No interaction with nadolol was flagged, but that does not mean the ' +
+        'combination is safe. Klacid is on the known-risk list, so avoid it. Ask your doctor.',
+        [card('clarithromycin', 'KNOWN_RISK', 'KNOWN_RISK')]);
+      expect(c.issue).assertEqual('NONE');
+    });
+
+    it('polishReassuranceIsCaught', 0, () => {
+      expect(hasReassurance('Apap jest bezpieczny.')).assertTrue();
+      expect(hasReassurance('Można go bezpiecznie przyjmować.')).assertTrue();
+      expect(hasReassurance('Nie ma żadnego ryzyka.')).assertTrue();
+      expect(hasReassurance('Apap nie jest bezpieczny.')).assertFalse();
+      expect(hasReassurance('To nie oznacza, że jest bezpieczny dla każdego.')).assertFalse();
+      expect(checkFinalText('Apap jest bezpieczny, możesz go wziąć.', []).issue).assertEqual('REASSURES_RISKY');
+    });
+
+    it('polishVerdictWordingIsAccepted', 0, () => {
+      const known: TextCheck = checkFinalText('Klacid jest na liście leków o znanym ryzyku wydłużenia QT. Unikaj go ' +
+        'i skonsultuj się z lekarzem.', [card('clarithromycin', 'KNOWN_RISK', 'KNOWN_RISK')]);
+      expect(known.issue).assertEqual('NONE');
+      const unknown: TextCheck = checkFinalText('Nie znalazłam tego leku. Zapytaj farmaceutę.',
+        [card('', 'UNKNOWN_DRUG', 'UNKNOWN_DRUG')]);
+      expect(unknown.issue).assertEqual('NONE');
+    });
+
+    it('conditionalRiskMustMentionTheRisk', 0, () => {
+      expect(checkFinalText('Loperamide is used for diarrhoea.', [card('loperamide', 'CONDITIONAL_RISK',
+        'CONDITIONAL_RISK')]).issue).assertEqual('DOWNPLAYS_VERDICT');
+      expect(checkFinalText('Loperamide needs caution; check with your doctor.', [card('loperamide',
+        'CONDITIONAL_RISK', 'CONDITIONAL_RISK')]).issue).assertEqual('NONE');
     });
 
     it('replacesTextThatReassuresAboutRiskyDrug', 0, () => {

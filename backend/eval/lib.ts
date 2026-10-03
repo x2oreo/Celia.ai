@@ -249,25 +249,43 @@ export function verdictText(v: VerdictCardPayload): string {
 export type TextIssue = 'NONE' | 'EMPTY' | 'REASSURES_RISKY' | 'DOWNPLAYS_VERDICT';
 
 const MAX_TEXT = 1500;
+
+// Port of common/Text.ets.
+export function normalizeText(text: string): string {
+  return text.toLowerCase().replace(/[‘’ʼ′]/g, "'");
+}
+
 const REASSURANCE: RegExp[] = [
   /\b(is|are|it's|its|be|perfectly|completely|totally|generally|should be)\s+(safe|fine|ok|okay|harmless)\b/g,
   /\b(safe|fine|ok|okay) (for you )?to (take|use)\b/g,
   /\bno (qt |real |known )?risk\b/g,
   /\bharmless\b/g,
+  /\b(jest|są)\s+(całkowicie\s+|zupełnie\s+|w pełni\s+)?bezpieczn/g,
+  /bezpieczn\S*\s+(dla ciebie|dla pana|dla pani|do (przyjęcia|stosowania|wzięcia))/g,
+  /\bmożna\s+(go\s+|ją\s+|je\s+)?bezpiecznie/g,
+  /\bbez (żadnego )?ryzyka/g,
+  /\bnie ma (żadnego )?ryzyka/g,
 ];
-const NEGATION = /(not|n't|never|no longer)\s*$/;
-const RISK_WORDS = /\b(risk|risky|avoid|danger|dangerous|caution|careful|not recommended|check with)\b/;
-const ASK_WORDS = /\b(pharmacist|doctor|cardiologist)\b/;
-const MEDICINE_WORDS = /\b(medicine|medicines|medication|drug|drugs|tablet|tablets|pill|pills|take|taking)\b/;
+const NEGATION = /(not|n't|never|no longer|(^|\s)nie)\s*((jest|są)\s*)?$/;
+const DENIAL = /((not|n't)\s+(necessarily\s+)?(mean|means|guarantee|guarantees)|\bnie\s+(oznacza|znaczy|gwarantuje))\b[^.!?;]*$/;
+const RISK_WORDS = /\b(risk|risky|avoid|danger|dangerous|caution|careful|not recommended|check with)\b|ryzyk|unik|ostrożn|niebezpieczn|uważ/;
+const ASK_WORDS = /\b(pharmacist|doctor|cardiologist)\b|lekarz|farmaceut|kardiolog/;
+const MEDICINE_WORDS =
+  /\b(medicine|medicines|medication|drug|drugs|tablet|tablets|pill|pills|take|taking)\b|\blek(i|u|ów|iem|ami)?(?![a-ząćęłńóśźż])|tabletk|wziąć|brać|przyjmowa|przyjąć/;
+
+export function mentionsMedicine(text: string): boolean {
+  return MEDICINE_WORDS.test(normalizeText(text));
+}
 
 export function hasReassurance(text: string): boolean {
-  const t = text.toLowerCase();
+  const t = normalizeText(text);
   for (const pattern of REASSURANCE) {
     pattern.lastIndex = 0;
     let m = pattern.exec(t);
     while (m !== null) {
       const before = t.slice(Math.max(0, m.index - 14), m.index);
-      if (!NEGATION.test(before)) return true;
+      const clause = t.slice(Math.max(0, m.index - 80), m.index);
+      if (!NEGATION.test(before) && !DENIAL.test(clause)) return true;
       m = pattern.exec(t);
     }
   }
@@ -285,11 +303,12 @@ function replacement(verdicts: VerdictCardPayload[]): string {
 export function checkFinalText(text: string, verdicts: VerdictCardPayload[]): { issue: TextIssue; text: string } {
   const trimmed = text.trim().slice(0, MAX_TEXT);
   if (trimmed.length === 0) return { issue: 'EMPTY', text: replacement(verdicts) };
-  const aboutMedicine = verdicts.length > 0 || MEDICINE_WORDS.test(trimmed.toLowerCase());
+  const lower = normalizeText(trimmed);
+  const aboutMedicine = verdicts.length > 0 || mentionsMedicine(lower);
   if (aboutMedicine && hasReassurance(trimmed)) return { issue: 'REASSURES_RISKY', text: replacement(verdicts) };
-  const lower = trimmed.toLowerCase();
   for (const v of verdicts) {
-    const downplayed = ((v.combinedRisk === 'KNOWN_RISK' || v.combinedRisk === 'POSSIBLE_RISK') && !RISK_WORDS.test(lower)) ||
+    const risky = ['KNOWN_RISK', 'POSSIBLE_RISK', 'CONDITIONAL_RISK'].includes(v.combinedRisk);
+    const downplayed = (risky && !RISK_WORDS.test(lower)) ||
       (v.combinedRisk === 'UNKNOWN_DRUG' && !ASK_WORDS.test(lower));
     if (downplayed) return { issue: 'DOWNPLAYS_VERDICT', text: replacement(verdicts) };
   }
@@ -336,7 +355,7 @@ const OK_PATTERNS: RegExp[] = [
 ];
 
 export function classifyGate(text: string, checkInPending: boolean): GateResult {
-  const t = text.toLowerCase();
+  const t = normalizeText(text);
   if (EMERGENCY_PATTERNS.some((p) => p.test(t))) return 'EMERGENCY';
   if (checkInPending) {
     if (UNWELL_PATTERNS.some((p) => p.test(t))) return 'UNWELL';
