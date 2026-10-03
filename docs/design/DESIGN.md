@@ -385,6 +385,19 @@ The `Taken` pill is 44 vp tall (`chip_height`, radius 22) so a dose is logged wi
 In ArkUI, use `animateTo` / `.animation()` with `Curve.EaseInOut` and `iterations: -1` for loops, and
 `keyframeAnimateTo` for the heartbeat. Respect the system reduced-motion setting by dropping loops to static.
 
+**Reduced motion** (`common/Motion.ets`, read once at start and on change):
+
+- API 23 and later: the system "reduce animations" accessibility setting
+  (`accessibility.isAnimationReduceEnabledSync()`, `onAnimationReduceStateChange`).
+- API 20 to 22 (our minimum is 20): the SDK has no reduce-motion query. The fallback is the animation duration
+  scale (`settings.display.ANIMATOR_DURATION_SCALE`); a value of 0 counts as reduced.
+- When reduced: breathing, the sheen turn and the thinking arc stay still. Halos still follow the voice level (a
+  response to sound, not a loop), and every state keeps its text label.
+- Neither path has been seen switching on a device yet; on the API 24 emulator the setting reads "off".
+
+A size or radius that changes with the orb must not sit under a looping `.animation()`: give it its own one-shot
+`.animation()` above the loop, or it keeps swinging between the old and the new value.
+
 ---
 
 ## 9. Voice and content
@@ -475,7 +488,9 @@ Top to bottom:
    18:00–23:59 evening, 00:00–04:59 a plain "Hi". The date and the genotype chip of the old Home are dropped: the
    date is on the system bar and the genotype is in the tip label and in Settings.
 3. **Voice stage** (voice mode only): the orb (6.6a), its state label, the `SIMULATED VOICE INPUT` badge in demo
-   mode. Tap on the orb while idle: start talking.
+   mode. Tap on the orb while idle: start talking. While a session is live and nothing has been said yet, the stage
+   takes the whole height between the notes strip and the dock (welcome and quick actions are hidden); with the
+   first words it steps back to the compact orb above the thread.
 4. **Thread**, or the **welcome** (hint and three starter chips) while nothing has been said. The last chat is
    restored at start, as before.
 5. **Quick-action row** (chips, scrolls sideways): Scan a box (scan page), Log how I feel (symptom log), Doctor

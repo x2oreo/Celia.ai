@@ -104,6 +104,44 @@ settings gear tap, Doctor prep / Trends / Scan chips (same push as the tested on
 | Notes strip (greeting, tip, alarm, travel) | tab 0, under the status strip | greeting, tip, alarm verified; travel unverified |
 | Live voice ends when leaving the agent | tab switch, pushed page | verified on emulator |
 
+## A2 — the orb as a stage (2026-10-04)
+
+**Asked:** full-height stage while live and nothing said; confirm the level wiring; real reduced-motion setting;
+labels on every state; no change to the look.
+
+**Produced:**
+
+- Full-height stage: `AgentConversation.immersive()` (voice mode, session live, no thread). `VoiceStage` gets
+  `full`; welcome and quick actions are hidden until the first words, then today's 168 → 84 step.
+- Level wiring, read in `voice/RealtimeSession.ets` (not edited): listening / hearing emit the microphone (or demo
+  clip) level through `onLevel`; speaking emits the playback level through the same listener; thinking and
+  connecting have no level and show the orbit arc. No state lacks a signal, nothing to fix.
+- Reduced motion: `Motion.start()` reads `accessibility.isAnimationReduceEnabledSync()` on API 23+ and follows
+  `onAnimationReduceStateChange`. **API 20–22 expose no reduce-motion query** (checked in the SDK typings:
+  the accessibility functions are `@since 23`); the fallback there is `settings.display.ANIMATOR_DURATION_SCALE`
+  equal to 0. Written into DESIGN.md §8. `VoiceOrb` reacts to a change while on screen; other loop users
+  (`AgentAvatar`, `HrRing`, `Common`, not all mine) read the flag when they are built.
+- Two animation bugs fixed in `VoiceOrb.ets` (behaviour, not look): after New chat (orb 84 → 168) the core's
+  corner radius sat under the infinite breathing animation and the orb pulsed into a rounded square; the thinking
+  arc's size sat under its infinite spin. Both sizes now ease once.
+
+**Validated** (216 tests, build green; emulator API 24, demo voice, from an empty chat):
+
+| State | Label on screen | Shot |
+|---|---|---|
+| Connecting | "Connecting…", arc, coral halos, full-height stage | `shots/t1/a2_1_connecting.jpeg` |
+| Listening | "I'm listening", neutral halos | `shots/t1/a2_2_listening.jpeg` |
+| Hearing | "Listening…", neutral halos opened by the clip level | `shots/t1/a2_3_hearing.jpeg` |
+| Thinking | "Thinking…", arc, compact orb, user words in the thread | `shots/t1/a2_4_thinking.jpeg` |
+| Speaking | "Speaking", coral halos | `shots/t1/a2_5_speaking.jpeg` |
+| Listening again | "I'm listening", verdict card in the thread | `shots/t1/a2_6_listening_again.jpeg` |
+
+The orb stays round through New chat → session (it was a rounded square before the fix).
+
+**Not validated:** reduced motion switched on (no toggle exercised; the read returns "off" without errors); the
+API 20–22 fallback (emulator is API 24); the arc size fix (the thinking window was missed in the re-run, and
+`a2_4_thinking.jpeg` predates it: it shows the arc mid-shrink); real microphone levels (demo clip only).
+
 ## Needs from other tracks
 
 None.
