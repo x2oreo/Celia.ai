@@ -738,3 +738,27 @@ The tap-to-talk fallback is also untested end to end.
   tracks into the same checkout while the integrator was mid-merge; asking it by message which files it owned
   settled it in one exchange. The tab-0 agent layout from T1 is being replaced by the owner's v2 design in another
   session, so the navigation rows in the README wait for that.
+
+### 2026-10-04 (early morning) — Kaloyan + Claude Code: the owner's v2 design applied; integrator re-check (branch `kaloyan/agent-home`)
+- **Asked:** apply the owner's Claude Design v2 screens, the "Dawn" silk orb, Lucide icons, and move the orb to the
+  bottom of the agent stage. A second session (the integrator) re-checks the result.
+- **Produced (design session, commits `985cc79..6588a02`):** tab bar Today · Medicines · orb · Health · Emergency;
+  Today is a dashboard again and the agent is a full-screen pushed stage (the tab-0 agent from the night before is
+  replaced); orb dock with tap to talk, tap again to mute, End, and "Aa" for typing; live captions with "Show
+  conversation"; Trends inline on Health; a Today's doses row on Medicines; Emergency reordered; Lucide icons (ISC,
+  listed under pre-existing components). Voice still ends when the stage is closed or covered, and the microphone
+  opens only on a tap.
+- **Validated:** from a clean checkout of `6588a02`: 240 phone tests, 68 backend tests, HAP builds. The design
+  session looked at Today, the stage (empty, speaking with a verdict card, muted), Health, Medicines and Emergency on
+  the emulator.
+- **Not validated:** those emulator screenshots came from the shared working tree, which held other sessions'
+  uncommitted files, not from a clean build of the commits. Dark mode, a real phone, reduced motion, the frame rate
+  of the Canvas orb on real hardware, and "Taken" on a dose with real reminders were not checked. The integrator's
+  own emulator pass on the v2 build was cut short: another session reinstalled the app while it ran.
+- **Lessons:** the integrator's clean-checkout build caught that `d9ed08d` did not compile on its own: a commit of
+  `pages/Index.ets` had carried another session's imports of pages that were never committed, and the reported
+  "252 tests" counted that session's uncommitted tests. A shared working tree hides this, because everyone's build
+  sees everyone's files. Rule from here: before any push, build and test the commit in a clean worktree. Several
+  sessions also drove the one emulator without the lock, so a tap could land on another session's fresh install.
+  In one typed turn the agent answered a symptom-log question and also re-opened the dentist brief from earlier in
+  the chat; that needs an eval case before the prompt is called stable.
