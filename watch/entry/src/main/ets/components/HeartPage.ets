@@ -20,9 +20,12 @@ export struct HeartPage {
   }
 
   elapsed(): string {
-    const m = Math.floor(this.ctrl.elapsedSec / 60);
-    const s = this.ctrl.elapsedSec % 60;
-    return `${m}:${s < 10 ? '0' : ''}${s}`;
+    const t = this.ctrl.monitoringSec;
+    const h = Math.floor(t / 3600);
+    const m = Math.floor((t % 3600) / 60);
+    const s = t % 60;
+    const mm = h > 0 && m < 10 ? `0${m}` : `${m}`;
+    return `${h > 0 ? `${h}:` : ''}${mm}:${s < 10 ? '0' : ''}${s}`;
   }
 
   syncLabel(): string {
@@ -68,7 +71,7 @@ export struct HeartPage {
       }
       .alignItems(VerticalAlign.Center)
 
-      Text(this.ctrl.running ? `bpm · ${this.elapsed()}` : 'bpm')
+      Text('bpm')
         .fontSize(12)
         .fontColor(Theme.MUTED)
 
@@ -81,17 +84,17 @@ export struct HeartPage {
           .width(150)
       }
 
-      Button(this.ctrl.running ? 'Stop' : 'Start')
-        .fontSize(15)
-        .fontWeight(FontWeight.Medium)
-        .width(96)
-        .height(36)
-        .margin({ top: 6 })
-        .backgroundColor(this.ctrl.running ? Theme.CARD : Theme.HEART)
-        .fontColor(Theme.TEXT)
-        .onClick(() => {
-          this.ctrl.toggle();
-        })
+      Row({ space: 6 }) {
+        Circle().width(8).height(8).fill(this.ctrl.running ? Theme.HEART : Theme.MUTED)
+        Text(this.ctrl.running ? `Monitoring · ${this.elapsed()}` : 'Paused')
+          .fontSize(13)
+          .fontColor(Theme.TEXT)
+      }
+      .height(32)
+      .padding({ left: 14, right: 14 })
+      .margin({ top: 6 })
+      .borderRadius(16)
+      .backgroundColor(Theme.CARD)
 
       Row({ space: 6 }) {
         Circle().width(6).height(6).fill(this.syncColor())

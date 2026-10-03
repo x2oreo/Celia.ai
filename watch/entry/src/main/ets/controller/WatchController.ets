@@ -1,5 +1,5 @@
 import { abilityAccessCtrl, common, Permissions } from '@kit.AbilityKit';
-import { vibrator } from '@kit.SensorServiceKit';
+import { sensor, vibrator } from '@kit.SensorServiceKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { AppConfig, AppConfigData } from '../common/AppConfig';
 import { Logger } from '../common/Logger';
@@ -29,20 +29,33 @@ export type SyncState = 'OFF' | 'OK' | 'PENDING' | 'ERROR';
 
 const LIVE_EVERY_MS = 5000;
 const SYNC_EVERY_MS = 3000;
+/** Monitoring is continuous, so summaries are sent per window instead of per start/stop. */
+const SUMMARY_WINDOW_MS = 5 * 60 * 1000;
+/**
+ * Heart-rate sensors (and the emulator's virtual one) may report only when the value changes, so the last reading
+ * stays valid this long; after that we show "waiting" and stop evaluating.
+ */
+const READING_VALID_MS = 30000;
 const BATCH = 50;
+const WAITING = 'Waiting for heart rate…';
 
-/** All watch state and behaviour. The UI only renders it and forwards taps. */
+/**
+ * All watch state and behaviour. The UI only renders it and forwards taps.
+ * Monitoring is always on while the app is visible: the page calls resume() on show and pause() on hide.
+ * (HarmonyOS freezes background apps and has no continuous-task type for heart-rate monitoring; on a real watch
+ * 24/7 data comes from the system's own HR history via Health Service Kit. See watch/README.md.)
+ */
 @ObservedV2
 export class WatchController {
   @Trace bpm: number = 0;
   @Trace running: boolean = false;
-  @Trace sourceKind: HrSourceKind = 'SIMULATED';
+  @Trace sourceKind: HrSourceKind = 'SENSOR';
   @Trace scenarioIdx: number = 0;
   @Trace alertText: string = '';
   @Trace statusText: string = '';
   @Trace syncState: SyncState = 'OFF';
   @Trace pending: number = 0;
-  @Trace elapsedSec: number = 0;
+  @Trace monitoringSec: number = 0;
   @Trace highBpm: number = 140;
   @Trace lowBpm: number = 45;
 
@@ -50,12 +63,19 @@ export class WatchController {
   private cfg: AppConfigData = AppConfig.defaults();
   private source: HeartRateSource | undefined = undefined;
   private alarm: AlarmRules = new AlarmRules(AlarmRules.defaultConfig(140, 45));
-  private stats: SessionStats = new SessionStats();
+  private window: SessionStats = new SessionStats();
+  private windowStartMs: number = 0;
   private outbox: MetricOutbox = new MetricOutbox(new MemoryOutboxStore(), 500);
   private uploader: SupabaseUploader | undefined = undefined;
   private lastLiveMs: number = 0;
+  private lastSampleMs: number = 0;
+  private monitoringSinceMs: number = 0;
+  private tickTimer: number = -1;
   private syncTimer: number = -1;
   private syncing: boolean = false;
+  private visible: boolean = false;
+  private healthPermission: boolean = false;
+  private ready: Promise<void> = Promise.resolve();
 
   init(ctx: common.UIAbilityContext): void {
     this.ctx = ctx;
@@ -77,10 +97,15 @@ export class WatchController {
     this.syncTimer = setInterval(() => {
       this.syncNow();
     }, SYNC_EVERY_MS);
+    this.monitoringSinceMs = Date.now();
+    // Ask for the HR permission once, up front, so the dialog doesn't interrupt a running monitor.
+    this.ready = this.ensureHealthPermission().then((granted: boolean) => {
+      this.healthPermission = granted;
+    });
   }
 
   dispose(): void {
-    this.stop();
+    this.pause();
     if (this.syncTimer >= 0) {
       clearInterval(this.syncTimer);
       this.syncTimer = -1;
@@ -91,67 +116,37 @@ export class WatchController {
     return SCENARIOS[this.scenarioIdx].label;
   }
 
-  get isDemoData(): boolean {
-    return this.sourceKind === 'SIMULATED';
+  get medicationName(): string {
+    return this.cfg.medicationName;
   }
 
-  async start(): Promise<void> {
-    if (this.running) {
-      return;
-    }
-    if (this.sourceKind === 'SENSOR' && !(await this.ensureHealthPermission())) {
-      this.statusText = 'No heart-rate permission, using demo data';
-      this.sourceKind = 'SIMULATED';
-    }
-    this.stats = new SessionStats();
-    this.alarm.reset();
-    this.alertText = '';
-    this.bpm = 0;
-    this.elapsedSec = 0;
-    this.lastLiveMs = 0;
-    this.running = true;
-    this.source = this.createSource(this.sourceKind);
-    this.source.start((bpm: number, tsMs: number) => {
-      this.onSample(bpm, tsMs);
-    }, (msg: string) => {
-      this.onSourceError(msg);
-    });
-    Logger.info(`session started, source=${this.sourceKind}`);
-  }
-
-  stop(): void {
-    if (!this.running) {
-      return;
-    }
-    this.source?.stop();
-    this.source = undefined;
-    this.running = false;
-    const summary = this.stats.summary();
-    if (summary !== undefined) {
-      this.record('hr_session', summary, Date.now());
-    }
-    Logger.info('session stopped');
-  }
-
-  async toggle(): Promise<void> {
-    if (this.running) {
-      this.stop();
-    } else {
-      await this.start();
+  /** App became visible: (re)start monitoring. */
+  async resume(): Promise<void> {
+    this.visible = true;
+    await this.ready;
+    if (this.visible) {
+      this.startSource();
     }
   }
 
-  /** Toggles demo data ↔ watch sensor. Restarts the session if one is running. */
-  async cycleSource(): Promise<void> {
-    this.sourceKind = this.sourceKind === 'SIMULATED' ? 'SENSOR' : 'SIMULATED';
-    this.statusText = '';
-    await this.restartIfRunning();
+  /** App hidden: the OS will freeze us, so close the summary window and push what we have. */
+  pause(): void {
+    this.visible = false;
+    this.stopSource();
+    this.flushWindow(Date.now());
+    this.syncNow();
   }
 
-  async cycleScenario(): Promise<void> {
+  /** Toggles watch sensor ↔ demo data. */
+  cycleSource(): void {
+    this.sourceKind = this.sourceKind === 'SENSOR' ? 'SIMULATED' : 'SENSOR';
+    this.restart();
+  }
+
+  cycleScenario(): void {
     this.scenarioIdx = (this.scenarioIdx + 1) % SCENARIOS.length;
     if (this.sourceKind === 'SIMULATED') {
-      await this.restartIfRunning();
+      this.restart();
     }
   }
 
@@ -160,17 +155,13 @@ export class WatchController {
   }
 
   logSymptom(kind: SymptomKind): void {
-    const v: SymptomValues = { kind: kind, bpm: this.running ? this.bpm : 0 };
+    const v: SymptomValues = { kind: kind, bpm: this.bpm };
     this.record('symptom', v, Date.now());
   }
 
   logMedication(): void {
     const v: MedicationTakenValues = { name: this.cfg.medicationName };
     this.record('medication_taken', v, Date.now());
-  }
-
-  get medicationName(): string {
-    return this.cfg.medicationName;
   }
 
   async syncNow(): Promise<void> {
@@ -191,10 +182,66 @@ export class WatchController {
     this.syncing = false;
   }
 
-  private async restartIfRunning(): Promise<void> {
+  private restart(): void {
+    this.statusText = '';
     if (this.running) {
-      this.stop();
-      await this.start();
+      this.stopSource();
+      this.startSource();
+    }
+  }
+
+  private startSource(): void {
+    if (this.running) {
+      return;
+    }
+    if (this.sourceKind === 'SENSOR' && !this.sensorUsable()) {
+      this.sourceKind = 'SIMULATED';
+    }
+    this.alarm.reset();
+    this.bpm = 0;
+    this.lastLiveMs = 0;
+    this.lastSampleMs = Date.now();
+    this.windowStartMs = Date.now();
+    this.window = new SessionStats();
+    this.running = true;
+    this.source = this.createSource(this.sourceKind);
+    this.source.start((bpm: number, tsMs: number) => {
+      this.onSample(bpm, tsMs);
+    }, (msg: string) => {
+      this.onSourceError(msg);
+    });
+    this.tickTimer = setInterval(() => {
+      this.onTick();
+    }, 1000);
+    Logger.info(`monitoring started, source=${this.sourceKind}`);
+  }
+
+  private stopSource(): void {
+    if (!this.running) {
+      return;
+    }
+    this.source?.stop();
+    this.source = undefined;
+    if (this.tickTimer >= 0) {
+      clearInterval(this.tickTimer);
+      this.tickTimer = -1;
+    }
+    this.running = false;
+    Logger.info('monitoring paused');
+  }
+
+  /** Sensor present and permission granted; otherwise explain and fall back to labelled demo data. */
+  private sensorUsable(): boolean {
+    if (!this.healthPermission) {
+      this.statusText = 'No heart-rate permission, demo data';
+      return false;
+    }
+    try {
+      sensor.getSingleSensorSync(sensor.SensorId.HEART_RATE);
+      return true;
+    } catch (e) {
+      this.statusText = 'No heart-rate sensor, demo data';
+      return false;
     }
   }
 
@@ -205,35 +252,58 @@ export class WatchController {
     return new SimulatedHeartRateSource(SCENARIOS[this.scenarioIdx].id);
   }
 
+  /** Sources only update the current reading; all processing runs once per second here. */
   private onSample(bpm: number, tsMs: number): void {
     this.bpm = bpm;
-    this.statusText = '';
-    this.stats.add(bpm, tsMs);
-    this.elapsedSec = this.stats.durationSec;
-    if (tsMs - this.lastLiveMs >= LIVE_EVERY_MS) {
-      this.lastLiveMs = tsMs;
-      const live: HrLiveValues = { bpm: bpm };
-      this.record('hr_live', live, tsMs);
+    this.lastSampleMs = tsMs;
+    if (this.statusText === WAITING) {
+      this.statusText = '';
     }
-    const alert = this.alarm.evaluate(bpm, tsMs);
+  }
+
+  private onTick(): void {
+    const now = Date.now();
+    this.monitoringSec = Math.round((now - this.monitoringSinceMs) / 1000);
+    if (now - this.windowStartMs >= SUMMARY_WINDOW_MS) {
+      this.flushWindow(now);
+    }
+    if (this.bpm <= 0 || now - this.lastSampleMs > READING_VALID_MS) {
+      if (this.sourceKind === 'SENSOR' && now - this.lastSampleMs > 8000) {
+        this.statusText = WAITING;
+        this.bpm = 0;
+      }
+      return;
+    }
+    this.window.add(this.bpm, now);
+    if (now - this.lastLiveMs >= LIVE_EVERY_MS) {
+      this.lastLiveMs = now;
+      const live: HrLiveValues = { bpm: this.bpm };
+      this.record('hr_live', live, now);
+    }
+    const alert = this.alarm.evaluate(this.bpm, now);
     if (alert !== undefined) {
-      this.raiseAlert(alert, tsMs);
+      this.raiseAlert(alert, now);
     }
+  }
+
+  /** Sends the current window as an `hr_session` summary and starts a new window. */
+  private flushWindow(nowMs: number): void {
+    const summary = this.window.summary();
+    if (summary !== undefined) {
+      this.record('hr_session', summary, nowMs);
+    }
+    this.window = new SessionStats();
+    this.windowStartMs = nowMs;
   }
 
   private onSourceError(msg: string): void {
     this.statusText = msg;
     if (this.sourceKind === 'SENSOR') {
-      // Emulator / no sensor: keep the demo alive on scripted data, clearly labelled.
-      this.source?.stop();
+      // Sensor failed at runtime: keep monitoring on scripted data, clearly labelled.
+      this.stopSource();
       this.sourceKind = 'SIMULATED';
-      this.statusText = 'No HR sensor, using demo data';
-      this.source = this.createSource('SIMULATED');
-      this.source.start((bpm: number, tsMs: number) => {
-        this.onSample(bpm, tsMs);
-      }, (m: string) => {
-        this.statusText = m;
-      });
+      this.statusText = 'Sensor failed, demo data';
+      this.startSource();
     }
   }
 

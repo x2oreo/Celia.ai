@@ -2,37 +2,48 @@ import { WatchController } from '../controller/WatchController';
 import { Theme } from './Theme';
 
 @ComponentV2
-export struct SettingsPage {
-  @Param @Require ctrl: WatchController;
+struct SettingRow {
+  @Param @Require label: string;
+  @Param @Require value: string;
+  @Event onTap: () => void = () => {};
 
-  sourceName(): string {
-    if (this.ctrl.sourceKind === 'SENSOR') {
-      return 'Watch sensor';
-    }
-    return 'Demo data';
-  }
-
-  @Builder
-  row(label: string, value: string, action: () => void) {
+  build() {
     Column({ space: 2 }) {
-      Text(label).fontSize(10).fontColor(Theme.MUTED)
-      Text(value).fontSize(13).fontColor(Theme.TEXT).maxLines(1)
+      Text(this.label).fontSize(10).fontColor(Theme.MUTED)
+      Text(this.value).fontSize(13).fontColor(Theme.TEXT).maxLines(1)
     }
     .width(150)
     .padding({ top: 5, bottom: 5 })
     .borderRadius(16)
     .backgroundColor(Theme.CARD)
-    .onClick(action)
+    .onClick(() => this.onTap())
+  }
+}
+
+@ComponentV2
+export struct SettingsPage {
+  @Param @Require ctrl: WatchController;
+
+  sourceName(): string {
+    return this.ctrl.sourceKind === 'SENSOR' ? 'Watch sensor' : 'Demo data';
   }
 
   build() {
     Column({ space: 6 }) {
-      this.row('Source (tap to change)', this.sourceName(), () => {
-        this.ctrl.cycleSource();
+      SettingRow({
+        label: 'Source (tap to change)',
+        value: this.sourceName(),
+        onTap: () => {
+          this.ctrl.cycleSource();
+        }
       })
       if (this.ctrl.sourceKind === 'SIMULATED') {
-        this.row('Scenario (tap to change)', this.ctrl.scenarioLabel, () => {
-          this.ctrl.cycleScenario();
+        SettingRow({
+          label: 'Scenario (tap to change)',
+          value: this.ctrl.scenarioLabel,
+          onTap: () => {
+            this.ctrl.cycleScenario();
+          }
         })
       }
       Text(`Alert below ${this.ctrl.lowBpm} / above ${this.ctrl.highBpm} bpm`)

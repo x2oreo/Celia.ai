@@ -19,6 +19,14 @@ struct Index {
     this.ctrl.dispose();
   }
 
+  onPageShow(): void {
+    this.ctrl.resume();
+  }
+
+  onPageHide(): void {
+    this.ctrl.pause();
+  }
+
   build() {
     Stack() {
       Swiper() {

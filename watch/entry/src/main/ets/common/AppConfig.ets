@@ -26,7 +26,7 @@ export class AppConfig {
       supabaseUrl: '',
       supabaseAnonKey: '',
       deviceId: 'demo-watch-1',
-      defaultSource: 'SIMULATED',
+      defaultSource: 'SENSOR',
       medicationName: 'nadolol',
       highBpm: 140,
       lowBpm: 45

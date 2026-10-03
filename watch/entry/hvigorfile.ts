@@ -34,7 +34,7 @@ function writeConfigFromEnv(): void {
     supabaseUrl: str('SUPABASE_URL', ''),
     supabaseAnonKey: str('SUPABASE_ANON_KEY', ''),
     deviceId: str('WATCH_DEVICE_ID', 'demo-watch-1'),
-    defaultSource: str('DEFAULT_SOURCE', 'SIMULATED'),
+    defaultSource: str('DEFAULT_SOURCE', 'SENSOR'),
     medicationName: str('MEDICATION_NAME', 'nadolol'),
     highBpm: num('HIGH_BPM', 140),
     lowBpm: num('LOW_BPM', 45)
