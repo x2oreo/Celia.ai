@@ -49,6 +49,7 @@ export class ToolUi {
       case 'suggest_alternatives':
         return $r('app.media.ic_pill');
       case 'get_vitals_summary':
+      case 'get_trends':
         return $r('app.media.ic_heart_fill');
       case 'explain_condition':
       case 'prepare_doctor_visit':
@@ -99,6 +100,8 @@ export class ToolUi {
           $r('app.string.tool_prepare_doctor_visit');
       case 'get_dose_status':
         return step.done ? $r('app.string.tool_get_dose_status_done') : $r('app.string.tool_get_dose_status');
+      case 'get_trends':
+        return step.done ? $r('app.string.tool_get_trends_done') : $r('app.string.tool_get_trends');
       default:
         return step.done ? $r('app.string.tool_generic_done') : $r('app.string.tool_generic');
     }

@@ -140,6 +140,15 @@ export const TOOLS: FunctionTool[] = [
     {},
   ),
   tool(
+    'get_trends',
+    'Read the last 14 or 30 days of watch history: average resting heart rate, change over the last week, days ' +
+      'with a dose logged, days with a symptom, and fixed-rule findings. Also puts a button to the trends chart on ' +
+      'screen. Use when the user asks how they have been doing lately or about patterns.',
+    {
+      days: { type: 'integer', enum: [14, 30], description: 'Window in days. Use 14 unless the user asks for a month.' },
+    },
+  ),
+  tool(
     'start_new_chat',
     'Save the current conversation and start a new, empty one. Use when the user asks for a new chat, to start ' +
       'over, or to save this chat. Every chat is already kept on the phone, so nothing is lost.',

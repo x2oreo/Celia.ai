@@ -1,4 +1,4 @@
-// prepare_doctor_visit, get_dose_status — features that used to be several taps away, one sentence away.
+// prepare_doctor_visit, get_dose_status, get_trends — features that used to be several taps away, one sentence away.
 // Both are read-only and deterministic: the content comes from doctor/DoctorPrep.ets and reminders/DoseSchedule.ets.
 
 import { AgentTool, TurnState, action, toolError } from '../ToolTypes';
@@ -10,6 +10,8 @@ import {
 } from '../../doctor/DoctorPrep';
 import { ReminderService } from '../../reminders/ReminderService';
 import { DoseLog, DoseReminder, doseStatus, timeLabel } from '../../reminders/DoseSchedule';
+import { WatchInsight } from '../../model/WatchData';
+import { loadTrends, TrendData, TrendStats, trendStats } from '../../vitals/Trends';
 
 const FLAGGED_WINDOW_MS: number = 90 * 24 * 60 * 60 * 1000;
 
@@ -74,6 +76,45 @@ export class GetDoseStatusTool implements AgentTool {
         ? 'No reminders are set. A button to open reminders is on screen.'
         : 'Today\'s doses from the reminder log on this phone. Do not advise on a missed dose beyond "follow your ' +
           'doctor\'s instructions". Nothing was changed; the user marks doses on the reminders screen.'
+    };
+    return JSON.stringify(out);
+  }
+}
+
+interface TrendsOutput {
+  days: number;
+  source: string;            // WATCH | DEMO (simulated) | OFFLINE
+  averageRestingBpm: number;
+  changeLast7DaysBpm: number | null;   // last 7 days minus the days before; null = not enough days
+  daysWithDoseLogged: number;
+  daysWithSymptom: number;
+  findings: string[];        // fixed-rule texts; quote as is
+  note: string;
+}
+
+const TREND_SPANS: number[] = [14, 30];
+
+export class GetTrendsTool implements AgentTool {
+  name: string = 'get_trends';
+
+  async execute(args: Record<string, Object>, turn: TurnState): Promise<string> {
+    const asked: Object | undefined = args['days'];
+    const span: number = typeof asked === 'number' && TREND_SPANS.includes(asked) ? asked : 14;
+    const data: TrendData = await loadTrends(Date.now(), span);
+    const s: TrendStats = trendStats(data.days);
+    const payload: OpenPagePayload = { page: 'TRENDS', specialty: '' };
+    turn.actions.push(action('OPEN_PAGE', payload));
+    const out: TrendsOutput = {
+      days: span,
+      source: data.source,
+      averageRestingBpm: s.avgResting,
+      changeLast7DaysBpm: s.hasChange ? s.change : null,
+      daysWithDoseLogged: s.doseDays,
+      daysWithSymptom: s.symptomDays,
+      findings: data.insights.map((i: WatchInsight) => i.message),
+      note: (data.simulated ? 'This is SIMULATED demo data: say so. ' : '') +
+        'Wrist resting heart rate only, not an ECG. Report the numbers; do not interpret them medically or say ' +
+        'they are good or bad. A button to open the trends chart is on screen.'
     };
     return JSON.stringify(out);
   }

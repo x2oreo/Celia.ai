@@ -217,8 +217,9 @@ Full contract: `backend/supabase/functions/README.md`.
 ```
 Tools (schemas in `_shared/tools.ts`, executors in `app/.../agent/tools/`): `check_drug`, `get_my_meds`,
 `get_vitals_summary`, `explain_condition`, `suggest_alternatives`, `scan_medicine`, `add_med`, `show_emergency_card`,
-`start_emergency`, `share_emergency_card`, `start_new_chat`, `log_symptom`, `prepare_doctor_visit`, `get_dose_status`
-(the last two are read-only and return fixed content from `doctor/DoctorPrep.ets` and `reminders/DoseSchedule.ets`). Write tools only create confirm cards (`log_symptom` writes the on-device symptom log directly; red flags start SOS by rule). Responses are validated in the app
+`start_emergency`, `share_emergency_card`, `start_new_chat`, `log_symptom`, `prepare_doctor_visit`, `get_dose_status`, `get_trends`
+(the last three are read-only and return fixed content from `doctor/DoctorPrep.ets`, `reminders/DoseSchedule.ets` and
+`vitals/Trends.ets`). Write tools only create confirm cards (`log_symptom` writes the on-device symptom log directly; red flags start SOS by rule). Responses are validated in the app
 (`ResponseValidator`); anything invalid → `fallback: true` deterministic reply. Auth: Supabase anon key; the OpenAI
 key is an Edge Function secret. Timeouts: app 20 s per step → fallback.
 

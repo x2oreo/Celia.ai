@@ -75,7 +75,7 @@ export interface AddMedPayload {
 }
 
 export interface OpenPagePayload {
-  page: string;         // 'DOCTOR_PREP' | 'REMINDERS'
+  page: string;         // 'DOCTOR_PREP' | 'REMINDERS' | 'TRENDS'
   specialty: string;    // doctor/DoctorPrep Specialty for DOCTOR_PREP, otherwise ''
 }
 

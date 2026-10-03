@@ -41,7 +41,8 @@ function kinds(r: ComboResult): string {
 // Must equal TOOL_NAMES in backend/supabase/functions/_shared/tools.ts.
 const BACKEND_TOOLS: string[] = ['check_drug', 'get_my_meds', 'get_vitals_summary', 'explain_condition',
   'suggest_alternatives', 'scan_medicine', 'add_med', 'show_emergency_card', 'start_emergency',
-  'share_emergency_card', 'start_new_chat', 'log_symptom', 'prepare_doctor_visit', 'get_dose_status'];
+  'share_emergency_card', 'start_new_chat', 'log_symptom', 'prepare_doctor_visit', 'get_dose_status',
+  'get_trends'];
 
 export default function agentSafetyTest() {
   describe('ComboRules', () => {

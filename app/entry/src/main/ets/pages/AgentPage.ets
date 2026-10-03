@@ -637,6 +637,15 @@ export struct AgentPage {
             this.navStack.pushPathByName(Routes.REMINDERS, null);
           }
         })
+      } else if (this.pagePayload(a).page === 'TRENDS') {
+        ActionTile({
+          icon: $r('app.media.ic_wave'),
+          title: $r('app.string.trends_title'),
+          subtitle: $r('app.string.trends_subtitle'),
+          onTap: () => {
+            this.navStack.pushPathByName(Routes.TRENDS, null);
+          }
+        })
       }
     }
   }

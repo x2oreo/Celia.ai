@@ -9,7 +9,7 @@ import {
   AddMedTool, ScanMedicineTool, ShareEmergencyCardTool, ShowEmergencyCardTool, StartEmergencyTool, StartNewChatTool
 } from './tools/ActionTools';
 import { LogSymptomTool } from './tools/SymptomTools';
-import { GetDoseStatusTool, PrepareDoctorVisitTool } from './tools/CareTools';
+import { GetDoseStatusTool, GetTrendsTool, PrepareDoctorVisitTool } from './tools/CareTools';
 import { Logger } from '../common/Logger';
 
 const log: Logger = new Logger('ToolRegistry');
@@ -23,7 +23,7 @@ export class ToolRegistry {
       new ExplainConditionTool(), new GetVitalsSummaryTool(),
       new ScanMedicineTool(), new AddMedTool(), new ShowEmergencyCardTool(), new StartEmergencyTool(),
       new ShareEmergencyCardTool(), new StartNewChatTool(), new LogSymptomTool(),
-      new PrepareDoctorVisitTool(), new GetDoseStatusTool()
+      new PrepareDoctorVisitTool(), new GetDoseStatusTool(), new GetTrendsTool()
     ];
     for (const t of all) {
       this.tools.set(t.name, t);
