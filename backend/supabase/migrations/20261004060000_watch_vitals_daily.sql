@@ -40,4 +40,5 @@ select
 from v
 group by device_id, d;
 
-grant select on public.watch_vitals_daily to anon;
+-- security_invoker: the watch_metrics policies decide which rows come back (owner-only after 20261004100200).
+grant select on public.watch_vitals_daily to anon, authenticated;
