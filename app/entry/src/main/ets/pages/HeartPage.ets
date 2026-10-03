@@ -23,6 +23,32 @@ export function severityColor(a: VitalsAlert): Resource {
   }
 }
 
+// One extra vital: value over its label. A component, not a @Builder with arguments: builder arguments are passed by
+// value, so the tiles would keep the first reading.
+@ComponentV2
+struct HeartStat {
+  @Param label: ResourceStr = '';
+  @Param value: ResourceStr = '';
+
+  build() {
+    Column({ space: 2 }) {
+      Text(this.value)
+        .fontSize($r('app.float.font_subtitle'))
+        .fontWeight(FontWeight.Bold)
+        .fontColor($r('app.color.ink'))
+      Text(this.label)
+        .fontSize($r('app.float.font_caption'))
+        .fontColor($r('app.color.ink_3'))
+    }
+    .layoutWeight(1)
+    .alignItems(HorizontalAlign.Start)
+    .padding(12)
+    .backgroundColor($r('app.color.surface_alt'))
+    .borderRadius($r('app.float.radius_s'))
+    .accessibilityGroup(true)
+  }
+}
+
 @ComponentV2
 export struct HeartPage {
   @Consumer('navStack') navStack: NavPathStack = new NavPathStack();
@@ -76,25 +102,6 @@ export struct HeartPage {
     }
     const resting: boolean = (this.latest?.steps ?? 0) <= 60;
     return (resting && bpm >= 120) || bpm < 45 ? 'ELEVATED' : 'CALM';
-  }
-
-  @Builder
-  stat(label: Resource, value: ResourceStr) {
-    Column({ space: 2 }) {
-      Text(value)
-        .fontSize($r('app.float.font_subtitle'))
-        .fontWeight(FontWeight.Bold)
-        .fontColor($r('app.color.ink'))
-      Text(label)
-        .fontSize($r('app.float.font_caption'))
-        .fontColor($r('app.color.ink_3'))
-    }
-    .layoutWeight(1)
-    .alignItems(HorizontalAlign.Start)
-    .padding(12)
-    .backgroundColor($r('app.color.surface_alt'))
-    .borderRadius($r('app.float.radius_s'))
-    .accessibilityGroup(true)
   }
 
   private alertWord(a: VitalsAlert): Resource {
@@ -205,12 +212,19 @@ export struct HeartPage {
             .fontColor($r('app.color.ink_3'))
           HrChart({ hrs: this.hrs, chartWidth: this.chartWidth, chartHeight: 96 })
           Row({ space: 8 }) {
-            this.stat($r('app.string.heart_resting_hr'),
-              this.latest?.restingHr === undefined ? '--' : `${this.latest?.restingHr}`)
-            this.stat($r('app.string.heart_hrv'), this.latest?.hrv === undefined ? '--' :
-              `${Math.round(this.latest?.hrv ?? 0)} ms`)
-            this.stat($r('app.string.heart_rhythm'), this.latest?.irregular === true ?
-              $r('app.string.heart_rhythm_irregular') : $r('app.string.heart_rhythm_regular'))
+            HeartStat({
+              label: $r('app.string.heart_resting_hr'),
+              value: this.latest?.restingHr === undefined ? '--' : `${this.latest?.restingHr}`
+            })
+            HeartStat({
+              label: $r('app.string.heart_hrv'),
+              value: this.latest?.hrv === undefined ? '--' : `${Math.round(this.latest?.hrv ?? 0)} ms`
+            })
+            HeartStat({
+              label: $r('app.string.heart_rhythm'),
+              value: this.latest?.irregular === true ? $r('app.string.heart_rhythm_irregular') :
+                $r('app.string.heart_rhythm_regular')
+            })
           }
           .width('100%')
           Text($r('app.string.heart_only_hr'))
