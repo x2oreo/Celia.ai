@@ -49,7 +49,7 @@ struct MedIdCard {
         .fontSize($r('app.float.font_caption'))
         .fontWeight(FontWeight.Bold)
         .fontColor($r('app.color.card_fixed_ink'))
-        .maxLines(1)
+        .maxLines(2)
         .textOverflow({ overflow: TextOverflow.Ellipsis })
       Text($r('app.string.em_avoid'))
         .fontSize($r('app.float.font_caption'))
