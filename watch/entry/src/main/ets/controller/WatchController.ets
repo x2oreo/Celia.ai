@@ -3,6 +3,7 @@ import { sensor, vibrator } from '@kit.SensorServiceKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { AppConfig, AppConfigData } from '../common/AppConfig';
 import { Logger } from '../common/Logger';
+import { NOTIFY_FALL, NOTIFY_HR, NOTIFY_SOS, NOTIFY_VITALS, Notifier } from '../common/Notifier';
 import {
   Activity,
   FallResponse,
@@ -194,6 +195,7 @@ export class WatchController {
   private motionPermission: boolean = false;
   private locationPermission: boolean = false;
   private ready: Promise<void> = Promise.resolve();
+  private notifier: Notifier = new Notifier();
 
   init(ctx: common.UIAbilityContext): void {
     this.ctx = ctx;
@@ -229,7 +231,9 @@ export class WatchController {
     }, SYNC_EVERY_MS);
     this.monitoringSinceMs = Date.now();
     // Ask for permissions once, up front, so the dialog doesn't interrupt a running monitor.
-    this.ready = this.requestPermissions();
+    this.ready = this.requestPermissions().then(() => this.notifier.init(ctx)).then(() => {
+      this.notifier.scheduleDailyMedication(this.cfg.medReminderTime, this.cfg.medicationName);
+    });
   }
 
   dispose(): void {
@@ -319,6 +323,11 @@ export class WatchController {
     this.activityOverride = order[(order.indexOf(this.activityOverride) + 1) % order.length];
     this.activity = this.currentActivity(Date.now());
     this.applyLimits();
+  }
+
+  /** Demo: system reminder for the medication in 10 s (try closing the app first). */
+  async testMedicationReminder(): Promise<boolean> {
+    return this.notifier.testReminder(10, this.cfg.medicationName);
   }
 
   simulateFall(): void {
@@ -757,6 +766,7 @@ export class WatchController {
     this.fallBpm = this.bpm;
     this.fallStartMs = Date.now();
     this.fallCountdown = FALL_COUNTDOWN_SEC;
+    this.notifier.alert(NOTIFY_FALL, 'Fall detected', 'Open the watch and answer within 30 s, or SOS starts.');
     this.vibrate(2000);
     Logger.info('fall countdown started');
   }
@@ -827,6 +837,7 @@ export class WatchController {
     }
     this.record('sos', v, now);
     this.sosSent = true;
+    this.notifier.alert(NOTIFY_SOS, 'SOS sent', 'Your phone is alerting your emergency contacts.');
     this.vibrate(3000);
     Logger.info('SOS sent');
   }
@@ -843,6 +854,33 @@ export class WatchController {
     this.alertActivity = this.activity;
     this.alertText = detail;
     this.checkInOpen = false;
+    this.notifyAlert(kind, bpm);
+  }
+
+  /** Mirrors an alert screen as a watch notification, so it stays in the list after the screen is dismissed. */
+  private notifyAlert(kind: AlertKind, value: number): void {
+    switch (kind) {
+      case 'HIGH':
+        this.notifier.alert(NOTIFY_HR, `Heart rate high: ${value} bpm`, `Above your ${this.limitReason} limit.`);
+        break;
+      case 'LOW':
+        this.notifier.alert(NOTIFY_HR, `Heart rate low: ${value} bpm`, `Below your ${this.limitReason} limit.`);
+        break;
+      case 'RHYTHM':
+        this.notifier.alert(NOTIFY_HR, 'Irregular rhythm', `At ${value} bpm (simulated signal). Sit down now.`);
+        break;
+      case 'RECOVERY':
+        this.notifier.alert(NOTIFY_HR, 'Slow heart-rate recovery', this.alertText);
+        break;
+      case 'HRV':
+        this.notifier.alert(NOTIFY_VITALS, `HRV low: ${value} ms`, 'Simulated signal. Sit down and breathe slowly.');
+        break;
+      case 'SPO2':
+        this.notifier.alert(NOTIFY_VITALS, `Oxygen low: ${value}%`, 'Simulated signal. Sit up and breathe slowly.');
+        break;
+      default:
+        break;
+    }
   }
 
   /** New risky drug from the phone (or Simulate) → limits change and the verdict glance pops up once. */

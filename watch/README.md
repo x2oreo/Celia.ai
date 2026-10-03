@@ -101,6 +101,15 @@ The sim-tile demo (Vitals page) drifts the signal over 2.5 s (refreshed every 25
 4 s (`anomalyProgress()`). A tapped anomaly uses a 1 s sustain (`ANOMALY_SUSTAIN_MS`) instead of 5 s, so the alert
 lands under 4 s after the tap (measured: HRV 3.0 s, SpO2 2.8 s, rhythm 1.5 s).
 
+## Notifications and reminders
+
+- Every alert screen (heart rate high/low, rhythm, recovery, HRV, SpO2, fall, SOS sent) also posts a **watch
+  notification** (Notification Kit), so it stays in the notification list after the screen is dismissed. Tapping
+  it opens the app. The user allows notifications once, on first launch.
+- **Daily medication reminder** at `MED_REMINDER_TIME` (default 08:00, empty = off) via `reminderAgentManager`. The
+  **system** fires it with Done/Snooze buttons, so it works while the app is frozen or closed (verified on the
+  emulator with the app force-stopped). Simulate → *Med reminder in 10 s* demonstrates it.
+
 ## Context: activity, falls, wear (beyond heart rate)
 
 PPG heart rate can't show QT, so the watch adds context that matters for LQTS:
@@ -113,7 +122,7 @@ PPG heart rate can't show QT, so the watch adds context that matters for LQTS:
 
 The emulator has an accelerometer (rest/active works from it) but no wear sensor. **Simulate page** (4th page):
 *Fall*, *Take watch off / Put watch on*, *State: auto → rest → active → asleep*, *Genotype*, *Risky drug on/off*
-(stand-in for the phone app's drug scan).
+(stand-in for the phone app's drug scan), *Med reminder in 10 s*. The page scrolls vertically (crown or swipe).
 
 ## Always-on monitoring
 

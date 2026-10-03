@@ -31,6 +31,8 @@ export interface AppConfigData {
   demoSpeed: number;
   /** HR must stay out of range this long before the alert screen. */
   alertSustainSec: number;
+  /** Daily medication reminder "HH:MM"; empty = off. */
+  medReminderTime: string;
 }
 
 export class AppConfig {
@@ -49,7 +51,8 @@ export class AppConfig {
       genotype: 'UNKNOWN',
       restingBpm: 65,
       demoSpeed: 4,
-      alertSustainSec: 5
+      alertSustainSec: 5,
+      medReminderTime: '08:00'
     };
     return cfg;
   }
@@ -112,6 +115,9 @@ export class AppConfig {
     }
     if (typeof src.alertSustainSec === 'number' && src.alertSustainSec >= 1 && src.alertSustainSec <= 60) {
       target.alertSustainSec = src.alertSustainSec;
+    }
+    if (typeof src.medReminderTime === 'string') {
+      target.medReminderTime = src.medReminderTime;
     }
     if (typeof src.lowBpm === 'number' && src.lowBpm > 20 && src.lowBpm < 80) {
       target.lowBpm = src.lowBpm;
