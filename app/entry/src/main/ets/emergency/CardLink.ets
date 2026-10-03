@@ -1,4 +1,4 @@
-// Emergency-card QR (F-30): a link to the static card viewer (site/card/, GitHub Pages) with the card itself in
+// Emergency-card QR (F-30): a link to the static card viewer (site/card/, Vercel) with the card itself in
 // the URL #fragment. Browsers never send the fragment to the server, so the host only serves an empty page; the
 // card is rendered on the scanner's phone, in its own language. The same link opens offline inside Celia.
 //
@@ -10,7 +10,7 @@ import { medLine } from './CardContent';
 import { base64UrlDecode, base64UrlEncode, utf8Decode, utf8Encode } from '../common/Base64Url';
 import { LocalConfig } from '../common/LocalConfig';
 
-export const PUBLIC_CARD_VIEWER_URL: string = 'https://x2oreo.github.io/Celia.ai/card/';
+export const PUBLIC_CARD_VIEWER_URL: string = 'https://celia-share.vercel.app/card/';
 // A local viewer (app/scripts/serve-card.sh, laptop on the same Wi-Fi) wins over the public one when set.
 export const CARD_VIEWER_URL: string =
   LocalConfig.CARD_VIEWER_URL.length > 0 ? LocalConfig.CARD_VIEWER_URL : PUBLIC_CARD_VIEWER_URL;
@@ -53,7 +53,16 @@ export function encodePayload(payload: CardPayload): string {
 
 export function decodePayload(encoded: string): CardPayload | undefined {
   try {
-    const p: CardPayload = JSON.parse(utf8Decode(base64UrlDecode(encoded))) as CardPayload;
+    return parsePayloadJson(utf8Decode(base64UrlDecode(encoded)));
+  } catch (e) {
+    return undefined;
+  }
+}
+
+// The card JSON itself (also what an encrypted share link decrypts to). Validated before use.
+export function parsePayloadJson(json: string): CardPayload | undefined {
+  try {
+    const p: CardPayload = JSON.parse(json) as CardPayload;
     if (p.v !== CARD_PAYLOAD_VERSION || typeof p.g !== 'string' || !Array.isArray(p.m) || !Array.isArray(p.c)) {
       return undefined;
     }
