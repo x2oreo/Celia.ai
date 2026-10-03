@@ -50,8 +50,9 @@ export struct CheckInSheet {
       // Out-of-range heart rate: Possible-risk tint + triangle + words, never colour alone.
       Row({ space: 12 }) {
         RiskShape({ risk: 'POSSIBLE_RISK', dim: 32 })
+          .accessibilityLevel('no-hide-descendants')
         Column() {
-          Text(this.bpm > 0 ? `${this.bpm} bpm` : '—')
+          Text(this.bpm > 0 ? $r('app.string.heart_bpm_value', this.bpm) : '—')
             .fontSize($r('app.float.font_title'))
             .fontWeight(800)
             .fontColor($r('app.color.risk_possible_text'))
@@ -67,6 +68,7 @@ export struct CheckInSheet {
       .padding({ left: 16, right: 16, top: 12, bottom: 12 })
       .backgroundColor($r('app.color.risk_possible_tint'))
       .borderRadius($r('app.float.radius_m'))
+      .accessibilityGroup(true)
 
       Text(this.message)
         .fontSize(this.message.length > 90 ? $r('app.float.font_headline') : $r('app.float.font_title_3'))

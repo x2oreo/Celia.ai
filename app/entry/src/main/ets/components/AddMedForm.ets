@@ -5,7 +5,8 @@ import { DrugEntry } from '../drugs/DrugDataset';
 import { DrugInfo, drugInfo } from '../drugs/DrugInfo';
 import { LocalStore } from '../data/LocalStore';
 import { RiskLevel } from '../model/DrugVerdict';
-import { PrimaryButton, RiskBadge } from './Common';
+import { PrimaryButton, resText, RiskBadge } from './Common';
+import { RiskUi } from '../common/RiskUi';
 
 @ComponentV2
 export struct AddMedForm {
@@ -73,6 +74,8 @@ export struct AddMedForm {
             }
             .width('100%')
             .padding({ top: 10, bottom: 10, left: 12, right: 12 })
+            .accessibilityGroup(true)
+            .accessibilityText(`${e.ingredient}, ${resText(this.getUIContext(), RiskUi.label(e.risk))}`)
             .onClick(() => this.pick(e))
           }, (e: DrugEntry) => e.ingredient)
         }

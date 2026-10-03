@@ -40,6 +40,7 @@ export struct MedicineInfoCard {
     .alignItems(VerticalAlign.Top)
     .width('100%')
     .padding({ top: 8, bottom: 8 })
+    .accessibilityGroup(true)
   }
 
   build() {
@@ -80,6 +81,7 @@ export struct MedicineInfoCard {
           }
           .width('100%')
           .padding({ top: 4, bottom: 4 })
+          .accessibilityGroup(true)
           .accessibilityText($r('app.string.info_leaflet'))
           .onClick(() => {
             this.openLeaflet(this.box?.leafletUrl ?? '');

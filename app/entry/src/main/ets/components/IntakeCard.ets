@@ -91,6 +91,7 @@ export struct IntakeCard {
             .layoutWeight(1)
         }
         .width('100%')
+        .accessibilityGroup(true)
         if (this.intake.watchSynced) {
           Text($r('app.string.intake_watching', dateTime(this.intake.ts + WATCH_WINDOW_MS, Date.now())))
             .fontSize($r('app.float.font_small'))
