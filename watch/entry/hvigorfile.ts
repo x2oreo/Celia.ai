@@ -42,6 +42,7 @@ function writeConfigFromEnv(): void {
     sleepLowBpm: num('SLEEP_LOW_BPM', 40),
     genotype: str('GENOTYPE', 'UNKNOWN'),
     restingBpm: num('RESTING_BPM', 65),
+    demoSpeed: num('DEMO_SPEED', 4),
     lowBpm: num('LOW_BPM', 45)
   };
   fs.mkdirSync(path.dirname(outPath), { recursive: true });

@@ -16,6 +16,7 @@ export default function scenariosTest() {
 
     it('unknown id falls back to the first scenario', 0, () => {
       expect(findScenario('nope').id).assertEqual(SCENARIOS[0].id);
+      expect(SCENARIOS[0].id).assertEqual('tour');
     });
 
     it('normal workout stays under the exercise limit while active', 0, () => {
@@ -34,6 +35,18 @@ export default function scenariosTest() {
       const s = findScenario('faint');
       expect(s.fallAtSec > 12).assertTrue();
       expect(bpmAt(s, 12) > 180).assertTrue();
+    });
+
+    it('full demo covers exercise, recovery, startle, sleep, rhythm and a fall', 0, () => {
+      const s = findScenario('tour');
+      expect(stateAt(s, 30)).assertEqual('ACTIVE');
+      expect(bpmAt(s, 40) > 140).assertTrue();
+      expect(bpmAt(s, 43) - bpmAt(s, 103) < 12).assertTrue();
+      expect(bpmAt(s, 140) > 140).assertTrue();
+      expect(stateAt(s, 180)).assertEqual('ASLEEP');
+      expect(bpmAt(s, 180) < 40).assertTrue();
+      expect(bpmAt(s, 224) >= 170).assertTrue();
+      expect(s.fallAtSec).assertEqual(234);
     });
 
     it('each LQT scenario crosses the default limits (45-140)', 0, () => {

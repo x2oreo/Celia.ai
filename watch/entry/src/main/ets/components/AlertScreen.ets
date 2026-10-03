@@ -99,7 +99,7 @@ export struct AlertScreen {
           .letterSpacing(1)
           .fontColor(this.color())
         Text(this.bigNumber())
-          .fontSize(56)
+          .fontSize(48)
           .fontWeight(FontWeight.Bolder)
           .fontColor(this.color())
         Text(this.subtitle()).fontSize(12).fontColor(Theme.TEXT)
@@ -108,13 +108,13 @@ export struct AlertScreen {
           .fontColor(Theme.MUTED)
           .maxLines(2)
           .textAlign(TextAlign.Center)
-          .width(150)
+          .width(140)
           .margin({ bottom: 4 })
         Row({ space: 4 }) {
-          Pill({ label: "I'm OK", pillWidth: 78, fontSize: 13, onTap: () => {
+          Pill({ label: "I'm OK", pillWidth: 62, pillHeight: 30, fontSize: 12, onTap: () => {
             this.ctrl.imOk();
           } })
-          Pill({ label: 'Need help', bg: Theme.DANGER, pillWidth: 92, fontSize: 13, onTap: () => {
+          Pill({ label: 'Need help', bg: Theme.DANGER, pillWidth: 78, pillHeight: 30, fontSize: 12, onTap: () => {
             this.ctrl.needHelp();
           } })
         }

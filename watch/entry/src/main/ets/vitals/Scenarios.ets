@@ -43,6 +43,15 @@ function scenario(id: string, label: string, segments: Segment[], fallAtSec: num
 }
 
 export const SCENARIOS: Scenario[] = [
+  // Everything in one run (~5 min of scenario time, ~75 s at 4× demo speed): exercise high → slow recovery →
+  // startle at rest → low HR asleep → irregular rhythm → faint with a fall.
+  scenario('tour', 'Full demo', [
+    rest(8, 68, 70), move(20, 70, 150), move(15, 150, 152),
+    rest(60, 150, 146), rest(10, 146, 146), rest(15, 146, 72),
+    rest(4, 72, 165), rest(20, 165, 160), rest(15, 160, 75),
+    sleep(15, 58, 36), sleep(30, 36, 38),
+    rest(6, 70, 72), rest(4, 72, 190), rest(12, 190, 185), rest(60, 50, 48)
+  ], 234),
   scenario('rest', 'Resting', [rest(60, 68, 72), rest(60, 72, 66)], -1),
   // Normal workout + healthy recovery (~35 bpm drop in the first minute).
   scenario('workout', 'Normal workout',

@@ -45,6 +45,13 @@ export struct SettingsPage {
             this.ctrl.cycleScenario();
           }
         })
+        SettingRow({
+          label: 'Demo speed',
+          value: `${this.ctrl.demoSpeed}×`,
+          onTap: () => {
+            this.ctrl.cycleDemoSpeed();
+          }
+        })
       }
       Text(`Now: ${this.ctrl.limitLow}–${this.ctrl.limitHigh} bpm (${this.ctrl.limitReason})`)
         .fontSize(10)

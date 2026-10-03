@@ -53,7 +53,7 @@ export type ActivityOverride = 'AUTO' | 'REST' | 'ACTIVE' | 'ASLEEP';
 
 const LIVE_EVERY_MS = 5000;
 const VITALS_EVERY_MS = 30000;
-const MOCK_EVERY_MS = 5000;
+const MOCK_EVERY_MS = 2000;
 const SYNC_EVERY_MS = 3000;
 const CONTEXT_EVERY_MS = 60000;
 /** Monitoring is continuous, so summaries are sent per window instead of per start/stop. */
@@ -65,6 +65,8 @@ const SUMMARY_WINDOW_MS = 5 * 60 * 1000;
 const READING_VALID_MS = 30000;
 /** How long the wearer has to answer "Are you OK?" after a fall. */
 const FALL_COUNTDOWN_SEC = 30;
+/** Demo speeds offered in Settings. */
+const DEMO_SPEEDS: number[] = [1, 2, 4, 8];
 /** SOS countdown before the emergency row is sent; Cancel stops it. */
 const SOS_COUNTDOWN_SEC = 10;
 /** Simulated cadence while active in demo scenarios (steps per second). */
@@ -120,6 +122,8 @@ export class WatchController {
   @Trace syncState: SyncState = 'OFF';
   @Trace pending: number = 0;
   @Trace monitoringSec: number = 0;
+  /** Fast-forward factor for demo scenarios (Settings). */
+  @Trace demoSpeed: number = 4;
 
   private ctx: common.UIAbilityContext | undefined = undefined;
   private cfg: AppConfigData = AppConfig.defaults();
@@ -170,6 +174,7 @@ export class WatchController {
     this.ctx = ctx;
     this.cfg = AppConfig.load(ctx);
     this.sourceKind = this.cfg.defaultSource;
+    this.demoSpeed = this.cfg.demoSpeed;
     this.genotype = this.cfg.genotype;
     this.base = {
       activeHigh: this.cfg.highBpm,
@@ -239,6 +244,14 @@ export class WatchController {
   cycleSource(): void {
     this.sourceKind = this.sourceKind === 'SENSOR' ? 'SIMULATED' : 'SENSOR';
     this.restart();
+  }
+
+  cycleDemoSpeed(): void {
+    const idx = DEMO_SPEEDS.indexOf(this.demoSpeed);
+    this.demoSpeed = DEMO_SPEEDS[(idx + 1) % DEMO_SPEEDS.length];
+    if (this.sourceKind === 'SIMULATED') {
+      this.restart();
+    }
   }
 
   cycleScenario(): void {
@@ -450,7 +463,7 @@ export class WatchController {
     if (kind === 'SENSOR') {
       return new SensorHeartRateSource();
     }
-    const sim = new SimulatedHeartRateSource(SCENARIOS[this.scenarioIdx].id);
+    const sim = new SimulatedHeartRateSource(SCENARIOS[this.scenarioIdx].id, this.demoSpeed);
     this.simSource = sim;
     return sim;
   }
@@ -544,9 +557,15 @@ export class WatchController {
     this.processReading(now);
   }
 
+  /** Clock for timing rules: scenario time in demo mode (fast-forwarded), wall clock otherwise. */
+  private logicNow(now: number): number {
+    return this.simSource !== undefined ? this.simSource.virtualNowMs : now;
+  }
+
   private processReading(now: number): void {
+    const t = this.logicNow(now);
     this.window.add(this.bpm, now);
-    this.resting.add(this.bpm, now, this.activity);
+    this.resting.add(this.bpm, t, this.activity);
     this.restingBpm = this.resting.value;
     this.restingMeasured = this.resting.measured;
     if (now - this.lastMockMs >= MOCK_EVERY_MS) {
@@ -563,11 +582,11 @@ export class WatchController {
       this.lastVitalsMs = now;
       this.record('vitals', this.vitalsSnapshot(), now);
     }
-    const rec = this.recovery.add(this.bpm, now, this.activity);
+    const rec = this.recovery.add(this.bpm, t, this.activity);
     if (rec !== undefined) {
       this.onRecovery(rec, now);
     }
-    const alert = this.alarm.evaluate(this.bpm, now,
+    const alert = this.alarm.evaluate(this.bpm, t,
       { high: this.limitHigh, low: this.limitLow, reason: this.limitReason }, this.activity);
     if (alert !== undefined) {
       this.raiseAlert(alert, now);

@@ -23,8 +23,15 @@ always labelled as demo data.
 
 | Source | Where it runs | Metric `source` |
 |---|---|---|
-| Demo data (scenarios: Resting, Normal workout, LQT1 exercise, LQT2 startle, LQT3 night, Faint) | anywhere | `simulated` |
+| Demo data (scenarios: **Full demo**, Resting, Normal workout, LQT1 exercise, LQT2 startle, LQT3 night, Faint) | anywhere | `simulated` |
 | **Watch sensor** (default; `sensor.SensorId.HEART_RATE`, needs READ_HEALTH_DATA) | real watch, or the emulator's virtual HR sensor; falls back to demo if there is no sensor/permission | `watch` |
+
+### Fast demo
+
+Settings → Source: *Demo data* → Scenario: **Full demo** → Demo speed **4×** (default, `DEMO_SPEED` in `.env`).
+It plays everything in ~75 s: high HR during exercise → slow recovery → startle at rest → low HR asleep →
+irregular rhythm → fall. In demo mode the timing rules (10 s sustain, alert cooldowns, 1-min recovery) run on
+scenario time so they speed up too; uploaded rows keep real timestamps.
 
 ### Driving the sensor on the emulator
 

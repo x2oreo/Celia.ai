@@ -27,6 +27,8 @@ export interface AppConfigData {
   genotype: Genotype;
   /** Resting-HR estimate until the watch has measured a resting minute. */
   restingBpm: number;
+  /** Fast-forward factor for demo scenarios. */
+  demoSpeed: number;
 }
 
 export class AppConfig {
@@ -43,7 +45,8 @@ export class AppConfig {
       lowBpm: 45,
       sleepLowBpm: 40,
       genotype: 'UNKNOWN',
-      restingBpm: 65
+      restingBpm: 65,
+      demoSpeed: 4
     };
     return cfg;
   }
@@ -100,6 +103,9 @@ export class AppConfig {
     }
     if (typeof src.restingBpm === 'number' && src.restingBpm > 30 && src.restingBpm < 120) {
       target.restingBpm = src.restingBpm;
+    }
+    if (src.demoSpeed === 1 || src.demoSpeed === 2 || src.demoSpeed === 4 || src.demoSpeed === 8) {
+      target.demoSpeed = src.demoSpeed;
     }
     if (typeof src.lowBpm === 'number' && src.lowBpm > 20 && src.lowBpm < 80) {
       target.lowBpm = src.lowBpm;
