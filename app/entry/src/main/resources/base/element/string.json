@@ -1,0 +1,808 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "Celia.ai main module"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "Heart-safety companion for Long QT syndrome"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "Celia.ai"
+    },
+    {
+      "name": "tab_agent",
+      "value": "Agent"
+    },
+    {
+      "name": "tab_medicines",
+      "value": "Medicines"
+    },
+    {
+      "name": "tab_heart",
+      "value": "Heart"
+    },
+    {
+      "name": "tab_emergency",
+      "value": "Emergency"
+    },
+    {
+      "name": "agent_title",
+      "value": "Your heart-safety agent"
+    },
+    {
+      "name": "agent_placeholder",
+      "value": "Chat with the agent about your condition, medicines and symptoms. Coming soon."
+    },
+    {
+      "name": "medicines_title",
+      "value": "Medicines"
+    },
+    {
+      "name": "medicines_placeholder",
+      "value": "Your medicines and QT-risk checks will appear here."
+    },
+    {
+      "name": "heart_title",
+      "value": "Heart"
+    },
+    {
+      "name": "heart_placeholder",
+      "value": "Live heart rate from your watch or a simulated source will appear here."
+    },
+    {
+      "name": "emergency_title",
+      "value": "Emergency"
+    },
+    {
+      "name": "emergency_placeholder",
+      "value": "Your emergency card and SOS actions will appear here."
+    },
+    {
+      "name": "onboarding_title",
+      "value": "Welcome"
+    },
+    {
+      "name": "onboarding_subtitle",
+      "value": "Set up your heart profile. It takes a minute and stays on this phone."
+    },
+    {
+      "name": "onboarding_continue",
+      "value": "Continue"
+    },
+    {
+      "name": "disclaimer",
+      "value": "Not a medical device. Always ask your doctor or pharmacist."
+    },
+    {
+      "name": "risk_known",
+      "value": "Known risk"
+    },
+    {
+      "name": "risk_possible",
+      "value": "Possible risk"
+    },
+    {
+      "name": "risk_conditional",
+      "value": "Conditional risk"
+    },
+    {
+      "name": "risk_not_listed",
+      "value": "Not on QT lists"
+    },
+    {
+      "name": "risk_unknown",
+      "value": "Not recognised"
+    },
+    {
+      "name": "error_generic",
+      "value": "Something went wrong. Please try again."
+    },
+    {
+      "name": "verdict_copied",
+      "value": "Question copied — paste it to your doctor or pharmacist."
+    },
+    {
+      "name": "combo_cyp_title",
+      "value": "Interaction with your medicines"
+    },
+    {
+      "name": "combo_additive_title",
+      "value": "Adds up with your medicines"
+    },
+    {
+      "name": "verdict_alternatives",
+      "value": "Ask your doctor about"
+    },
+    {
+      "name": "verdict_dont_stop",
+      "value": "Never stop a prescribed medicine on your own — talk to your doctor first."
+    },
+    {
+      "name": "verdict_how_we_know",
+      "value": "How we know"
+    },
+    {
+      "name": "verdict_ask_doctor",
+      "value": "Copy a question for my doctor"
+    },
+    {
+      "name": "meds_added",
+      "value": "Added to your medicines"
+    },
+    {
+      "name": "check_add_to_mine",
+      "value": "Add to my medicines"
+    },
+    {
+      "name": "check_another",
+      "value": "Check another medicine"
+    },
+    {
+      "name": "check_title",
+      "value": "Medicine check"
+    },
+    {
+      "name": "meds_name_hint",
+      "value": "Medicine name, e.g. Concor"
+    },
+    {
+      "name": "meds_not_recognised",
+      "value": "Not recognised — we will treat it as unchecked"
+    },
+    {
+      "name": "meds_dose_hint",
+      "value": "Dose (optional), e.g. 5 mg in the morning"
+    },
+    {
+      "name": "meds_add",
+      "value": "Add medicine"
+    },
+    {
+      "name": "meds_add_short",
+      "value": "Add"
+    },
+    {
+      "name": "meds_add_title",
+      "value": "Add a medicine"
+    },
+    {
+      "name": "meds_remove",
+      "value": "Remove medicine"
+    },
+    {
+      "name": "medicines_subtitle",
+      "value": "Check before you take anything new"
+    },
+    {
+      "name": "check_prompt",
+      "value": "Can I take this?"
+    },
+    {
+      "name": "check_hint",
+      "value": "Name on the box, e.g. Klacid"
+    },
+    {
+      "name": "check_button",
+      "value": "Check"
+    },
+    {
+      "name": "meds_mine",
+      "value": "MY MEDICINES"
+    },
+    {
+      "name": "meds_empty",
+      "value": "No medicines yet. Add what you take so we can warn you about interactions."
+    },
+    {
+      "name": "meds_swipe_hint",
+      "value": "Swipe left on a medicine to remove it."
+    },
+    {
+      "name": "history_title",
+      "value": "Check history"
+    },
+    {
+      "name": "history_subtitle",
+      "value": "Every medicine you checked"
+    },
+    {
+      "name": "tab_home",
+      "value": "Home"
+    },
+    {
+      "name": "history_all",
+      "value": "All"
+    },
+    {
+      "name": "history_risky",
+      "value": "Risky"
+    },
+    {
+      "name": "history_ok",
+      "value": "Not listed"
+    },
+    {
+      "name": "history_unknown",
+      "value": "Not recognised"
+    },
+    {
+      "name": "history_empty",
+      "value": "No checks yet. Check a medicine to see it here."
+    },
+    {
+      "name": "history_empty_filter",
+      "value": "Nothing matches this filter."
+    },
+    {
+      "name": "heart_waiting",
+      "value": "Waiting for data"
+    },
+    {
+      "name": "heart_asleep",
+      "value": "Asleep"
+    },
+    {
+      "name": "heart_active",
+      "value": "Active"
+    },
+    {
+      "name": "heart_resting",
+      "value": "Resting"
+    },
+    {
+      "name": "heart_subtitle",
+      "value": "Live heart rate and alerts"
+    },
+    {
+      "name": "heart_simulated",
+      "value": "SIMULATED"
+    },
+    {
+      "name": "heart_resting_hr",
+      "value": "Resting HR"
+    },
+    {
+      "name": "heart_hrv",
+      "value": "HRV"
+    },
+    {
+      "name": "heart_rhythm",
+      "value": "Rhythm"
+    },
+    {
+      "name": "heart_alerts",
+      "value": "ALERTS"
+    },
+    {
+      "name": "heart_no_alerts",
+      "value": "No alerts. We will tell you if your heart rate looks unusual for your genotype."
+    },
+    {
+      "name": "heart_sim_controls",
+      "value": "Simulation controls (no watch on the emulator)"
+    },
+    {
+      "name": "emergency_subtitle",
+      "value": "Call for help and show your card"
+    },
+    {
+      "name": "emergency_dial_failed",
+      "value": "Could not open the dialer"
+    },
+    {
+      "name": "emergency_sos",
+      "value": "SOS"
+    },
+    {
+      "name": "emergency_bystander",
+      "value": "Help guide"
+    },
+    {
+      "name": "emergency_no_profile",
+      "value": "Finish setup to see your emergency card."
+    },
+    {
+      "name": "emergency_qr",
+      "value": "Show card as QR code"
+    },
+    {
+      "name": "emergency_qr_hint",
+      "value": "Any phone camera can read this — no app or internet needed."
+    },
+    {
+      "name": "home_check",
+      "value": "Check a medicine"
+    },
+    {
+      "name": "home_card",
+      "value": "Emergency card"
+    },
+    {
+      "name": "home_doctor",
+      "value": "Doctor visit prep"
+    },
+    {
+      "name": "home_heart_sim",
+      "value": "Heart rate · simulated"
+    },
+    {
+      "name": "home_meds",
+      "value": "MY MEDICINES"
+    },
+    {
+      "name": "home_manage",
+      "value": "Manage"
+    },
+    {
+      "name": "home_no_meds",
+      "value": "No medicines added yet."
+    },
+    {
+      "name": "home_other_risk",
+      "value": "Other risk"
+    },
+    {
+      "name": "home_recent",
+      "value": "RECENT CHECKS"
+    },
+    {
+      "name": "home_all",
+      "value": "See all"
+    },
+    {
+      "name": "home_no_checks",
+      "value": "Nothing checked yet. Before you take something new, check it here."
+    },
+    {
+      "name": "onb_contact_invalid",
+      "value": "Enter a name and a valid phone number"
+    },
+    {
+      "name": "onb_name_hint",
+      "value": "Your name (shown on the emergency card)"
+    },
+    {
+      "name": "onb_genotype",
+      "value": "Your genotype (from your genetic test)"
+    },
+    {
+      "name": "onb_icd",
+      "value": "I have an implanted defibrillator (ICD)"
+    },
+    {
+      "name": "onb_icd_hint",
+      "value": "Shown on your emergency card for paramedics"
+    },
+    {
+      "name": "onb_meds_title",
+      "value": "What do you take?"
+    },
+    {
+      "name": "onb_meds_subtitle",
+      "value": "We check each medicine and warn you about interactions with new ones."
+    },
+    {
+      "name": "onb_contacts_title",
+      "value": "Who should we call?"
+    },
+    {
+      "name": "onb_contacts_subtitle",
+      "value": "Emergency contacts appear on your card and get your SOS."
+    },
+    {
+      "name": "onb_contact_name",
+      "value": "Name"
+    },
+    {
+      "name": "onb_contact_phone",
+      "value": "Phone number"
+    },
+    {
+      "name": "onb_contact_relation",
+      "value": "Relation, e.g. Mum"
+    },
+    {
+      "name": "onb_contact_add",
+      "value": "Add contact"
+    },
+    {
+      "name": "onb_finish_title",
+      "value": "Almost done"
+    },
+    {
+      "name": "onb_finish_subtitle",
+      "value": "Your country sets the emergency number we call."
+    },
+    {
+      "name": "onb_country",
+      "value": "Country"
+    },
+    {
+      "name": "onb_notes_hint",
+      "value": "Notes for paramedics, e.g. allergies, cardiologist's phone"
+    },
+    {
+      "name": "onb_privacy",
+      "value": "Everything you enter stays on this phone."
+    },
+    {
+      "name": "onb_done",
+      "value": "Finish"
+    },
+    {
+      "name": "onb_back",
+      "value": "Back"
+    },
+    {
+      "name": "onb_skip",
+      "value": "Skip"
+    },
+    {
+      "name": "settings_title",
+      "value": "Settings"
+    },
+    {
+      "name": "settings_profile",
+      "value": "PROFILE"
+    },
+    {
+      "name": "settings_contacts",
+      "value": "EMERGENCY CONTACTS"
+    },
+    {
+      "name": "settings_region",
+      "value": "COUNTRY AND CARD LANGUAGE"
+    },
+    {
+      "name": "settings_safety",
+      "value": "SAFETY AND PRIVACY"
+    },
+    {
+      "name": "settings_save",
+      "value": "Save"
+    },
+    {
+      "name": "settings_saved",
+      "value": "Saved"
+    },
+    {
+      "name": "settings_email_hint",
+      "value": "E-mail (optional)"
+    },
+    {
+      "name": "settings_test_sos",
+      "value": "Test SOS"
+    },
+    {
+      "name": "settings_test_sos_hint",
+      "value": "Practise the SOS flow — marked as TEST"
+    },
+    {
+      "name": "settings_clear",
+      "value": "Clear all data"
+    },
+    {
+      "name": "settings_clear_confirm",
+      "value": "This deletes your profile, medicines and history from this phone."
+    },
+    {
+      "name": "settings_cancel",
+      "value": "Cancel"
+    },
+    {
+      "name": "settings_clear_yes",
+      "value": "Delete"
+    },
+    {
+      "name": "privacy_title",
+      "value": "What left my phone"
+    },
+    {
+      "name": "privacy_subtitle",
+      "value": "App lock and every request the app sent"
+    },
+    {
+      "name": "perm_location_reason",
+      "value": "Your location is added to the SOS message so your contacts can find you."
+    },
+    {
+      "name": "sos_glad",
+      "value": "Glad you are OK. Logged."
+    },
+    {
+      "name": "sos_test_banner",
+      "value": "TEST — no real emergency"
+    },
+    {
+      "name": "sos_question",
+      "value": "Are you OK?"
+    },
+    {
+      "name": "sos_seconds",
+      "value": "seconds until SOS"
+    },
+    {
+      "name": "sos_explain",
+      "value": "If you don't answer, we prepare the SOS: call the ambulance and alert your contacts."
+    },
+    {
+      "name": "sos_im_ok",
+      "value": "I'm OK"
+    },
+    {
+      "name": "sos_send_now",
+      "value": "I need help now"
+    },
+    {
+      "name": "sos_sent_title",
+      "value": "Get help now"
+    },
+    {
+      "name": "sos_sent_subtitle",
+      "value": "Call the ambulance first, then send the message to your contacts."
+    },
+    {
+      "name": "sos_share",
+      "value": "Send SOS message to my contacts"
+    },
+    {
+      "name": "sos_locating",
+      "value": "Finding your location…"
+    },
+    {
+      "name": "sos_no_location",
+      "value": "Location unavailable — the message says so."
+    },
+    {
+      "name": "sos_location_ok",
+      "value": "Location added to the message"
+    },
+    {
+      "name": "sos_sms_note",
+      "value": "Your phone's share sheet sends the message (SMS, messenger or e-mail). Apps cannot send SMS silently on HarmonyOS."
+    },
+    {
+      "name": "lock_title",
+      "value": "Celia.ai is locked"
+    },
+    {
+      "name": "lock_subtitle",
+      "value": "Your medicines and history are protected. In an emergency, anyone can open the help guide."
+    },
+    {
+      "name": "lock_unlock",
+      "value": "Unlock"
+    },
+    {
+      "name": "lock_failed",
+      "value": "Not unlocked"
+    },
+    {
+      "name": "lock_emergency",
+      "value": "Emergency help"
+    },
+    {
+      "name": "by_nav_title",
+      "value": "Help this person"
+    },
+    {
+      "name": "by_title",
+      "value": "This person has a heart condition"
+    },
+    {
+      "name": "by_subtitle",
+      "value": "Follow these steps. Stay calm — you are doing the right thing."
+    },
+    {
+      "name": "by_subtitle_generic",
+      "value": "Follow these steps. Stay calm — you are doing the right thing."
+    },
+    {
+      "name": "by_step2_title",
+      "value": "Not breathing normally? Push."
+    },
+    {
+      "name": "by_step2_body",
+      "value": "Push hard and fast in the centre of the chest, about 5 cm deep. Follow the beat below. Don't stop until help arrives."
+    },
+    {
+      "name": "by_step3_title",
+      "value": "Get an AED"
+    },
+    {
+      "name": "by_step3_body",
+      "value": "Send someone for the nearest defibrillator (AED). Switch it on and follow its voice."
+    },
+    {
+      "name": "by_cpr_start",
+      "value": "Tap to start the CPR beat (110 per minute)"
+    },
+    {
+      "name": "by_cpr_running",
+      "value": "Push on every pulse. Tap to stop."
+    },
+    {
+      "name": "by_facts",
+      "value": "FOR PARAMEDICS"
+    },
+    {
+      "name": "by_icd",
+      "value": "Has an implanted defibrillator (ICD) — still do CPR; an AED is safe to use."
+    },
+    {
+      "name": "dp_intro",
+      "value": "Pick who you are seeing. We prepare a safety brief from your own records."
+    },
+    {
+      "name": "dp_share",
+      "value": "Share the brief"
+    },
+    {
+      "name": "dp_copy",
+      "value": "Copy text"
+    },
+    {
+      "name": "dp_copied",
+      "value": "Brief copied"
+    },
+    {
+      "name": "privacy_nav",
+      "value": "Privacy"
+    },
+    {
+      "name": "privacy_promise",
+      "value": "Your profile, medicines, contacts, heart data and history are stored only on this phone, encrypted. Nothing is uploaded unless listed below."
+    },
+    {
+      "name": "privacy_lock",
+      "value": "App lock"
+    },
+    {
+      "name": "privacy_lock_hint",
+      "value": "Face, fingerprint or PIN when opening the app"
+    },
+    {
+      "name": "privacy_clear",
+      "value": "Clear"
+    },
+    {
+      "name": "privacy_empty",
+      "value": "Nothing has left your phone."
+    },
+    {
+      "name": "sym_title",
+      "value": "Symptom log"
+    },
+    {
+      "name": "sym_subtitle",
+      "value": "Note how you felt — it goes into your doctor brief"
+    },
+    {
+      "name": "sym_saved",
+      "value": "Symptom saved"
+    },
+    {
+      "name": "sym_what",
+      "value": "WHAT DID YOU FEEL?"
+    },
+    {
+      "name": "sym_red_flag",
+      "value": "This can be serious. If it is happening now, get help."
+    },
+    {
+      "name": "sym_how_bad",
+      "value": "HOW BAD?"
+    },
+    {
+      "name": "sym_doing",
+      "value": "WHAT WERE YOU DOING?"
+    },
+    {
+      "name": "sym_note_hint",
+      "value": "Anything else (optional)"
+    },
+    {
+      "name": "sym_save",
+      "value": "Save"
+    },
+    {
+      "name": "sym_recent",
+      "value": "RECENT"
+    },
+    {
+      "name": "rem_title",
+      "value": "Medicine reminders"
+    },
+    {
+      "name": "rem_subtitle",
+      "value": "Never miss your beta-blocker"
+    },
+    {
+      "name": "rem_today",
+      "value": "TODAY"
+    },
+    {
+      "name": "rem_empty",
+      "value": "No reminders yet. Add one below."
+    },
+    {
+      "name": "rem_taken",
+      "value": "Taken"
+    },
+    {
+      "name": "rem_new",
+      "value": "NEW REMINDER"
+    },
+    {
+      "name": "rem_need_meds",
+      "value": "Add your medicines first (Medicines tab)."
+    },
+    {
+      "name": "rem_add",
+      "value": "Add daily reminder"
+    },
+    {
+      "name": "rem_added",
+      "value": "Reminder set"
+    },
+    {
+      "name": "rem_failed",
+      "value": "Saved, but the system reminder could not be set"
+    },
+    {
+      "name": "ph_title",
+      "value": "Pharmacy card"
+    },
+    {
+      "name": "ph_subtitle",
+      "value": "Show it at the pharmacy counter"
+    },
+    {
+      "name": "scan_button",
+      "value": "Scan the box barcode"
+    },
+    {
+      "name": "scan_unknown_box",
+      "value": "We don't know this box yet — type the name on the box."
+    },
+    {
+      "name": "home_more",
+      "value": "MORE"
+    },
+    {
+      "name": "a11y_settings",
+      "value": "Settings"
+    },
+    {
+      "name": "a11y_delete",
+      "value": "Delete"
+    },
+    {
+      "name": "a11y_remove",
+      "value": "Remove"
+    },
+    {
+      "name": "home_c_known",
+      "value": "Known risk"
+    },
+    {
+      "name": "home_c_other",
+      "value": "Other risk"
+    },
+    {
+      "name": "home_c_ok",
+      "value": "Not listed"
+    },
+    {
+      "name": "home_c_unknown",
+      "value": "Unknown"
+    },
+    {
+      "name": "privacy_lock_unavailable",
+      "value": "Set a screen lock (PIN) on your phone first."
+    }
+  ]
+}

@@ -28,6 +28,7 @@ and takes over in an emergency — with your health data staying on *your* devic
 | **Medicine check** | Type, say, or **photograph** a box → active ingredient → deterministic QT-risk verdict → agent explains + drafts question for doctor | **Core Vision OCR** (on-device), Scan Kit (barcode) |
 | **Watch guard** | Live heart rate + heart-rate alarm events from the Huawei watch; abnormal → agent proactively checks in, watch gets an alert | **Wear Engine Kit** (sensor + monitor + notify clients) |
 | **Emergency mode** | Emergency card (diagnosis, drugs to avoid, ICE contacts), one-tap 112, card readable by paramedics | Home **widget (Form Kit)**, notifications, (stretch) Live View |
+| **Daily companion** | Dose reminders, genotype trigger coach, symptom diary, travel & pharmacy card, privacy ledger | reminderAgentManager, Location Kit, Intents Kit |
 | **Doctor / caregiver** | Event log + doctor report; (stretch) caregiver tablet gets alerts device-to-device | ArkData RDB, (stretch) distributed data object / continuation |
 
 **Digital sovereignty angle (matches the task's Oniro/Europe framing):** personal health data (profile, meds,

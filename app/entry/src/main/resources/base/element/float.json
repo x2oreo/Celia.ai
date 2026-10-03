@@ -1,0 +1,72 @@
+{
+  "float": [
+    {
+      "name": "space_xs",
+      "value": "4vp"
+    },
+    {
+      "name": "space_s",
+      "value": "8vp"
+    },
+    {
+      "name": "space_m",
+      "value": "16vp"
+    },
+    {
+      "name": "space_l",
+      "value": "24vp"
+    },
+    {
+      "name": "space_xl",
+      "value": "32vp"
+    },
+    {
+      "name": "radius_m",
+      "value": "16vp"
+    },
+    {
+      "name": "font_title",
+      "value": "24fp"
+    },
+    {
+      "name": "font_body",
+      "value": "16fp"
+    },
+    {
+      "name": "font_caption",
+      "value": "12fp"
+    },
+    {
+      "name": "font_headline",
+      "value": "32fp"
+    },
+    {
+      "name": "font_subtitle",
+      "value": "18fp"
+    },
+    {
+      "name": "font_small",
+      "value": "14fp"
+    },
+    {
+      "name": "font_hero",
+      "value": "56fp"
+    },
+    {
+      "name": "radius_s",
+      "value": "10vp"
+    },
+    {
+      "name": "radius_l",
+      "value": "24vp"
+    },
+    {
+      "name": "button_height",
+      "value": "48vp"
+    },
+    {
+      "name": "button_height_l",
+      "value": "64vp"
+    }
+  ]
+}
