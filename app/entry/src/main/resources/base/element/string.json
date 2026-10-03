@@ -329,6 +329,10 @@
       "value": "Scan with any phone camera to open this card in the reader's language. The card is inside the link — nothing is uploaded."
     },
     {
+      "name": "emergency_qr_hint_encrypted",
+      "value": "Scan with any phone camera to open this card in the reader's language. The card was encrypted on this phone before upload; only this link can open it."
+    },
+    {
       "name": "home_check",
       "value": "Check a medicine"
     },
@@ -657,6 +661,26 @@
       "value": "Pick who you are seeing. We prepare a safety brief from your own records."
     },
     {
+      "name": "dp_ai_button",
+      "value": "Summarise for the doctor"
+    },
+    {
+      "name": "dp_ai_loading",
+      "value": "Writing a short summary…"
+    },
+    {
+      "name": "dp_ai_caption",
+      "value": "Generated summary of the brief below, not medical advice. The risk words in the brief come from the QT list, not from AI."
+    },
+    {
+      "name": "dp_ai_rejected",
+      "value": "Couldn't write a summary that follows the safety rules. The brief below is complete."
+    },
+    {
+      "name": "dp_ai_failed",
+      "value": "Couldn't reach the summary service. The brief below is complete and works offline."
+    },
+    {
       "name": "dp_share",
       "value": "Share the brief"
     },
@@ -674,7 +698,7 @@
     },
     {
       "name": "privacy_promise",
-      "value": "Your profile, medicines, contacts, heart data and history are stored only on this phone, encrypted. Nothing is uploaded unless listed below."
+      "value": "Your profile, medicines, contacts, heart data, history and chats with the agent are stored only on this phone, encrypted. Nothing is uploaded unless listed below."
     },
     {
       "name": "privacy_lock",
@@ -691,6 +715,10 @@
     {
       "name": "privacy_empty",
       "value": "Nothing has left your phone."
+    },
+    {
+      "name": "privacy_export",
+      "value": "Export the list"
     },
     {
       "name": "sym_title",
@@ -746,7 +774,7 @@
     },
     {
       "name": "rem_empty",
-      "value": "No reminders yet. Add one below."
+      "value": "No reminders yet. Pick a medicine and a time below."
     },
     {
       "name": "rem_taken",
@@ -1229,6 +1257,46 @@
       "value": "Full emergency card"
     },
     {
+      "name": "em_read_aloud",
+      "value": "Read the card aloud"
+    },
+    {
+      "name": "em_read_stop",
+      "value": "Stop reading"
+    },
+    {
+      "name": "em_read_unavailable",
+      "value": "No voice is available for this language right now. Show the card instead."
+    },
+    {
+      "name": "em_nearby",
+      "value": "Nearby help"
+    },
+    {
+      "name": "em_nearby_hospital",
+      "value": "Hospital"
+    },
+    {
+      "name": "em_nearby_pharmacy",
+      "value": "Pharmacy"
+    },
+    {
+      "name": "em_nearby_aed",
+      "value": "Defibrillator (AED)"
+    },
+    {
+      "name": "share_remove_title",
+      "value": "Remove this card link?"
+    },
+    {
+      "name": "share_remove_body",
+      "value": "Anyone who has the link or the QR will no longer be able to open your card. You can make a new link later."
+    },
+    {
+      "name": "share_remove_confirm",
+      "value": "Remove link"
+    },
+    {
       "name": "em_general",
       "value": "General emergency"
     },
@@ -1463,6 +1531,314 @@
     {
       "name": "widget_open_card",
       "value": "Open emergency card"
+    },
+    {
+      "name": "widget_help",
+      "value": "Help this person"
+    },
+    {
+      "name": "chats_title",
+      "value": "Chats"
+    },
+    {
+      "name": "chats_new",
+      "value": "New chat"
+    },
+    {
+      "name": "chats_empty",
+      "value": "No chats yet. Ask the agent something to start one."
+    },
+    {
+      "name": "chats_privacy",
+      "value": "Chats are saved only on this phone."
+    },
+    {
+      "name": "chats_untitled",
+      "value": "New chat"
+    },
+    {
+      "name": "chats_open_now",
+      "value": "Open now"
+    },
+    {
+      "name": "chats_rename",
+      "value": "Rename"
+    },
+    {
+      "name": "chats_rename_hint",
+      "value": "Chat name"
+    },
+    {
+      "name": "chats_rename_save",
+      "value": "Save"
+    },
+    {
+      "name": "chats_delete",
+      "value": "Delete"
+    },
+    {
+      "name": "chats_delete_title",
+      "value": "Delete this chat?"
+    },
+    {
+      "name": "chats_delete_body",
+      "value": "The messages are removed from this phone. Your medicines and checks stay."
+    },
+    {
+      "name": "a11y_chats",
+      "value": "Chats"
+    },
+    {
+      "name": "a11y_new_chat",
+      "value": "New chat"
+    },
+    {
+      "name": "home_chats",
+      "value": "Chats"
+    },
+    {
+      "name": "med_about",
+      "value": "What it's for"
+    },
+    {
+      "name": "med_tips",
+      "value": "Good to know"
+    },
+    {
+      "name": "med_with_mine",
+      "value": "With your medicines"
+    },
+    {
+      "name": "med_no_interactions",
+      "value": "No known interactions with your other medicines on our list."
+    },
+    {
+      "name": "med_alternatives",
+      "value": "Ask your doctor about: %s"
+    },
+    {
+      "name": "med_brands",
+      "value": "Also sold as"
+    },
+    {
+      "name": "med_unknown_body",
+      "value": "We couldn't match this name to our list, so we can't say anything about heart rhythm. Check the spelling or ask your pharmacist."
+    },
+    {
+      "name": "med_ai_button",
+      "value": "Explain it in plain words"
+    },
+    {
+      "name": "med_ai_loading",
+      "value": "Writing a plain explanation…"
+    },
+    {
+      "name": "med_ai_badge",
+      "value": "AI SUMMARY"
+    },
+    {
+      "name": "med_ai_contains",
+      "value": "What's in it"
+    },
+    {
+      "name": "med_ai_caption",
+      "value": "Generated explanation, not medical advice. The heart-rhythm badge above comes from the QT list, not from AI."
+    },
+    {
+      "name": "med_ai_offline",
+      "value": "Explanations need a connection. Everything above works offline."
+    },
+    {
+      "name": "med_ai_unknown",
+      "value": "No explanation found for this name. Check the spelling."
+    },
+    {
+      "name": "med_ai_rejected",
+      "value": "Couldn't write a safe summary for this one. The facts above are complete."
+    },
+    {
+      "name": "med_ai_failed",
+      "value": "Couldn't reach the explanation service. Try again later; everything above works offline."
+    },
+    {
+      "name": "med_check",
+      "value": "Full check"
+    },
+    {
+      "name": "med_remind",
+      "value": "Remind me"
+    },
+    {
+      "name": "med_source",
+      "value": "Facts: public patient leaflets · QT data: CredibleMeds-derived list · Not a medical device."
+    },
+    {
+      "name": "rem_progress",
+      "value": "%d of %d taken today"
+    },
+    {
+      "name": "rem_all_done",
+      "value": "All done for today"
+    },
+    {
+      "name": "rem_next",
+      "value": "Next: %s at %s"
+    },
+    {
+      "name": "rem_none_today",
+      "value": "Nothing scheduled yet"
+    },
+    {
+      "name": "rem_status_taken",
+      "value": "Taken"
+    },
+    {
+      "name": "rem_status_due",
+      "value": "Due now"
+    },
+    {
+      "name": "rem_status_missed",
+      "value": "Missed"
+    },
+    {
+      "name": "rem_status_upcoming",
+      "value": "Later"
+    },
+    {
+      "name": "rem_status_skipped",
+      "value": "Skipped"
+    },
+    {
+      "name": "rem_pick_med",
+      "value": "Which medicine"
+    },
+    {
+      "name": "rem_pick_time",
+      "value": "When"
+    },
+    {
+      "name": "rem_morning",
+      "value": "Morning"
+    },
+    {
+      "name": "rem_noon",
+      "value": "Midday"
+    },
+    {
+      "name": "rem_evening",
+      "value": "Evening"
+    },
+    {
+      "name": "rem_night",
+      "value": "Night"
+    },
+    {
+      "name": "rem_custom",
+      "value": "Other"
+    },
+    {
+      "name": "rem_gentle",
+      "value": "Gentle reminders, no sudden loud alarm. They work even when the app is closed."
+    },
+    {
+      "name": "rem_delete",
+      "value": "Delete reminder"
+    },
+    {
+      "name": "rem_add_at",
+      "value": "Remind me daily at %s"
+    },
+    {
+      "name": "share_preparing",
+      "value": "Preparing a secure link…"
+    },
+    {
+      "name": "share_card_caption",
+      "value": "End-to-end encrypted. The link stays the same until your card changes."
+    },
+    {
+      "name": "share_remove",
+      "value": "Remove this link"
+    },
+    {
+      "name": "share_removed",
+      "value": "Link removed — it no longer opens"
+    },
+    {
+      "name": "dp_send_link",
+      "value": "Send report link"
+    },
+    {
+      "name": "dp_copy_link",
+      "value": "Copy report link"
+    },
+    {
+      "name": "dp_link_caption",
+      "value": "Opens on any phone or computer. Encrypted, and it stops working after 48 hours."
+    },
+    {
+      "name": "dp_link_failed",
+      "value": "Couldn’t create the link. Check the connection, or share the text instead."
+    },
+    {
+      "name": "dp_link_copied",
+      "value": "Report link copied"
+    },
+    {
+      "name": "dp_share_text",
+      "value": "Share as text"
+    },
+    {
+      "name": "dp_link_message",
+      "value": "My Long QT safety report (opens in any browser, link works for 48 hours):"
+    },
+    {
+      "name": "med_ask",
+      "value": "Ask the agent"
+    },
+    {
+      "name": "med_ask_prompt",
+      "value": "Tell me about %s: what is it for, and is it OK with my long QT and my other medicines?"
+    },
+    {
+      "name": "scan_lookup_title",
+      "value": "Looking this box up…"
+    },
+    {
+      "name": "scan_lookup_web",
+      "value": "Searching pharmacies on the web…"
+    },
+    {
+      "name": "scan_lookup_web_caption",
+      "value": "This can take up to 20 seconds."
+    },
+    {
+      "name": "scan_candidate_title",
+      "value": "Is this your box?"
+    },
+    {
+      "name": "scan_candidate_ai_badge",
+      "value": "AI · WEB"
+    },
+    {
+      "name": "scan_candidate_ai_caption",
+      "value": "Found by a web search. Check the name matches your box."
+    },
+    {
+      "name": "scan_candidate_unconfirmed",
+      "value": "Not confirmed: %s"
+    },
+    {
+      "name": "scan_candidate_yes",
+      "value": "Yes, check it"
+    },
+    {
+      "name": "scan_candidate_no",
+      "value": "Not my box"
+    },
+    {
+      "name": "a11y_box_lookup",
+      "value": "Looking the box up online"
     }
   ]
 }

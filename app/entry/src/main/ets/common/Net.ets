@@ -7,6 +7,37 @@ import { forbiddenFields, Ledger, LedgerEntry } from '../privacy/Ledger';
 
 const log: Logger = new Logger('Net');
 
+// Where a request goes. Default: the app backend (Config.BACKEND_URL). Sharing always uses Supabase (shareTarget).
+export class NetTarget {
+  base: string;
+  key: string;
+
+  constructor(base: string, key: string) {
+    this.base = base;
+    this.key = key;
+  }
+}
+
+export function backendTarget(): NetTarget {
+  return new NetTarget(Config.hasBackend() ? Config.BACKEND_URL : '', Config.SUPABASE_ANON_KEY);
+}
+
+export function shareTarget(): NetTarget {
+  return new NetTarget(Config.SHARE_BACKEND_URL, Config.SHARE_ANON_KEY);
+}
+
+function jsonHeaders(key: string, prefer: string): Record<string, string> {
+  const h: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'apikey': key,
+    'Authorization': `Bearer ${key}`
+  };
+  if (prefer !== '') {
+    h['Prefer'] = prefer;
+  }
+  return h;
+}
+
 export class NetResult {
   ok: boolean;
   status: number;
@@ -19,7 +50,25 @@ export class NetResult {
   }
 }
 
-export async function postJson(path: string, fields: Record<string, string>, timeoutMs: number): Promise<NetResult> {
+export async function postJson(path: string, fields: Record<string, string>, timeoutMs: number,
+  target: NetTarget = backendTarget()): Promise<NetResult> {
+  return sendJson(http.RequestMethod.POST, path, fields, timeoutMs, target);
+}
+
+// DELETE with a JSON body (e.g. revoking a share). Same guard and ledger as postJson.
+export async function deleteJson(path: string, fields: Record<string, string>, timeoutMs: number,
+  target: NetTarget = backendTarget()): Promise<NetResult> {
+  return sendJson(http.RequestMethod.DELETE, path, fields, timeoutMs, target);
+}
+
+// PostgREST upsert (insert, or merge on the primary key). Same guard and ledger; 200/201/204 count as success.
+export async function upsertJson(path: string, fields: Record<string, string>, timeoutMs: number,
+  target: NetTarget = backendTarget()): Promise<NetResult> {
+  return sendJson(http.RequestMethod.POST, path, fields, timeoutMs, target, 'resolution=merge-duplicates');
+}
+
+async function sendJson(method: http.RequestMethod, path: string, fields: Record<string, string>,
+  timeoutMs: number, target: NetTarget, prefer: string = ''): Promise<NetResult> {
   const names: string[] = Object.keys(fields);
   const blocked: string[] = forbiddenFields(names);
   const body: string = JSON.stringify(fields);
@@ -30,26 +79,23 @@ export async function postJson(path: string, fields: Record<string, string>, tim
     log.error(`blocked personal fields: ${blocked.join(',')}`);
     return new NetResult(false, 0, '');
   }
-  if (!Config.hasBackend()) {
+  if (target.base === '' || target.key === '') {
     return new NetResult(false, 0, '');
   }
   const req: http.HttpRequest = http.createHttp();
   try {
     const options: http.HttpRequestOptions = {
-      method: http.RequestMethod.POST,
-      header: {
-        'Content-Type': 'application/json',
-        'apikey': Config.SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${Config.SUPABASE_ANON_KEY}`
-      },
+      method: method,
+      header: jsonHeaders(target.key, prefer),
       extraData: body,
       connectTimeout: timeoutMs,
       readTimeout: timeoutMs
     };
-    const res: http.HttpResponse = await req.request(`${Config.BACKEND_URL}${path}`, options);
-    entry.outcome = res.responseCode === 200 ? 'OK' : 'ERROR';
+    const res: http.HttpResponse = await req.request(`${target.base}${path}`, options);
+    const ok: boolean = res.responseCode === 200 || (prefer !== '' && (res.responseCode === 201 || res.responseCode === 204));
+    entry.outcome = ok ? 'OK' : 'ERROR';
     await Ledger.add(entry);
-    return new NetResult(res.responseCode === 200, res.responseCode, res.result as string);
+    return new NetResult(ok, res.responseCode, res.result as string);
   } catch (e) {
     entry.outcome = 'ERROR';
     await Ledger.add(entry);
@@ -62,9 +108,10 @@ export async function postJson(path: string, fields: Record<string, string>, tim
 
 // GET for read-only PostgREST views (no request body, so nothing personal leaves the device; still ledgered).
 // Polling callers pass ledger=false after their first call so a 2 s poll doesn't flood the 200-entry ledger.
-export async function getJson(path: string, timeoutMs: number, ledger: boolean = true): Promise<NetResult> {
+export async function getJson(path: string, timeoutMs: number, ledger: boolean = true,
+  target: NetTarget = backendTarget()): Promise<NetResult> {
   const entry: LedgerEntry = { ts: Date.now(), endpoint: path, fields: [], bytes: 0, outcome: 'OK' };
-  if (!Config.hasBackend()) {
+  if (target.base === '' || target.key === '') {
     return new NetResult(false, 0, '');
   }
   const req: http.HttpRequest = http.createHttp();
@@ -72,13 +119,13 @@ export async function getJson(path: string, timeoutMs: number, ledger: boolean =
     const options: http.HttpRequestOptions = {
       method: http.RequestMethod.GET,
       header: {
-        'apikey': Config.SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${Config.SUPABASE_ANON_KEY}`
+        'apikey': target.key,
+        'Authorization': `Bearer ${target.key}`
       },
       connectTimeout: timeoutMs,
       readTimeout: timeoutMs
     };
-    const res: http.HttpResponse = await req.request(`${Config.BACKEND_URL}${path}`, options);
+    const res: http.HttpResponse = await req.request(`${target.base}${path}`, options);
     entry.outcome = res.responseCode === 200 ? 'OK' : 'ERROR';
     if (ledger) {
       await Ledger.add(entry);

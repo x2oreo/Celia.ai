@@ -12,6 +12,7 @@
 // The OpenAI key never reaches the phone: /realtime-session mints a 2-minute client secret.
 // Any failure → status 'FAILED'; the UI falls back to push-to-talk (VoiceSession).
 
+import { Ledger } from '../privacy/Ledger';
 import { webSocket } from '@kit.NetworkKit';
 import { audio } from '@kit.AudioKit';
 import { util } from '@kit.ArkTS';
@@ -247,6 +248,10 @@ export class RealtimeSession {
       const headers: Record<string, string> = { 'Authorization': `Bearer ${session.clientSecret}` };
       const options: webSocket.WebSocketRequestOptions = { header: headers };
       const ok: boolean = await ws.connect(`${REALTIME_URL}?model=${encodeURIComponent(session.model)}`, options);
+      // Live voice streams microphone audio to the model provider: one ledger line per session (F-46).
+      await Ledger.add({
+        ts: Date.now(), endpoint: 'realtime voice (WebSocket)', fields: ['audio'], bytes: 0, outcome: ok ? 'OK' : 'ERROR'
+      });
       if (!ok) {
         return this.fail('connect returned false');
       }
