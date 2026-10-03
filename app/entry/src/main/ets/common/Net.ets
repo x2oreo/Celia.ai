@@ -59,3 +59,34 @@ export async function postJson(path: string, fields: Record<string, string>, tim
     req.destroy();
   }
 }
+
+// GET for read-only PostgREST views (no request body, so nothing personal leaves the device; still ledgered).
+export async function getJson(path: string, timeoutMs: number): Promise<NetResult> {
+  const entry: LedgerEntry = { ts: Date.now(), endpoint: path, fields: [], bytes: 0, outcome: 'OK' };
+  if (!Config.hasBackend()) {
+    return new NetResult(false, 0, '');
+  }
+  const req: http.HttpRequest = http.createHttp();
+  try {
+    const options: http.HttpRequestOptions = {
+      method: http.RequestMethod.GET,
+      header: {
+        'apikey': Config.SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${Config.SUPABASE_ANON_KEY}`
+      },
+      connectTimeout: timeoutMs,
+      readTimeout: timeoutMs
+    };
+    const res: http.HttpResponse = await req.request(`${Config.BACKEND_URL}${path}`, options);
+    entry.outcome = res.responseCode === 200 ? 'OK' : 'ERROR';
+    await Ledger.add(entry);
+    return new NetResult(res.responseCode === 200, res.responseCode, res.result as string);
+  } catch (e) {
+    entry.outcome = 'ERROR';
+    await Ledger.add(entry);
+    log.warn(`request ${path} failed: ${JSON.stringify(e)}`);
+    return new NetResult(false, 0, '');
+  } finally {
+    req.destroy();
+  }
+}
