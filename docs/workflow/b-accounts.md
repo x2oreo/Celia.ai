@@ -39,11 +39,45 @@
   `invalid_credentials` and shows the amber strip with the fields kept (`accounts-login-error.jpeg`). This emulator
   pass found and fixed two form bugs: the button kept the sign-up label after switching to log-in, and both inputs
   were cleared after an error (both caused by values passed by value into `@Builder` functions).
-- Not validated: the Account page on the emulator (reaching it needs a finished onboarding); built only.
 - Not validated (needs the migration applied and "Confirm email" off): real sign-up from the emulator, profile push /
   pull against the live table, the B1 acceptance run (sign up → kill → network off → reopen signed in). Context7 was
   not available in this session; the encrypted RDB and `@kit.NetworkKit` http calls reuse the patterns already in
   `data/LocalStore.ets` and `common/Net.ets`.
+
+### 2026-10-04 — Georgi + Claude Code: SOS contacts under the account and RLS by account (B10, B9; branch `georgi/b-accounts`)
+- Asked: B10 (contacts and first name reach the server with consent; show the dispatch status) and B9 (close the
+  open RLS on watch data through the device ↔ account binding; give the watch its own secret).
+- Produced:
+  - `20261004100100_sos_contacts_account.sql`: `watch_pairings.user_id` (pairing_claim records `auth.uid()`,
+    `pairing_bind(token)` binds older pairings), `emergency_contacts.user_id`, `sos_profile` (first name, no API
+    access), `device_owned()`, `sync_sos_contacts()` (owner only, E.164, ≤ 5, empty = delete), `sos_status()`. Anon
+    insert on `emergency_contacts` removed. A new owner never inherits the previous owner's contacts. The `sos`
+    function reads the name from `sos_profile`.
+  - `20261004100200_watch_rls_by_account.sql` (B9 part 1): anon reads only the demo watch; signed-in owners read
+    their watch (`watch_metrics`, views, `watch_context`, `resting_day_sim`); phone writes to `watch_context`,
+    `set_watch_genotype`, `ack_watch_alert` (from Workstream A's 20261004050000) need the owner. Names are wiped
+    from `watch_context`.
+  - `20261004100300_watch_secret.sql` (B9 part 2): `pairing_start` hands out a watch secret once (hash stored);
+    `x-watch-secret` header unlocks the watch's context read, uploads (once it has a secret), `pairing_start` and the
+    demo RPC. The open anon read on `watch_context` is gone.
+  - `backend/supabase/tests/run-rls.sh` + `accounts_rls.sql` + `supabase-shim.sql`: every migration applied to a
+    throw-away local Postgres 15 with Supabase stand-ins, then ~49 behaviour checks (profiles, watch data by owner,
+    contacts RPCs, binding, account deletion, watch secret).
+  - Phone: `common/Net.ets` adds the user's JWT to database paths (`/rest/v1/`) on the accounts project only; AI
+    calls (`/functions/v1/`) stay anonymous because the token names the user. Expired tokens are not sent (the
+    request falls back to the public key, which still reads the demo watch). `data/WatchPairing.ets`: claim binds,
+    `bindToAccount()` after sign-in. `PairWatchPage` asks to sign in first. `account/SosContacts.ets`: consent
+    switch, E.164 normalisation from the profile country (ITU-T calling codes), first name only, `SOS_CONTACTS`
+    ledger exception, status line (incl. "test mode, no text or call was sent" for `dry_run`). README updated in the
+    same commit.
+  - Watch (B9 part 2): `docs/workflow/b-accounts-watch-secret.patch`, made on a detached copy of `georgi/b-watch`
+    (S6's RestClient): RestClient sends `x-watch-secret`, PairingClient stores the secret from `pairing_start`,
+    DeviceIdStore keeps it, WatchController wires it (3 lines). Watch build OK, watch tests 88/88 there.
+- Validated: phone tests 248/248; backend Deno 68/68; RLS checks pass on local Postgres; watch patch builds and
+  passes 88/88 on top of `georgi/b-watch`. Emulator: Settings → Account row, Account page signed out
+  (`accounts-account-signed-out.jpeg`), Pair watch asks to sign in (`accounts-pair-sign-in.jpeg`).
+- Not validated: nothing of B9/B10 against the live project (migrations not applied); the consent switch and SOS
+  status signed in; a real SOS reaching contacts (no Twilio credentials: the server records `dry_run`).
 
 ## README "How to verify" rows
 | Feature | How to check |
@@ -54,6 +88,9 @@
 | Profile backup (B2) | Signed in, change the name in Settings → Account shows "Backed up …"; in Supabase `select updated_at from profiles` changes |
 | Restore on a new phone (B2) | Uninstall, reinstall, Welcome → I already have an account → log in → skips onboarding, profile and medicines back |
 | Delete cloud data | Settings → Account → Delete my data from my account → row gone, signed out, phone data kept |
+| SOS contacts with consent (B10) | Signed in + paired: Settings → Account → switch on → "2 contacts ready"; `select count(*) from emergency_contacts` matches; switch off → 0. Built, unverified until migrations 100100/100200 are applied |
+| SOS status | After a watch SOS, Account shows "Last SOS …: test mode, no text or call was sent" while Twilio is not configured |
+| Watch data only for its owner (B9) | `backend/supabase/tests/run-rls.sh` → ALL ACCOUNTS RLS CHECKS PASSED; on the emulators: paired + signed in shows the watch's heart rate, signed out shows nothing for it |
 | Ledger exceptions | Settings → Privacy → What left my phone → `/rest/v1/profiles` rows list field names with `exception: PROFILE_SYNC` |
 
 ## DESIGN.md subsection (new screens only)
@@ -87,6 +124,12 @@
   until the app restarts.
 - "Set up without an account" exists because sign-up needs a network and the card must work from the first launch.
 
+- Phase 2 deviation: I could not merge `georgi/b-watch` into this branch (blocked), so the watch half of B9 is a
+  patch file instead of commits.
+- B9 trade-off: a watch that never paired can still upload under its random id with the public key (nobody can read
+  those rows back); once it has a secret, uploads need it. The demo watch stays public on purpose.
+- Pairing a watch now needs an account: an unbound watch's data could not be read by anyone.
+
 ## For Workstream A (routes, functions, contracts)
 - Routes: `welcome`, `auth` (param `AuthParam('SIGN_UP' | 'LOG_IN')`), `account`.
 - `Session`: `isSignedIn()`, `userId()`, `userName()`, `email()`, `accessToken()` (may be expired offline),
@@ -94,8 +137,24 @@
 - `AuthForm`: `@Param mode`, `@Event onDone(signedIn)`, new optional `@Event onModeChange(mode)`.
 - Requests made as the user: `accountTarget(await Session.freshToken())` from `common/Net.ets`.
 
+## B9 plan and deploy order
+1. Apply `20261004100000` (accounts) and `20261004100100` (contacts, binding) — compatible with every current build.
+2. Install the new phone build (sends the JWT on `/rest/v1/`, binds pairings). Sign in, re-open Pair watch: an
+   existing pairing is bound automatically after sign-in (or pair again).
+3. Apply `20261004100200` (owner-only reads). Retest: phone paired + signed in sees live heart rate and Trends;
+   signed out it shows nothing for the paired watch; unpaired shows the demo watch. Old watch builds keep working.
+4. Merge `georgi/b-watch` into integration, apply `docs/workflow/b-accounts-watch-secret.patch` (`git apply`),
+   build both, install the watch, pair it again from the phone (it receives its secret), then apply
+   `20261004100300`. Retest: watch uploads, watch context (genotype / risky drug badge), SOS, demo RPC.
+   Do not apply 100300 before the watch build that sends the header.
+5. Rollback for 100200/100300: re-create the old anon policies (they are listed at the top of each file).
+
 ## Coordinator actions
 - Apply `backend/supabase/migrations/20261004100000_profiles_auth.sql` (after Georgi's OK).
+- Apply `20261004100100`, `20261004100200`, `20261004100300` in the order above; deploy the `sos` function
+  (reads `sos_profile`).
+- After `georgi/b-watch` is in integration: `git apply docs/workflow/b-accounts-watch-secret.patch` (watch side of
+  B9 part 2), run the watch tests.
 - Georgi: turn off Authentication → "Confirm email" (code also handles it on).
 - `scripts/worktree.sh` does not copy the local signing block of `app/build-profile.json5`; the worktree needed it
   copied by hand (kept out of git with `skip-worktree`).
