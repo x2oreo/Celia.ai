@@ -3,10 +3,11 @@
 // and a QR link to the card viewer.
 
 import { LocalStore, StoreTopic } from '../data/LocalStore';
-import { Contact, Profile } from '../model/Profile';
+import { CardField, Contact, Profile } from '../model/Profile';
 import { Medication } from '../model/Medication';
 import { emergencyFor, EmergencyInfo, systemCountry } from '../common/EmergencyNumbers';
-import { CARD_TEXTS, CardText, cardText } from '../common/CardStrings';
+import { CARD_TEXTS, CardText, cardLabels, cardText } from '../common/CardStrings';
+import { CardRow, detailRows, shownOnCard } from '../emergency/EmergencyDetails';
 import { cardSpeech } from '../emergency/CardSpeech';
 import { NearbyKind, nearbySearchUrl } from '../emergency/NearbyHelp';
 import { VoiceOutput } from '../voice/VoiceOutput';
@@ -317,7 +318,7 @@ export struct EmergencyPage {
       .borderRadius({ topLeft: 18, topRight: 18 })
 
       Column({ space: 14 }) {
-        if ((this.cardProfile().name ?? '').length > 0) {
+        if ((this.cardProfile().name ?? '').length > 0 && shownOnCard(this.cardProfile(), CardField.NAME)) {
           Text(this.cardProfile().name ?? '').fontSize($r('app.float.font_title')).fontWeight(FontWeight.Bold).fontColor($r('app.color.card_fixed_ink'))
         }
         Text(cardText(this.lang).condition)
@@ -343,13 +344,17 @@ export struct EmergencyPage {
         Text(cardText(this.lang).treatment)
           .fontSize($r('app.float.font_body'))
           .fontColor($r('app.color.card_fixed_ink_2'))
+        // Emergency details (B4) in their fixed order; empty and switched-off fields are left out.
+        ForEach(detailRows(this.cardProfile(), cardLabels(this.lang), Date.now()), (r: CardRow) => {
+          this.cardLine(r.label, r.value)
+        }, (r: CardRow, i: number) => `${i}-${r.id}-${r.label}-${r.value}`)
         this.cardLine(cardText(this.lang).meds, this.meds.length === 0 ? cardText(this.lang).noMeds :
           this.meds.map((m: Medication) => medLine(m)).join('\n'))
-        if (this.cardProfile().contacts.length > 0) {
+        if (this.cardProfile().contacts.length > 0 && shownOnCard(this.cardProfile(), CardField.CONTACTS)) {
           this.cardLine(cardText(this.lang).contacts,
             this.cardProfile().contacts.map((c: Contact) => `${c.name} (${c.relation}) ${c.phone}`).join('\n'))
         }
-        if (this.cardProfile().notes.length > 0) {
+        if (this.cardProfile().notes.length > 0 && shownOnCard(this.cardProfile(), CardField.NOTES)) {
           this.cardLine(cardText(this.lang).notes, this.cardProfile().notes)
         }
       }
