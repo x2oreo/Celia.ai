@@ -256,7 +256,7 @@ export struct HomePage {
   @Builder
   travelBanner() {
     Row({ space: 12 }) {
-      Image($r('app.media.ic_location')).width(18).height(18).fillColor($r('app.color.ink_2'))
+      Image($r('app.media.ic_plane')).width(18).height(18).fillColor($r('app.color.ink_2'))
       Column({ space: 2 }) {
         Text(`You're in ${emergencyFor(this.abroad()).name}`)
           .fontSize($r('app.float.font_headline'))
@@ -492,7 +492,7 @@ export struct HomePage {
         this.tile($r('app.string.home_scan_box'), $r('app.media.ic_scan'), () => {
           this.navStack.pushPathByName(Routes.SCAN, null);
         })
-        this.tile($r('app.string.home_log_feel'), $r('app.media.ic_tab_heart'), () => {
+        this.tile($r('app.string.home_log_feel'), $r('app.media.ic_smile'), () => {
           this.navStack.pushPathByName(Routes.SYMPTOM_LOG, null);
         })
       }
@@ -543,11 +543,11 @@ export struct HomePage {
           .maxLines(this.tipOpen ? 3 : 1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
           .layoutWeight(1)
-        Image($r('app.media.ic_chevron_right'))
-          .width(14)
-          .height(14)
+        Image($r('app.media.ic_chevron_down'))
+          .width(16)
+          .height(16)
           .fillColor($r('app.color.ink_3'))
-          .rotate({ angle: this.tipOpen ? -90 : 90 })
+          .rotate({ angle: this.tipOpen ? 180 : 0 })
       }
       .width('100%')
       if (this.tipOpen) {

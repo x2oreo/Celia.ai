@@ -243,6 +243,18 @@
     {
       "name": "orb_glow",
       "value": "#59F27470"
+    },
+    {
+      "name": "orb_glow_clear",
+      "value": "#00F27470"
+    },
+    {
+      "name": "orb_glow_user",
+      "value": "#40B8AEA8"
+    },
+    {
+      "name": "orb_glow_user_clear",
+      "value": "#00B8AEA8"
     }
   ]
 }

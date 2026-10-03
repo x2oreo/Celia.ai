@@ -13,6 +13,8 @@ import { Routes } from '../../common/Routes';
 
 export type AgentMode = 'VOICE' | 'CHAT';
 
+const LONG_CAPTION: number = 140;   // characters; above this the live caption uses the smaller size
+
 export class ChatItem {
   id: number;
   role: ChatRole;
@@ -324,10 +326,11 @@ export struct AgentCaptions {
             .width('100%')
         }
         if (this.agentText() !== '') {
+          // Large for a sentence or two; a longer answer steps down so it stays readable without scrolling far.
           Text(this.agentText())
-            .fontSize($r('app.float.font_title'))
+            .fontSize(this.agentText().length > LONG_CAPTION ? $r('app.float.font_subtitle') : $r('app.float.font_title'))
             .fontWeight(FontWeight.Bold)
-            .lineHeight(31)
+            .lineHeight(this.agentText().length > LONG_CAPTION ? 25 : 31)
             .fontColor($r('app.color.ink'))
             .copyOption(CopyOptions.LocalDevice)
             .width('100%')

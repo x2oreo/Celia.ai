@@ -28,10 +28,10 @@ import { Logger } from '../common/Logger';
 import { RoundIconButton, StatusStrip } from '../components/Common';
 import { ToolStep, ToolUi, toolArg } from '../components/AgentCards';
 import { stagePhase } from '../components/agent/AgentLogic';
-import { VoiceStage } from '../components/agent/VoiceStage';
+import { OrbDock, OrbLight } from '../components/agent/OrbDock';
 import { AgentCaptions, AgentMode, AgentThread, AgentWelcome, ChatItem } from '../components/agent/AgentThread';
 import { Brief, HomeBrief } from '../components/agent/HomeBrief';
-import { ChatBar, VoiceDock } from '../components/agent/AgentDock';
+import { ChatBar } from '../components/agent/AgentDock';
 
 const log: Logger = new Logger('AgentPage');
 
@@ -171,14 +171,6 @@ export struct AgentConversation {
     return `${Math.floor(this.elapsed / 60)}:${sec < 10 ? '0' : ''}${sec}`;
   }
 
-  // Orb size: 168 until something is said, 120 above the captions, 84 above the full thread.
-  private orbDim(): number {
-    if (!this.hasThread()) {
-      return 168;
-    }
-    return this.showThread ? 84 : 120;
-  }
-
   // Rebuilds the thread from the open chat. Restored chats carry display cards only (no confirm or SOS cards).
   private loadChat(): void {
     this.items = [];
@@ -293,7 +285,7 @@ export struct AgentConversation {
     return this.phase !== 'OFF' || this.recording;
   }
 
-  // The one big button. Idle: start talking. Live: mute / unmute. Tap-to-talk: start, then send.
+  // The orb. Idle: start talking. Live: mute / unmute. Tap-to-talk: start, then send.
   private async onMic(): Promise<void> {
     if (this.phase === 'CONNECTING') {
       return;
@@ -388,7 +380,7 @@ export struct AgentConversation {
 
   private stageLabel(): ResourceStr {
     if (this.muted) {
-      return $r('app.string.agent_voice_muted');
+      return $r('app.string.agent_voice_muted_short');
     }
     switch (this.stage()) {
       case 'CONNECTING':
@@ -410,7 +402,7 @@ export struct AgentConversation {
     return this.liveTools.find((t: ToolStep) => !t.done);
   }
 
-  // Live session, nothing said yet: the orb is the whole screen (DESIGN.md §10.1a). The dock stays.
+  // Live session, nothing said yet: the stage is empty but for the state in large words; the dock stays.
   private immersive(): boolean {
     return this.mode === 'VOICE' && this.voiceActive() && !this.hasThread();
   }
@@ -588,8 +580,7 @@ export struct AgentConversation {
   header() {
     Row({ space: 8 }) {
       RoundIconButton({
-        icon: $r('app.media.ic_chevron_left'),
-        angle: -90,
+        icon: $r('app.media.ic_chevron_down'),
         label: $r('app.string.a11y_close'),
         onTap: () => {
           this.onClose();
@@ -640,11 +631,11 @@ export struct AgentConversation {
   @Builder
   threadToggle() {
     Row({ space: 6 }) {
-      Image($r('app.media.ic_chevron_left'))
-        .width(14)
-        .height(14)
+      Image($r('app.media.ic_chevron_down'))
+        .width(16)
+        .height(16)
         .fillColor($r('app.color.ink_2'))
-        .rotate({ angle: this.showThread ? -90 : 90 })
+        .rotate({ angle: this.showThread ? 0 : 180 })
       Text(this.showThread ? $r('app.string.agent_hide_thread') : $r('app.string.agent_show_thread'))
         .fontSize($r('app.float.font_small'))
         .fontWeight(600)
@@ -668,6 +659,10 @@ export struct AgentConversation {
   }
 
   build() {
+    Stack({ alignContent: Alignment.Bottom }) {
+    if (this.mode === 'VOICE') {
+      OrbLight({ phase: this.stage(), level: this.level, muted: this.muted })
+    }
     Column() {
       this.header()
       if (this.micBlocked && this.mode === 'VOICE') {
@@ -685,23 +680,19 @@ export struct AgentConversation {
           .padding({ left: 20, right: 20, bottom: 8 })
       }
 
-      if (this.mode === 'VOICE') {
-        VoiceStage({
-          phase: this.stage(),
-          level: this.level,
-          muted: this.muted,
-          dim: this.orbDim(),
-          full: this.immersive(),
-          label: this.stageLabel(),
-          onOrbTap: () => {
-            if (this.phase === 'OFF' && !this.recording) {
-              this.onMic();
-            }
-          }
-        })
-          .layoutWeight(this.immersive() ? 1 : 0)
-      }
-      if (!this.immersive()) {
+      if (this.immersive()) {
+        Column() {
+          Text(this.stageLabel())
+            .fontSize($r('app.float.font_title'))
+            .fontWeight(FontWeight.Bold)
+            .fontColor($r('app.color.ink'))
+            .textAlign(TextAlign.Center)
+            .padding({ left: 32, right: 32 })
+        }
+        .width('100%')
+        .layoutWeight(1)
+        .justifyContent(FlexAlign.Center)
+      } else {
         if (!this.hasThread()) {
           this.welcome()
         } else if (this.mode === 'CHAT' || this.showThread) {
@@ -714,12 +705,14 @@ export struct AgentConversation {
         }
       }
       if (this.mode === 'VOICE') {
-        VoiceDock({
-          phase: this.phase,
-          recording: this.recording,
+        OrbDock({
+          phase: this.stage(),
+          level: this.level,
           muted: this.muted,
+          recording: this.recording,
           active: this.voiceActive(),
-          onMic: () => {
+          label: this.stageLabel(),
+          onOrb: () => {
             this.onMic();
           },
           onScan: () => {
@@ -749,6 +742,9 @@ export struct AgentConversation {
           }
         })
       }
+    }
+    .width('100%')
+    .height('100%')
     }
     .width('100%')
     .height('100%')

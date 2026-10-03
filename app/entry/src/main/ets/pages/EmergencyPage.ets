@@ -547,7 +547,7 @@ export struct EmergencyPage {
           if (this.canSpeak) {
             SecondaryButton({
               label: this.speaking ? $r('app.string.em_read_stop') : $r('app.string.em_read_aloud'),
-              icon: $r('app.media.ic_wave'),
+              icon: $r('app.media.ic_volume'),
               onTap: () => {
                 this.readAloud();
               }

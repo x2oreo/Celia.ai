@@ -1733,6 +1733,22 @@
       "value": "Hide conversation"
     },
     {
+      "name": "agent_orb_mute",
+      "value": "Tap the orb to mute"
+    },
+    {
+      "name": "agent_orb_unmute",
+      "value": "Tap the orb to unmute"
+    },
+    {
+      "name": "agent_orb_send",
+      "value": "Tap the orb to send"
+    },
+    {
+      "name": "agent_voice_muted_short",
+      "value": "Muted"
+    },
+    {
       "name": "agent_voice_unavailable",
       "value": "I can't use the microphone right now."
     },
