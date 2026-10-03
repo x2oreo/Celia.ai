@@ -27,3 +27,6 @@
 
 # Claude local settings
 .claude/settings.local.json
+
+# Watch app runtime config (Supabase URL/key)
+watch/entry/src/main/resources/rawfile/config.json
