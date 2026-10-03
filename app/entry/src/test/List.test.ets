@@ -22,6 +22,7 @@ import drugCheckClientTest from './DrugCheckClient.test';
 import boxIdentifyTest from './BoxIdentify.test';
 import trendsTest from './Trends.test';
 import accountTest from './Account.test';
+import sosContactsTest from './SosContacts.test';
 import { Config } from '../main/ets/common/Config';
 
 export default function testsuite() {
@@ -51,4 +52,5 @@ export default function testsuite() {
   drugCheckClientTest();
   boxIdentifyTest();
   accountTest();
+  sosContactsTest();
 }

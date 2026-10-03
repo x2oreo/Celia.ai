@@ -126,13 +126,16 @@ not. Everything below is optional and the phone lists each request in Settings �
 | OpenAI, via our Edge Functions | Condition, genotype, medicine ingredients, one-line heart summary, last 12 chat messages; for the optional summaries, a medicine name or the doctor brief's medicine lines | You talk or type to the agent online, or tap "Explain it in plain words" / "Summarise for the doctor" |
 | OpenAI, via our Edge Functions or a direct WebSocket | Voice audio; a downscaled box photo | Live voice, cloud tap-to-talk, or a photo scan the on-device reader could not handle |
 | Supabase Storage | Card or doctor report, encrypted on the phone; the key stays in the link | You create a share link or card QR |
+| Supabase, SOS tables (our project) | Your emergency contacts' names and international phone numbers (at most 5) and your first name, for your paired watch; readable by nobody through the API, only by our `sos` function | Only after you switch on Settings → Account → "Let my watch alert my contacts" (off by default); switching it off deletes them |
 | Never uploaded in the clear | Without an account: name, phone numbers, contacts, notes | — |
 
 **With an account:** the `profiles` row is readable and writable only by your own login (row-level security
 `auth.uid() = user_id`; nothing for the public key). It is stored in our Supabase project. Delete it any time in
 Settings → Account → "Delete my data from my account" (this also signs you out; the phone keeps its copy). Signing
 out keeps the data on the phone unless you choose "Sign out and delete". The ledger marks these requests with their
-named exception (`ACCOUNT_AUTH`, `PROFILE_SYNC`); no other request may carry personal fields.
+named exception (`ACCOUNT_AUTH`, `PROFILE_SYNC`, `SOS_CONTACTS`); no other request may carry personal fields.
+When a watch SOS fires, the `sos` function texts and calls those contacts; without Twilio credentials on the server
+it records a test run instead (`dry_run`) and the Account page says that nobody was contacted.
 
 Known limits of this build: watch rows are guarded by a shared anon key plus the device id rather than per-user
 auth; the watch app has no ledger of its own.

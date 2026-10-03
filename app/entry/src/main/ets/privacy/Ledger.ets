@@ -48,7 +48,14 @@ export const EXCEPTION_PROFILE_SYNC: PersonalDataException = new PersonalDataExc
   '/rest/v1/profiles', ['name', 'phone', 'email', 'contacts', 'notes'],
   'Your profile and medicines are backed up to your own account so a new phone can restore them.');
 
-export const PERSONAL_DATA_EXCEPTIONS: PersonalDataException[] = [EXCEPTION_ACCOUNT_AUTH, EXCEPTION_PROFILE_SYNC];
+// With the user's consent (Settings → Account), the paired watch's SOS contacts and the user's first name, so the
+// server can alert them (migration 20261004100100_sos_contacts_account.sql, owner-only RPC).
+export const EXCEPTION_SOS_CONTACTS: PersonalDataException = new PersonalDataException('SOS_CONTACTS',
+  '/rest/v1/rpc/sync_sos_contacts', ['name', 'phone', 'contacts'],
+  'You switched on "Alert my contacts from my watch".');
+
+export const PERSONAL_DATA_EXCEPTIONS: PersonalDataException[] = [EXCEPTION_ACCOUNT_AUTH, EXCEPTION_PROFILE_SYNC,
+  EXCEPTION_SOS_CONTACTS];
 
 // Personal fields a request may NOT send: forbidden fields not covered by the named exception for this endpoint.
 // An exception only applies when the endpoint matches its own prefix, so it cannot be borrowed by another call.

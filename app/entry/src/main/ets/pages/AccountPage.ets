@@ -7,6 +7,8 @@ import { toast } from '../common/Toast';
 import { LocalStore } from '../data/LocalStore';
 import { Session } from '../account/Session';
 import { ProfileSync, SyncResult } from '../account/ProfileSync';
+import { DispatchStatus, SosContacts, SosStatus, SosSyncResult } from '../account/SosContacts';
+import { WatchPairing } from '../data/WatchPairing';
 import { PrimaryButton, SecondaryButton, SectionHeader, StatusStrip } from '../components/Common';
 
 @ComponentV2
@@ -17,6 +19,15 @@ export struct AccountPage {
   @Local syncResult: SyncResult = 'UP_TO_DATE';
   @Local syncAt: number = 0;
   @Local busy: boolean = false;
+  // B10: SOS contacts on the server (consent switch, off by default).
+  @Local sosOn: boolean = false;
+  @Local sosBusy: boolean = false;
+  @Local sosPaired: boolean = false;
+  @Local sosResult: SosSyncResult | undefined = undefined;
+  @Local sosSkipped: number = 0;
+  @Local sosContacts: number = -1;   // -1 = unknown (offline / not loaded)
+  @Local sosLast: DispatchStatus | undefined = undefined;
+  @Local sosLastAt: number = 0;
   private unsubscribe: () => void = () => {
   };
 
@@ -34,6 +45,27 @@ export struct AccountPage {
     this.email = Session.email();
     this.syncResult = ProfileSync.lastResult;
     this.syncAt = ProfileSync.lastSyncAt;
+    this.loadSos();
+  }
+
+  private async loadSos(): Promise<void> {
+    this.sosOn = await SosContacts.consent();
+    this.sosPaired = WatchPairing.isPaired();
+    this.sosResult = SosContacts.lastResult;
+    this.sosSkipped = SosContacts.lastSkipped;
+    const st: SosStatus | undefined = this.signedIn ? await SosContacts.status() : undefined;
+    this.sosContacts = st !== undefined ? st.contacts : -1;
+    this.sosLast = st !== undefined ? st.lastStatus : undefined;
+    this.sosLastAt = st !== undefined ? st.lastAt : 0;
+  }
+
+  private async toggleSos(on: boolean): Promise<void> {
+    this.sosOn = on;
+    this.sosBusy = true;
+    this.sosResult = await SosContacts.setConsent(on);
+    this.sosSkipped = SosContacts.lastSkipped;
+    this.sosBusy = false;
+    await this.loadSos();
   }
 
   private async syncNow(): Promise<void> {
@@ -98,6 +130,7 @@ export struct AccountPage {
   // Deleting signs out too, so the next local edit does not upload the profile again.
   private async deleteCloud(): Promise<void> {
     this.busy = true;
+    await SosContacts.clearOnServer();   // contacts and first name go too
     const ok: boolean = await ProfileSync.deleteCloudData();
     this.busy = false;
     if (!ok) {
@@ -161,6 +194,93 @@ export struct AccountPage {
     .borderRadius($r('app.float.radius_m'))
   }
 
+  private lastLine(): Resource | undefined {
+    const at: string = dateTime(this.sosLastAt, Date.now());
+    if (this.sosLast === 'dry_run') {
+      return $r('app.string.acc_sos_last_dry_run', at);
+    }
+    if (this.sosLast === 'sent') {
+      return $r('app.string.acc_sos_last_sent', at);
+    }
+    if (this.sosLast === 'partial') {
+      return $r('app.string.acc_sos_last_partial', at);
+    }
+    if (this.sosLast === 'failed' || this.sosLast === 'skipped_global_limit' || this.sosLast === 'unknown') {
+      return $r('app.string.acc_sos_last_failed', at);
+    }
+    if (this.sosLast === 'no_contacts') {
+      return $r('app.string.acc_sos_last_no_contacts', at);
+    }
+    if (this.sosLast === 'skipped_cooldown') {
+      return $r('app.string.acc_sos_last_skipped', at);
+    }
+    return undefined;
+  }
+
+  @Builder
+  sosCard() {
+    Column({ space: 12 }) {
+      Row({ space: 12 }) {
+        Text($r('app.string.acc_sos_switch'))
+          .fontSize($r('app.float.font_body'))
+          .fontWeight(FontWeight.Medium)
+          .fontColor($r('app.color.ink'))
+          .layoutWeight(1)
+        Toggle({ type: ToggleType.Switch, isOn: this.sosOn })
+          .enabled(this.sosPaired && !this.sosBusy)
+          .selectedColor($r('app.color.ink'))
+          .accessibilityText($r('app.string.acc_sos_switch'))
+          .onChange((on: boolean) => {
+            if (on !== this.sosOn) {
+              this.toggleSos(on);
+            }
+          })
+      }
+      .width('100%')
+      .constraintSize({ minHeight: $r('app.float.touch_min') })
+      Text($r('app.string.acc_sos_explain'))
+        .fontSize($r('app.float.font_small'))
+        .fontColor($r('app.color.ink_3'))
+        .width('100%')
+      if (!this.sosPaired) {
+        StatusStrip({ kind: 'OFFLINE', label: $r('app.string.acc_sos_needs_watch') })
+      } else if (this.sosBusy) {
+        LoadingProgress().width(28).height(28).color($r('app.color.brand_accent'))
+      } else if (this.sosOn) {
+        if (this.sosResult === 'OFFLINE') {
+          StatusStrip({ kind: 'OFFLINE', label: $r('app.string.acc_sos_offline') })
+        } else if (this.sosResult === 'ERROR') {
+          StatusStrip({ kind: 'ERROR', label: $r('app.string.acc_sos_error') })
+        }
+        if (this.sosContacts > 0) {
+          Text($r('app.string.acc_sos_ready', this.sosContacts))
+            .fontSize($r('app.float.font_small'))
+            .fontColor($r('app.color.ink_2'))
+            .width('100%')
+        } else if (this.sosContacts === 0) {
+          Text($r('app.string.acc_sos_none'))
+            .fontSize($r('app.float.font_small'))
+            .fontColor($r('app.color.ink_2'))
+            .width('100%')
+        }
+        if (this.sosSkipped > 0) {
+          StatusStrip({ kind: 'ERROR', label: $r('app.string.acc_sos_skipped', this.sosSkipped) })
+        }
+      }
+      if (this.sosPaired && this.lastLine() !== undefined) {
+        Text(this.lastLine())
+          .fontSize($r('app.float.font_small'))
+          .fontColor($r('app.color.ink_2'))
+          .width('100%')
+      }
+    }
+    .width('100%')
+    .padding(16)
+    .backgroundColor($r('app.color.surface'))
+    .border({ width: 1, color: $r('app.color.border') })
+    .borderRadius($r('app.float.radius_m'))
+  }
+
   @Builder
   whereCard() {
     Text($r('app.string.acc_where_body'))
@@ -183,6 +303,8 @@ export struct AccountPage {
               label: $r('app.string.acc_sign_out'),
               onTap: () => this.confirmSignOut()
             })
+            SectionHeader({ title: $r('app.string.acc_sos_label') })
+            this.sosCard()
             SectionHeader({ title: $r('app.string.acc_where_label') })
             this.whereCard()
             Text($r('app.string.acc_delete_cloud'))

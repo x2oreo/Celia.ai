@@ -43,6 +43,7 @@ import { VisitsPage } from './VisitsPage';
 import { FeelingPage } from './FeelingPage';
 import { Session, launchRoute } from '../account/Session';
 import { ProfileSync } from '../account/ProfileSync';
+import { SosContacts } from '../account/SosContacts';
 import { AgentCore, QUICK_REPLY_OK, QUICK_REPLY_UNWELL } from '../agent/AgentCore';
 import { CheckInSheet } from '../components/CheckInSheet';
 import { clock } from '../common/Format';
@@ -96,6 +97,9 @@ struct Index {
   private async showOnboardingIfNeeded(): Promise<void> {
     await Session.load();
     ProfileSync.start();
+    await WatchPairing.load();
+    WatchPairing.startAccountBinding();   // B9: a paired watch is readable only by its signed-in owner
+    SosContacts.start();                  // B10: contacts to the server, only with consent
     let profile: Profile | undefined = await LocalStore.get().getProfile();
     if (launchRoute(Session.isSignedIn(), profile !== undefined) === 'WELCOME') {
       this.navStack.pushPathByName(Routes.WELCOME, null, false);
