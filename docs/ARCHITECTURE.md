@@ -34,15 +34,26 @@ without blocking each other. Change a contract → tell the team on Discord + up
  └───────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-**Data rule:** the deterministic core works offline and its data (profile, meds, ICE contacts, chats, events) is
-stored only in the on-device encrypted RDB. Optional cloud paths, all listed in `AI_FEATURES.md` §3:
+**Data rule:** the deterministic core works offline and its data (profile, meds, ICE contacts, chats, events) lives
+in the on-device encrypted RDB, which the UI always reads. Optional cloud paths, all listed in `AI_FEATURES.md` §3:
+
+- Accounts (Supabase Auth, email + password over HTTPS, `account/AuthClient.ets`). The session is stored in the
+  encrypted RDB (`account/Session.ets`); with a stored session the app opens signed in with no network, even with an
+  expired token, and refreshes when it can. Only the server rejecting the refresh token signs out.
+- Account backup: profile + medicines as one JSON document in `public.profiles` (one row per user, RLS
+  `auth.uid() = user_id` for select/insert/update/delete, nothing for anon). Last-write-wins on the document time
+  (newer of `Profile.updatedAt` and the last medicine change), pushed/pulled at sign-in, at launch and after edits
+  (`account/ProfileSync.ets`). Medicines ride in the same document as the profile: one round trip, one policy set,
+  one timestamp. Deleted from Settings → Account (row only; the auth user stays). Requests carrying personal fields
+  must name a `PersonalDataException` (`privacy/Ledger.ets`): only `ACCOUNT_AUTH` and `PROFILE_SYNC` exist.
 
 - Supabase: the watch app uploads `watch_metrics` rows keyed by a device id (heart rate, alerts, symptoms, doses
   taken, falls, wear state, simulated vitals, and an `sos` row with location when allowed). The phone writes
   `watch_context` (genotype, last risky medicine and time) and reads the metrics back.
 - OpenAI, through our Edge Functions: `/agent` context and the last 12 chat messages, voice audio, a downscaled box
   photo. Live voice opens a WebSocket straight to OpenAI with a 2-minute secret.
-- Never uploaded in the clear by either app: name, phone numbers, contacts, notes.
+- Never uploaded in the clear by either app without an account: name, phone numbers, contacts, notes. With an
+  account they go only to the user's own `profiles` row (above).
 
 Known limit: watch rows are protected by a shared anon key plus the device id, not per-user auth (see README).
 
