@@ -2,6 +2,8 @@
 // BEFORE any model call. A match starts the deterministic emergency flow; the LLM is never on that path.
 // Patterns are deliberately broad: a false alarm costs one tap on "Cancel", a miss can cost a life.
 
+import { normalizeText } from '../common/Text';
+
 export type GateResult = 'EMERGENCY' | 'UNWELL' | 'OK' | 'NONE';
 
 // Red flags for LQTS (lqts-domain skill → Emergency facts). English + Polish.
@@ -56,7 +58,7 @@ function matchesAny(text: string, patterns: RegExp[]): boolean {
 export class SafetyGate {
   // checkInPending: true while a proactive "Are you OK?" is waiting for an answer.
   static classify(text: string, checkInPending: boolean): GateResult {
-    const t: string = text.toLowerCase();
+    const t: string = normalizeText(text);
     if (matchesAny(t, EMERGENCY_PATTERNS)) {
       return 'EMERGENCY';
     }
