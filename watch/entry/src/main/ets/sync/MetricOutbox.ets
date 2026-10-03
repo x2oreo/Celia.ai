@@ -1,4 +1,4 @@
-import { MetricRow } from '../model/WatchMetric';
+import { MetricRow, MetricType } from '../model/WatchMetric';
 
 /** Where the outbox persists itself. Preferences on the watch, in-memory in tests. */
 export interface OutboxStore {
@@ -45,6 +45,11 @@ export class MetricOutbox {
       this.rows.splice(liveIdx >= 0 ? liveIdx : 0, 1);
     }
     this.persist();
+  }
+
+  /** True while a row of this type is still waiting for upload. */
+  has(type: MetricType): boolean {
+    return this.rows.some((r: MetricRow) => r.type === type);
   }
 
   peek(max: number): MetricRow[] {

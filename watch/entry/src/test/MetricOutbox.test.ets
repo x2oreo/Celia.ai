@@ -25,6 +25,17 @@ export default function metricOutboxTest() {
       expect((box.peek(1)[0].payload as HrLiveValues).bpm).assertEqual(3);
     });
 
+    it('reports a waiting row type until it is acked', 0, () => {
+      const box = new MetricOutbox(new MemoryOutboxStore(), 10);
+      box.enqueue(live(1));
+      box.enqueue(symptom());
+      expect(box.has('symptom')).assertTrue();
+      box.ack(1);
+      expect(box.has('symptom')).assertTrue();
+      box.ack(1);
+      expect(box.has('symptom')).assertFalse();
+    });
+
     it('survives a restart via the store', 0, () => {
       const store = new MemoryOutboxStore();
       const a = new MetricOutbox(store, 10);
