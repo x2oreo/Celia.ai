@@ -14,6 +14,7 @@ export class Routes {
   static readonly PRIVACY: string = 'privacy';
   static readonly SYMPTOM_LOG: string = 'symptomLog';
   static readonly REMINDERS: string = 'reminders';
+  static readonly CARD_VIEW: string = 'cardView';         // param: CardPayload (scanned card QR)
 }
 
 // Tab indexes of components/MainTabs.ets.

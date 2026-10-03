@@ -180,7 +180,7 @@ drug tables); the LLM key is an Edge Function secret. Timeouts: app 20 s → fal
 | Notifications / call | `@kit.NotificationKit`, `call.makeCall` (dialer) | `common/Notify.ets`, `common/Dialer.ets` | ✅ verified |
 | Voice (stretch) | `@kit.CoreSpeechKit` | agent | ⚠️ check English support |
 | SOS location (F-28) | `@kit.LocationKit` | `emergency/SosService.ets` | ⚠️ permission flow verified; emulator has no fix → message says "location unknown" |
-| Card QR (F-30) | ArkUI `QRCode` | `pages/EmergencyPage.ets` | ✅ |
+| Card QR (F-30) | ArkUI `QRCode` → link to static viewer `site/card/` (GitHub Pages); card JSON → base64url in the `#fragment` (never sent to the server, no requests besides the page itself) | `emergency/CardLink.ets`, `pages/EmergencyPage.ets`, `pages/CardViewPage.ets`, `site/card/index.html` | ✅ (Pages must be enabled: Settings → Pages → GitHub Actions) |
 | SOS message (F-28) | `@kit.ShareKit` system share sheet | `common/Share.ets` | ✅ — direct SMS needs `SEND_MESSAGES` (system apps only), so the user sends via SMS/messenger/e-mail |
 | Live View (F-35) | `@kit.LiveViewKit` | `emergency/LiveStatus.ets` | ⚠️ needs scenario approval in AGC; falls back to an ongoing notification (used on the emulator) |
 | Box barcode (F-36) | `@kit.ScanKit` (system scan UI, album allowed) | `drugs/BarcodeService.ets`, `drugs/Gs1.ets`, `drugs/GtinCatalog.ets`, `rawfile/gtin_pl.json` | ✅ real Polish boxes offline (URPL register, ≈68k packs, loads in ~80 ms); other countries via on-device "teach this barcode"; demo GTINs (prefix 200) kept |

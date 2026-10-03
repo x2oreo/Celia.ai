@@ -14,6 +14,7 @@ import { PharmacyCardPage } from './PharmacyCardPage';
 import { PrivacyPage } from './PrivacyPage';
 import { SymptomLogPage } from './SymptomLogPage';
 import { RemindersPage } from './RemindersPage';
+import { CardViewPage } from './CardViewPage';
 import { LockScreen } from '../components/LockScreen';
 import { Routes, SosParam } from '../common/Routes';
 import { LocalStore } from '../data/LocalStore';
@@ -90,6 +91,8 @@ struct Index {
       SymptomLogPage()
     } else if (name === Routes.REMINDERS) {
       RemindersPage()
+    } else if (name === Routes.CARD_VIEW) {
+      CardViewPage()
     }
   }
 

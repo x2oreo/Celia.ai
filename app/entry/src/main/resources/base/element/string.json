@@ -309,8 +309,20 @@
       "value": "Show card as QR code"
     },
     {
+      "name": "emergency_card_open",
+      "value": "Open card in browser"
+    },
+    {
+      "name": "emergency_card_copy",
+      "value": "Copy card link"
+    },
+    {
+      "name": "emergency_card_copied",
+      "value": "Card link copied — paste it in any browser or chat."
+    },
+    {
       "name": "emergency_qr_hint",
-      "value": "Any phone camera can read this — no app or internet needed."
+      "value": "Scan with any phone camera to open this card in the reader's language. The card is inside the link — nothing is uploaded."
     },
     {
       "name": "home_check",
@@ -847,6 +859,14 @@
     {
       "name": "info_forgotten",
       "value": "Barcode forgotten"
+    },
+    {
+      "name": "cardview_title",
+      "value": "Emergency card"
+    },
+    {
+      "name": "cardview_note",
+      "value": "Scanned from a Celia QR code. Read on this phone only — nothing was saved."
     }
   ]
 }

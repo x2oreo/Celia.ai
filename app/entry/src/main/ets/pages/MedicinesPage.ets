@@ -10,6 +10,7 @@ import { AddMedForm } from '../components/AddMedForm';
 import { NavRow, PageTitle, PrimaryButton, RiskBadge, SecondaryButton, SectionHeader } from '../components/Common';
 import { BarcodeResult, scanBox } from '../drugs/BarcodeService';
 import { TeachBoxForm } from '../components/TeachBoxForm';
+import { CardPayload, parseCardLink } from '../emergency/CardLink';
 
 export function medRisk(m: Medication): RiskLevel {
   const e: DrugEntry | undefined = DrugChecker.get().entry(m.ingredient) ?? DrugChecker.get().resolve(m.name);
@@ -63,6 +64,10 @@ export struct MedicinesPage {
       // A real product code we don't know yet (e.g. a Bulgarian box): teach it once.
       this.teachGtin = r.gtin;
       this.showTeach = true;
+    } else if (parseCardLink(r.raw) !== undefined) {
+      // Someone's emergency-card QR: show the card (decoded on device, nothing stored).
+      const card: CardPayload | undefined = parseCardLink(r.raw);
+      this.navStack.pushPathByName(Routes.CARD_VIEW, card);
     } else {
       // Not a product code (e.g. a QR with text): check the text itself.
       this.navStack.pushPathByName(Routes.CHECK_RESULT, new CheckParam(r.raw, true, 'BARCODE'));

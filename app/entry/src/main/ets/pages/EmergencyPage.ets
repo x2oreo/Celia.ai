@@ -6,11 +6,17 @@ import { Contact, Profile } from '../model/Profile';
 import { Medication } from '../model/Medication';
 import { emergencyFor, EmergencyInfo, systemCountry } from '../common/EmergencyNumbers';
 import { cardText } from '../common/CardStrings';
-import { cardPlainText, medLine } from '../emergency/CardContent';
+import { medLine } from '../emergency/CardContent';
+import { cardLink } from '../emergency/CardLink';
 import { dial } from '../common/Dialer';
 import { Routes } from '../common/Routes';
 import { PageTitle, PrimaryButton, SecondaryButton } from '../components/Common';
 import { toast } from '../common/Toast';
+import { copyText } from '../common/Clipboard';
+import { Logger } from '../common/Logger';
+import { common } from '@kit.AbilityKit';
+
+const log: Logger = new Logger('EmergencyPage');
 
 @ComponentV2
 export struct EmergencyPage {
@@ -34,6 +40,29 @@ export struct EmergencyPage {
 
   aboutToDisappear(): void {
     this.unsubscribe();
+  }
+
+  private currentCardLink(): string {
+    return this.profile === undefined ? '' : cardLink(this.profile, this.meds, this.info().code);
+  }
+
+  private openCard(): void {
+    const link: string = this.currentCardLink();
+    if (link.length === 0) {
+      return;
+    }
+    const ctx: common.UIAbilityContext = this.getUIContext().getHostContext() as common.UIAbilityContext;
+    ctx.openLink(link).catch((e: Error) => {
+      log.warn(`card open failed: ${JSON.stringify(e)}`);
+      toast(this.getUIContext(), $r('app.string.error_generic'));
+    });
+  }
+
+  private async copyCard(): Promise<void> {
+    const link: string = this.currentCardLink();
+    if (link.length > 0 && await copyText(link)) {
+      toast(this.getUIContext(), $r('app.string.emergency_card_copied'));
+    }
   }
 
   private async reload(): Promise<void> {
@@ -207,7 +236,7 @@ export struct EmergencyPage {
             })
           }, (c: Contact) => `${c.name}-${c.phone}`)
 
-          // Offline QR: any phone camera can read the card, no app and no internet needed
+          // QR → card viewer link; the card travels in the #fragment and is rendered on the scanner's phone
           Column({ space: 12 }) {
             Row() {
               Image($r('app.media.ic_qr')).width(22).height(22).fillColor($r('app.color.brand_accent'))
@@ -227,15 +256,38 @@ export struct EmergencyPage {
               this.showQr = !this.showQr;
             })
             if (this.showQr) {
-              QRCode(cardPlainText(this.profile, this.meds))
-                .width(240)
-                .height(240)
+              QRCode(cardLink(this.profile, this.meds, this.info().code))
+                .width(260)
+                .height(260)
                 .color('#101828')
                 .backgroundColor('#FFFFFF')
               Text($r('app.string.emergency_qr_hint'))
                 .fontSize($r('app.float.font_caption'))
                 .fontColor($r('sys.color.font_secondary'))
                 .textAlign(TextAlign.Center)
+              // Same link as text, for when the QR can't be scanned (or to send it in a chat)
+              Text(cardLink(this.profile, this.meds, this.info().code))
+                .fontSize($r('app.float.font_caption'))
+                .fontColor($r('app.color.brand_accent'))
+                .maxLines(2)
+                .textOverflow({ overflow: TextOverflow.Ellipsis })
+                .wordBreak(WordBreak.BREAK_ALL)
+                .onClick(() => {
+                  this.openCard();
+                })
+              SecondaryButton({
+                label: $r('app.string.emergency_card_open'),
+                icon: $r('app.media.ic_share'),
+                onTap: () => {
+                  this.openCard();
+                }
+              })
+              SecondaryButton({
+                label: $r('app.string.emergency_card_copy'),
+                onTap: () => {
+                  this.copyCard();
+                }
+              })
             }
           }
           .width('100%')

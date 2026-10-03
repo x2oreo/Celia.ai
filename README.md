@@ -60,7 +60,7 @@ Everything below runs on the emulator with no backend and no watch. Heart data i
 | History, dashboard (F-23, F-24) | Home shows meds by risk, interactions and recent checks; Medicines → Check history (filters). |
 | Heart + alerts (F-09, F-32) | Heart → Simulation controls → `lqt2 startle tachy`, `lqt3 night brady`, `lqt1 exercise`, `irregular rhythm`, `watch disconnect`. |
 | SOS (F-27, F-28, F-35) | A CRITICAL alert (e.g. `lqt2 startle tachy`) opens the 30 s "Are you OK?" countdown → "I'm OK" or let it run → call / share message / call contacts. Settings → Test SOS runs a 10 s test marked TEST. 10-min cooldown for automatic SOS. |
-| Emergency card (F-08, F-26, F-29, F-30) | Emergency tab: country number (e.g. Bulgaria 150, Poland 999), English card, offline QR. (UI is English-only for now; card translations for 12 more languages are kept in `common/CardStrings.ets` for later.) |
+| Emergency card (F-08, F-26, F-29, F-30) | Emergency tab: country number (e.g. Bulgaria 150, Poland 999), English card, QR. The QR is a link to the card viewer (`site/card/`, GitHub Pages) with the card in the `#fragment` — any phone camera opens the formatted card in the reader's language (13 languages); scanning it with Celia's own scanner opens it offline. Preview locally: `python3 -m http.server -d site` → `/card/#<payload>`. |
 | Help guide (F-41) | Emergency → Help guide: 3 steps + CPR metronome 110/min (haptic). Also reachable from the lock screen. |
 | Pharmacy card (F-40) | Home → More → Pharmacy card (English for now). |
 | Doctor prep (F-31) | Home → Doctor visit prep → pick the specialist → share / copy. No AI: built from your own data. |
