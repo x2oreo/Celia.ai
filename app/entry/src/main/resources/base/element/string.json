@@ -2210,7 +2210,11 @@
     },
     {
       "name": "trends_offline",
-      "value": "Couldn't load your watch history. Check your connection and open this page again."
+      "value": "Couldn't load your watch history. Check your connection and try again."
+    },
+    {
+      "name": "trends_no_rows",
+      "value": "Your watch has not sent any data in the last %d days. Wear it and keep it paired, then open this page again."
     },
     {
       "name": "trends_disclaimer",

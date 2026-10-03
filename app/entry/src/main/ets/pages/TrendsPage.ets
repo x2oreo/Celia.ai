@@ -94,8 +94,11 @@ export struct TrendsPage {
           })
       }, (n: number) => `${n}`)
       Blank()
+      // Honest source label: SIMULATED for demo history or watch rows marked simulated, WATCH for real rows.
       if (this.data !== undefined && this.data.simulated) {
         SourceBadge({ label: $r('app.string.badge_simulated') })
+      } else if (this.data !== undefined && this.data.source === 'WATCH' && this.stats().daysWithData > 0) {
+        SourceBadge({ label: $r('app.string.badge_watch'), solid: true })
       }
     }
     .width('100%')
@@ -138,6 +141,17 @@ export struct TrendsPage {
               message: $r('app.string.trends_offline'),
               action: $r('app.string.check_retry'),
               onAction: () => {
+                this.data = undefined;
+                this.load();
+              }
+            })
+          } else if (this.data.source === 'WATCH' && this.stats().daysWithData === 0) {
+            // The project answered, but this watch has no rows in the span: say so, never fill in demo data.
+            EmptyCard({
+              message: $r('app.string.trends_no_rows', this.data.days.length),
+              action: this.span === 14 ? $r('app.string.trends_days', 30) : '',
+              onAction: () => {
+                this.span = 30;
                 this.data = undefined;
                 this.load();
               }
