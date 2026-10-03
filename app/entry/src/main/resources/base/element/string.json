@@ -1463,6 +1463,86 @@
     {
       "name": "widget_open_card",
       "value": "Open emergency card"
+    },
+    {
+      "name": "pair_nav",
+      "value": "Pair watch"
+    },
+    {
+      "name": "pair_row_title",
+      "value": "Pair watch"
+    },
+    {
+      "name": "pair_row_unpaired",
+      "value": "Not paired · using the shared demo watch"
+    },
+    {
+      "name": "pair_row_paired",
+      "value": "Paired with watch %s"
+    },
+    {
+      "name": "pair_intro",
+      "value": "Link your watch so this phone shows only your heart data."
+    },
+    {
+      "name": "pair_step_1",
+      "value": "On the watch, open Settings → Pair with phone."
+    },
+    {
+      "name": "pair_step_2",
+      "value": "Type the 6-digit code it shows. The code works for 5 minutes."
+    },
+    {
+      "name": "pair_code_hint",
+      "value": "6-digit code"
+    },
+    {
+      "name": "pair_button",
+      "value": "Pair"
+    },
+    {
+      "name": "pair_busy",
+      "value": "Pairing…"
+    },
+    {
+      "name": "pair_done",
+      "value": "Watch paired"
+    },
+    {
+      "name": "pair_paired_title",
+      "value": "Paired with watch %s"
+    },
+    {
+      "name": "pair_paired_since",
+      "value": "Since %s"
+    },
+    {
+      "name": "pair_replaced",
+      "value": "This watch was paired with another phone. Pair again to see its data here."
+    },
+    {
+      "name": "pair_unpair",
+      "value": "Unpair"
+    },
+    {
+      "name": "pair_unpaired",
+      "value": "Watch unpaired"
+    },
+    {
+      "name": "pair_err_code",
+      "value": "That code didn't work. Check the watch and try again, or get a new code."
+    },
+    {
+      "name": "pair_err_rate",
+      "value": "Too many tries. Wait a few minutes, then get a new code on the watch."
+    },
+    {
+      "name": "pair_err_offline",
+      "value": "Couldn't reach the server. Check your connection and try again."
+    },
+    {
+      "name": "pair_err_backend",
+      "value": "Pairing needs the online service, which isn't set up in this build."
     }
   ]
 }

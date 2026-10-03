@@ -29,6 +29,8 @@ import { askNotificationPermission } from '../common/Notify';
 import { AppLock } from '../common/AppLock';
 import { ReminderService } from '../reminders/ReminderService';
 import { BetaBlockerWatch } from '../vitals/BetaBlockerWatch';
+import { WatchPairing } from '../data/WatchPairing';
+import { PairWatchPage } from './PairWatchPage';
 import { AgentCore, QUICK_REPLY_OK, QUICK_REPLY_UNWELL } from '../agent/AgentCore';
 import { CheckInSheet } from '../components/CheckInSheet';
 import { clock } from '../common/Format';
@@ -51,9 +53,13 @@ struct Index {
   aboutToAppear(): void {
     this.showOnboardingIfNeeded();
     // The Celia watch via Supabase when a backend is configured; otherwise the labelled simulated source.
-    VitalsService.get().start('WATCH');
+    // The paired watch's id (if any) is loaded first, so nothing ever polls the wrong watch.
+    WatchPairing.load().then(() => {
+      VitalsService.get().start('WATCH');
+      BetaBlockerWatch.start();
+      WatchPairing.startGenotypeSync();
+    });
     WearNotifier.start();
-    BetaBlockerWatch.start();
     VitalsService.get().onAlert((a: VitalsAlert) => this.onAlert(a));
     AgentCore.get().onProactive((r: AgentReply) => this.onAgentProactive(r));
     AgentPrompt.onOpenChat(() => this.openChat());
@@ -198,6 +204,8 @@ struct Index {
       AgentPage()
     } else if (name === Routes.SCAN) {
       ScanPage()
+    } else if (name === Routes.PAIR_WATCH) {
+      PairWatchPage()
     }
   }
 

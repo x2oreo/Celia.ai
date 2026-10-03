@@ -9,8 +9,10 @@ export class Config {
   static readonly SUPABASE_ANON_KEY: string = LocalConfig.SUPABASE_ANON_KEY;
   static readonly AGENT_TIMEOUT_MS: number = 20000;
   static readonly DRUG_CHECK_TIMEOUT_MS: number = 5000;
-  // Watch paired with this phone. Hackathon: one demo watch (watch/.env WATCH_DEVICE_ID).
-  static readonly WATCH_DEVICE_ID: string = 'demo-watch-1';
+  // Shared demo watch, used until this phone is paired with a watch (data/WatchPairing.ets sets WATCH_DEVICE_ID at
+  // launch and after pairing). Every watch query reads WATCH_DEVICE_ID at call time.
+  static readonly DEFAULT_WATCH_DEVICE_ID: string = 'demo-watch-1';
+  static WATCH_DEVICE_ID: string = Config.DEFAULT_WATCH_DEVICE_ID;
 
   static hasBackend(): boolean {
     return Config.BACKEND_URL.length > 0 && Config.SUPABASE_ANON_KEY.length > 0;

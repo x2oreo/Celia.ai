@@ -408,6 +408,11 @@ In ArkUI, use `animateTo` / `.animation()` with `Curve.EaseInOut` and `iteration
 - **Onboarding**: progress segments in `brand`, orb 96 on step 1, `title-1` per step, primary `Continue`.
 - **Doctor report**: specialty chips (6.3), sections as `surface` cards with bullets, primary `Share`, secondary `Copy`.
 - **Medicines empty**: dashed empty card "No medicines yet. Add one or scan a box." + primary `Add a medicine`.
+- **Pair watch** (Settings → Pair watch): when paired, a `surface` card with a check icon, "Paired with watch
+  {first 8 chars of the id}" (`body` bold), "Since …" in `ink-3` and a secondary `Unpair`. Below it, always, the code
+  card: one `body` intro line, two `body-sm` steps in `ink-3`, a 56 vp `surface-alt` input centred in `title-2`, the
+  error strip from 6.7 when a code fails (neutral offline strip when there is no backend), and a primary `Pair`
+  that stays inactive until 6 digits are typed. Pairing again replaces the old pairing.
 
 ### 10.3 Still open
 

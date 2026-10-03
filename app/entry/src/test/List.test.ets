@@ -12,6 +12,8 @@ import boxCatalogTest from './BoxCatalog.test';
 import cardLinkTest from './CardLink.test';
 import restingTrendTest from './RestingTrend.test';
 import watchCloudSourceTest from './WatchCloudSource.test';
+import watchDataClientTest from './WatchDataClient.test';
+import watchPairingTest from './WatchPairing.test';
 
 export default function testsuite() {
   contractSmokeTest();
@@ -28,4 +30,6 @@ export default function testsuite() {
   cardLinkTest();
   restingTrendTest();
   watchCloudSourceTest();
+  watchDataClientTest();
+  watchPairingTest();
 }

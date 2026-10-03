@@ -8,6 +8,8 @@ import { Routes, SosParam } from '../common/Routes';
 import { NavRow, PrimaryButton, SectionHeader } from '../components/Common';
 import { validPhone } from './OnboardingPage';
 import { toast } from '../common/Toast';
+import { WatchPairing, shortId } from '../data/WatchPairing';
+import { Config } from '../common/Config';
 
 const GENOTYPES: Genotype[] = ['LQT1', 'LQT2', 'LQT3', 'UNKNOWN'];
 
@@ -22,15 +24,24 @@ export struct SettingsPage {
   @Local cRelation: string = '';
   @Local cEmail: string = '';
   @Local showAddContact: boolean = false;
+  @Local watchPaired: boolean = false;
+  @Local watchShort: string = '';
 
   aboutToAppear(): void {
     this.load();
+  }
+
+  // Back from the Pair watch page: show the new pairing state.
+  refreshWatchRow(): void {
+    this.watchPaired = WatchPairing.isPaired();
+    this.watchShort = shortId(Config.WATCH_DEVICE_ID);
   }
 
   private async load(): Promise<void> {
     this.profile = await LocalStore.get().getProfile();
     this.name = this.profile?.name ?? '';
     this.notes = this.profile?.notes ?? '';
+    this.refreshWatchRow();
   }
 
   // Saves a copy so @Local observers see a new object.
@@ -263,6 +274,17 @@ export struct SettingsPage {
             .border({ width: 1, color: $r('app.color.border') })
             .borderRadius($r('app.float.radius_m'))
 
+            SectionHeader({ title: $r('app.string.pair_nav') })
+            NavRow({
+              icon: $r('app.media.ic_tab_heart'),
+              title: $r('app.string.pair_row_title'),
+              subtitle: this.watchPaired ? $r('app.string.pair_row_paired', this.watchShort) :
+                $r('app.string.pair_row_unpaired'),
+              onTap: () => {
+                this.navStack.pushPathByName(Routes.PAIR_WATCH, null);
+              }
+            })
+
             SectionHeader({ title: $r('app.string.settings_safety') })
             NavRow({
               icon: $r('app.media.ic_bell'),
@@ -301,6 +323,7 @@ export struct SettingsPage {
       .scrollBar(BarState.Off)
     }
     .title($r('app.string.settings_title'))
+    .onShown(() => this.refreshWatchRow())
     .backgroundColor($r('app.color.bg'))
   }
 }

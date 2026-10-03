@@ -17,6 +17,7 @@ export class Routes {
   static readonly CARD_VIEW: string = 'cardView';         // param: CardPayload (scanned card QR)
   static readonly AGENT_CHAT: string = 'agentChat';
   static readonly SCAN: string = 'scan';
+  static readonly PAIR_WATCH: string = 'pairWatch';
 }
 
 // Tab indexes of components/MainTabs.ets. The first tab is the agent's home; the chat itself is a pushed page

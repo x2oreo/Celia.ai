@@ -10,7 +10,6 @@ import { DailyResting } from './RestingTrend';
 
 const log: Logger = new Logger('RestingHistory');
 
-const WATCH_DEVICE_ID: string = Config.WATCH_DEVICE_ID;
 const DAYS_TO_LOAD: number = 21;
 const DAY_MS: number = 24 * 3600 * 1000;
 
@@ -54,7 +53,7 @@ export function demoHistory(now: number): DailyResting[] {
 
 export async function loadRestingHistory(now: number): Promise<DailyResting[]> {
   if (Config.hasBackend()) {
-    const path: string = `/rest/v1/watch_resting_daily?device_id=eq.${WATCH_DEVICE_ID}` +
+    const path: string = `/rest/v1/watch_resting_daily?device_id=eq.${Config.WATCH_DEVICE_ID}` +
       `&select=day,resting_bpm,rest_minutes,simulated&order=day.desc&limit=${DAYS_TO_LOAD}`;
     const res: NetResult = await getJson(path, Config.DRUG_CHECK_TIMEOUT_MS);
     if (!res.ok) {
