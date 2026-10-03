@@ -33,6 +33,29 @@ same `sensor.on(HEART_RATE)` code as a real watch. Drag above 140 and hold for 1
 below 45 for the low one. The last reading counts for 30 s (sensors may report only on change); after that the
 watch shows "Waiting for heart rate…".
 
+## Risk-model inputs from the watch
+
+| Input | Status | How |
+|---|---|---|
+| Heart rate | ✅ real | `sensor.on(HEART_RATE)` (emulator: virtual HR sensor) |
+| HR limits per state | ✅ real | `Limits.limitsFor()`: max at rest 120 / active 140 / asleep 100, low 45 (asleep 40); LQT1 −10 while active, LQT2 −10 at rest, LQT3 low +5; recent risky drug −10 on all highs |
+| Resting heart rate | ✅ real (calculated) | lowest 1-min average at rest/asleep over 24 h (`RestingHr`); "est" until the first resting minute |
+| HR recovery after exercise (LQT1) | ✅ real (calculated) | peak HR of a ≥ 20 s active bout vs. HR 60 s after it ends; drop < 12 bpm = slow → alert (`RecoveryTracker`) |
+| Exercise / activity | ✅ real | accelerometer (`MotionAnalyzer`) + step counter (`PEDOMETER`) |
+| Stress | ⚠️ partly real | HR > resting × 1.35 at rest, and HRV < 25 ms when HRV is available (`isStressed`) |
+| Asleep | ⚠️ approximate | on wrist + still ≥ 10 min + HR ≤ resting + 10 + 22:00–07:00 (`SleepDetector`) |
+| Genotype, recently scanned risky drug | ✅ real (server) | `watch_context` row written by the phone app; polled every 60 s |
+| HRV | 🧪 simulated | Huawei watches measure it; watch apps can't read it yet |
+| Irregular rhythm | 🧪 simulated | ditto; simulated as "very fast HR without exertion" (≥ 170 at rest) |
+| SpO2, breathing rate | 🧪 simulated | ditto |
+
+Simulated values are plausible for the current state and heart rate (`MockedVitals`), tagged **sim** on the watch,
+and listed in `payload.mocked` in the data. They show what the product does once Huawei opens these signals to
+watch apps.
+
+Watch pages (swipe): **Heart** (bpm, state, current max) → **Vitals** (all inputs above) → **Log** (symptoms,
+medication) → **Settings** (source, demo scenario) → **Simulate**.
+
 ## Context: activity, falls, wear (beyond heart rate)
 
 PPG heart rate can't show QT, so the watch adds context that matters for LQTS:
@@ -44,7 +67,8 @@ PPG heart rate can't show QT, so the watch adds context that matters for LQTS:
 | **Watch on wrist** | `WEAR_DETECTION` sensor (not on the emulator); Simulate page | No HR alarms while off the wrist; `wear_state` rows so the dashboard can tell "not worn" from "no data" |
 
 The emulator has an accelerometer (rest/active works from it) but no wear sensor. **Simulate page** (4th page):
-*Fall*, *Take watch off / Put watch on*, *Activity: auto → rest → active*.
+*Fall*, *Take watch off / Put watch on*, *State: auto → rest → active → asleep*, *Genotype*, *Risky drug on/off*
+(stand-in for the phone app's drug scan).
 
 ## Always-on monitoring
 
@@ -73,6 +97,17 @@ What the demo shows is the part we can run on the emulator: our own monitoring l
 | `medication_taken` | "Took nadolol" | `{ name }` |
 | `fall_detected` | after a fall, when answered or after 30 s | `{ bpm, response: "ok" \| "no_response", responseSec }` |
 | `wear_state` | watch put on / taken off | `{ onWrist }` |
+| `vitals` | every 30 s | every input above: `{ bpm, restingBpm, activity, stress, steps, hrvMs, spo2, breathingRate, irregularRhythm, highLimitBpm, lowLimitBpm, genotype, riskyDrug, mocked[] }` |
+| `hr_recovery` | 60 s after an exercise bout | `{ peakBpm, bpmAfter60s, dropBpm, slow }` |
+| `rhythm_alert` | irregular rhythm starts (simulated) | `{ bpm, activity, mocked: true }` |
+
+The watch also **reads** `watch_context` (`device_id`, `genotype`, `risky_drug`, `risky_drug_risk`, `risky_drug_at`).
+The phone app upserts it after onboarding and after each drug check that returns a QT-risk verdict:
+```
+POST {SUPABASE_URL}/rest/v1/watch_context   Prefer: resolution=merge-duplicates
+{ "device_id": "demo-watch-1", "genotype": "LQT2", "risky_drug": "clarithromycin",
+  "risky_drug_risk": "KNOWN_RISK", "risky_drug_at": "2026-10-03T12:00:00Z" }
+```
 
 Contract: `entry/src/main/ets/model/WatchMetric.ets`. Table + RLS: `backend/supabase/migrations/` (run all files in order).
 
@@ -99,7 +134,7 @@ GET {SUPABASE_URL}/rest/v1/watch_metrics?device_id=eq.demo-watch-1&type=eq.hr_al
 cd watch && source env.sh
 ohpm install
 hvigorw --mode module -p module=entry@default -p product=default assembleHap --no-daemon
-hvigorw test -p module=entry -p coverage=false --no-daemon     # 26 local unit tests
+hvigorw test -p module=entry -p coverage=false --no-daemon     # 35 local unit tests
 cat entry/.test/default/intermediates/test/coverage_data/test_result.txt
 
 # Wearable emulator (image: HarmonyOS 6.1.1 wearable)
