@@ -20,6 +20,11 @@
 - Validated: every API name used in the code sketches was checked in the SDK typings (`pushService.getToken`,
   `liveViewManager` types and optional/required fields, `wearEngine` clients, `authentication` request/credential
   fields, `form_config` `renderingMode`). Huawei OIDC discovery and JWKS respond (2026-10-03).
+- Validated in Deno (scratch, jose 5.10): the Push service-account JWT sketch (header/claims/signature) and the
+  ID-token verification sketch (valid → UnionID; wrong nonce/aud/iss → rejected; live Huawei JWKS loads). This
+  found a real bug in the first draft: Huawei's JWKS labels keys `RS256` while ID tokens default to PS256, so
+  jose's `createRemoteJWKSet` would reject every token; `account-kit.md` now selects keys by `kid` and asks the
+  client for RS256.
 - Not validated: nothing ran on a device or emulator; no AGC project exists. Unverified points are flagged in each
   doc (push token on the emulator outside China, `idToken` presence in the sign-in response, lock-screen widget
   placement on the emulator, what a tap on a locked-screen widget does, Supabase `.invalid` email acceptance).

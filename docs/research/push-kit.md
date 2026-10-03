@@ -199,6 +199,9 @@ export async function sendPush(cfg: PushConfig, tokens: string[], title: string,
 }
 ```
 
+- Tested in Deno with jose 5.10 (2026-10-03, scratch copy of this block): config returns null on missing/empty
+  key JSON; the JWT header is `{alg:'PS256', kid, typ:'JWT'}`, `iss` = `sub_account`, `aud` = the token URL,
+  `exp - iat = 3600`, and it verifies with the matching public key. Not sent to Huawei (no key).
 - Success is response code `80000000`. `80300007` = all tokens invalid (delete them). `80300008` = body over 4096
   bytes. Full list: [push-scenariozed-api-response].
 - `title`/`body` come from the deterministic `buildSosMessage` (no LLM), shortened: e.g. title "Celia SOS from your

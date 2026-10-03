@@ -64,6 +64,7 @@ export async function signInWithHuaweiId(ctx: common.Context): Promise<HuaweiIdR
   req.forceLogin = true;                      // show sign-in/consent when needed
   req.state = util.generateRandomUUID();
   req.nonce = util.generateRandomUUID();      // matches ^[0-9a-zA-Z:/\.\-_]{1,255}$; ends up in the ID token
+  req.idTokenSignAlgorithm = authentication.IdTokenSignAlgorithm.RS256;  // default PS256; see JWKS note below
   try {
     const controller = new authentication.AuthenticationController(ctx);
     const resp = await controller.executeRequest(req) as authentication.LoginWithHuaweiIDResponse;
@@ -102,22 +103,41 @@ GET https://accounts.huawei.com/.well-known/openid-configuration
   subject_types_supported ["pairwise"]
 ```
 
+**JWKS gotcha (checked live 2026-10-03):** every key in Huawei's JWKS is labelled `"alg": "RS256"`, while ID
+tokens are signed with **PS256 by default**. jose's `createRemoteJWKSet` matches keys by `alg`, so it would reject
+every default token. Two fixes, use both: the client asks for RS256 (`IdTokenSignAlgorithm.RS256 = 2`, in the
+typings), and the server picks the key by `kid` only and imports it for the header's algorithm, as Huawei's Java
+sample does. Both paths were tested in Deno with jose 5.10 (a PS256 token verified against a JWK labelled RS256;
+wrong nonce, `aud` or `iss` rejected; the live JWKS loads).
+
 ID token claims ([account-faq-12]): `iss` = `https://accounts.huawei.com`, `sub` = **UnionID**, `aud` = our client
 ID, `azp`, `exp`, `iat`, `openid`, optional `nonce`, `display_name`/`nickname`/`picture` only with the `profile`
 scope. The default sign-in algorithm is PS256.
 
 ```ts
-import { createRemoteJWKSet, jwtVerify } from 'npm:jose@5';
+import { importJWK, type JWK, type JWTHeaderParameters, jwtVerify } from 'npm:jose@5';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
-const JWKS = createRemoteJWKSet(new URL('https://oauth-login.cloud.huawei.com/oauth2/v3/certs'));
+const CERTS = 'https://oauth-login.cloud.huawei.com/oauth2/v3/certs';
+let cache: JWK[] = [];
+
+/** Huawei labels its JWKs "RS256" but may sign PS256: select by kid, import for the header's alg. */
+async function huaweiKey(h: JWTHeaderParameters) {
+  if (!cache.some((k) => k.kid === h.kid)) {                  // keys rotate daily
+    const res = await fetch(CERTS, { signal: AbortSignal.timeout(5000) });
+    cache = ((await res.json()) as { keys?: JWK[] }).keys ?? [];
+  }
+  const jwk = cache.find((k) => k.kid === h.kid);
+  if (!jwk || (h.alg !== 'PS256' && h.alg !== 'RS256')) throw new Error('unknown key');
+  return await importJWK({ ...jwk, alg: h.alg }, h.alg);
+}
 
 Deno.serve(async (req) => {
   const body = await req.json().catch(() => null) as { idToken?: unknown; nonce?: unknown } | null;
   if (!body || typeof body.idToken !== 'string' || typeof body.nonce !== 'string') return json(400, { error: 'bad request' });
   let sub: string;
   try {
-    const { payload } = await jwtVerify(body.idToken, JWKS, {
+    const { payload } = await jwtVerify(body.idToken, huaweiKey, {
       issuer: 'https://accounts.huawei.com',
       audience: Deno.env.get('HUAWEI_CLIENT_ID')!,
       algorithms: ['PS256', 'RS256'],
