@@ -193,8 +193,20 @@
       "value": "My medicines"
     },
     {
+      "name": "meds_mine_count",
+      "value": "My medicines · %d"
+    },
+    {
       "name": "meds_empty",
       "value": "No medicines yet. Add one or scan a box."
+    },
+    {
+      "name": "meds_link_reminders",
+      "value": "Reminders"
+    },
+    {
+      "name": "meds_link_history",
+      "value": "History"
     },
     {
       "name": "meds_swipe_hint",
@@ -277,6 +289,14 @@
       "value": "Rhythm"
     },
     {
+      "name": "heart_rhythm_regular",
+      "value": "Regular"
+    },
+    {
+      "name": "heart_rhythm_irregular",
+      "value": "Irregular"
+    },
+    {
       "name": "heart_alerts",
       "value": "ALERTS"
     },
@@ -285,8 +305,32 @@
       "value": "No alerts. Everything looks calm."
     },
     {
+      "name": "heart_bpm_value",
+      "value": "%d bpm"
+    },
+    {
+      "name": "heart_alert_critical_a11y",
+      "value": "Urgent alert, %d beats per minute"
+    },
+    {
+      "name": "heart_alert_warn_a11y",
+      "value": "Warning, %d beats per minute"
+    },
+    {
+      "name": "heart_alert_info_a11y",
+      "value": "Note, %d beats per minute"
+    },
+    {
       "name": "heart_sim_controls",
       "value": "Demo controls"
+    },
+    {
+      "name": "heart_link_symptom",
+      "value": "Log a symptom"
+    },
+    {
+      "name": "heart_link_doctor",
+      "value": "Doctor prep"
     },
     {
       "name": "emergency_subtitle",
@@ -1129,6 +1173,22 @@
       "value": "Back"
     },
     {
+      "name": "a11y_unavailable",
+      "value": "Not available yet"
+    },
+    {
+      "name": "a11y_loading",
+      "value": "Loading"
+    },
+    {
+      "name": "a11y_expanded",
+      "value": "Expanded"
+    },
+    {
+      "name": "a11y_collapsed",
+      "value": "Collapsed"
+    },
+    {
       "name": "a11y_camera",
       "value": "Scan a medicine box"
     },
@@ -1187,6 +1247,14 @@
     {
       "name": "heart_only_hr",
       "value": "Heart rate only. This app does not measure QT."
+    },
+    {
+      "name": "a11y_hr_chart",
+      "value": "Heart rate over the last minutes: between %d and %d beats per minute"
+    },
+    {
+      "name": "a11y_hr_chart_empty",
+      "value": "No heart rate history yet"
     },
     {
       "name": "checkin_from_watch",

@@ -4,6 +4,20 @@
 import { RiskLevel } from '../model/DrugVerdict';
 import { RiskUi } from '../common/RiskUi';
 import { Motion } from '../common/Motion';
+import { Routes } from '../common/Routes';
+
+// A resource string as plain text, for accessibility sentences that mix resource words (a risk label) with data.
+export function resText(ui: UIContext, r: Resource): string {
+  try {
+    return ui.getHostContext()?.resourceManager.getStringSync(r.id) ?? '';
+  } catch (e) {
+    return '';
+  }
+}
+
+export function strText(ui: UIContext, v: ResourceStr): string {
+  return typeof v === 'string' ? v : resText(ui, v as Resource);
+}
 
 // Flat surface card: white, 1 vp border, no shadow (E0).
 @ComponentV2
@@ -60,6 +74,8 @@ export struct SectionHeader {
 }
 
 // Risk shape: octagon / triangle / diamond / check circle, or a dashed circle with "?" for Unknown.
+// A screen reader hears the risk word for it. Where the shape is only decoration (next to its own word, or used as a
+// warning mark) the caller hides it with accessibilityLevel('no-hide-descendants').
 @ComponentV2
 export struct RiskShape {
   @Param risk: RiskLevel = 'UNKNOWN_DRUG';
@@ -82,11 +98,14 @@ export struct RiskShape {
       }
       .width(this.dim)
       .height(this.dim)
+      .accessibilityGroup(true)
+      .accessibilityText(RiskUi.label(this.risk))
     } else {
       Image(RiskUi.icon(this.risk))
         .width(this.dim)
         .height(this.dim)
         .fillColor(RiskUi.color(this.risk))
+        .accessibilityText(RiskUi.label(this.risk))
     }
   }
 }
@@ -100,6 +119,7 @@ export struct RiskBadge {
   build() {
     Row({ space: this.compact ? 5 : 8 }) {
       RiskShape({ risk: this.risk, dim: this.compact ? 16 : 24 })
+        .accessibilityLevel('no-hide-descendants')
       Text(RiskUi.label(this.risk))
         .fontSize(this.compact ? $r('app.float.font_micro') : $r('app.float.font_badge'))
         .fontWeight(800)
@@ -111,6 +131,7 @@ export struct RiskBadge {
     .padding({ left: 4, right: this.compact ? 8 : 12 })
     .backgroundColor(RiskUi.tint(this.risk))
     .borderRadius(this.compact ? 12 : 16)
+    .accessibilityGroup(true)
   }
 }
 
@@ -151,7 +172,7 @@ export struct PrimaryButton {
     .opacity(this.active ? 1 : 0.4)
     .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.97 })
     .accessibilityGroup(true)
-    .accessibilityDescription(this.active ? '' : 'Not available yet')
+    .accessibilityDescription(this.active ? '' : resText(this.getUIContext(), $r('app.string.a11y_unavailable')))
     .onClick(() => {
       if (this.active) {
         this.onTap();
@@ -308,7 +329,7 @@ export struct PageTitle {
   }
 }
 
-// Back-arrow header for pushed pages.
+// Back-arrow header for pushed pages. Pages of this track use ScreenHeader; kept for the pages that still call it.
 @ComponentV2
 export struct BackHeader {
   @Param title: ResourceStr = '';
@@ -323,7 +344,7 @@ export struct BackHeader {
       .width(48)
       .height(48)
       .justifyContent(FlexAlign.Center)
-      .accessibilityText('Back')
+      .accessibilityText($r('app.string.a11y_back'))
       .onClick(() => this.onBack())
       Text(this.title)
         .fontSize($r('app.float.font_headline'))
@@ -334,6 +355,58 @@ export struct BackHeader {
     .width('100%')
     .height(56)
     .padding({ left: 4, right: 16 })
+  }
+}
+
+// The one header for every screen: back (pushed pages), title, settings. Tab pages pass `back: false` and get the
+// large title. `onDark` is for the scan surface. It navigates by itself through the root NavPathStack.
+// The look lives here only, so a reskin touches one place.
+@ComponentV2
+export struct ScreenHeader {
+  @Param title: ResourceStr = '';
+  @Param back: boolean = true;
+  @Param settings: boolean = true;
+  @Param onDark: boolean = false;
+  @Consumer('navStack') navStack: NavPathStack = new NavPathStack();
+
+  @Builder
+  iconButton(icon: Resource, dim: number, color: ResourceColor, label: Resource, onTap: () => void) {
+    Row() {
+      Image(icon).width(dim).height(dim).fillColor(color)
+    }
+    .width($r('app.float.touch_min'))
+    .height($r('app.float.touch_min'))
+    .justifyContent(FlexAlign.Center)
+    .accessibilityGroup(true)
+    .accessibilityText(label)
+    .onClick(onTap)
+  }
+
+  build() {
+    Row({ space: 4 }) {
+      if (this.back) {
+        this.iconButton($r('app.media.ic_chevron_left'), 24,
+          this.onDark ? $r('app.color.on_accent') : $r('app.color.ink'), $r('app.string.a11y_back'), () => {
+            this.navStack.pop();
+          })
+      }
+      Text(this.title)
+        .fontSize(this.back ? $r('app.float.font_headline') : $r('app.float.font_title_1'))
+        .fontWeight(this.back ? FontWeight.Bold : 800)
+        .fontColor(this.onDark ? $r('app.color.on_accent') : $r('app.color.ink'))
+        .maxLines(1)
+        .textOverflow({ overflow: TextOverflow.Ellipsis })
+        .layoutWeight(1)
+      if (this.settings) {
+        this.iconButton($r('app.media.ic_settings'), 22,
+          this.onDark ? $r('app.color.on_accent') : $r('app.color.ink_3'), $r('app.string.a11y_settings'), () => {
+            this.navStack.pushPathByName(Routes.SETTINGS, null);
+          })
+      }
+    }
+    .width('100%')
+    .constraintSize({ minHeight: 56 })
+    .padding(this.back ? { left: 4, right: 4 } : { top: 16, bottom: 8 })
   }
 }
 
@@ -365,6 +438,12 @@ export struct StatusChip {
   @Event onTap: () => void = () => {
   };
 
+  // With a risk shape the chip is read as "Ondansetron, Known risk": the verdict by its word, never by colour.
+  private spoken(): string {
+    const label: string = strText(this.getUIContext(), this.label);
+    return this.risk === undefined ? label : `${label}, ${resText(this.getUIContext(), RiskUi.label(this.risk))}`;
+  }
+
   build() {
     Row({ space: 6 }) {
       if (this.risk !== undefined) {
@@ -382,6 +461,7 @@ export struct StatusChip {
     .border({ width: 1, color: $r('app.color.border') })
     .borderRadius(20)
     .accessibilityGroup(true)
+    .accessibilityText(this.spoken())
     .onClick(() => this.onTap())
   }
 }
@@ -425,6 +505,7 @@ export struct QuickReplyChip {
     .borderRadius(22)
     .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.97 })
     .accessibilityGroup(true)
+    .accessibilitySelected(this.chipStyle === 'SELECTED')
     .onClick(() => this.onTap())
   }
 }
@@ -446,6 +527,7 @@ export struct StatusStrip {
         Circle().width(8).height(8).fill($r('app.color.ink_4'))
       } else {
         RiskShape({ risk: 'POSSIBLE_RISK', dim: 18 })
+          .accessibilityLevel('no-hide-descendants')
       }
       Text(this.label)
         .fontSize($r('app.float.font_badge'))
@@ -458,6 +540,7 @@ export struct StatusStrip {
           .fontWeight(FontWeight.Bold)
           .fontColor(this.kind === 'OFFLINE' ? $r('app.color.status_offline_text') : $r('app.color.risk_possible_text'))
           .decoration({ type: TextDecorationType.Underline })
+          .constraintSize({ minHeight: 24 })
           .onClick(() => this.onAction())
       }
     }
@@ -529,6 +612,8 @@ export struct TypingDots {
           .fontColor($r('app.color.ink_3'))
       }
     }
+    .accessibilityGroup(true)
+    .accessibilityText(strText(this.getUIContext(), this.label !== '' ? this.label : $r('app.string.a11y_loading')))
     .onAppear(() => {
       this.on = true;
     })
@@ -545,5 +630,6 @@ export struct SheetGrabber {
       .borderRadius(2)
       .backgroundColor($r('app.color.border_strong'))
       .margin({ top: 8, bottom: 8 })
+      .accessibilityLevel('no')
   }
 }
