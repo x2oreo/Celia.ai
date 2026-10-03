@@ -25,6 +25,10 @@
       "value": "#14100F"
     },
     {
+      "name": "bg_clear",
+      "value": "#0014100F"
+    },
+    {
       "name": "surface",
       "value": "#1F1A17"
     },

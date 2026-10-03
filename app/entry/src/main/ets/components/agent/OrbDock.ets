@@ -1,53 +1,31 @@
 // The bottom of the agent stage in voice mode (DESIGN.md §10.1a, screens 02 and 03): the orb sits where a mic
-// button would, with one round button on each side. Slow rings leave the orb while someone talks, and OrbLight
-// (below) glows behind the lower half of the stage and follows the voice, so the screen feels alive without
-// anything that reads as a pulse or a trace.
+// button would, with one round button on each side. The dock floats over the conversation, which runs the full
+// height of the stage underneath it. OrbBackdrop (below) fades the conversation out behind the orb and lets a
+// soft glow push out from the orb with the voice. No rings, no lines: only light.
 //   idle       scan · orb (tap: talk) · type
 //   live       End  · orb (tap: mute / unmute) · type
 //   recording  cancel · orb (tap: send) · type      (tap-to-talk, when live voice is unavailable)
 // The dock only reports taps; the page decides what they do. The state is always written above the orb.
 
 import { Config } from '../../common/Config';
-import { Motion } from '../../common/Motion';
 import { VoicePhase } from '../../voice/RealtimeSession';
 import { SourceBadge } from '../Common';
 import { SilkOrb } from '../SilkOrb';
 
 const ORB: number = 104;
-const DOCK_H: number = 136;        // orb row
-const LIGHT_H: number = 460;       // how far the ambient light reaches up from the bottom edge
+const DOCK_H: number = 128;        // orb row
+const GLOW: number = 300;          // diameter of the glow at rest; it sits centred on the orb
+const FADE_H: number = 310;        // the conversation fades into the background over this height
 const LEVEL_MS: number = 160;
 const FADE_MS: number = 320;
-const RING_MS: number = 2600;
 
-// One slow ring leaving the orb. A component of its own so the loop restarts each time the dock goes live.
+// Room the conversation leaves at its end so its last lines can scroll clear of the floating dock.
+export const DOCK_CLEARANCE: number = 250;
+
+// Behind the floating dock: the conversation fades into the background, and a soft glow pushes out from the orb.
+// Warm for the agent, neutral while the user is heard; it opens a little with the voice. Takes no touches.
 @ComponentV2
-struct OrbRing {
-  @Param delay: number = 0;
-  @Param user: boolean = false;    // neutral for the user's voice, warm for the agent's
-  @Local out: boolean = false;
-
-  build() {
-    Circle()
-      .width(ORB)
-      .height(ORB)
-      .fillOpacity(0)
-      .stroke(this.user ? $r('app.color.ink_4') : $r('app.color.orb_mid'))
-      .strokeWidth(1.5)
-      .animation({ duration: FADE_MS, curve: Curve.EaseInOut })
-      .scale({ x: this.out ? 2.6 : 1, y: this.out ? 2.6 : 1 })
-      .opacity(this.out ? 0 : 0.35)
-      .animation({ duration: RING_MS, delay: this.delay, curve: Curve.EaseOut, iterations: -1 })
-      .onAppear(() => {
-        this.out = true;
-      })
-  }
-}
-
-// Light rising from the orb: a wide radial glow behind the whole lower half of the stage, warm for the agent and
-// neutral while the user is heard. The page puts it behind its content, so it takes no room in the layout.
-@ComponentV2
-export struct OrbLight {
+export struct OrbBackdrop {
   @Param phase: VoicePhase = 'OFF';
   @Param level: number = 0;
   @Param muted: boolean = false;
@@ -56,49 +34,55 @@ export struct OrbLight {
     return this.phase === 'HEARING' || this.phase === 'LISTENING';
   }
 
-  // 0..1: how much the light opens. Idle keeps a faint glow so the orb never sits on a dead surface.
+  // 0..1: how far the glow opens. Idle keeps a faint glow so the orb never sits on a dead surface.
   private glow(): number {
     if (this.muted) {
-      return 0.15;
+      return 0.1;
     }
     if (this.phase === 'OFF') {
-      return 0.4;
+      return 0.3;
     }
     if (this.phase === 'HEARING' || this.phase === 'SPEAKING') {
-      return 0.7 + 0.3 * Math.max(0.25, Math.min(1, this.level));
+      return 0.6 + 0.4 * Math.max(0.25, Math.min(1, this.level));
     }
-    return 0.6;
+    return 0.5;
+  }
+
+  @Builder
+  glowDisc(from: Resource, to: Resource, on: boolean) {
+    Row()
+      .width(GLOW)
+      .height(GLOW)
+      .radialGradient({ center: ['50%', '50%'], radius: '50%', colors: [[from, 0], [to, 1]] })
+      .opacity(on ? 1 : 0)
+      .animation({ duration: FADE_MS, curve: Curve.EaseInOut })
   }
 
   build() {
-    Stack() {
+    Stack({ alignContent: Alignment.Bottom }) {
       Row()
         .width('100%')
         .height('100%')
-        .radialGradient({
-          center: ['50%', '78%'],
-          radius: '70%',
-          colors: [[$r('app.color.orb_glow'), 0], [$r('app.color.orb_glow_clear'), 1]]
+        .linearGradient({
+          direction: GradientDirection.Bottom,
+          colors: [[$r('app.color.bg_clear'), 0], [$r('app.color.bg'), 0.3], [$r('app.color.bg'), 1]]
         })
-        .opacity(this.userVoice() ? 0 : 1)
-        .animation({ duration: FADE_MS, curve: Curve.EaseInOut })
-      Row()
-        .width('100%')
-        .height('100%')
-        .radialGradient({
-          center: ['50%', '78%'],
-          radius: '70%',
-          colors: [[$r('app.color.orb_glow_user'), 0], [$r('app.color.orb_glow_user_clear'), 1]]
-        })
-        .opacity(this.userVoice() ? 1 : 0)
-        .animation({ duration: FADE_MS, curve: Curve.EaseInOut })
+      Stack() {
+        this.glowDisc($r('app.color.orb_glow'), $r('app.color.orb_glow_clear'), !this.userVoice())
+        this.glowDisc($r('app.color.orb_glow_user'), $r('app.color.orb_glow_user_clear'), this.userVoice())
+      }
+      .width(GLOW)
+      .height(GLOW)
+      // Centred on the orb: the orb row is DOCK_H tall and sits 8 vp above the bottom edge.
+      .margin({ bottom: 8 + DOCK_H / 2 - GLOW / 2 })
+      .opacity(this.glow())
+      .scale({ x: 0.8 + 0.5 * this.glow(), y: 0.8 + 0.5 * this.glow() })
+      .animation({ duration: LEVEL_MS, curve: Curve.EaseOut })
     }
     .width('100%')
-    .height(LIGHT_H)
-    .opacity(this.glow())
-    .animation({ duration: LEVEL_MS, curve: Curve.EaseOut })
+    .height(FADE_H)
+    .clip(true)
     .hitTestBehavior(HitTestMode.None)
-    .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.BOTTOM])
   }
 }
 
@@ -118,26 +102,8 @@ export struct OrbDock {
   };
   @Event onKeyboard: () => void = () => {
   };
-  @Local reduced: boolean = Motion.reduced;
-  private offMotion: () => void = () => {
-  };
-
-  aboutToAppear(): void {
-    this.offMotion = Motion.onChange((on: boolean) => {
-      this.reduced = on;
-    });
-  }
-
-  aboutToDisappear(): void {
-    this.offMotion();
-  }
-
   private userVoice(): boolean {
     return this.phase === 'HEARING' || this.phase === 'LISTENING';
-  }
-
-  private voiced(): boolean {
-    return !this.muted && (this.phase === 'HEARING' || this.phase === 'SPEAKING');
   }
 
   private hint(): Resource | undefined {
@@ -225,10 +191,6 @@ export struct OrbDock {
   @Builder
   orb() {
     Stack() {
-      if (this.voiced() && !this.reduced) {
-        OrbRing({ delay: 0, user: this.userVoice() })
-        OrbRing({ delay: RING_MS / 2, user: this.userVoice() })
-      }
       SilkOrb({ dim: ORB, phase: this.phase, level: this.level, muted: this.muted })
     }
     .width(ORB)
@@ -287,8 +249,10 @@ export struct OrbDock {
         .justifyContent(FlexAlign.SpaceEvenly)
         .alignItems(VerticalAlign.Center)
         .padding({ left: 24, right: 24 })
+        .hitTestBehavior(HitTestMode.Transparent)
     }
     .width('100%')
     .padding({ top: 4, bottom: 8 })
+    .hitTestBehavior(HitTestMode.Transparent)
   }
 }

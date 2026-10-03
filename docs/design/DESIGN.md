@@ -298,7 +298,7 @@ The orb is the agent's face while you talk. `components/SilkOrb.ets`, placed by 
 Neutral halo means "your voice", warm means "the agent". The label always says the state in words, so it never
 depends on colour or motion alone. While live the label carries a 8 vp dot in the same colour family
 (`brand` for the agent, `ink-4` for you). On the stage the orb sits in the dock at the bottom (10.1a, screens 02
-and 03) with the ambient light and rings behind it.
+and 03), floating over the conversation with a soft glow behind it.
 
 ### 6.6b Icons: Lucide
 
@@ -613,8 +613,11 @@ sits above it.
 - **Orb dock** (`components/agent/OrbDock.ets`): state label ("Tap to talk", `brand_text` 15 fp / 700), then a row:
   60 round `surface` scan button, **the orb at 104**, 60 round `surface` "Aa" (typing). Tap the orb: start talking.
   The microphone only opens on that tap.
-- **Ambient light** (`OrbLight`): a radial glow behind the lower 460 vp of the stage, centred on the orb,
-  `orb_glow` → `orb_glow_clear`. Idle 40% strength. It takes no room in the layout and never covers text.
+- **The dock floats.** The conversation runs the full height of the stage underneath it and leaves 250 vp at its
+  end, so the last line scrolls clear of the orb. No bar, no divider.
+- **Backdrop** (`OrbBackdrop`): over the bottom 310 vp the conversation fades into `bg` (`bg_clear` → `bg` by 30%),
+  and a 300 vp radial glow sits centred on the orb, `orb_glow` → `orb_glow_clear`, at 30% when idle. Only light: no
+  rings, no lines.
 
 **03 Agent stage, live voice**:
 
@@ -623,16 +626,15 @@ sits above it.
 - **Captions** instead of a chat list: "You: …" in `body` `ink-3`, the agent's sentence in `title-2` / 700 growing
   word by word (18 fp above 140 characters), the tool step pill, then the cards of this turn (verdict card,
   confirm cards, tiles) sliding in under the captions. A verdict never needs a page change.
-- "Show conversation" (chevron, 14 fp / 600) swaps the captions for the full thread; "Hide conversation" swaps
-  back. Typing mode always shows the thread and the chat bar instead of the dock.
+- A round button at the right of the header (chat glyph) swaps the captions for the full thread; the same button
+  (voice glyph) swaps back. Typing mode always shows the thread and the chat bar instead of the dock.
 - Orb dock, live: state label with its 8 vp dot (`brand` for the agent, `ink-4` for you) and the hint "Tap the orb
   to mute". Row: 60 round **ink `End`** (✕ over the word; ink, not red: ending a call is not an emergency), the orb,
   60 round "Aa". **Tap the orb: mute / unmute** (the orb fades and stills when muted; the label says "Muted").
   Recording one question (tap-to-talk fallback): cancel ✕, orb (tap: send), "Aa".
-- Light and rings: the ambient light turns neutral (`orb_glow_user`) while you are heard and warm while the agent
-  speaks, and opens with the voice level (160 ms ease-out). While someone talks, two 1.5 vp rings leave the orb
-  (scale 1 → 2.6, fading out, 2.6 s, offset by half a cycle). Rings are slow and round: nothing that reads as a
-  pulse or a trace. Reduced motion: no rings, light stays.
+- Light: the glow turns neutral (`orb_glow_user`) while you are heard and warm while the agent speaks, and pushes
+  out slightly from the orb with the voice level (opacity 60–100%, scale 1.1–1.3, 160 ms ease-out). Muted: 10%.
+  Nothing else moves around the orb.
 - Leaving the stage (close, a pushed page, the app going to the background) ends the live session.
 
 **04 Health (tab 2)**: every watch metric, one tap from its graph (6.10).
@@ -811,6 +813,6 @@ the browser; the page itself never sees anything until the key in the link's `#`
 
 `radius_btn` 14, `button_height_sheet` 52, `chip_height` 44, `font_button` 15, `font_badge` 13, `font_mono` 9,
 `avatar_*` (incl. `avatar_tab` 56, `avatar_hero` 168), `dock_side` 60, `dock_main` 80, `risk_<level>_border`, `danger`, `scrim`,
-`shadow_sheet`, `orb_light/mid/dark`, `orb_sheen`, `orb_sheen_clear`, `orb_glow`, `orb_glow_clear`,
+`shadow_sheet`, `bg_clear`, `orb_light/mid/dark`, `orb_sheen`, `orb_sheen_clear`, `orb_glow`, `orb_glow_clear`,
 `orb_glow_user`, `orb_glow_user_clear`, and `card_fixed_*`
 (always-light emergency card, the same in dark mode).

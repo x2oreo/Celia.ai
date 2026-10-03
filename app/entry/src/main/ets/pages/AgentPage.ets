@@ -28,7 +28,7 @@ import { Logger } from '../common/Logger';
 import { RoundIconButton, StatusStrip } from '../components/Common';
 import { ToolStep, ToolUi, toolArg } from '../components/AgentCards';
 import { stagePhase } from '../components/agent/AgentLogic';
-import { OrbDock, OrbLight } from '../components/agent/OrbDock';
+import { DOCK_CLEARANCE, OrbBackdrop, OrbDock } from '../components/agent/OrbDock';
 import { AgentCaptions, AgentMode, AgentThread, AgentWelcome, ChatItem } from '../components/agent/AgentThread';
 import { Brief, HomeBrief } from '../components/agent/HomeBrief';
 import { ChatBar } from '../components/agent/AgentDock';
@@ -407,6 +407,11 @@ export struct AgentConversation {
     return this.mode === 'VOICE' && this.voiceActive() && !this.hasThread();
   }
 
+  // In voice mode the dock floats over the conversation, which leaves room at its end to scroll clear of it.
+  private endPad(): number {
+    return this.mode === 'VOICE' ? DOCK_CLEARANCE : 12;
+  }
+
   private hasThread(): boolean {
     return this.items.length > 0 || this.userLive !== '' || this.agentLive !== '' || this.liveTools.length > 0 ||
       this.busy;
@@ -509,6 +514,7 @@ export struct AgentConversation {
       accepted: this.accepted,
       sosClosedAt: this.sosClosedAt,
       scroller: this.scroller,
+      endPad: this.endPad(),
       onSend: (text: string) => {
         this.send(text);
       },
@@ -541,6 +547,7 @@ export struct AgentConversation {
       resolved: this.resolved,
       accepted: this.accepted,
       sosClosedAt: this.sosClosedAt,
+      endPad: this.endPad(),
       onSend: (text: string) => {
         this.send(text);
       },
@@ -565,6 +572,7 @@ export struct AgentConversation {
     AgentWelcome({
       mode: this.mode,
       line: this.line,
+      endPad: this.endPad(),
       onStarter: (label: Resource) => {
         this.send(this.str(label));
       },
@@ -573,6 +581,19 @@ export struct AgentConversation {
       }
     })
       .layoutWeight(1)
+  }
+
+  // Captions and the full thread are two views of the same turns; this switches between them (voice mode).
+  @Builder
+  threadButton() {
+    RoundIconButton({
+      icon: this.showThread ? $r('app.media.ic_wave') : $r('app.media.ic_chat'),
+      label: this.showThread ? $r('app.string.agent_hide_thread') : $r('app.string.agent_show_thread'),
+      onTap: () => {
+        this.showThread = !this.showThread;
+        this.toBottom();
+      }
+    })
   }
 
   // Header: close (chevron down), then "VOICE · 0:42" while a session runs, else Chats and New chat.
@@ -595,9 +616,16 @@ export struct AgentConversation {
           .fontColor($r('app.color.ink_3'))
           .textAlign(TextAlign.Center)
           .layoutWeight(1)
-        Blank().width($r('app.float.chip_height'))
+        if (this.hasThread()) {
+          this.threadButton()
+        } else {
+          Blank().width($r('app.float.chip_height'))
+        }
       } else {
         Blank()
+        if (this.mode === 'VOICE' && this.hasThread()) {
+          this.threadButton()
+        }
         Text($r('app.string.home_chats'))
           .fontSize($r('app.float.font_button'))
           .fontWeight(FontWeight.Bold)
@@ -627,29 +655,6 @@ export struct AgentConversation {
     .padding({ left: 16, right: 16 })
   }
 
-  // "Show conversation" / "Hide conversation": captions and the full thread are two views of the same turns.
-  @Builder
-  threadToggle() {
-    Row({ space: 6 }) {
-      Image($r('app.media.ic_chevron_down'))
-        .width(16)
-        .height(16)
-        .fillColor($r('app.color.ink_2'))
-        .rotate({ angle: this.showThread ? 0 : 180 })
-      Text(this.showThread ? $r('app.string.agent_hide_thread') : $r('app.string.agent_show_thread'))
-        .fontSize($r('app.float.font_small'))
-        .fontWeight(600)
-        .fontColor($r('app.color.ink_2'))
-    }
-    .height($r('app.float.chip_height'))
-    .padding({ left: 16, right: 16 })
-    .accessibilityGroup(true)
-    .onClick(() => {
-      this.showThread = !this.showThread;
-      this.toBottom();
-    })
-  }
-
   // A page pushed over the stage, or the stage being left: end live voice. The microphone never stays open unseen.
   @Monitor('active')
   onActiveChange(m: IMonitor): void {
@@ -660,51 +665,66 @@ export struct AgentConversation {
 
   build() {
     Stack({ alignContent: Alignment.Bottom }) {
-    if (this.mode === 'VOICE') {
-      OrbLight({ phase: this.stage(), level: this.level, muted: this.muted })
-    }
-    Column() {
-      this.header()
-      if (this.micBlocked && this.mode === 'VOICE') {
-        StatusStrip({
-          kind: 'ERROR',
-          label: $r('app.string.agent_voice_unavailable'),
-          action: $r('app.string.agent_type_instead'),
-          onAction: () => {
-            this.setMode('CHAT');
-          }
-        })
-          .padding({ left: 20, right: 20, bottom: 8 })
-      } else if (!Config.hasBackend()) {
-        StatusStrip({ label: $r('app.string.agent_offline') })
-          .padding({ left: 20, right: 20, bottom: 8 })
-      }
-
-      if (this.immersive()) {
-        Column() {
-          Text(this.stageLabel())
-            .fontSize($r('app.float.font_title'))
-            .fontWeight(FontWeight.Bold)
-            .fontColor($r('app.color.ink'))
-            .textAlign(TextAlign.Center)
-            .padding({ left: 32, right: 32 })
+      Column() {
+        this.header()
+        if (this.micBlocked && this.mode === 'VOICE') {
+          StatusStrip({
+            kind: 'ERROR',
+            label: $r('app.string.agent_voice_unavailable'),
+            action: $r('app.string.agent_type_instead'),
+            onAction: () => {
+              this.setMode('CHAT');
+            }
+          })
+            .padding({ left: 20, right: 20, bottom: 8 })
+        } else if (!Config.hasBackend()) {
+          StatusStrip({ label: $r('app.string.agent_offline') })
+            .padding({ left: 20, right: 20, bottom: 8 })
         }
-        .width('100%')
-        .layoutWeight(1)
-        .justifyContent(FlexAlign.Center)
-      } else {
-        if (!this.hasThread()) {
+
+        if (this.immersive()) {
+          Column() {
+            Text(this.stageLabel())
+              .fontSize($r('app.float.font_title'))
+              .fontWeight(FontWeight.Bold)
+              .fontColor($r('app.color.ink'))
+              .textAlign(TextAlign.Center)
+              .padding({ left: 32, right: 32, bottom: DOCK_CLEARANCE })
+          }
+          .width('100%')
+          .layoutWeight(1)
+          .justifyContent(FlexAlign.Center)
+        } else if (!this.hasThread()) {
           this.welcome()
         } else if (this.mode === 'CHAT' || this.showThread) {
           this.thread()
         } else {
           this.captions()
         }
-        if (this.mode === 'VOICE' && this.hasThread()) {
-          this.threadToggle()
+        if (this.mode === 'CHAT') {
+          ChatBar({
+            draft: this.draft,
+            onDraft: (text: string) => {
+              this.draft = text;
+            },
+            onSend: () => {
+              this.send(this.draft);
+            },
+            onScan: () => {
+              this.pickAndScan();
+            },
+            onVoice: () => {
+              this.setMode('VOICE');
+            }
+          })
         }
       }
+      .width('100%')
+      .height('100%')
+
+      // Voice: the conversation runs the full height; the orb floats over its end on a soft fade and glow.
       if (this.mode === 'VOICE') {
+        OrbBackdrop({ phase: this.stage(), level: this.level, muted: this.muted })
         OrbDock({
           phase: this.stage(),
           level: this.level,
@@ -725,26 +745,7 @@ export struct AgentConversation {
             this.setMode('CHAT');
           }
         })
-      } else {
-        ChatBar({
-          draft: this.draft,
-          onDraft: (text: string) => {
-            this.draft = text;
-          },
-          onSend: () => {
-            this.send(this.draft);
-          },
-          onScan: () => {
-            this.pickAndScan();
-          },
-          onVoice: () => {
-            this.setMode('VOICE');
-          }
-        })
       }
-    }
-    .width('100%')
-    .height('100%')
     }
     .width('100%')
     .height('100%')

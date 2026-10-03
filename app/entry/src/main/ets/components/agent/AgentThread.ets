@@ -48,6 +48,7 @@ export struct AgentThread {
   @Param accepted: string[] = [];
   @Param sosClosedAt: number = 0;
   @Param scroller: Scroller = new Scroller();
+  @Param endPad: number = 12;          // room at the end, so the last turn clears a floating dock
   @Event onSend: (text: string) => void = (text: string) => {
   };
   @Event onResolve: (actionId: string, accepted: boolean) => void = (actionId: string, accepted: boolean) => {
@@ -194,7 +195,7 @@ export struct AgentThread {
     .height('100%')
     .padding({ left: 20, right: 20 })
     .contentStartOffset(4)
-    .contentEndOffset(12)
+    .contentEndOffset(this.endPad)
     .scrollBar(BarState.Off)
     .edgeEffect(EdgeEffect.Spring)
   }
@@ -215,6 +216,7 @@ export struct AgentCaptions {
   @Param resolved: string[] = [];
   @Param accepted: string[] = [];
   @Param sosClosedAt: number = 0;
+  @Param endPad: number = 12;
   @Event onSend: (text: string) => void = (text: string) => {
   };
   @Event onResolve: (actionId: string, accepted: boolean) => void = (actionId: string, accepted: boolean) => {
@@ -347,7 +349,7 @@ export struct AgentCaptions {
       }
       .width('100%')
       .alignItems(HorizontalAlign.Start)
-      .padding({ left: 20, right: 20, top: 8, bottom: 12 })
+      .padding({ left: 20, right: 20, top: 8, bottom: this.endPad })
     }
     .width('100%')
     .height('100%')
@@ -363,6 +365,7 @@ export struct AgentCaptions {
 export struct AgentWelcome {
   @Param mode: AgentMode = 'VOICE';
   @Param line: string = '';            // the agent's sentence, same as on Today
+  @Param endPad: number = 12;
   @Event onStarter: (label: Resource) => void = (label: Resource) => {
   };
   @Event onOpen: (route: string) => void = (route: string) => {
@@ -440,7 +443,7 @@ export struct AgentWelcome {
         .alignItems(HorizontalAlign.Start)
       }
       .width('100%')
-      .padding({ left: 20, right: 20, bottom: 12 })
+      .padding({ left: 20, right: 20, bottom: this.endPad })
     }
     .width('100%')
     .height('100%')
