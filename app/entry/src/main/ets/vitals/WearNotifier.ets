@@ -7,9 +7,6 @@ import { VitalsAlert } from '../model/Vitals';
 import { notify, NOTIFY_ALERT, NOTIFY_RISKY_CHECK } from '../common/Notify';
 import { pulse } from '../common/Haptics';
 import { Logger } from '../common/Logger';
-import { LocalStore } from '../data/LocalStore';
-import { Profile } from '../model/Profile';
-import { WatchContextSync } from './WatchContextSync';
 
 const log: Logger = new Logger('WearNotifier');
 
@@ -33,18 +30,8 @@ export class WearNotifier {
     log.info(`wrist alert (watch not connected — phone fallback): ${name}`);
     pulse(300);
     notify(NOTIFY_RISKY_CHECK, `Careful with ${name}`, text, false);
-    WearNotifier.tellWatch(name, o);
-  }
-
-  // The Celia watch app shows the verdict glance when watch_context names a new risky drug (cloud path).
-  private static async tellWatch(name: string, o: CheckOutcome): Promise<void> {
-    try {
-      const profile: Profile | undefined = await LocalStore.get().getProfile();
-      const risk: string = o.combo.kind !== 'NONE' && o.verdict.risk === 'NOT_LISTED' ? 'POSSIBLE_RISK' : o.verdict.risk;
-      await WatchContextSync.riskyDrug(profile?.genotype ?? 'UNKNOWN', name, risk);
-    } catch (e) {
-      log.warn(`watch context failed: ${String(e)}`);
-    }
+    // The watch is told only when the user confirms they took it ("I took it", drugs/DrugIntake.ets): checking a
+    // medicine is not taking it, and a check alone must not tighten the watch's limits for 72 h.
   }
 
   static vitalsAlert(a: VitalsAlert): void {

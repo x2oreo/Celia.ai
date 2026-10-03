@@ -1,4 +1,4 @@
-// Tells the Celia watch app (watch/) about the user's genotype and a risky medicine just checked, through the
+// Tells the Celia watch app (watch/) about the user's genotype and a risky medicine just taken, through the
 // `watch_context` row it polls every 60 s (T15 cloud path — no Wear Engine approval needed). Only with the cloud
 // backend (Config.hasWatchCloud). Sends no personal data: device id, genotype, ingredient, risk level, time.
 
@@ -22,12 +22,13 @@ export function watchContextRow(deviceId: string, genotype: string, drug: string
 }
 
 export class WatchContextSync {
-  static async riskyDrug(genotype: string, drug: string, risk: string): Promise<boolean> {
+  // `at` = when it was taken (drugs/DrugIntake.ets); the watch's 72 h window starts there.
+  static async riskyDrug(genotype: string, drug: string, risk: string, at: number = Date.now()): Promise<boolean> {
     if (!Config.hasWatchCloud() || !['KNOWN_RISK', 'POSSIBLE_RISK', 'CONDITIONAL_RISK'].includes(risk)) {
       return false;
     }
     const res: NetResult = await upsertJson('/rest/v1/watch_context',
-      watchContextRow(Config.WATCH_DEVICE_ID, genotype, drug, risk, Date.now()), 8000);
+      watchContextRow(Config.WATCH_DEVICE_ID, genotype, drug, risk, at), 8000);
     if (!res.ok) {
       log.warn(`watch_context upsert failed: HTTP ${res.status}`);
     }

@@ -16,6 +16,7 @@ import restingTrendTest from './RestingTrend.test';
 import watchCloudSourceTest from './WatchCloudSource.test';
 import watchDataClientTest from './WatchDataClient.test';
 import watchPairingTest from './WatchPairing.test';
+import drugIntakeTest from './DrugIntake.test';
 import medInfoTest from './MedInfo.test';
 import drugCheckClientTest from './DrugCheckClient.test';
 import boxIdentifyTest from './BoxIdentify.test';
@@ -42,6 +43,7 @@ export default function testsuite() {
   watchCloudSourceTest();
   watchDataClientTest();
   watchPairingTest();
+  drugIntakeTest();
   medInfoTest();
   drugCheckClientTest();
   boxIdentifyTest();
