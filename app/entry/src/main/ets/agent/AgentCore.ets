@@ -50,6 +50,7 @@ export class AgentCore {
   private static instance: AgentCore | undefined = undefined;
 
   private proactive: Listeners<AgentReply> = new Listeners<AgentReply>();
+  private emergencyClosed: Listeners<number> = new Listeners<number>();
   private client: AgentClient = new AgentClient();
   private registry: ToolRegistry = new ToolRegistry();
   private history: ChatMessage[] = [];
@@ -112,7 +113,14 @@ export class AgentCore {
   // Called by the emergency screen when the user cancels the countdown.
   emergencyCancelled(): void {
     this.cancelCheckIn();
-    this.remember('assistant', 'Emergency call cancelled by the user.');
+    this.emergencyClosed.emit(Date.now());
+    this.proactive.emit(this.say('Glad you\'re OK. I cancelled the emergency call. Sit down and rest for a few ' +
+      'minutes, and tell me if anything changes.', [], true));
+  }
+
+  // The SOS countdown was cancelled ("I'm OK"). The chat hides its "Open SOS" button.
+  onEmergencyClosed(cb: Listener<number>): () => void {
+    return this.emergencyClosed.add(cb);
   }
 
   // ---- hooks for the realtime voice session (same tools, gate, validator and memory) ----------------------------
@@ -258,7 +266,7 @@ export class AgentCore {
       log.warn(`logEvent failed: ${String(e)}`);
     }
     return this.say(`This could be serious. Sit or lie down now. I'm calling ${num} in ${EMERGENCY_COUNTDOWN_SEC} ` +
-      'seconds and alerting your emergency contacts — tap Cancel if you are OK.',
+      'seconds and alerting your emergency contacts — tap "I\'m OK" if you are fine.',
       [action('START_EMERGENCY', payload)], true);
   }
 

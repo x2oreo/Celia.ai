@@ -29,6 +29,7 @@ class ChatItem {
   text: string;
   actions: UiAction[];
   candidates: ScanCandidate[];
+  ts: number = Date.now();
 
   constructor(id: number, role: ChatRole, text: string, actions: UiAction[], candidates: ScanCandidate[]) {
     this.id = id;
@@ -50,6 +51,7 @@ export struct AgentPage {
   @Local listening: boolean = false;
   @Local live: RealtimeStatus = 'IDLE';
   @Local resolved: string[] = [];    // actionIds of confirm cards already answered
+  @Local sosClosedAt: number = 0;    // last time the SOS countdown was cancelled
   private nextId: number = 1;
   private voiceReady: boolean = false;
   private scroller: Scroller = new Scroller();
@@ -63,6 +65,9 @@ export struct AgentPage {
     this.offs.push(AgentCore.get().onProactive((r: AgentReply) => {
       // Index opens the SOS screen for proactive emergencies; here we only show the message.
       this.push('assistant', r.text, r.actions, []);
+    }));
+    this.offs.push(AgentCore.get().onEmergencyClosed((ts: number) => {
+      this.sosClosedAt = ts;
     }));
     this.offs.push(RealtimeSession.get().onStatus((s: RealtimeStatus) => {
       this.live = s;
@@ -353,10 +358,11 @@ export struct AgentPage {
   }
 
   private verdictTitle(p: VerdictCardPayload): string {
+    const brand: string = p.query.length > 0 ? p.query.charAt(0).toUpperCase() + p.query.slice(1) : p.query;
     if (p.ingredient === '' || p.ingredient === p.query.toLowerCase()) {
-      return p.ingredient === '' ? p.query : p.ingredient;
+      return p.ingredient === '' ? brand : p.ingredient;
     }
-    return `${p.query} → ${p.ingredient}`;
+    return `${brand} → ${p.ingredient}`;
   }
 
   private riskBorder(risk: RiskLevel): Resource {
@@ -408,7 +414,7 @@ export struct AgentPage {
   }
 
   @Builder
-  actionView(a: UiAction) {
+  actionView(a: UiAction, ts: number) {
     if (a.type === 'SHOW_VERDICT') {
       this.verdictCard(a)
     } else if (a.type === 'QUICK_REPLIES') {
@@ -427,14 +433,16 @@ export struct AgentPage {
       this.confirmCard($r('app.string.agent_share_card_title'), '', (JSON.parse(a.payload) as ConfirmPayload).actionId)
     } else if (a.type === 'START_EMERGENCY') {
       Row({ space: 8 }) {
-        Text($r('app.string.agent_emergency_started'))
+        Text(ts > this.sosClosedAt ? $r('app.string.agent_emergency_started') : $r('app.string.agent_emergency_cancelled'))
           .fontSize($r('app.float.font_small'))
           .fontWeight(FontWeight.Bold)
           .fontColor($r('app.color.risk_known'))
           .layoutWeight(1)
-        this.chip($r('app.string.agent_open_sos'), true, () => {
-          this.openSos(a);
-        })
+        if (ts > this.sosClosedAt) {
+          this.chip($r('app.string.agent_open_sos'), true, () => {
+            this.openSos(a);
+          })
+        }
       }
       .width('100%')
     } else if (a.type === 'SHOW_EMERGENCY_CARD') {
@@ -467,7 +475,7 @@ export struct AgentPage {
           .copyOption(CopyOptions.LocalDevice)
       }
       ForEach(item.actions, (a: UiAction) => {
-        this.actionView(a)
+        this.actionView(a, item.ts)
       }, (a: UiAction, i: number) => `${item.id}-${i}-${a.type}`)
       if (item.candidates.length > 0) {
         Flex({ wrap: FlexWrap.Wrap, space: { main: LengthMetrics.vp(8), cross: LengthMetrics.vp(8) } }) {

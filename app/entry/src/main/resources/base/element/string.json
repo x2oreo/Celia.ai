@@ -931,6 +931,10 @@
     {
       "name": "a11y_live",
       "value": "Live voice"
+    },
+    {
+      "name": "agent_emergency_cancelled",
+      "value": "Emergency cancelled"
     }
   ]
 }
