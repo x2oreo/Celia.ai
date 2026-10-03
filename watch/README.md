@@ -24,15 +24,38 @@ always labelled as demo data.
 | Source | Where it runs | Metric `source` |
 |---|---|---|
 | Demo data (scenarios: Resting, LQT1 exercise, LQT2 startle, LQT3 night) | anywhere | `simulated` |
-| Watch sensor (`sensor.SensorId.HEART_RATE`, needs READ_HEALTH_DATA) | real full-HarmonyOS watch; falls back to demo on the emulator | `watch` |
+| **Watch sensor** (default; `sensor.SensorId.HEART_RATE`, needs READ_HEALTH_DATA) | real watch, or the emulator's virtual HR sensor; falls back to demo if there is no sensor/permission | `watch` |
+
+### Driving the sensor on the emulator
+
+Emulator toolbar → **⋯ (more)** → **Virtual sensors** → **Heart rate**: move the slider. The app reads it through the
+same `sensor.on(HEART_RATE)` code as a real watch. Drag above 140 and hold for 10 s to trigger the high-HR alert,
+below 45 for the low one. The last reading counts for 30 s (sensors may report only on change); after that the
+watch shows "Waiting for heart rate…".
+
+## Always-on monitoring
+
+There is no Start button. Monitoring starts when the app opens and runs while it is on screen; leaving the app
+pauses it, closes the current summary window and pushes the queue; coming back resumes it.
+
+**How 24/7 tracking works on a real watch (pitch):** HarmonyOS freezes apps shortly after they leave the screen, and
+none of the continuous-task types (data transfer, audio, location, Bluetooth, multi-device, VoIP, task keeping)
+covers heart-rate monitoring. The system checks that a declared task is real, so faking one gets the app suspended.
+The watch **system** already measures heart rate around the clock (Huawei Health continuous HR). The production
+design is therefore:
+1. **Health Service Kit** reads the system's continuous HR history (needs Huawei approval for health data).
+2. The app syncs it **on open and on a schedule** (deferred background tasks), using the same outbox → Supabase path.
+3. **Live alarms** come from the system's own HR alarm, which the phone app subscribes to via Wear Engine.
+
+What the demo shows is the part we can run on the emulator: our own monitoring loop, alert rules and upload path.
 
 ## Metrics sent (`watch_metrics` table)
 
 | `type` | When | `payload` |
 |---|---|---|
-| `hr_live` | every 5 s while a session runs | `{ bpm }` |
+| `hr_live` | every 5 s while monitoring | `{ bpm }` |
 | `hr_alert` | HR outside limits for ≥ 10 s (60 s cooldown) | `{ bpm, limitBpm, direction, sustainedSec }` |
-| `hr_session` | on Stop | `{ avgBpm, maxBpm, minBpm, durationSec, samples }` |
+| `hr_session` | every 5 min, and when the app is left | `{ avgBpm, maxBpm, minBpm, durationSec, samples }` |
 | `symptom` | "I feel unwell" buttons | `{ kind, bpm }` |
 | `medication_taken` | "Took nadolol" | `{ name }` |
 
@@ -75,5 +98,6 @@ hdc hilog | grep CeliaWatch
 ## Limits (be honest in the demo)
 
 - No QT/QTc and no ECG: PPG heart rate can't measure QT. Alerts are "heart rate outside your limits", not diagnosis.
-- The emulator has no HR sensor: heart rate on the emulator is scripted demo data.
+- On the emulator, heart rate is either the virtual sensor slider or scripted demo data. Never real physiology.
+- Monitoring only runs while the app is on screen (see *Always-on monitoring*).
 - Hackathon auth: shared anon key + device id. Production needs device tokens and per-user RLS.
