@@ -16,7 +16,8 @@ Skills to load before coding: `celia-agent`, `harmonyos-kits`, `arkts-language`,
    - **OpenAI** Responses API (model via `OPENAI_MODEL` secret), key in Supabase secrets. Voice later via the
      OpenAI Realtime API with the same tools.
    - Stateless relay: one model step per call. The tool loop runs in the app (`AgentCore`), tools execute
-     on-device, so personal data never leaves the phone. Contract: `backend/supabase/functions/README.md`.
+     on-device, so name, contacts and notes never leave the phone (the context that is sent is listed in
+     `AI_FEATURES.md` §3). Contract: `backend/supabase/functions/README.md`.
    - Return "hello" first, deploy, and give Georgie the URL.
 4. **System prompt v1** (`backend/supabase/functions/agent/prompt.ts`): role, LQTS facts by genotype, the rules
    (never give a verdict yourself, always use `check_drug`, always end medical advice with "ask your doctor or

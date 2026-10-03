@@ -9,7 +9,8 @@
 
 An **agent-first heart-safety companion for people with Long QT syndrome** on HarmonyOS: an AI agent you can talk
 to about your syndrome, that checks every medicine before you take it, watches your heart through your Huawei watch,
-and takes over in an emergency — with your health data staying on *your* devices.
+and takes over in an emergency. The safety core (verdicts, emergency card, profile) works fully offline; cloud
+features are optional and every request the phone makes is listed in an on-phone ledger.
 
 ## Problem
 
@@ -31,9 +32,11 @@ and takes over in an emergency — with your health data staying on *your* devic
 | **Daily companion** | Dose reminders, genotype trigger coach, symptom diary, travel & pharmacy card, privacy ledger | reminderAgentManager, Location Kit, Intents Kit |
 | **Doctor / caregiver** | Event log + doctor report; (stretch) caregiver tablet gets alerts device-to-device | ArkData RDB, (stretch) distributed data object / continuation |
 
-**Digital sovereignty angle (matches the task's Oniro/Europe framing):** personal health data (profile, meds,
-vitals, events) lives **on-device**. The cloud only sees the minimum needed: a drug name for lookup, and a
-de-identified context for the LLM. Documented in `AI_FEATURES.md`.
+**Digital sovereignty angle (matches the task's Oniro/Europe framing):** the deterministic core (drug
+verdicts, emergency card, profile, medicines, chats) runs and is stored on the phone and needs no network. Cloud
+features are optional: watch metrics go to our Supabase project keyed by a device id, and the agent, voice and photo
+paths go through our Edge Functions to OpenAI. Name and contacts are never uploaded in the clear. The full list is in
+`AI_FEATURES.md` §3 and the README "What leaves the phone" table.
 
 ## Who uses it
 
@@ -90,7 +93,7 @@ de-identified context for the LLM. Documented in `AI_FEATURES.md`.
    heart rate jumped to 165 while resting. Are you OK? Did you faint?" → user: "I feel dizzy" → agent starts
    emergency mode: card + 112.
 5. **Robustness:** show the model returning garbage → app falls back to the deterministic answer (tests in repo).
-6. Close: on-device data, open platform, condition packs next.
+6. Close: offline safety core, ledger of what leaves the phone, open platform, condition packs next.
 
 ## Judging map
 

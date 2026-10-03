@@ -58,7 +58,8 @@ Functions or the Realtime WebSocket. They are not stored by us, and our logs rec
 
 ## 3. Data that leaves the device
 
-Only this de-identified context is sent to `/agent`:
+Only this context is sent to `/agent` (no name, contacts or notes; it does include health facts such as the
+genotype):
 
 - the condition (`LQTS`)
 - the genotype
@@ -80,13 +81,20 @@ Every AI call (`/agent`, `/transcribe`, `/speak`, `/vision-extract`, `/realtime-
 field names and size, never values; a request with a personal top-level field (name, phone, email, contacts, notes,
 address, location) is blocked before it is sent (`BackendClient` / `Net`).
 
-It never sends names, phone numbers, emergency contacts or device IDs. (Separately, and only when the user taps
+The AI paths never send names, phone numbers, emergency contacts or device IDs. (Separately, and only when the user taps
 "Send report link" or opens the card QR, the card/report is uploaded **encrypted on the phone** to `/share`; the server
 stores ciphertext only and the key stays in the link — no AI is involved in that path.) Request validation in `_shared/validate.ts`
 rejects anything outside that shape.
 
 The relay uses `previous_response_id` within a turn, so OpenAI keeps the response under its standard API retention.
-Personal data (profile, medicines, contacts, events, saved chats) stays in on-device storage.
+The profile, contacts, notes and saved chats stay in on-device storage (beyond the fields listed above).
+
+**Not AI, but also leaves the devices:** when a watch is linked, the watch app uploads its readings to our Supabase
+project as `watch_metrics` rows keyed by a device id (heart rate, alerts, symptoms, doses taken, falls, wear state,
+simulated vitals, and an `sos` row with location when allowed). The phone writes `watch_context` (genotype, last
+risky medicine and time) so the watch can tighten its limits, and reads the metrics back. The phone's requests show
+in the ledger; the watch app has no ledger of its own. These rows are guarded by a shared anon key plus the device
+id, not per-user auth — a known limit of this build.
 
 ## 4. Validation of model output (`app/.../agent/ResponseValidator.ets`)
 

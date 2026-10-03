@@ -104,10 +104,27 @@ Hosting: Supabase (Edge Functions, Storage) and Vercel (static viewer pages in `
 Public APIs called by the `/drug-check` and `/box-identify` Edge Functions for medicines outside our data: NLM RxNav
 (name → ingredient, rxnav.nlm.nih.gov), openFDA drug labels (api.fda.gov, public domain), AEMPS CIMA (Spanish
 medicines register, cima.aemps.es), UPCitemdb (free trial API) and Open Food / Products / Beauty Facts (ODbL). Only a
-medicine name or a barcode is sent; no personal data.
+medicine name or a barcode is sent to those APIs; no personal data.
 Nearby help opens Google Maps search URLs (developers.google.com/maps/documentation/urls, no key, no location sent
 by the app).
 App code, data and prompts are written in this repo.
+
+### What leaves the phone
+
+The safety core (drug verdicts, emergency card, profile, medicines, reminders) works with no network. Everything
+below is optional and the phone lists each request in Settings → Privacy → "What left my phone".
+
+| Goes to | What | When |
+|---|---|---|
+| Supabase (our project) | Watch readings keyed by a device id: heart rate, alerts, symptoms, doses taken, falls, wear state, simulated vitals, `sos` row with location if allowed | A linked watch app is running |
+| Supabase (our project) | `watch_context`: genotype, last risky medicine and time | You tap "I took it" on a risky medicine, or change genotype while paired |
+| OpenAI, via our Edge Functions | Condition, genotype, medicine ingredients, one-line heart summary, last 12 chat messages; for the optional summaries, a medicine name or the doctor brief's medicine lines | You talk or type to the agent online, or tap "Explain it in plain words" / "Summarise for the doctor" |
+| OpenAI, via our Edge Functions or a direct WebSocket | Voice audio; a downscaled box photo | Live voice, cloud tap-to-talk, or a photo scan the on-device reader could not handle |
+| Supabase Storage | Card or doctor report, encrypted on the phone; the key stays in the link | You create a share link or card QR |
+| Never uploaded in the clear | Name, phone numbers, contacts, notes | — |
+
+Known limits of this build: watch rows are guarded by a shared anon key plus the device id rather than per-user
+auth; the watch app has no ledger of its own.
 
 **Data sources:** drug risk categories follow the public CredibleMeds QTdrugs lists (crediblemeds.org); brand names
 from the Polish (URPL) and Bulgarian (BDA) medicine registers; emergency numbers from the EU 112 pages and national
