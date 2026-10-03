@@ -20,14 +20,16 @@ import { LockScreen } from '../components/LockScreen';
 import { Routes, SosParam } from '../common/Routes';
 import { LocalStore } from '../data/LocalStore';
 import { Profile } from '../model/Profile';
-import { VitalsAlert } from '../model/Vitals';
+import { VitalsAlert, VitalsSample } from '../model/Vitals';
 import { VitalsService } from '../vitals/VitalsService';
 import { WearNotifier } from '../vitals/WearNotifier';
 import { SosController } from '../emergency/SosController';
 import { askNotificationPermission } from '../common/Notify';
 import { AppLock } from '../common/AppLock';
 import { ReminderService } from '../reminders/ReminderService';
-import { AgentCore } from '../agent/AgentCore';
+import { AgentCore, QUICK_REPLY_OK, QUICK_REPLY_UNWELL } from '../agent/AgentCore';
+import { CheckInSheet } from '../components/CheckInSheet';
+import { clock } from '../common/Format';
 import { AgentPrompt } from '../agent/AgentPrompt';
 import { AgentReply, EmergencyPayload, UiAction } from '../model/AgentTypes';
 
@@ -36,6 +38,12 @@ import { AgentReply, EmergencyPayload, UiAction } from '../model/AgentTypes';
 struct Index {
   @Provider('navStack') navStack: NavPathStack = new NavPathStack();
   @Local locked: boolean = false;
+  // Heart-rate check-in sheet (design B3)
+  @Local checkIn: boolean = false;
+  @Local checkInText: string = '';
+  @Local checkInBpm: number = 0;
+  @Local checkInTime: string = '';
+  @Local checkInSim: boolean = true;
 
   aboutToAppear(): void {
     this.showOnboardingIfNeeded();
@@ -79,17 +87,66 @@ struct Index {
     }
     const reason: string = a.hr > 0 ? `heart rate ${Math.round(a.hr)} — ${a.kind.toLowerCase().replace(/_/g, ' ')}` :
       a.kind.toLowerCase().replace(/_/g, ' ');
+    this.checkIn = false;
     this.navStack.pushPathByName(Routes.SOS, new SosParam(false, reason, true));
   }
 
   // Unanswered heart-rate check-in → the agent starts an emergency; hand it to the SOS screen.
   private onAgentProactive(r: AgentReply): void {
     const a: UiAction | undefined = r.actions.find((x: UiAction) => x.type === 'START_EMERGENCY');
-    if (a === undefined || !SosController.get().canAutoStart(Date.now())) {
+    if (a === undefined) {
+      if (r.actions.some((x: UiAction) => x.type === 'QUICK_REPLIES')) {
+        this.showCheckIn(r.text);
+      }
+      return;
+    }
+    this.checkIn = false;
+    if (!SosController.get().canAutoStart(Date.now())) {
       return;
     }
     const p: EmergencyPayload = JSON.parse(a.payload) as EmergencyPayload;
     this.navStack.pushPathByName(Routes.SOS, new SosParam(false, p.reason, true));
+  }
+
+  // The agent asks "are you OK?" as a sheet, unless the chat is already in front (it shows the same question).
+  private showCheckIn(text: string): void {
+    const names: string[] = this.navStack.getAllPathName();
+    if (names.length > 0 && names[names.length - 1] === Routes.AGENT_CHAT) {
+      return;
+    }
+    // Never ask "are you OK?" on top of a running or just-sent SOS.
+    if (names.includes(Routes.SOS) || SosController.get().state !== 'IDLE') {
+      return;
+    }
+    const sample: VitalsSample | undefined = VitalsService.get().latest();
+    this.checkInText = text;
+    this.checkInBpm = sample === undefined ? 0 : Math.round(sample.hr);
+    this.checkInSim = sample?.source !== 'WATCH';
+    this.checkInTime = clock(Date.now());
+    this.checkIn = true;
+  }
+
+  @Builder
+  checkInSheet() {
+    CheckInSheet({
+      message: this.checkInText,
+      bpm: this.checkInBpm,
+      time: this.checkInTime,
+      simulated: this.checkInSim,
+      onFine: () => {
+        this.checkIn = false;
+        AgentCore.get().send(QUICK_REPLY_OK);
+      },
+      onUnwell: () => {
+        // Continue in the chat: it sends the answer and handles whatever the agent decides next.
+        this.checkIn = false;
+        AgentPrompt.ask(QUICK_REPLY_UNWELL);
+      },
+      onHelp: () => {
+        this.checkIn = false;
+        this.navStack.pushPathByName(Routes.SOS, new SosParam(false, `heart rate ${this.checkInBpm}`, false));
+      }
+    })
   }
 
   @Builder
@@ -145,5 +202,16 @@ struct Index {
     }
     .width('100%')
     .height('100%')
+    .bindSheet(this.checkIn, this.checkInSheet(), {
+      height: SheetSize.FIT_CONTENT,
+      dragBar: true,
+      showClose: false,
+      backgroundColor: $r('app.color.bg'),
+      radius: { topLeft: 28, topRight: 28 },
+      maskColor: $r('app.color.scrim'),
+      onDisappear: () => {
+        this.checkIn = false;
+      }
+    })
   }
 }
