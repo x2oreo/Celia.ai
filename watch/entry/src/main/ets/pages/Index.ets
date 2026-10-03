@@ -34,7 +34,7 @@ struct Index {
         .selectedItemHeight(6)
         .color(Theme.MUTED)
         .selectedColor(Theme.TEXT)
-        .bottom(18))
+        .bottom(8))
       .width('100%')
       .height('100%')
 

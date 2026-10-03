@@ -60,38 +60,38 @@ export struct HeartPage {
   build() {
     Column({ space: 4 }) {
       Text(this.sourceLabel())
-        .fontSize(13)
+        .fontSize(11)
         .fontColor(this.sourceColor())
         .fontWeight(FontWeight.Medium)
         .maxLines(1)
 
       Row({ space: 6 }) {
-        Text('♥').fontSize(30).fontColor(Theme.HEART)
+        Text('♥').fontSize(22).fontColor(Theme.HEART)
         Text(this.ctrl.bpm > 0 ? `${this.ctrl.bpm}` : '--')
-          .fontSize(64)
+          .fontSize(48)
           .fontWeight(FontWeight.Bold)
           .fontColor(Theme.TEXT)
       }
       .alignItems(VerticalAlign.Center)
 
       Text(this.ctrl.running ? `bpm · ${this.elapsed()}` : 'bpm')
-        .fontSize(14)
+        .fontSize(12)
         .fontColor(Theme.MUTED)
 
       if (this.ctrl.statusText.length > 0) {
         Text(this.ctrl.statusText)
-          .fontSize(12)
+          .fontSize(10)
           .fontColor(Theme.WARN)
           .maxLines(2)
           .textAlign(TextAlign.Center)
-          .width('70%')
+          .width(150)
       }
 
       Button(this.ctrl.running ? 'Stop' : 'Start')
-        .fontSize(18)
+        .fontSize(15)
         .fontWeight(FontWeight.Medium)
-        .width(120)
-        .height(44)
+        .width(96)
+        .height(36)
         .margin({ top: 6 })
         .backgroundColor(this.ctrl.running ? Theme.CARD : Theme.HEART)
         .fontColor(Theme.TEXT)
@@ -100,13 +100,14 @@ export struct HeartPage {
         })
 
       Row({ space: 6 }) {
-        Circle().width(8).height(8).fill(this.syncColor())
-        Text(this.syncLabel()).fontSize(12).fontColor(Theme.MUTED)
+        Circle().width(6).height(6).fill(this.syncColor())
+        Text(this.syncLabel()).fontSize(10).fontColor(Theme.MUTED)
       }
-      .margin({ top: 4 })
+      .margin({ top: 2 })
     }
     .width('100%')
     .height('100%')
+    .padding({ bottom: 14 })
     .justifyContent(FlexAlign.Center)
   }
 }

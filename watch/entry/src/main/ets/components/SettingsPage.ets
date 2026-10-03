@@ -18,18 +18,18 @@ export struct SettingsPage {
   @Builder
   row(label: string, value: string, action: () => void) {
     Column({ space: 2 }) {
-      Text(label).fontSize(12).fontColor(Theme.MUTED)
-      Text(value).fontSize(16).fontColor(Theme.TEXT).maxLines(1)
+      Text(label).fontSize(10).fontColor(Theme.MUTED)
+      Text(value).fontSize(13).fontColor(Theme.TEXT).maxLines(1)
     }
-    .width(220)
-    .padding({ top: 8, bottom: 8 })
-    .borderRadius(20)
+    .width(150)
+    .padding({ top: 5, bottom: 5 })
+    .borderRadius(16)
     .backgroundColor(Theme.CARD)
     .onClick(action)
   }
 
   build() {
-    Column({ space: 8 }) {
+    Column({ space: 6 }) {
       this.row('Source (tap to change)', this.sourceName(), () => {
         this.ctrl.cycleSource();
       })
@@ -39,7 +39,7 @@ export struct SettingsPage {
         })
       }
       Text(`Alert below ${this.ctrl.lowBpm} / above ${this.ctrl.highBpm} bpm`)
-        .fontSize(12)
+        .fontSize(10)
         .fontColor(Theme.MUTED)
     }
     .width('100%')

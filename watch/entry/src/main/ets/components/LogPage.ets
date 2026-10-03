@@ -17,9 +17,10 @@ export struct LogPage {
   @Builder
   symptomButton(label: string, kind: SymptomKind) {
     Button(label)
-      .fontSize(14)
-      .width(118)
-      .height(42)
+      .fontSize(11)
+      .width(74)
+      .height(30)
+      .padding({ left: 2, right: 2 })
       .backgroundColor(Theme.CARD)
       .fontColor(Theme.TEXT)
       .onClick(() => {
@@ -40,10 +41,10 @@ export struct LogPage {
         this.symptomButton('Other', 'other')
       }
       Button(`Took ${this.ctrl.medicationName}`)
-        .fontSize(15)
-        .width(180)
-        .height(42)
-        .margin({ top: 4 })
+        .fontSize(12)
+        .width(120)
+        .height(30)
+        .margin({ top: 2 })
         .backgroundColor(Theme.OK)
         .fontColor('#000000')
         .onClick(() => {
