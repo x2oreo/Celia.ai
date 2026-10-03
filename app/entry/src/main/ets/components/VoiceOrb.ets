@@ -15,6 +15,7 @@ const SIZE_MS: number = 320;
 @ComponentV2
 struct OrbitArc {
   @Param dim: number = 160;
+  @Param reduced: boolean = false;
   @Local turned: boolean = false;
 
   build() {
@@ -26,8 +27,10 @@ struct OrbitArc {
       .strokeWidth(3)
       .strokeLineCap(LineCapStyle.Round)
       .strokeDashArray([this.dim * 0.55, this.dim * Math.PI])
+      // Size eases once; only the rotation below loops.
+      .animation({ duration: SIZE_MS, curve: Curve.EaseInOut })
       .rotate({ angle: this.turned ? 360 : 0 })
-      .animation(Motion.reduced ? undefined : {
+      .animation(this.reduced ? undefined : {
         duration: ARC_TURN_MS,
         curve: Curve.Linear,
         iterations: -1
@@ -47,6 +50,19 @@ export struct VoiceOrb {
   @Param muted: boolean = false;
   @Local out: boolean = false;
   @Local turned: boolean = false;
+  @Local reduced: boolean = Motion.reduced;   // system reduce-motion: loops stay static
+  private offMotion: () => void = () => {
+  };
+
+  aboutToAppear(): void {
+    this.offMotion = Motion.onChange((on: boolean) => {
+      this.reduced = on;
+    });
+  }
+
+  aboutToDisappear(): void {
+    this.offMotion();
+  }
 
   private voiced(): boolean {
     return this.phase === 'HEARING' || this.phase === 'SPEAKING';
@@ -118,7 +134,7 @@ export struct VoiceOrb {
               ]
             })
             .rotate({ angle: this.turned ? 360 : 0 })
-            .animation(Motion.reduced ? undefined : {
+            .animation(this.reduced ? undefined : {
               duration: SHEEN_TURN_MS,
               curve: Curve.Linear,
               iterations: -1
@@ -128,8 +144,11 @@ export struct VoiceOrb {
         .height('100%')
         .borderRadius(this.dim / 2)
         .clip(true)
+        // The corner radius follows the size once. Left under the breathing loop below, it would keep swinging
+        // between the old and the new radius after the orb grows, and the core would pulse into a rounded square.
+        .animation({ duration: SIZE_MS, curve: Curve.EaseInOut })
         .scale({ x: this.out ? 1.03 : 0.95, y: this.out ? 1.03 : 0.95 })
-        .animation(Motion.reduced ? undefined : {
+        .animation(this.reduced ? undefined : {
           duration: Motion.BREATH_MS,
           curve: Curve.EaseInOut,
           iterations: -1,
@@ -150,7 +169,7 @@ export struct VoiceOrb {
       .animation({ duration: LEVEL_MS, curve: Curve.EaseOut })
 
       if (this.phase === 'CONNECTING' || this.phase === 'THINKING') {
-        OrbitArc({ dim: this.dim * 1.16 })
+        OrbitArc({ dim: this.dim * 1.16, reduced: this.reduced })
       }
     }
     .width(this.dim)

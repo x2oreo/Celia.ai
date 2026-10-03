@@ -15,15 +15,15 @@ export class Routes {
   static readonly SYMPTOM_LOG: string = 'symptomLog';
   static readonly REMINDERS: string = 'reminders';
   static readonly CARD_VIEW: string = 'cardView';         // param: CardPayload (scanned card QR)
-  static readonly AGENT_CHAT: string = 'agentChat';    // param: AskParam | null
+  static readonly AGENT_CHAT: string = 'agentChat';    // param: AskParam | null; redirects to tab 0
   static readonly CHATS: string = 'chats';               // saved agent chats
   static readonly SCAN: string = 'scan';
   static readonly PAIR_WATCH: string = 'pairWatch';
   static readonly TRENDS: string = 'trends';
 }
 
-// Tab indexes of components/MainTabs.ets. The first tab is the agent's home; the chat itself is a pushed page
-// (Routes.AGENT_CHAT).
+// Tab indexes of components/MainTabs.ets. The first tab is the agent conversation itself; Routes.AGENT_CHAT only
+// redirects to it (pages/AgentPage.ets).
 export class TabIndex {
   static readonly HOME: number = 0;
   static readonly MEDICINES: number = 1;
