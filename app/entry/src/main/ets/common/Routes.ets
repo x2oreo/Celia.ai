@@ -49,12 +49,15 @@ export class TabIndex {
   static readonly EMERGENCY: number = 3;
 }
 
-// Opens doctor prep on this specialty (doctor/DoctorPrep Specialty), e.g. from the agent's tile.
+// Opens doctor prep on this specialty (doctor/DoctorPrep Specialty), e.g. from the agent's tile, or on a saved visit
+// (doctor/Visit DoctorVisit id, from pages/VisitsPage) — then the visit's specialty wins.
 export class DoctorPrepParam {
   specialty: string;
+  visitId: number;   // -1 = no saved visit
 
-  constructor(specialty: string) {
+  constructor(specialty: string, visitId: number = -1) {
     this.specialty = specialty;
+    this.visitId = visitId;
   }
 }
 

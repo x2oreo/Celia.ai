@@ -1,16 +1,23 @@
 // Doctor visit prep (F-31): pick the specialist → safety brief from my own data → send as an encrypted link that
-// opens on any device (site/report, 48 h), or share/copy as text.
+// opens on any device (site/report, 48 h), or share/copy as text. Opened on a saved visit (B6, DoctorPrepParam
+// visitId) the brief adds the visit's reason and worries, the specialty is fixed, and a checked AI summary is kept
+// with the visit.
 
 import { common } from '@kit.AbilityKit';
 import { LocalStore } from '../data/LocalStore';
 import { Profile } from '../model/Profile';
-import { BriefSection, briefText, buildBrief, Specialty, SPECIALTIES, specialtyName } from '../doctor/DoctorPrep';
+import {
+  BriefSection, briefText, buildBrief, Specialty, SPECIALTIES, specialtyName, visitDay
+} from '../doctor/DoctorPrep';
 import { copyText } from '../common/Clipboard';
-import { DoctorPrepParam } from '../common/Routes';
+import { DoctorPrepParam, Routes } from '../common/Routes';
 import { shareText } from '../common/Share';
 import { toast } from '../common/Toast';
-import { PrimaryButton, QuietButton, SecondaryButton, SourceBadge, TypingDots } from '../components/Common';
-import { DoctorSummary, SummaryOutcome, SummaryResult } from '../doctor/DoctorSummary';
+import { NavRow, PrimaryButton, QuietButton, SecondaryButton, SourceBadge, TypingDots } from '../components/Common';
+import { DoctorSummary, parseSummary, SummaryOutcome, SummaryResult } from '../doctor/DoctorSummary';
+import { DoctorVisit } from '../doctor/Visit';
+import { VisitStore } from '../doctor/VisitStore';
+import { personalTerms } from '../doctor/Redact';
 import { Motion } from '../common/Motion';
 import { buildReport, ReportPayload } from '../doctor/ReportPayload';
 import { contentHash, ShareRecord, ShareService } from '../share/ShareService';
@@ -20,31 +27,55 @@ import { ReminderService } from '../reminders/ReminderService';
 
 type SummaryState = 'IDLE' | 'LOADING' | SummaryResult;
 
+interface SavedSummary {
+  summary: string;
+}
+
 const REPORT_BRIEF_KEY: string = 'share.report.brief';   // hash of the brief behind the live report link
 
 @ComponentV2
 export struct DoctorPrepPage {
+  @Consumer('navStack') navStack: NavPathStack = new NavPathStack();
   @Local specialty: Specialty = 'GP';
+  @Local visit: DoctorVisit | undefined = undefined;
   @Local sections: BriefSection[] = [];
   @Local profile: Profile | undefined = undefined;
   @Local sending: boolean = false;
   @Local summary: string = '';
   @Local summaryState: SummaryState = 'IDLE';
+  private generation: number = 0;   // a newer build_ wins when two overlap (aboutToAppear, then onReady)
 
   aboutToAppear(): void {
     this.build_();
   }
 
   private async build_(): Promise<void> {
-    this.profile = await LocalStore.get().getProfile();
-    if (this.profile === undefined) {
-      this.sections = [];
+    const gen: number = ++this.generation;
+    const profile: Profile | undefined = await LocalStore.get().getProfile();
+    const sections: BriefSection[] = profile === undefined ? [] : buildBrief(profile,
+      await LocalStore.get().listMeds(), await LocalStore.get().listScans(), await LocalStore.get().listEvents(),
+      this.specialty, Date.now(), this.visit);
+    if (gen !== this.generation) {
       return;
     }
-    this.sections = buildBrief(this.profile, await LocalStore.get().listMeds(), await LocalStore.get().listScans(),
-      await LocalStore.get().listEvents(), this.specialty, Date.now());
-    this.summary = '';
-    this.summaryState = 'IDLE';
+    this.profile = profile;
+    this.sections = sections;
+    // A summary saved with the visit passed the checks when it arrived; check it again before showing it.
+    const stored: SavedSummary = { summary: this.visit === undefined ? '' : this.visit.summary };
+    const saved: SummaryOutcome = stored.summary === '' ? new SummaryOutcome('REJECTED', '') :
+      parseSummary(JSON.stringify(stored));
+    this.summary = saved.text;
+    this.summaryState = saved.result === 'OK' ? 'OK' : 'IDLE';
+  }
+
+  private async openVisit(id: number): Promise<void> {
+    const v: DoctorVisit | undefined = await VisitStore.get(id);
+    if (v === undefined) {
+      return;
+    }
+    this.visit = v;
+    this.specialty = v.specialty;
+    await this.build_();
   }
 
   private async summarise(): Promise<void> {
@@ -52,18 +83,25 @@ export struct DoctorPrepPage {
       return;
     }
     const forSpecialty: Specialty = this.specialty;
+    const visit: DoctorVisit | undefined = this.visit;
     this.summaryState = 'LOADING';
     let out: SummaryOutcome;
     try {
-      out = await DoctorSummary.fetch(this.sections, forSpecialty, this.profile.genotype);
+      out = await DoctorSummary.fetch(this.sections, forSpecialty, this.profile.genotype, visit,
+        personalTerms(this.profile));
     } catch (e) {
       out = new SummaryOutcome('FAILED', '');
     }
-    if (forSpecialty !== this.specialty) {
+    if (forSpecialty !== this.specialty || visit !== this.visit) {
       return;   // the brief changed while waiting
     }
     this.summary = out.text;
     this.summaryState = out.result;
+    if (out.result === 'OK' && visit !== undefined) {
+      visit.summary = out.text;
+      visit.summaryAt = Date.now();
+      await VisitStore.save(visit);
+    }
   }
 
   // AI summary (DESIGN.md §6.9 AI block pattern): optional, labelled, never changes the brief below.
@@ -76,7 +114,7 @@ export struct DoctorPrepPage {
           .fontSize($r('app.float.font_body'))
           .fontColor($r('app.color.ink'))
           .lineHeight(22)
-        Text($r('app.string.dp_ai_caption'))
+        Text(this.visit === undefined ? $r('app.string.dp_ai_caption') : $r('app.string.doc_summary_saved'))
           .fontSize($r('app.float.font_micro'))
           .fontColor($r('app.color.ink_4'))
           .lineHeight(15)
@@ -187,12 +225,22 @@ export struct DoctorPrepPage {
     NavDestination() {
       Scroll() {
         Column({ space: 12 }) {
-          Text($r('app.string.dp_intro'))
+          Text(this.visit === undefined ? $r('app.string.dp_intro') : $r('app.string.doc_visits_intro'))
             .fontSize($r('app.float.font_body'))
             .fontColor($r('app.color.ink_3'))
             .width('100%')
+          if (this.visit === undefined) {
+            NavRow({
+              icon: $r('app.media.ic_doctor'),
+              title: $r('app.string.doc_my_visits'),
+              subtitle: $r('app.string.doc_my_visits_sub'),
+              onTap: () => {
+                this.navStack.pushPathByName(Routes.VISITS, null);
+              }
+            })
+          }
           Flex({ wrap: FlexWrap.Wrap }) {
-            ForEach(SPECIALTIES, (s: Specialty) => {
+            ForEach(this.visit === undefined ? SPECIALTIES : [], (s: Specialty) => {
               Text(specialtyName(s))
                 .fontSize($r('app.float.font_small'))
                 .fontColor(this.specialty === s ? $r('app.color.chat_user_text') : $r('app.color.ink'))
@@ -292,10 +340,15 @@ export struct DoctorPrepPage {
       .align(Alignment.Top)
       .scrollBar(BarState.Off)
     }
-    .title($r('app.string.home_doctor'))
+    .title(this.visit === undefined ? $r('app.string.home_doctor') :
+      `${specialtyName(this.visit.specialty)} · ${visitDay(this.visit.date)}`)
     .backgroundColor($r('app.color.bg'))
     .onReady((ctx: NavDestinationContext) => {
       const p: DoctorPrepParam | undefined = ctx.pathInfo.param as DoctorPrepParam | undefined;
+      if (p !== undefined && p !== null && typeof p.visitId === 'number' && p.visitId >= 0) {
+        this.openVisit(p.visitId);
+        return;
+      }
       const s: Specialty | undefined = SPECIALTIES.find((x: Specialty) => x === p?.specialty);
       if (s !== undefined && s !== this.specialty) {
         this.specialty = s;

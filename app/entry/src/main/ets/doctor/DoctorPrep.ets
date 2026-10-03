@@ -100,11 +100,16 @@ function textLines(t: string): string[] {
   return t.split('\n').map((l: string) => l.trim()).filter((l: string) => l.length > 0);
 }
 
-// "Visit on …" + reason, then the worries as their own section. Shown first, after the patient line.
+// 'YYYY-MM-DD' → '20 Oct 2026' (the date part of common/Format fullDate).
+export function visitDay(ymd: string): string {
+  const when: number = new Date(`${ymd}T12:00:00`).getTime();
+  return isNaN(when) ? ymd : fullDate(when).split(',')[0];
+}
+
+// "Date" + reason, then the worries as their own section. Shown first, after the patient line.
 export function visitSections(v: VisitAnswers): BriefSection[] {
   const out: BriefSection[] = [];
-  const when: number = new Date(`${v.date}T12:00:00`).getTime();
-  const lines: string[] = [`Date: ${isNaN(when) ? v.date : fullDate(when)}.`];
+  const lines: string[] = [`Date: ${visitDay(v.date)}.`];
   textLines(v.reason).forEach((l: string, i: number) => {
     lines.push(i === 0 ? `Reason: ${l}` : l);
   });

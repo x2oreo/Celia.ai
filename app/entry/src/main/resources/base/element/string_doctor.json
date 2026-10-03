@@ -1,0 +1,152 @@
+{
+  "string": [
+    {
+      "name": "doc_visits_intro",
+      "value": "Going to a doctor? Say why and what worries you. The app builds a safety brief for that doctor."
+    },
+    {
+      "name": "doc_add_visit",
+      "value": "Add a visit"
+    },
+    {
+      "name": "doc_visits_empty",
+      "value": "No visits yet. Add one to prepare your questions."
+    },
+    {
+      "name": "doc_new_visit",
+      "value": "New visit"
+    },
+    {
+      "name": "doc_which_doctor",
+      "value": "Which doctor?"
+    },
+    {
+      "name": "doc_when",
+      "value": "When?"
+    },
+    {
+      "name": "doc_change_date",
+      "value": "Change date"
+    },
+    {
+      "name": "doc_reason",
+      "value": "Reason for the visit"
+    },
+    {
+      "name": "doc_reason_hint",
+      "value": "For example: check-up, wisdom tooth, new medicine"
+    },
+    {
+      "name": "doc_worries",
+      "value": "What worries you?"
+    },
+    {
+      "name": "doc_worries_hint",
+      "value": "Anything you want to ask or are unsure about"
+    },
+    {
+      "name": "doc_privacy_caption",
+      "value": "Your answers are saved on this phone. Names, phone numbers and e-mail addresses are removed before anything is sent for the AI summary."
+    },
+    {
+      "name": "doc_save_visit",
+      "value": "Save and build the brief"
+    },
+    {
+      "name": "doc_cancel",
+      "value": "Cancel"
+    },
+    {
+      "name": "doc_delete",
+      "value": "Delete"
+    },
+    {
+      "name": "doc_delete_title",
+      "value": "Delete this visit?"
+    },
+    {
+      "name": "doc_delete_msg",
+      "value": "The visit and its summary are removed from this phone."
+    },
+    {
+      "name": "doc_deleted",
+      "value": "Visit deleted"
+    },
+    {
+      "name": "doc_upcoming",
+      "value": "UPCOMING"
+    },
+    {
+      "name": "doc_past",
+      "value": "PAST"
+    },
+    {
+      "name": "doc_has_summary",
+      "value": "AI summary saved"
+    },
+    {
+      "name": "doc_my_visits",
+      "value": "My visits"
+    },
+    {
+      "name": "doc_my_visits_sub",
+      "value": "Save a visit with your reason and worries"
+    },
+    {
+      "name": "doc_summary_saved",
+      "value": "Saved with this visit. Generated text, checked for doses and reassurance; the brief below is from your own records."
+    },
+    {
+      "name": "doc_feel_intro",
+      "value": "A quick note for your diary. It stays on this phone."
+    },
+    {
+      "name": "doc_feel_note_hint",
+      "value": "Anything to add? (optional)"
+    },
+    {
+      "name": "doc_feel_save",
+      "value": "Save to diary"
+    },
+    {
+      "name": "doc_feel_saved",
+      "value": "Saved to your diary"
+    },
+    {
+      "name": "doc_feel_recent",
+      "value": "RECENT"
+    },
+    {
+      "name": "doc_feel_low",
+      "value": "Not feeling well? Logging the symptom helps your doctor see it."
+    },
+    {
+      "name": "doc_feel_log_symptom",
+      "value": "Log a symptom"
+    },
+    {
+      "name": "doc_feel_empty",
+      "value": "No diary entries yet."
+    },
+    {
+      "name": "doc_widget_name",
+      "value": "How are you feeling?"
+    },
+    {
+      "name": "doc_widget_desc",
+      "value": "Add a diary entry in one tap"
+    },
+    {
+      "name": "doc_widget_action",
+      "value": "Add entry"
+    },
+    {
+      "name": "doc_feel_title",
+      "value": "How are you feeling?"
+    },
+    {
+      "name": "doc_visits_title",
+      "value": "Doctor visits"
+    }
+  ]
+}

@@ -111,6 +111,7 @@ export default function visitsTest() {
       const v: DoctorVisit = newVisit(1, 'DENTIST', '2026-10-20', 'Wisdom tooth out', 'Adrenaline\nThe noise', NOW);
       const sections: BriefSection[] = buildBrief(profile(), [], [], [], 'DENTIST', NOW, v);
       expect(sections[1].title).assertEqual('This visit');
+      expect(sections[1].lines[0]).assertEqual('Date: 20 Oct 2026.');
       expect(sections[1].lines[1]).assertEqual('Reason: Wisdom tooth out');
       expect(sections[2].title).assertEqual('What worries me');
       expect(sections[2].lines.length).assertEqual(2);
