@@ -71,5 +71,10 @@ the logic is pure (app 188 / Deno 65, all green).
 | 9 | A message sent during a cold start could vanish into another chat | Each turn waits for the last chat to be reopened |
 | 10 | Answered confirm/SOS cards looked actionable again after returning to the chat | The thread redraws display cards only |
 
-**Needs deploying before it is live:** `share`, `box-identify`, `sos` and migrations `20261004020000_box_confirmations`
-and `20261004030000_sos_abuse_limits`. Until `share` is redeployed the app falls back to the old DELETE revoke.
+**Deployed (3 Oct, project `jxiggumhircfuhianmel`):** `share` v4, `box-identify` v4, `agent` v2, `realtime-session` v2,
+`med-info` v3, new `doctor-summary` v1 and `sos` v1; migrations `box_confirmations`, `sos_abuse_limits` and
+`emergency_contacts_limit_no_rpc`. Live checks: share revoke-by-POST and bad-id answers, sos refuses calls without its
+secret, box-identify rejects a bad barcode, med-info explains Zofran, doctor-summary keeps the risk words verbatim, the
+agent calls `log_symptom` for "I felt dizzy after my alarm", and the 5-contact limit rejects a 6th contact (nothing
+written). `drug-check` v5 was already the current code. `sos` stays inert until `SOS_WEBHOOK_SECRET` (and, for real
+sends, the Twilio secrets) are set.
