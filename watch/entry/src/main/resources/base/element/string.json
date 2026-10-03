@@ -1,0 +1,20 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "Celia.ai watch: live heart rate, LQTS alerts and quick logging."
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "Celia.ai watch companion"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "Celia Watch"
+    },
+    {
+      "name": "health_reason",
+      "value": "Reads your heart rate to warn you about rhythm-related risks."
+    }
+  ]
+}
