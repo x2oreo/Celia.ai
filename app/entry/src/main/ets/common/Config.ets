@@ -36,6 +36,11 @@ export class Config {
     return !Config.offline && Config.BACKEND_URL.length > 0 && Config.SUPABASE_ANON_KEY.length > 0;
   }
 
+  // Accounts (Supabase Auth + the profiles table) always use the deployed project, like share links.
+  static hasAccountBackend(): boolean {
+    return !Config.offline && Config.SHARE_BACKEND_URL.length > 0 && Config.SHARE_ANON_KEY.length > 0;
+  }
+
   // Watch data lives in the Supabase database. The local dev backend (backend/eval/dev-backend.ts on 127.0.0.1)
   // only serves the AI functions, so with it the phone keeps its labelled simulated vitals.
   static hasWatchCloud(): boolean {
