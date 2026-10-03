@@ -47,8 +47,9 @@ GET {SUPABASE_URL}/rest/v1/watch_metrics?device_id=eq.demo-watch-1&type=eq.hr_al
 ## Setup
 
 1. Supabase: run the migration in the SQL editor (or `supabase db push`).
-2. `cp entry/src/main/resources/rawfile/config.example.json entry/src/main/resources/rawfile/config.json` and fill
-   in `supabaseUrl`, `supabaseAnonKey`, `deviceId`. `config.json` is git-ignored. Without it the app works offline
+2. Fill in `watch/.env` (copy `watch/.env.example` if it's missing): `SUPABASE_URL`, `SUPABASE_ANON_KEY`,
+   optionally `WATCH_DEVICE_ID`. `.env` is git-ignored. Each build (`entry/hvigorfile.ts`) writes it into the bundled
+   `rawfile/config.json` (also git-ignored), so **rebuild after editing `.env`**. Without it the app works offline
    and keeps metrics in its outbox.
 3. Emulator: the unsigned HAP installs as is (verified on the HarmonyOS 6.1.1 wearable emulator). Real device:
    DevEco → File → Project Structure → Signing Configs → *Automatically generate signature*.

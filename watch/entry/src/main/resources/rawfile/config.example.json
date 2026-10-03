@@ -1,9 +1,0 @@
-{
-  "supabaseUrl": "https://YOUR-PROJECT.supabase.co",
-  "supabaseAnonKey": "YOUR-ANON-KEY",
-  "deviceId": "demo-watch-1",
-  "defaultSource": "SIMULATED",
-  "medicationName": "nadolol",
-  "highBpm": 140,
-  "lowBpm": 45
-}

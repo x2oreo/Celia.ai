@@ -5,7 +5,7 @@ import { Logger } from './Logger';
 
 /**
  * Runtime config, read from `resources/rawfile/config.json` (git-ignored).
- * Copy `config.example.json` to `config.json` and fill it in. Without it the app still runs: metrics stay in
+ * Generated from watch/.env at build time (see entry/hvigorfile.ts). Without it the app still runs: metrics stay in
  * the on-watch outbox and nothing is uploaded.
  */
 export interface AppConfigData {
