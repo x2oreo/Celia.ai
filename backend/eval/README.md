@@ -30,7 +30,8 @@ npx -y deno@2 run -A backend/eval/vision-eval.ts
 npx -y deno@2 run -A backend/eval/realtime-smoke.ts text  # or: audio
 ```
 
-Each script starts the function it needs on `:8000` with `deno run` and stops it afterwards. Functions run one at a
+Each script starts the function it needs on `:8010` (`EVAL_PORT`) and stops it afterwards, so it can run while
+`dev-backend.ts` holds `:8000` for the emulator. Functions run one at a
 time.
 
 **Budget.**

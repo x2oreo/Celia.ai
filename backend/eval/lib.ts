@@ -129,11 +129,13 @@ async function pump(stream: ReadableStream<Uint8Array>, sink: string[]): Promise
   if (buf !== '') sink.push(buf);
 }
 
-// Starts backend/supabase/functions/<name>/index.ts on :8000 (each function is a plain Deno.serve). One at a time.
+// Starts backend/supabase/functions/<name>/index.ts on EVAL_PORT (default 8010) through fn-wrap.ts, so an eval can
+// run while dev-backend.ts holds :8000 for the emulator. One at a time.
 export async function startFn(name: string, envOverrides: Record<string, string> = {}): Promise<RunningFn> {
-  const env = { ...Deno.env.toObject(), ...envOverrides };
+  const port = Deno.env.get('EVAL_PORT') ?? '8010';
+  const env = { ...Deno.env.toObject(), ...envOverrides, FN_PORT: port, FN_PATH: `${FUNCTIONS_DIR}${name}/index.ts` };
   const child = new Deno.Command(Deno.execPath(), {
-    args: ['run', '--allow-net', '--allow-env', '--allow-read', `${FUNCTIONS_DIR}${name}/index.ts`],
+    args: ['run', '--allow-net', '--allow-env', '--allow-read', `${EVAL_DIR}fn-wrap.ts`],
     env,
     clearEnv: true,
     stdout: 'piped',
@@ -141,7 +143,7 @@ export async function startFn(name: string, envOverrides: Record<string, string>
   }).spawn();
   const logs: string[] = [];
   const pumps = [pump(child.stdout, logs), pump(child.stderr, logs)];
-  const url = 'http://localhost:8000';
+  const url = `http://127.0.0.1:${port}`;
   for (let i = 0; i < 100; i++) {
     try {
       const r = await fetch(url, { method: 'GET' });
