@@ -99,34 +99,49 @@ export struct AuthForm {
   }
 
   @Builder
-  field(label: Resource, value: string, hint: ResourceStr, type: InputType, onChange: (v: string) => void) {
-    Column({ space: 6 }) {
-      Text(label)
-        .fontSize($r('app.float.font_small'))
-        .fontWeight(FontWeight.Medium)
-        .fontColor($r('app.color.ink_2'))
-      TextInput({ text: value, placeholder: hint })
-        .type(type)
-        .height($r('app.float.touch_min'))
-        .fontSize($r('app.float.font_body'))
-        .backgroundColor($r('app.color.surface_alt'))
-        .borderRadius($r('app.float.radius_m'))
-        .enabled(!this.busy)
-        .onChange(onChange)
-    }
-    .width('100%')
-    .alignItems(HorizontalAlign.Start)
+  label(text: Resource) {
+    Text(text)
+      .fontSize($r('app.float.font_small'))
+      .fontWeight(FontWeight.Medium)
+      .fontColor($r('app.color.ink_2'))
   }
 
   build() {
     Column({ space: 16 }) {
-      this.field($r('app.string.acc_email'), this.email, '', InputType.Email, (v: string) => {
-        this.email = v;
-      })
-      this.field($r('app.string.acc_password'), this.password,
-        this.current === 'SIGN_UP' ? $r('app.string.acc_password_hint_new') : '', InputType.Password, (v: string) => {
-          this.password = v;
+      // Inputs read this.email / this.password directly: a by-value @Builder param would reset them on re-render.
+      Column({ space: 6 }) {
+        this.label($r('app.string.acc_email'))
+        TextInput({ text: this.email })
+          .type(InputType.Email)
+          .height($r('app.float.touch_min'))
+          .fontSize($r('app.float.font_body'))
+          .backgroundColor($r('app.color.surface_alt'))
+          .borderRadius($r('app.float.radius_m'))
+          .enabled(!this.busy)
+          .onChange((v: string) => {
+            this.email = v;
+          })
+      }
+      .width('100%')
+      .alignItems(HorizontalAlign.Start)
+      Column({ space: 6 }) {
+        this.label($r('app.string.acc_password'))
+        TextInput({
+          text: this.password,
+          placeholder: this.current === 'SIGN_UP' ? $r('app.string.acc_password_hint_new') : ''
         })
+          .type(InputType.Password)
+          .height($r('app.float.touch_min'))
+          .fontSize($r('app.float.font_body'))
+          .backgroundColor($r('app.color.surface_alt'))
+          .borderRadius($r('app.float.radius_m'))
+          .enabled(!this.busy)
+          .onChange((v: string) => {
+            this.password = v;
+          })
+      }
+      .width('100%')
+      .alignItems(HorizontalAlign.Start)
       if (this.confirmSent) {
         StatusStrip({ kind: 'OFFLINE', label: $r('app.string.acc_confirm_email') })
       }
@@ -143,9 +158,18 @@ export struct AuthForm {
         .height($r('app.float.button_height'))
         .justifyContent(FlexAlign.Center)
         .width('100%')
+      } else if (this.current === 'SIGN_UP') {
+        // One button per mode: PrimaryButton renders its label once (by-value @Builder), so it must be rebuilt.
+        PrimaryButton({
+          label: $r('app.string.acc_signup_button'),
+          active: this.email.length > 0 && this.password.length > 0,
+          onTap: () => {
+            this.submit();
+          }
+        })
       } else {
         PrimaryButton({
-          label: this.current === 'SIGN_UP' ? $r('app.string.acc_signup_button') : $r('app.string.acc_login_button'),
+          label: $r('app.string.acc_login_button'),
           active: this.email.length > 0 && this.password.length > 0,
           onTap: () => {
             this.submit();
