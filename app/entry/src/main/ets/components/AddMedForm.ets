@@ -7,11 +7,13 @@ import { DrugInfo, drugInfo } from '../drugs/DrugInfo';
 import { LocalStore } from '../data/LocalStore';
 import { ComboVerdict, RiskLevel } from '../model/DrugVerdict';
 import { Medication } from '../model/Medication';
-import { PrimaryButton, resText, RiskBadge, RiskShape } from './Common';
+import { PrimaryButton, resText, RiskBadge, RiskShape, SecondaryButton } from './Common';
 import { RiskUi } from '../common/RiskUi';
 
 @ComponentV2
 export struct AddMedForm {
+  // Inside a page with its own primary action (onboarding): "Add medicine" is a secondary button.
+  @Param embedded: boolean = false;
   @Event onAdded: () => void = () => {
   };
   @Local name: string = '';
@@ -187,14 +189,25 @@ export struct AddMedForm {
         .onChange((v: string) => {
           this.dose = v;
         })
-      PrimaryButton({
-        label: $r('app.string.meds_add'),
-        icon: $r('app.media.ic_plus'),
-        active: this.name.trim().length > 0,
-        onTap: () => {
-          this.save();
-        }
-      })
+      if (this.embedded) {
+        SecondaryButton({
+          label: $r('app.string.meds_add'),
+          icon: $r('app.media.ic_plus'),
+          active: this.name.trim().length > 0,
+          onTap: () => {
+            this.save();
+          }
+        })
+      } else {
+        PrimaryButton({
+          label: $r('app.string.meds_add'),
+          icon: $r('app.media.ic_plus'),
+          active: this.name.trim().length > 0,
+          onTap: () => {
+            this.save();
+          }
+        })
+      }
     }
     .width('100%')
   }

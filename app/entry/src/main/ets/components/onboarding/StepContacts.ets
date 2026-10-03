@@ -3,7 +3,7 @@
 
 import { Contact, Profile } from '../../model/Profile';
 import { validContact, withContact, withoutContact } from '../../onboarding/OnboardingFlow';
-import { PrimaryButton } from '../Common';
+import { SecondaryButton } from '../Common';
 import { toast } from '../../common/Toast';
 import { OnbHeading, OnbInput } from './OnbParts';
 
@@ -52,7 +52,7 @@ export struct StepContacts {
           this.cRelation = v;
         }
       })
-      PrimaryButton({
+      SecondaryButton({
         label: $r('app.string.onb_contact_add'),
         icon: $r('app.media.ic_plus'),
         active: validContact(this.cName, this.cPhone),

@@ -132,7 +132,11 @@ export struct OnboardingPage {
   @Builder
   stepWelcome() {
     Column({ space: 16 }) {
-      AgentAvatar({ dim: 96 })
+      // Padded so the breathing scale is not clipped at the page edge.
+      Row() {
+        AgentAvatar({ dim: 96 })
+      }
+      .padding(8)
       OnbHeading({ heading: $r('app.string.onb_welcome_title'), subtitle: $r('app.string.onb_welcome_body') })
       Text($r('app.string.onb_welcome_time'))
         .fontSize($r('app.float.font_small'))
@@ -204,6 +208,7 @@ export struct OnboardingPage {
         .width('100%')
         AuthForm({
           mode: this.authMode,
+          embedded: true,
           onDone: (signedIn: boolean) => {
             this.onAuthDone(signedIn);
           }
@@ -222,6 +227,7 @@ export struct OnboardingPage {
     Column({ space: 16 }) {
       OnbHeading({ heading: $r('app.string.onb_meds_title'), subtitle: $r('app.string.onb_meds_subtitle') })
       AddMedForm({
+        embedded: true,
         onAdded: () => {
           this.reloadMeds();
         }
@@ -273,6 +279,7 @@ export struct OnboardingPage {
       .width('100%')
       EmergencyDetailsForm({
         profile: this.draft,
+        showDob: false,
         onChange: (p: Profile) => {
           this.draft = withDetails(this.draft, p);
         }
@@ -384,25 +391,15 @@ export struct OnboardingPage {
         .scrollBar(BarState.Off)
 
         Column({ space: 8 }) {
-          // Two instances, not one with a changing label: PrimaryButton passes its label to a by-value @Builder,
-          // which does not re-render when the label changes.
-          if (isLastStep(this.step)) {
-            PrimaryButton({
-              label: $r('app.string.onb_done'),
-              active: !this.finishing,
-              onTap: () => this.next()
-            })
-          } else {
-            PrimaryButton({
-              label: $r('app.string.onb_continue'),
-              active: canContinue(this.step, this.consented, this.draft),
-              onTap: () => {
-                if (canContinue(this.step, this.consented, this.draft)) {
-                  this.next();
-                }
+          PrimaryButton({
+            label: isLastStep(this.step) ? $r('app.string.onb_done') : $r('app.string.onb_continue'),
+            active: isLastStep(this.step) ? !this.finishing : canContinue(this.step, this.consented, this.draft),
+            onTap: () => {
+              if (isLastStep(this.step) || canContinue(this.step, this.consented, this.draft)) {
+                this.next();
               }
-            })
-          }
+            }
+          })
           Row() {
             if (this.step > 0) {
               Text($r('app.string.onb_back'))

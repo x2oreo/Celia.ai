@@ -6,7 +6,7 @@ import { AuthMode } from '../common/Routes';
 import { AuthClient, AuthOutcome, AuthResult, MIN_PASSWORD_LENGTH, looksLikeEmail } from '../account/AuthClient';
 import { Session } from '../account/Session';
 import { ProfileSync } from '../account/ProfileSync';
-import { PrimaryButton, StatusStrip } from './Common';
+import { PrimaryButton, SecondaryButton, StatusStrip } from './Common';
 
 function outcomeMessage(o: AuthOutcome): Resource {
   if (o === 'INVALID_CREDENTIALS') {
@@ -39,6 +39,9 @@ function outcomeMessage(o: AuthOutcome): Resource {
 @ComponentV2
 export struct AuthForm {
   @Param mode: AuthMode = 'SIGN_UP';
+  // Inside a page that has its own primary action and mode switch (onboarding): the submit is a secondary button
+  // and the "Already have an account?" link is left out.
+  @Param embedded: boolean = false;
   // true once a session is stored (Session.isSignedIn()), false when the user backs out.
   @Event onDone: (signedIn: boolean) => void = (signedIn: boolean) => {
   };
@@ -54,6 +57,13 @@ export struct AuthForm {
 
   aboutToAppear(): void {
     this.current = this.mode;
+  }
+
+  @Monitor('mode')
+  onModeParam(): void {
+    this.current = this.mode;
+    this.error = undefined;
+    this.confirmSent = false;
   }
 
   private switchMode(): void {
@@ -158,10 +168,9 @@ export struct AuthForm {
         .height($r('app.float.button_height'))
         .justifyContent(FlexAlign.Center)
         .width('100%')
-      } else if (this.current === 'SIGN_UP') {
-        // One button per mode: PrimaryButton renders its label once (by-value @Builder), so it must be rebuilt.
-        PrimaryButton({
-          label: $r('app.string.acc_signup_button'),
+      } else if (this.embedded) {
+        SecondaryButton({
+          label: this.current === 'SIGN_UP' ? $r('app.string.acc_signup_button') : $r('app.string.acc_login_button'),
           active: this.email.length > 0 && this.password.length > 0,
           onTap: () => {
             this.submit();
@@ -169,21 +178,23 @@ export struct AuthForm {
         })
       } else {
         PrimaryButton({
-          label: $r('app.string.acc_login_button'),
+          label: this.current === 'SIGN_UP' ? $r('app.string.acc_signup_button') : $r('app.string.acc_login_button'),
           active: this.email.length > 0 && this.password.length > 0,
           onTap: () => {
             this.submit();
           }
         })
       }
-      Text(this.current === 'SIGN_UP' ? $r('app.string.acc_to_login') : $r('app.string.acc_to_signup'))
-        .fontSize($r('app.float.font_small'))
-        .fontWeight(FontWeight.Medium)
-        .fontColor($r('app.color.brand_text'))
-        .constraintSize({ minHeight: $r('app.float.touch_min') })
-        .textAlign(TextAlign.Center)
-        .width('100%')
-        .onClick(() => this.switchMode())
+      if (!this.embedded) {
+        Text(this.current === 'SIGN_UP' ? $r('app.string.acc_to_login') : $r('app.string.acc_to_signup'))
+          .fontSize($r('app.float.font_small'))
+          .fontWeight(FontWeight.Medium)
+          .fontColor($r('app.color.brand_text'))
+          .constraintSize({ minHeight: $r('app.float.touch_min') })
+          .textAlign(TextAlign.Center)
+          .width('100%')
+          .onClick(() => this.switchMode())
+      }
     }
     .width('100%')
   }

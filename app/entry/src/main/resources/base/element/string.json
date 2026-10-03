@@ -566,7 +566,7 @@
     },
     {
       "name": "onb_name_hint",
-      "value": "Your name (shown on the emergency card)"
+      "value": "Your name"
     },
     {
       "name": "onb_genotype",
