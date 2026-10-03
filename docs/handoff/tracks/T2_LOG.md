@@ -130,6 +130,12 @@ gitignored, on this Mac)
 `components/agent/*` exists on `origin/kaloyan/t1-agent-home` but is not merged into `origin/kaloyan/agent-home`
 (checked 2026-10-03 23:10). Not started: the `SYMPTOM_LOG` tile, the `LOG_DOSE` card, the camera picker.
 
+Camera, checked in Context7 (harmonyos-references) ahead of the edit: `cameraPicker.pick(context,
+[cameraPicker.PickerMediaType.PHOTO], { cameraPosition: camera.CameraPosition.CAMERA_POSITION_BACK })` from
+`@kit.CameraKit` returns `PickerResult.resultUri`. It is the system camera UI, so the app needs no camera
+permission. Plan: try it first, fall back to `PhotoViewPicker` when it throws or returns an empty URI (emulator).
+Not built, not run.
+
 ## Needs from other tracks
 
 - **T1 / integrator:** merge the A3 split, then tell T2. T2 then adds to `components/agent/ActionCards.ets`:
