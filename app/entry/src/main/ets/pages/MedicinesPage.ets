@@ -1,7 +1,8 @@
-// Medicines tab (design B4): header, search-first check, quick links (reminders, check history) seen without
-// scrolling, recently checked chips, my medicines as a two-column grid.
+// Medicines tab (DESIGN.md §10.1a, screen 05): header with History, search-first check, today's doses as a sideways
+// row (taken, due, missed, later), recently checked chips, my medicines as a two-column grid. Dose styling is
+// neutral, never a risk colour.
 
-import { AskParam, CheckParam, Routes } from '../common/Routes';
+import { AskParam, CheckParam, Routes, TabIndex } from '../common/Routes';
 import { DrugChecker } from '../drugs/DrugChecker';
 import { DrugEntry } from '../drugs/DrugDataset';
 import { LocalStore, StoreTopic } from '../data/LocalStore';
@@ -11,9 +12,11 @@ import { RiskLevel } from '../model/DrugVerdict';
 import { AddMedForm } from '../components/AddMedForm';
 import { MedicineDetailSheet } from '../components/MedicineDetailSheet';
 import { medSubtitle } from '../drugs/MedFacts';
-import {
-  EmptyCard, QuickReplyChip, resText, RiskBadge, ScreenHeader, SectionHeader, StatusChip
-} from '../components/Common';
+import { EmptyCard, resText, RiskBadge, ScreenHeader, SectionHeader, StatusChip } from '../components/Common';
+import { ReminderService } from '../reminders/ReminderService';
+import { DoseLog, DoseReminder, DoseStatus, doseStatus, dayKey, timeLabel } from '../reminders/DoseSchedule';
+import { clock } from '../common/Format';
+import { pulse } from '../common/Haptics';
 import { RiskUi } from '../common/RiskUi';
 
 export function medRisk(m: Medication): RiskLevel {
@@ -23,6 +26,8 @@ export function medRisk(m: Medication): RiskLevel {
 
 const RECENT_MAX: number = 6;
 const MED_CARD_HEIGHT: number = 164;
+const DOSE_CARD_WIDTH: number = 132;
+const DOSE_CARD_HEIGHT: number = 112;
 
 @ComponentV2
 export struct MedicinesPage {
@@ -33,13 +38,17 @@ export struct MedicinesPage {
   @Local showAdd: boolean = false;
   @Local detail: Medication | undefined = undefined;
   @Local showDetail: boolean = false;
+  @Local doses: DoseReminder[] = [];
+  @Local doseLogs: DoseLog[] = [];
+  @Local now: number = Date.now();
+  @Consumer('tabIndex') activeTab: number = TabIndex.HOME;
   private unsubscribe: () => void = () => {
   };
 
   aboutToAppear(): void {
     this.reload();
     this.unsubscribe = LocalStore.get().onChange((t: StoreTopic) => {
-      if (t === 'meds' || t === 'scans') {
+      if (t === 'meds' || t === 'scans' || t === 'settings') {
         this.reload();
       }
     });
@@ -49,7 +58,34 @@ export struct MedicinesPage {
     this.unsubscribe();
   }
 
+  // Coming back to the tab: a dose may have become due.
+  @Monitor('activeTab')
+  onTab(m: IMonitor): void {
+    if (this.activeTab === TabIndex.MEDICINES) {
+      this.reload();
+    }
+  }
+
+  private status(r: DoseReminder): DoseStatus {
+    return doseStatus(r, this.doseLogs, this.now);
+  }
+
+  private takenAt(r: DoseReminder): string {
+    const today: string = dayKey(this.now);
+    const log: DoseLog | undefined = this.doseLogs.find((l: DoseLog) => l.reminderId === r.id && l.day === today);
+    return log === undefined ? '' : clock(log.ts);
+  }
+
+  private async take(r: DoseReminder): Promise<void> {
+    pulse(20);
+    await ReminderService.mark(r, 'TAKEN');
+  }
+
   private async reload(): Promise<void> {
+    this.now = Date.now();
+    this.doses = (await ReminderService.list()).sort((a: DoseReminder, b: DoseReminder) =>
+      (a.hour * 60 + a.minute) - (b.hour * 60 + b.minute));
+    this.doseLogs = await ReminderService.doseLog();
     this.meds = await LocalStore.get().listMeds();
     // Latest check per medicine, newest first.
     const seen: string[] = [];
@@ -142,6 +178,113 @@ export struct MedicinesPage {
     })
   }
 
+  // One dose of today (DESIGN.md §6.9, §10.1a). Taken: quiet. Due or missed: ink outline and a one-tap Taken.
+  // Later: dashed. A word says the status; no risk colour.
+  @Builder
+  doseCard(r: DoseReminder) {
+    Column({ space: 4 }) {
+      Text(this.status(r) === 'DUE' ? $r('app.string.dose_due_at', timeLabel(r)) : timeLabel(r))
+        .fontSize($r('app.float.font_badge'))
+        .fontWeight(this.status(r) === 'DUE' || this.status(r) === 'MISSED' ? FontWeight.Bold : FontWeight.Medium)
+        .fontColor(this.status(r) === 'DUE' || this.status(r) === 'MISSED' ? $r('app.color.ink') :
+          $r('app.color.ink_3'))
+      Text(r.medName)
+        .fontSize($r('app.float.font_body'))
+        .fontWeight(FontWeight.Bold)
+        .fontColor($r('app.color.ink'))
+        .maxLines(1)
+        .textOverflow({ overflow: TextOverflow.Ellipsis })
+      Blank()
+      if (this.status(r) === 'TAKEN') {
+        Row({ space: 4 }) {
+          Image($r('app.media.ic_check')).width(14).height(14).fillColor($r('app.color.ink_2'))
+          Text($r('app.string.dose_taken_at', this.takenAt(r)))
+            .fontSize($r('app.float.font_badge'))
+            .fontWeight(FontWeight.Bold)
+            .fontColor($r('app.color.ink_2'))
+        }
+      } else if (this.status(r) === 'DUE' || this.status(r) === 'MISSED') {
+        if (this.status(r) === 'MISSED') {
+          Text($r('app.string.rem_status_missed'))
+            .fontSize($r('app.float.font_micro'))
+            .fontWeight(FontWeight.Bold)
+            .fontColor($r('app.color.risk_possible_text'))
+        }
+        Row({ space: 6 }) {
+          Image($r('app.media.ic_check')).width(14).height(14).fillColor($r('app.color.chat_user_text'))
+          Text($r('app.string.rem_taken'))
+            .fontSize($r('app.float.font_badge'))
+            .fontWeight(FontWeight.Bold)
+            .fontColor($r('app.color.chat_user_text'))
+        }
+        .width('100%')
+        .height(36)
+        .justifyContent(FlexAlign.Center)
+        .borderRadius(18)
+        .backgroundColor($r('app.color.chat_user_bg'))
+        .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.95 })
+        .accessibilityGroup(true)
+        .accessibilityText($r('app.string.rem_taken_a11y', r.medName))
+        .onClick(() => {
+          this.take(r);
+        })
+      } else {
+        Text(this.status(r) === 'SKIPPED' ? $r('app.string.rem_status_skipped') : $r('app.string.rem_status_upcoming'))
+          .fontSize($r('app.float.font_badge'))
+          .fontWeight(FontWeight.Medium)
+          .fontColor($r('app.color.ink_3'))
+      }
+    }
+    .width(DOSE_CARD_WIDTH)
+    .height(DOSE_CARD_HEIGHT)
+    .alignItems(HorizontalAlign.Start)
+    .padding(12)
+    .backgroundColor(this.status(r) === 'TAKEN' ? $r('app.color.surface_alt') : $r('app.color.surface'))
+    .border({
+      width: this.status(r) === 'TAKEN' ? 0 : 1.5,
+      color: this.status(r) === 'DUE' || this.status(r) === 'MISSED' ? $r('app.color.ink') :
+        $r('app.color.border_strong'),
+      style: this.status(r) === 'UPCOMING' || this.status(r) === 'SKIPPED' ? BorderStyle.Dashed : BorderStyle.Solid
+    })
+    .borderRadius($r('app.float.radius_m'))
+    .accessibilityGroup(true)
+  }
+
+  @Builder
+  todaysDoses() {
+    SectionHeader({
+      title: $r('app.string.meds_today_doses'),
+      action: $r('app.string.meds_all'),
+      onAction: () => {
+        this.navStack.pushPathByName(Routes.REMINDERS, null);
+      }
+    })
+    if (this.doses.length === 0) {
+      Text($r('app.string.meds_no_doses'))
+        .fontSize($r('app.float.font_small'))
+        .fontColor($r('app.color.ink_3'))
+        .width('100%')
+        .padding(14)
+        .border({ width: 1.5, color: $r('app.color.border_strong'), style: BorderStyle.Dashed })
+        .borderRadius($r('app.float.radius_m'))
+        .onClick(() => {
+          this.navStack.pushPathByName(Routes.REMINDERS, null);
+        })
+    } else {
+      Scroll() {
+        Row({ space: 8 }) {
+          ForEach(this.doses, (r: DoseReminder) => {
+            this.doseCard(r)
+          }, (r: DoseReminder) => `${r.id}-${this.status(r)}-${this.takenAt(r)}`)
+        }
+      }
+      .scrollable(ScrollDirection.Horizontal)
+      .scrollBar(BarState.Off)
+      .width('100%')
+      .align(Alignment.Start)
+    }
+  }
+
   @Builder
   medCard(m: Medication) {
     Column() {
@@ -213,7 +356,15 @@ export struct MedicinesPage {
   build() {
     Scroll() {
       Column({ space: 12 }) {
-        ScreenHeader({ title: $r('app.string.medicines_title'), back: false })
+        ScreenHeader({
+          title: $r('app.string.medicines_title'),
+          back: false,
+          extraIcon: $r('app.media.ic_history'),
+          extraLabel: $r('app.string.meds_link_history'),
+          onExtra: () => {
+            this.navStack.pushPathByName(Routes.HISTORY, null);
+          }
+        })
 
         // Search-first check + scan
         Row({ space: 10 }) {
@@ -259,24 +410,7 @@ export struct MedicinesPage {
         }
         .width('100%')
 
-        // Quick links: reminders used to sit under the grid.
-        Row({ space: 8 }) {
-          QuickReplyChip({
-            label: $r('app.string.meds_link_reminders'),
-            icon: $r('app.media.ic_bell'),
-            onTap: () => {
-              this.navStack.pushPathByName(Routes.REMINDERS, null);
-            }
-          })
-          QuickReplyChip({
-            label: $r('app.string.meds_link_history'),
-            icon: $r('app.media.ic_history'),
-            onTap: () => {
-              this.navStack.pushPathByName(Routes.HISTORY, null);
-            }
-          })
-        }
-        .width('100%')
+        this.todaysDoses()
 
         if (this.recent.length > 0) {
           SectionHeader({
@@ -331,7 +465,7 @@ export struct MedicinesPage {
         }
 
       }
-      .padding({ left: $r('app.float.space_screen'), right: $r('app.float.space_screen'), bottom: 24 })
+      .padding({ left: $r('app.float.space_m'), right: $r('app.float.space_m'), bottom: 48 })
       .width('100%')
       .bindSheet(this.showDetail, this.detailSheet(), {
         detents: [SheetSize.LARGE, SheetSize.MEDIUM],
