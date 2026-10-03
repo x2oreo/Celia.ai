@@ -1,5 +1,5 @@
 import { abilityAccessCtrl, common, Permissions } from '@kit.AbilityKit';
-import { sensor, vibrator } from '@kit.SensorServiceKit';
+import { vibrator } from '@kit.SensorServiceKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { AppConfig, AppConfigData } from '../common/AppConfig';
 import { Logger } from '../common/Logger';
@@ -21,15 +21,9 @@ import {
   makeRow,
   sourceForKind
 } from '../model/WatchMetric';
-import { ContextSensors } from '../vitals/ContextSensors';
-import { HeartRateSource } from '../vitals/HeartRateSource';
 import { BaseLimits, HrLimits, limitsFor } from '../vitals/Limits';
 import { ANOMALY_RAMP_MS, Anomaly, MOCKED_FIELDS } from '../vitals/MockedVitals';
-import { MotionAnalyzer } from '../vitals/MotionAnalyzer';
-import { SCENARIOS, stateAt } from '../vitals/Scenarios';
-import { SensorHeartRateSource } from '../vitals/SensorHeartRateSource';
-import { SimulatedHeartRateSource } from '../vitals/SimulatedHeartRateSource';
-import { isAsleep } from '../vitals/SleepDetector';
+import { SCENARIOS } from '../vitals/Scenarios';
 import { MetricOutbox } from '../sync/MetricOutbox';
 import { PatientContext, PatientContextClient } from '../sync/PatientContextClient';
 import { PreferencesOutboxStore } from '../sync/PreferencesOutboxStore';
@@ -51,6 +45,7 @@ import { FallRecord, FallTick, SosFlow } from './SosFlow';
 import { PairScreen, PairState, PairingFlow } from './PairingFlow';
 import { OUTBOX_CAPACITY, SyncEngine, SyncState } from './SyncEngine';
 import { AlertKind, HeartRules, Reading, RulesHost } from './HeartRules';
+import { SensorHub } from './SensorHub';
 import { SupabaseUploader } from '../sync/SupabaseUploader';
 
 /** Simulate-page override for the wearer's state. AUTO = motion sensor / scenario / sleep detector. */
@@ -129,10 +124,7 @@ export class WatchController implements RulesHost {
     awakeLow: 45,
     sleepLow: 40
   };
-  private source: HeartRateSource | undefined = undefined;
-  private simSource: SimulatedHeartRateSource | undefined = undefined;
-  private sensors: ContextSensors = new ContextSensors();
-  private motion: MotionAnalyzer = new MotionAnalyzer();
+  private hub: SensorHub = new SensorHub();
   private sync: SyncEngine = new SyncEngine();
   private contextClient: PatientContextClient | undefined = undefined;
   private demoRpc: DemoRpcClient | undefined = undefined;
@@ -141,10 +133,6 @@ export class WatchController implements RulesHost {
   private lastContextMs: number = 0;
   private lastSampleMs: number = 0;
   private monitoringSinceMs: number = 0;
-  private stillSinceMs: number = -1;
-  private motionAvailable: boolean = false;
-  private sensorStepsBase: number = -1;
-  private simSteps: number = 0;
   private scenarioFallDone: boolean = false;
   private sos: SosFlow = new SosFlow();
   private rules: HeartRules = new HeartRules(this, Math.random);
@@ -553,27 +541,24 @@ export class WatchController implements RulesHost {
     this.rules.start(now);
     this.bpm = 0;
     this.lastSampleMs = now;
-    this.stillSinceMs = -1;
-    this.motion = new MotionAnalyzer();
     this.scenarioFallDone = false;
     this.running = true;
-    this.source = this.createSource(this.sourceKind);
-    this.source.start((bpm: number, tsMs: number) => {
-      this.onSample(bpm, tsMs);
-    }, (msg: string) => {
-      this.onSourceError(msg);
-    });
-    const started = this.sensors.start((x: number, y: number, z: number, tsMs: number) => {
-      this.onMotion(x, y, z, tsMs);
-    }, (worn: boolean) => {
-      this.setWorn(worn);
-    }, (total: number) => {
-      this.onSteps(total);
-    }, this.motionPermission);
+    const started = this.hub.start(this.sourceKind, this.scenarioIdx, this.demoSpeed, this.motionPermission,
+      (bpm: number, tsMs: number) => {
+        this.onSample(bpm, tsMs);
+      }, (msg: string) => {
+        this.onSourceError(msg);
+      }, () => {
+        Logger.info('fall detected by accelerometer');
+        this.startFall();
+      }, (worn: boolean) => {
+        this.setWorn(worn);
+      }, (steps: number) => {
+        this.steps = steps;
+      });
     this.tickTimer = setInterval(() => {
       this.onTick();
     }, 1000);
-    this.motionAvailable = started.indexOf('motion') >= 0;
     Logger.info(`monitoring started, source=${this.sourceKind}, context=[${started.join(',')}]`);
   }
 
@@ -581,10 +566,7 @@ export class WatchController implements RulesHost {
     if (!this.running) {
       return;
     }
-    this.source?.stop();
-    this.source = undefined;
-    this.simSource = undefined;
-    this.sensors.stop();
+    this.hub.stop();
     if (this.tickTimer >= 0) {
       clearInterval(this.tickTimer);
       this.tickTimer = -1;
@@ -599,22 +581,11 @@ export class WatchController implements RulesHost {
       this.statusText = 'No heart-rate permission, demo data';
       return false;
     }
-    try {
-      sensor.getSingleSensorSync(sensor.SensorId.HEART_RATE);
-      return true;
-    } catch (e) {
+    if (!SensorHub.heartRateSensorPresent()) {
       this.statusText = 'No heart-rate sensor, demo data';
       return false;
     }
-  }
-
-  private createSource(kind: HrSourceKind): HeartRateSource {
-    if (kind === 'SENSOR') {
-      return new SensorHeartRateSource();
-    }
-    const sim = new SimulatedHeartRateSource(SCENARIOS[this.scenarioIdx].id, this.demoSpeed);
-    this.simSource = sim;
-    return sim;
+    return true;
   }
 
   /** Sources only update the current reading; all processing runs once per second in onTick(). */
@@ -626,45 +597,17 @@ export class WatchController implements RulesHost {
     }
   }
 
-  private onMotion(x: number, y: number, z: number, tsMs: number): void {
-    if (this.motion.feed(x, y, z, tsMs)) {
-      Logger.info('fall detected by accelerometer');
-      this.startFall();
-    }
-  }
-
-  /** The step counter reports a running total since boot; show steps since the app started. */
-  private onSteps(total: number): void {
-    if (this.sensorStepsBase < 0) {
-      this.sensorStepsBase = total;
-    }
-    this.steps = this.simSteps + total - this.sensorStepsBase;
-  }
-
   /** Priority: Simulate-page override → demo scenario → accelerometer (+ sleep detector). */
   private currentActivity(now: number): Activity {
     if (this.activityOverride !== 'AUTO') {
       return this.activityOverride;
     }
-    if (this.simSource !== undefined) {
-      return stateAt(SCENARIOS[this.scenarioIdx], this.simSource.elapsedSec);
-    }
-    const moving = this.motionAvailable ? this.motion.activityAt(now) : 'UNKNOWN';
-    if (moving === 'REST') {
-      if (this.stillSinceMs < 0) {
-        this.stillSinceMs = now;
-      }
-      const asleep = isAsleep({
-        onWrist: this.onWrist,
-        stillSec: (now - this.stillSinceMs) / 1000,
-        bpm: this.bpm,
-        restingBpm: this.restingBpm,
-        hour: new Date(now).getHours()
-      });
-      return asleep ? 'ASLEEP' : 'REST';
-    }
-    this.stillSinceMs = -1;
-    return moving;
+    return this.hub.activity({
+      nowMs: now,
+      onWrist: this.onWrist,
+      bpm: this.bpm,
+      restingBpm: this.restingBpm
+    });
   }
 
   private applyLimits(): void {
@@ -679,9 +622,8 @@ export class WatchController implements RulesHost {
     this.monitoringSec = Math.round((now - this.monitoringSinceMs) / 1000);
     this.activity = this.currentActivity(now);
     this.applyLimits();
-    if (this.simSource !== undefined && this.activity === 'ACTIVE') {
-      this.simSteps += SIM_STEPS_PER_SEC;
-      this.steps += SIM_STEPS_PER_SEC;
+    if (this.hub.simulated && this.activity === 'ACTIVE') {
+      this.steps += this.hub.addSimSteps(SIM_STEPS_PER_SEC);
     }
     if (this.rules.windowDue(now)) {
       this.flushWindow(now);
@@ -707,15 +649,10 @@ export class WatchController implements RulesHost {
     this.processReading(now);
   }
 
-  /** Clock for timing rules: scenario time in demo mode (fast-forwarded), wall clock otherwise. */
-  private logicNow(now: number): number {
-    return this.simSource !== undefined ? this.simSource.virtualNowMs : now;
-  }
-
   private processReading(now: number): void {
     const r: Reading = {
       nowMs: now,
-      logicMs: this.logicNow(now),
+      logicMs: this.hub.logicNow(now),
       bpm: this.bpm,
       activity: this.activity,
       limits: { high: this.limitHigh, low: this.limitLow, reason: this.limitReason },
@@ -747,8 +684,7 @@ export class WatchController implements RulesHost {
 
   private tickScenarioFall(): void {
     const s = SCENARIOS[this.scenarioIdx];
-    if (this.simSource !== undefined && !this.scenarioFallDone && s.fallAtSec >= 0 &&
-      this.simSource.elapsedSec >= s.fallAtSec) {
+    if (this.hub.simulated && !this.scenarioFallDone && s.fallAtSec >= 0 && this.hub.scenarioSec >= s.fallAtSec) {
       this.scenarioFallDone = true;
       this.startFall();
     }
