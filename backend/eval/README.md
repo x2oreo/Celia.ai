@@ -79,3 +79,20 @@ replaced.
 `lib.ts` mirrors `ResponseValidator.ets`, `SafetyGate.ets`, `VerdictText.ets` and `ConditionFacts.ets` on purpose,
 including their known gaps (see `AI_WORKFLOW.md`, 2026-10-03 eval entry). When the device code changes, update the
 port in the same commit.
+
+## Emulator against a local backend
+
+This tests the real agent inside the app without deploying the functions.
+
+```bash
+set -a; source backend/supabase/functions/.env; set +a
+npx -y deno@2 run -A backend/eval/dev-backend.ts &          # functions on 127.0.0.1:8000 (paid OpenAI calls)
+source app/env.sh && hdc rport tcp:8000 tcp:8000            # emulator's 127.0.0.1:8000 → this Mac
+# in the gitignored app/entry/src/main/ets/common/LocalConfig.ets:
+#   BACKEND_URL = 'http://127.0.0.1:8000'   SUPABASE_ANON_KEY = 'local-dev'
+app/scripts/run.sh                                          # build, install, launch
+app/scripts/ui.sh tapt Agent && app/scripts/ui.sh shot      # drive the UI and take a screenshot
+```
+
+Put `LocalConfig.ets` back to empty values before running the unit tests, because the offline tests assume there is
+no backend. `/drug-check` is not served here (it needs the database), so the app uses its bundled dataset.

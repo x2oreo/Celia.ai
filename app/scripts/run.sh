@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Build → install → launch → screenshot. Run from anywhere:  app/scripts/run.sh [screenshot-path]
-# Needs a running emulator/device (`hdc list targets`) and a signing config (see README → Signing).
+# Needs a running emulator/device (`hdc list targets`). A real device also needs a signing config (README → Signing).
 set -euo pipefail
 
 APP_DIR="$(cd "$(dirname "$0")/.." && pwd)"
@@ -13,8 +13,9 @@ SHOT="${1:-$APP_DIR/build/screenshot.jpeg}"
 
 hvigorw --mode module -p module=entry@default -p product=default assembleHap --no-daemon
 if [ ! -f "$HAP" ]; then
-  echo "No signed HAP at $HAP — configure signing in DevEco first (README → Signing)." >&2
-  exit 1
+  # The emulator installs unsigned HAPs; a real device needs signing (README → Signing).
+  HAP="entry/build/default/outputs/default/entry-default-unsigned.hap"
+  echo "No signed HAP — installing the unsigned one (emulator only)." >&2
 fi
 
 hdc install -r "$HAP"
