@@ -60,7 +60,8 @@ Unit tests: 211 Hypium (phone) + 43 Hypium (watch) + 68 Deno, all green. Details
 | Privacy ledger | **T29** |
 | Accessible & calm UI | **T30** |
 
-Out of scope: user accounts / login — the core data stays on device (D6). The watch is linked with a 6-digit pairing code (see `watch/README.md`).
+User accounts (revised 4 Oct, Workstream B1/B2): optional email + password sign-in; the profile and medicines are
+backed up under the account and the app stays usable offline (D6). The watch is linked with a 6-digit pairing code (see `watch/README.md`).
 
 ## Conventions for every task
 

@@ -1,0 +1,304 @@
+{
+  "string": [
+    {
+      "name": "acc_welcome_title",
+      "value": "Celia"
+    },
+    {
+      "name": "acc_welcome_tagline",
+      "value": "Your heart-safety companion for Long QT syndrome."
+    },
+    {
+      "name": "acc_welcome_point_check",
+      "value": "Check any medicine against the QT list, even offline."
+    },
+    {
+      "name": "acc_welcome_point_watch",
+      "value": "Your watch keeps an eye on your heart rate."
+    },
+    {
+      "name": "acc_welcome_point_card",
+      "value": "Your emergency card opens with no network."
+    },
+    {
+      "name": "acc_welcome_create",
+      "value": "Create an account"
+    },
+    {
+      "name": "acc_welcome_login",
+      "value": "I already have an account"
+    },
+    {
+      "name": "acc_welcome_skip",
+      "value": "Set up without an account"
+    },
+    {
+      "name": "acc_welcome_skip_hint",
+      "value": "Your profile then stays on this phone only. You can add an account later in Settings."
+    },
+    {
+      "name": "acc_signup_title",
+      "value": "Create your account"
+    },
+    {
+      "name": "acc_login_title",
+      "value": "Log in"
+    },
+    {
+      "name": "acc_signup_subtitle",
+      "value": "Your profile and medicines are backed up to your account, so a new phone can restore them."
+    },
+    {
+      "name": "acc_login_subtitle",
+      "value": "Welcome back. Your profile will be restored."
+    },
+    {
+      "name": "acc_email",
+      "value": "Email"
+    },
+    {
+      "name": "acc_password",
+      "value": "Password"
+    },
+    {
+      "name": "acc_password_hint_new",
+      "value": "At least 8 characters"
+    },
+    {
+      "name": "acc_signup_button",
+      "value": "Create account"
+    },
+    {
+      "name": "acc_login_button",
+      "value": "Log in"
+    },
+    {
+      "name": "acc_working",
+      "value": "One moment…"
+    },
+    {
+      "name": "acc_to_login",
+      "value": "Already have an account? Log in"
+    },
+    {
+      "name": "acc_to_signup",
+      "value": "New here? Create an account"
+    },
+    {
+      "name": "acc_err_email",
+      "value": "That doesn't look like an email address."
+    },
+    {
+      "name": "acc_err_password_short",
+      "value": "Use at least 8 characters for your password."
+    },
+    {
+      "name": "acc_err_invalid",
+      "value": "Email or password is wrong. Try again?"
+    },
+    {
+      "name": "acc_err_taken",
+      "value": "An account with this email already exists. Log in instead?"
+    },
+    {
+      "name": "acc_err_weak",
+      "value": "That password is too easy to guess. Try a longer one."
+    },
+    {
+      "name": "acc_err_invalid_email",
+      "value": "This email address can't be used. Try another one."
+    },
+    {
+      "name": "acc_err_not_confirmed",
+      "value": "Confirm your email first: open the link we sent you, then log in."
+    },
+    {
+      "name": "acc_err_signup_disabled",
+      "value": "New accounts are switched off right now. Set up without an account for now."
+    },
+    {
+      "name": "acc_err_rate",
+      "value": "Too many tries. Wait a minute and try again."
+    },
+    {
+      "name": "acc_err_offline",
+      "value": "No connection. Your medicine check and emergency card still work. Try again when you're online."
+    },
+    {
+      "name": "acc_err_server",
+      "value": "Something went wrong on our side. Try again in a moment."
+    },
+    {
+      "name": "acc_confirm_email",
+      "value": "Check your email and open the link to confirm your account, then log in here."
+    },
+    {
+      "name": "acc_action_login",
+      "value": "Log in"
+    },
+    {
+      "name": "acc_nav",
+      "value": "Account"
+    },
+    {
+      "name": "acc_row_signed_in",
+      "value": "Signed in as %s"
+    },
+    {
+      "name": "acc_row_signed_out",
+      "value": "Not signed in · data on this phone only"
+    },
+    {
+      "name": "acc_title",
+      "value": "Account"
+    },
+    {
+      "name": "acc_signed_in_as",
+      "value": "Signed in as"
+    },
+    {
+      "name": "acc_sync_label",
+      "value": "BACKUP"
+    },
+    {
+      "name": "acc_sync_never",
+      "value": "Not backed up yet."
+    },
+    {
+      "name": "acc_sync_ok",
+      "value": "Backed up %s."
+    },
+    {
+      "name": "acc_sync_offline",
+      "value": "Offline. Your changes are saved on this phone and will be backed up when you're online."
+    },
+    {
+      "name": "acc_sync_error",
+      "value": "Backup didn't go through. Your data is safe on this phone."
+    },
+    {
+      "name": "acc_sync_now",
+      "value": "Back up now"
+    },
+    {
+      "name": "acc_sign_out",
+      "value": "Sign out"
+    },
+    {
+      "name": "acc_sign_out_confirm",
+      "value": "You stay set up on this phone: your profile, medicines and emergency card stay here. Also delete them from this phone?"
+    },
+    {
+      "name": "acc_sign_out_keep",
+      "value": "Sign out, keep data"
+    },
+    {
+      "name": "acc_sign_out_wipe",
+      "value": "Sign out and delete"
+    },
+    {
+      "name": "acc_delete_cloud",
+      "value": "Delete my data from my account"
+    },
+    {
+      "name": "acc_delete_cloud_confirm",
+      "value": "This deletes your backed-up profile and medicines from your account and signs you out. Everything on this phone stays. Your login itself stays; ask us to remove it."
+    },
+    {
+      "name": "acc_delete_cloud_yes",
+      "value": "Delete"
+    },
+    {
+      "name": "acc_deleted_cloud",
+      "value": "Deleted from your account."
+    },
+    {
+      "name": "acc_delete_failed",
+      "value": "Couldn't delete it. Check your connection and try again."
+    },
+    {
+      "name": "acc_cancel",
+      "value": "Cancel"
+    },
+    {
+      "name": "acc_where_label",
+      "value": "WHERE YOUR DATA IS"
+    },
+    {
+      "name": "acc_where_body",
+      "value": "On this phone, in encrypted storage. With an account, a copy of your profile and medicines is kept in your account (Supabase). Only you can read it: every row is locked to your login."
+    },
+    {
+      "name": "acc_signed_out_body",
+      "value": "You're not signed in. Everything stays on this phone. Sign in to back up your profile and medicines."
+    },
+    {
+      "name": "acc_pair_sign_in",
+      "value": "Sign in to pair your watch"
+    },
+    {
+      "name": "acc_pair_sign_in_why",
+      "value": "Your watch's heart data is kept under your account, so only you can see it. Without an account the app shows the demo watch."
+    },
+    {
+      "name": "acc_sos_label",
+      "value": "SOS ALERTS FROM YOUR WATCH"
+    },
+    {
+      "name": "acc_sos_switch",
+      "value": "Let my watch alert my contacts"
+    },
+    {
+      "name": "acc_sos_explain",
+      "value": "When your watch sends an SOS, our server texts and calls your emergency contacts. For that it keeps their names and numbers and your first name in your account. Off unless you switch it on; switching it off deletes them."
+    },
+    {
+      "name": "acc_sos_needs_watch",
+      "value": "Pair a watch first (Settings → Pair watch)."
+    },
+    {
+      "name": "acc_sos_ready",
+      "value": "%d contacts ready for an SOS."
+    },
+    {
+      "name": "acc_sos_none",
+      "value": "No contacts on the server yet. Add emergency contacts in Settings."
+    },
+    {
+      "name": "acc_sos_skipped",
+      "value": "%d contacts were left out: add the country code to their number, e.g. +48 600 123 456."
+    },
+    {
+      "name": "acc_sos_offline",
+      "value": "Offline. The contacts will be sent when you're online."
+    },
+    {
+      "name": "acc_sos_error",
+      "value": "Couldn't update the contacts on the server. Try again later."
+    },
+    {
+      "name": "acc_sos_last_dry_run",
+      "value": "Last SOS %s: test mode, no text or call was sent (sending isn't set up on the server yet)."
+    },
+    {
+      "name": "acc_sos_last_sent",
+      "value": "Last SOS %s: your contacts were texted and called."
+    },
+    {
+      "name": "acc_sos_last_partial",
+      "value": "Last SOS %s: some contacts couldn't be reached."
+    },
+    {
+      "name": "acc_sos_last_failed",
+      "value": "Last SOS %s: sending failed. Call for help yourself."
+    },
+    {
+      "name": "acc_sos_last_no_contacts",
+      "value": "Last SOS %s: nobody was alerted, there were no contacts."
+    },
+    {
+      "name": "acc_sos_last_skipped",
+      "value": "Last SOS %s: not sent again so soon after the previous one."
+    }
+  ]
+}

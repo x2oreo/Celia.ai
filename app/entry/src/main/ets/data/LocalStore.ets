@@ -91,8 +91,13 @@ export class LocalStore {
     return this.profile;
   }
 
-  async saveProfile(profile: Profile): Promise<void> {
+  // Stamps updatedAt (the time of this local edit; profile sync is last-write-wins on it). Pass stamp=false only when
+  // storing a copy that already carries its own time, e.g. a profile restored from the account.
+  async saveProfile(profile: Profile, stamp: boolean = true): Promise<void> {
     await this.ready;
+    if (stamp) {
+      profile.updatedAt = Date.now();
+    }
     this.profile = profile;
     await this.putKv('profile', JSON.stringify(profile));
     this.changes.emit('profile');

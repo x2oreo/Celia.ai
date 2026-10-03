@@ -10,6 +10,7 @@ import { validPhone } from './OnboardingPage';
 import { toast } from '../common/Toast';
 import { WatchPairing, shortId } from '../data/WatchPairing';
 import { Config } from '../common/Config';
+import { Session } from '../account/Session';
 
 const GENOTYPES: Genotype[] = ['LQT1', 'LQT2', 'LQT3', 'UNKNOWN'];
 
@@ -26,9 +27,20 @@ export struct SettingsPage {
   @Local showAddContact: boolean = false;
   @Local watchPaired: boolean = false;
   @Local watchShort: string = '';
+  @Local accountEmail: string = '';   // '' = signed out
+  private stopAccount: () => void = () => {
+  };
 
   aboutToAppear(): void {
     this.load();
+    this.accountEmail = Session.email();
+    this.stopAccount = Session.onChange(() => {
+      this.accountEmail = Session.email();
+    });
+  }
+
+  aboutToDisappear(): void {
+    this.stopAccount();
   }
 
   // Back from the Pair watch page: show the new pairing state.
@@ -273,6 +285,17 @@ export struct SettingsPage {
             .backgroundColor($r('app.color.surface'))
             .border({ width: 1, color: $r('app.color.border') })
             .borderRadius($r('app.float.radius_m'))
+
+            SectionHeader({ title: $r('app.string.acc_nav') })
+            NavRow({
+              icon: $r('app.media.ic_lock'),
+              title: $r('app.string.acc_nav'),
+              subtitle: this.accountEmail !== '' ? $r('app.string.acc_row_signed_in', this.accountEmail) :
+                $r('app.string.acc_row_signed_out'),
+              onTap: () => {
+                this.navStack.pushPathByName(Routes.ACCOUNT, null);
+              }
+            })
 
             SectionHeader({ title: $r('app.string.pair_nav') })
             NavRow({

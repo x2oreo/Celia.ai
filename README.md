@@ -114,17 +114,28 @@ App code, data and prompts are written in this repo.
 
 ### What leaves the phone
 
-The safety core (drug verdicts, emergency card, profile, medicines, reminders) works with no network. Everything
-below is optional and the phone lists each request in Settings → Privacy → "What left my phone".
+The safety core (drug verdicts, emergency card, profile, medicines, reminders) works with no network, signed in or
+not. Everything below is optional and the phone lists each request in Settings → Privacy → "What left my phone".
 
 | Goes to | What | When |
 |---|---|---|
+| Supabase Auth (our project) | Your email and password (the password is checked by Supabase Auth and stored there only as a hash) | You create an account or log in; token refreshes about once an hour while signed in |
+| Supabase `profiles` table (our project) | Your whole profile and medicine list as one document: name, genotype, ICD, emergency contacts with phone numbers and emails, card notes, emergency details, medicines and doses | You are signed in: at sign-in, at launch, and a few seconds after you change your profile or medicines |
 | Supabase (our project) | Watch readings keyed by a device id: heart rate, alerts, symptoms, doses taken, falls, wear state, simulated vitals, `sos` row with location if allowed | A linked watch app is running |
 | Supabase (our project) | `watch_context`: genotype, last risky medicine and time | You tap "I took it" on a risky medicine, or change genotype while paired |
 | OpenAI, via our Edge Functions | Condition, genotype, medicine ingredients, one-line heart summary, last 12 chat messages; for the optional summaries, a medicine name or the doctor brief's medicine lines | You talk or type to the agent online, or tap "Explain it in plain words" / "Summarise for the doctor" |
 | OpenAI, via our Edge Functions or a direct WebSocket | Voice audio; a downscaled box photo | Live voice, cloud tap-to-talk, or a photo scan the on-device reader could not handle |
 | Supabase Storage | Card or doctor report, encrypted on the phone; the key stays in the link | You create a share link or card QR |
-| Never uploaded in the clear | Name, phone numbers, contacts, notes | — |
+| Supabase, SOS tables (our project) | Your emergency contacts' names and international phone numbers (at most 5) and your first name, for your paired watch; readable by nobody through the API, only by our `sos` function | Only after you switch on Settings → Account → "Let my watch alert my contacts" (off by default); switching it off deletes them |
+| Never uploaded in the clear | Without an account: name, phone numbers, contacts, notes | — |
+
+**With an account:** the `profiles` row is readable and writable only by your own login (row-level security
+`auth.uid() = user_id`; nothing for the public key). It is stored in our Supabase project. Delete it any time in
+Settings → Account → "Delete my data from my account" (this also signs you out; the phone keeps its copy). Signing
+out keeps the data on the phone unless you choose "Sign out and delete". The ledger marks these requests with their
+named exception (`ACCOUNT_AUTH`, `PROFILE_SYNC`, `SOS_CONTACTS`); no other request may carry personal fields.
+When a watch SOS fires, the `sos` function texts and calls those contacts; without Twilio credentials on the server
+it records a test run instead (`dry_run`) and the Account page says that nobody was contacted.
 
 Known limits of this build: watch rows are guarded by a shared anon key plus the device id rather than per-user
 auth; the watch app has no ledger of its own.

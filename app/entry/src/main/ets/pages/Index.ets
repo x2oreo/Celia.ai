@@ -44,6 +44,9 @@ import { EmergencyProfilePage } from './EmergencyProfilePage';
 import { ResponderPage } from './ResponderPage';
 import { VisitsPage } from './VisitsPage';
 import { FeelingPage } from './FeelingPage';
+import { Session, launchRoute } from '../account/Session';
+import { ProfileSync } from '../account/ProfileSync';
+import { SosContacts } from '../account/SosContacts';
 import { AgentCore, QUICK_REPLY_OK, QUICK_REPLY_UNWELL } from '../agent/AgentCore';
 import { CheckInSheet } from '../components/CheckInSheet';
 import { clock } from '../common/Format';
@@ -93,10 +96,25 @@ struct Index {
     }, 30000);
   }
 
+  // Launch routing (B1): a stored session goes straight in, offline too; a fresh install sees Welcome. Signed in with
+  // no profile on the phone (new phone, or onboarding not finished): try to restore it first, else onboarding.
   private async showOnboardingIfNeeded(): Promise<void> {
-    const profile: Profile | undefined = await LocalStore.get().getProfile();
+    await Session.load();
+    ProfileSync.start();
+    await WatchPairing.load();
+    WatchPairing.startAccountBinding();   // B9: a paired watch is readable only by its signed-in owner
+    SosContacts.start();                  // B10: contacts to the server, only with consent
+    let profile: Profile | undefined = await LocalStore.get().getProfile();
+    if (launchRoute(Session.isSignedIn(), profile !== undefined) === 'WELCOME') {
+      this.navStack.pushPathByName(Routes.WELCOME, null, false);
+      return;
+    }
     if (profile === undefined) {
-      this.navStack.pushPathByName(Routes.ONBOARDING, null, false);
+      await ProfileSync.syncNow();
+      profile = await LocalStore.get().getProfile();
+      if (profile === undefined) {
+        this.navStack.pushPathByName(Routes.ONBOARDING, null, false);
+      }
     }
   }
 

@@ -25,6 +25,8 @@ import visitsTest from './Visits.test';
 import diaryTest from './Diary.test';
 import notifySosTest from './NotifySos.test';
 import liveStatusTest from './LiveStatus.test';
+import accountTest from './Account.test';
+import sosContactsTest from './SosContacts.test';
 import { Config } from '../main/ets/common/Config';
 
 export default function testsuite() {
@@ -57,4 +59,6 @@ export default function testsuite() {
   diaryTest();
   notifySosTest();
   liveStatusTest();
+  accountTest();
+  sosContactsTest();
 }

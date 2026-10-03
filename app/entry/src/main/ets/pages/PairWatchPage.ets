@@ -7,6 +7,8 @@ import { dateTime } from '../common/Format';
 import { PrimaryButton, SecondaryButton } from '../components/Common';
 import { toast } from '../common/Toast';
 import { VitalsService } from '../vitals/VitalsService';
+import { Session } from '../account/Session';
+import { AuthParam, Routes } from '../common/Routes';
 
 @ComponentV2
 export struct PairWatchPage {
@@ -17,9 +19,22 @@ export struct PairWatchPage {
   @Local code: string = '';
   @Local busy: boolean = false;
   @Local error: PairOutcome | undefined = undefined;
+  // A paired watch's data is readable only by its signed-in owner (B9), so pairing needs an account.
+  @Local signedIn: boolean = false;
+  @Consumer('navStack') navStack: NavPathStack = new NavPathStack();
+  private stopSession: () => void = () => {
+  };
 
   aboutToAppear(): void {
+    this.signedIn = Session.isSignedIn();
+    this.stopSession = Session.onChange((s: boolean) => {
+      this.signedIn = s;
+    });
     this.refresh();
+  }
+
+  aboutToDisappear(): void {
+    this.stopSession();
   }
 
   private async refresh(): Promise<void> {
@@ -129,6 +144,31 @@ export struct PairWatchPage {
     .borderRadius($r('app.float.radius_m'))
   }
 
+  // Signed out: pairing would bind the watch to nobody, so its data could not be read back.
+  @Builder
+  signInCard() {
+    Column({ space: 12 }) {
+      Text($r('app.string.acc_pair_sign_in'))
+        .fontSize($r('app.float.font_body'))
+        .fontColor($r('app.color.ink'))
+      Text($r('app.string.acc_pair_sign_in_why'))
+        .fontSize($r('app.float.font_small'))
+        .fontColor($r('app.color.ink_3'))
+      PrimaryButton({
+        label: $r('app.string.acc_action_login'),
+        onTap: () => {
+          this.navStack.pushPathByName(Routes.AUTH, new AuthParam('LOG_IN'));
+        }
+      })
+    }
+    .width('100%')
+    .alignItems(HorizontalAlign.Start)
+    .padding(16)
+    .backgroundColor($r('app.color.surface'))
+    .border({ width: 1, color: $r('app.color.border') })
+    .borderRadius($r('app.float.radius_m'))
+  }
+
   @Builder
   codeCard() {
     Column({ space: 12 }) {
@@ -181,7 +221,11 @@ export struct PairWatchPage {
             this.pairedCard()
           }
           // Pairing again (e.g. a new watch) is always possible; the new pairing replaces the old one.
-          this.codeCard()
+          if (this.signedIn) {
+            this.codeCard()
+          } else {
+            this.signInCard()
+          }
         }
         .padding({ left: 16, right: 16, bottom: 32 })
         .width('100%')
