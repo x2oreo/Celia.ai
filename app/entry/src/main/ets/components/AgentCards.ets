@@ -55,7 +55,11 @@ export class ToolUi {
       case 'prepare_doctor_visit':
         return $r('app.media.ic_doctor');
       case 'get_dose_status':
+      case 'log_dose':
+      case 'open_reminders':
         return $r('app.media.ic_bell');
+      case 'open_symptom_log':
+        return $r('app.media.ic_history');
       case 'scan_medicine':
         return $r('app.media.ic_camera');
       case 'show_emergency_card':
@@ -102,6 +106,12 @@ export class ToolUi {
         return step.done ? $r('app.string.tool_get_dose_status_done') : $r('app.string.tool_get_dose_status');
       case 'get_trends':
         return step.done ? $r('app.string.tool_get_trends_done') : $r('app.string.tool_get_trends');
+      case 'log_dose':
+        return step.done ? $r('app.string.tool_log_dose_done') : $r('app.string.tool_log_dose');
+      case 'open_symptom_log':
+        return step.done ? $r('app.string.tool_open_symptom_log_done') : $r('app.string.tool_open_symptom_log');
+      case 'open_reminders':
+        return step.done ? $r('app.string.tool_open_reminders_done') : $r('app.string.tool_open_reminders');
       default:
         return step.done ? $r('app.string.tool_generic_done') : $r('app.string.tool_generic');
     }
@@ -149,6 +159,7 @@ export struct ToolStepRow {
     .backgroundColor($r('app.color.surface'))
     .border({ width: 1, color: $r('app.color.border') })
     .borderRadius(18)
+    .accessibilityGroup(true)
   }
 }
 
@@ -215,6 +226,7 @@ export struct ConfirmCard {
         .layoutWeight(1)
       }
       .width('100%')
+      .accessibilityGroup(true)
 
       if (this.risk !== undefined) {
         RiskBadge({ risk: this.risk, compact: true })
@@ -288,6 +300,7 @@ export struct MedsCard {
             .width('100%')
             .padding({ top: 10, bottom: 10 })
             .border({ width: { top: i === 0 ? 0 : 1 }, color: $r('app.color.divider') })
+            .accessibilityGroup(true)
           }, (m: MedLinePayload, i: number) => `${i}-${m.name}`)
         }
         .width('100%')
@@ -339,6 +352,8 @@ export struct AlternativesCard {
             .backgroundColor($r('app.color.surface'))
             .border({ width: 1, color: $r('app.color.border_strong') })
             .borderRadius(18)
+            .accessibilityGroup(true)
+            .accessibilityText(name)
           }, (name: string) => name)
         }
         if (this.alts.note !== '') {
@@ -385,6 +400,7 @@ export struct EmergencyNotice {
           .border({ width: 1.5, color: $r('app.color.danger') })
           .borderRadius(22)
           .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.97 })
+          .accessibilityText($r('app.string.agent_open_sos'))
           .onClick(() => this.onOpen())
       }
     }
@@ -428,6 +444,7 @@ export struct ActionTile {
     .border({ width: 1, color: $r('app.color.border') })
     .borderRadius($r('app.float.radius_ml'))
     .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.98 })
+    .accessibilityGroup(true)
     .onClick(() => this.onTap())
   }
 }

@@ -2181,6 +2181,34 @@
       "value": "Checked today's doses"
     },
     {
+      "name": "tool_log_dose",
+      "value": "Finding the dose that is due"
+    },
+    {
+      "name": "tool_log_dose_done",
+      "value": "Checked for a dose that is due"
+    },
+    {
+      "name": "agent_log_dose_title",
+      "value": "Mark this dose as taken?"
+    },
+    {
+      "name": "tool_open_reminders",
+      "value": "Opening your reminders"
+    },
+    {
+      "name": "tool_open_reminders_done",
+      "value": "Reminders ready"
+    },
+    {
+      "name": "tool_open_symptom_log",
+      "value": "Reading your symptom log"
+    },
+    {
+      "name": "tool_open_symptom_log_done",
+      "value": "Read your symptom log"
+    },
+    {
       "name": "trends_title",
       "value": "Trends"
     },

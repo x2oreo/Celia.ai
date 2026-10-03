@@ -6,10 +6,12 @@ import { parseArgs } from './ResponseValidator';
 import { CheckDrugTool, GetMyMedsTool, SuggestAlternativesTool } from './tools/DrugTools';
 import { ExplainConditionTool, GetVitalsSummaryTool } from './tools/InfoTools';
 import {
-  AddMedTool, ScanMedicineTool, ShareEmergencyCardTool, ShowEmergencyCardTool, StartEmergencyTool, StartNewChatTool
+  AddMedTool, LogDoseTool, ScanMedicineTool, ShareEmergencyCardTool, ShowEmergencyCardTool, StartEmergencyTool, StartNewChatTool
 } from './tools/ActionTools';
 import { LogSymptomTool } from './tools/SymptomTools';
-import { GetDoseStatusTool, GetTrendsTool, PrepareDoctorVisitTool } from './tools/CareTools';
+import {
+  GetDoseStatusTool, GetTrendsTool, OpenRemindersTool, OpenSymptomLogTool, PrepareDoctorVisitTool
+} from './tools/CareTools';
 import { Logger } from '../common/Logger';
 
 const log: Logger = new Logger('ToolRegistry');
@@ -23,7 +25,8 @@ export class ToolRegistry {
       new ExplainConditionTool(), new GetVitalsSummaryTool(),
       new ScanMedicineTool(), new AddMedTool(), new ShowEmergencyCardTool(), new StartEmergencyTool(),
       new ShareEmergencyCardTool(), new StartNewChatTool(), new LogSymptomTool(),
-      new PrepareDoctorVisitTool(), new GetDoseStatusTool(), new GetTrendsTool()
+      new PrepareDoctorVisitTool(), new GetDoseStatusTool(), new GetTrendsTool(),
+      new OpenSymptomLogTool(), new OpenRemindersTool(), new LogDoseTool()
     ];
     for (const t of all) {
       this.tools.set(t.name, t);

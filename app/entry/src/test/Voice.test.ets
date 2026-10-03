@@ -2,6 +2,7 @@
 
 import { describe, it, expect } from '@ohos/hypium';
 import { concatChunks, pcmDurationMs, pcmLevel, pcmToWav } from '../main/ets/voice/Wav';
+import { DemoScript, demoScripts, parseScript } from '../main/ets/voice/DemoVoice';
 
 function ascii(bytes: Uint8Array, start: number, len: number): string {
   let s: string = '';
@@ -12,6 +13,25 @@ function ascii(bytes: Uint8Array, start: number, len: number): string {
 }
 
 export default function voiceTest() {
+  describe('DemoVoice', () => {
+    it('parsesPlainAndBargeInScripts', 0, () => {
+      expect(parseScript('doses').first).assertEqual('doses');
+      expect(parseScript('doses').interrupt).assertEqual('');
+      const b: DemoScript = parseScript('ondansetron+doses');
+      expect(b.first).assertEqual('ondansetron');
+      expect(b.interrupt).assertEqual('doses');
+    });
+
+    it('firstSessionIsAPlainQuestionAndOneScriptBargesIn', 0, () => {
+      const all: DemoScript[] = demoScripts();
+      expect(all[0].interrupt).assertEqual('');
+      expect(all.filter((s: DemoScript) => s.interrupt !== '').length).assertEqual(1);
+      for (const s of all) {
+        expect(s.first.length > 0).assertTrue();
+      }
+    });
+  });
+
   describe('Wav', () => {
     it('wrapsPcmInRiffHeader', 0, () => {
       const pcm: Uint8Array = new Uint8Array(32000); // 1 s at 16 kHz, 16-bit mono

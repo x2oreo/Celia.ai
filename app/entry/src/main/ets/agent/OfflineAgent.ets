@@ -4,10 +4,15 @@
 import { AgentReply, MedLinePayload, MedsPayload, UiAction, VerdictCardPayload } from '../model/AgentTypes';
 import { checkDrugFull } from './DrugCheckFlow';
 import { verdictText } from './VerdictText';
-import { action } from './ToolTypes';
+import { TurnState, action } from './ToolTypes';
 import { myMedsPayload } from './tools/DrugTools';
+import { LogDoseTool } from './tools/ActionTools';
+import {
+  GetDoseStatusTool, GetTrendsTool, OpenRemindersTool, OpenSymptomLogTool, SymptomLine, SymptomLogOutput
+} from './tools/CareTools';
 
-export type OfflineIntent = 'CHECK_DRUG' | 'MY_MEDS' | 'EMERGENCY_CARD' | 'SCAN' | 'UNKNOWN';
+export type OfflineIntent = 'CHECK_DRUG' | 'MY_MEDS' | 'EMERGENCY_CARD' | 'SCAN' | 'SYMPTOM_LOG' | 'DOSES' |
+  'LOG_DOSE' | 'REMINDERS' | 'TRENDS' | 'UNKNOWN';
 
 export interface ParsedIntent {
   intent: OfflineIntent;
@@ -35,6 +40,32 @@ export function parseOfflineIntent(text: string): ParsedIntent {
   const t: string = text.toLowerCase().trim();
   if (/\bemergency card\b|\bkarta\b/.test(t)) {
     const r: ParsedIntent = { intent: 'EMERGENCY_CARD', drug: '' };
+    return r;
+  }
+  // Pages the agent opens. Checked before the medicine patterns: "check my reminders" is not a medicine.
+  if (/\bsymptom (log|history|diary)\b|\b(my|past|previous|recent|logged) symptoms\b/.test(t)) {
+    const r: ParsedIntent = { intent: 'SYMPTOM_LOG', drug: '' };
+    return r;
+  }
+  // "I took my nadolol" / "mark my dose as taken": the medicine (if named) rides in `drug`.
+  const took: RegExpExecArray | null =
+    /\b(?:i|i've|i’ve|i have) (?:just |already )?(?:took|taken|had) (?:my|the) ([a-z0-9][a-z0-9 -]*)/.exec(t) ??
+      /\b(?:mark|log) (?:my |the )?([a-z0-9][a-z0-9 -]*?) (?:dose )?as taken\b/.exec(t);
+  if (took !== null) {
+    const r: ParsedIntent = { intent: 'LOG_DOSE', drug: took[1].replace(/\b(today|now|just now|this morning|tonight)\b.*$/, '').trim() };
+    return r;
+  }
+  if (/\b(did i|have i) (take|taken|had|have)\b|\bdoses? (due|today|left)\b|\bwhat(('|’)s| is) due\b|\bmissed (a |my )?dose\b/
+    .test(t)) {
+    const r: ParsedIntent = { intent: 'DOSES', drug: '' };
+    return r;
+  }
+  if (/\breminders?\b|\bremind me\b/.test(t)) {
+    const r: ParsedIntent = { intent: 'REMINDERS', drug: '' };
+    return r;
+  }
+  if (/\btrends?\b|\bhow have i been\b|\b(last|past) (two weeks|14 days|30 days|month)\b/.test(t)) {
+    const r: ParsedIntent = { intent: 'TRENDS', drug: '' };
     return r;
   }
   if (/\b(scan|photo|picture|camera|look at)\b/.test(t)) {
@@ -70,6 +101,70 @@ export function parseOfflineIntent(text: string): ParsedIntent {
   return r;
 }
 
+interface DoseLineOut {
+  medicine: string;
+  time: string;
+  status: string;
+}
+
+interface DoseListOut {
+  doses: DoseLineOut[];
+}
+
+interface ReminderLineOut {
+  medicine: string;
+  time: string;
+}
+
+interface ReminderListOut {
+  reminders: ReminderLineOut[];
+}
+
+function daysAgoText(d: number): string {
+  return d === 0 ? 'today' : (d === 1 ? 'yesterday' : `${d} days ago`);
+}
+
+// Fixed sentences for the page intents, built from the same tool output the model would get.
+export function symptomLogText(out: SymptomLogOutput): string {
+  if (out.entriesLast30Days === 0) {
+    return 'You have no symptoms logged in the last 30 days. You can add one in the symptom log.';
+  }
+  const last: SymptomLine = out.recent[0];
+  const n: number = out.entriesLast30Days;
+  return `You logged ${n} ${n === 1 ? 'symptom' : 'symptoms'} in the last 30 days. The most recent: ` +
+    `${last.symptom.toLowerCase()}, ${daysAgoText(last.daysAgo)}. The full log is one tap away.`;
+}
+
+export function dosesText(doses: DoseLineOut[]): string {
+  if (doses.length === 0) {
+    return 'No reminders are set, so I have no doses to show. You can add one on the reminders screen.';
+  }
+  return `Today's doses: ${doses.map((d: DoseLineOut) =>
+    `${d.medicine} ${d.time} ${d.status.toLowerCase()}`).join(', ')}. You can mark a dose on the reminders screen.`;
+}
+
+export function remindersText(reminders: ReminderLineOut[]): string {
+  if (reminders.length === 0) {
+    return 'No reminders are set yet. You can add one on the reminders screen.';
+  }
+  return `Your reminders: ${reminders.map((r: ReminderLineOut) => `${r.medicine} at ${r.time}`).join(', ')}. ` +
+    'You can change them on the reminders screen.';
+}
+
+interface LogDoseStatus {
+  status: string;
+}
+
+export function logDoseText(status: string): string {
+  if (status === 'AWAITING_USER_CONFIRMATION') {
+    return 'Tap Confirm on the card to mark this dose as taken. Nothing is logged until you do.';
+  }
+  if (status === 'NO_REMINDERS') {
+    return 'No reminders are set, so there is no dose to mark. You can add one on the reminders screen.';
+  }
+  return 'No dose is due right now, so I didn\'t log anything.';
+}
+
 function reply(text: string, actions: UiAction[]): AgentReply {
   const r: AgentReply = { text: text, actions: actions, fallback: true };
   return r;
@@ -77,7 +172,8 @@ function reply(text: string, actions: UiAction[]): AgentReply {
 
 export class OfflineAgent {
   // prefix: why we are offline, e.g. "I can't reach my assistant service right now."
-  static async answer(text: string, prefix: string): Promise<AgentReply> {
+  // turn: receives confirm cards proposed here (log_dose) so AgentCore can resolve the tap.
+  static async answer(text: string, prefix: string, turn: TurnState = new TurnState()): Promise<AgentReply> {
     const parsed: ParsedIntent = parseOfflineIntent(text);
     switch (parsed.intent) {
       case 'CHECK_DRUG': {
@@ -99,9 +195,30 @@ export class OfflineAgent {
         const a: UiAction = { type: 'OPEN_MED_SCAN', payload: '{}' };
         return reply('Point the camera at the medicine box.', [a]);
       }
+      case 'LOG_DOSE': {
+        const args: Record<string, Object> = { 'medicine': parsed.drug };
+        const out: LogDoseStatus = JSON.parse(await new LogDoseTool().execute(args, turn)) as LogDoseStatus;
+        return reply(logDoseText(out.status), turn.actions);
+      }
+      case 'SYMPTOM_LOG': {
+        const out: string = await new OpenSymptomLogTool().execute({}, turn);
+        return reply(symptomLogText(JSON.parse(out) as SymptomLogOutput), turn.actions);
+      }
+      case 'DOSES': {
+        const out: string = await new GetDoseStatusTool().execute({}, turn);
+        return reply(dosesText((JSON.parse(out) as DoseListOut).doses), turn.actions);
+      }
+      case 'REMINDERS': {
+        const out: string = await new OpenRemindersTool().execute({}, turn);
+        return reply(remindersText((JSON.parse(out) as ReminderListOut).reminders), turn.actions);
+      }
+      case 'TRENDS': {
+        await new GetTrendsTool().execute({}, turn);
+        return reply('Your resting heart rate, doses and symptoms by day are one tap away.', turn.actions);
+      }
       default:
         return reply(`${prefix} I can still check medicines — try "Can I take ibuprofen?" — show your emergency ` +
-          'card, or scan a medicine box.', []);
+          'card, scan a medicine box, or open your reminders, symptom log and trends.', []);
     }
   }
 }
