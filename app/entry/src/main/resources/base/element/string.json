@@ -22,6 +22,7 @@
     { "name": "onboarding_subtitle", "value": "Set up your heart profile so the agent can keep you safe. Your data stays on this device." },
     { "name": "onboarding_continue", "value": "Continue" },
 
-    { "name": "disclaimer", "value": "Not a medical device. Always ask your doctor or pharmacist." }
+    { "name": "disclaimer", "value": "Not a medical device. Always ask your doctor or pharmacist." },
+    { "name": "mic_reason", "value": "Celia listens while you hold the microphone button, so you can ask about medicines by voice." }
   ]
 }
