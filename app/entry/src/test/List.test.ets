@@ -23,6 +23,8 @@ import boxIdentifyTest from './BoxIdentify.test';
 import trendsTest from './Trends.test';
 import visitsTest from './Visits.test';
 import diaryTest from './Diary.test';
+import notifySosTest from './NotifySos.test';
+import liveStatusTest from './LiveStatus.test';
 import { Config } from '../main/ets/common/Config';
 
 export default function testsuite() {
@@ -53,4 +55,6 @@ export default function testsuite() {
   boxIdentifyTest();
   visitsTest();
   diaryTest();
+  notifySosTest();
+  liveStatusTest();
 }

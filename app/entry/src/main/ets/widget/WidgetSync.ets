@@ -11,6 +11,7 @@ import { emergencyFor, systemCountry } from '../common/EmergencyNumbers';
 import { medLine } from '../emergency/CardContent';
 import { Logger } from '../common/Logger';
 import { AlertCardData, readFormIds, WIDGET_PREFS } from './WidgetData';
+import { medIdLines, MedIdLines } from './MedIdData';
 
 const log: Logger = new Logger('WidgetSync');
 
@@ -41,6 +42,11 @@ export class WidgetSync {
     d.facts = meds.length === 0 ? icd : `${icd} · ${meds.slice(0, 2).map((m: Medication) => medLine(m)).join(', ')}`;
     d.number = emergencyFor(profile.country ?? systemCountry()).ambulance;
     d.ice = profile.contacts.length > 0 ? profile.contacts[0].name : '';
+    const mid: MedIdLines = medIdLines(profile, meds);
+    d.midName = mid.name;
+    d.midIcd = mid.icd;
+    d.midMeds = mid.meds;
+    d.midOther = mid.other;
     return d;
   }
 
@@ -52,6 +58,10 @@ export class WidgetSync {
       p.putSync('facts', d.facts);
       p.putSync('number', d.number);
       p.putSync('ice', d.ice);
+      p.putSync('midName', d.midName);
+      p.putSync('midIcd', d.midIcd);
+      p.putSync('midMeds', d.midMeds);
+      p.putSync('midOther', d.midOther);
       await p.flush();
       for (const id of readFormIds(ctx)) {
         try {

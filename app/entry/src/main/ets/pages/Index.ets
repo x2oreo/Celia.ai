@@ -23,7 +23,10 @@ import { LockScreen } from '../components/LockScreen';
 import { Routes, SosParam } from '../common/Routes';
 import { LocalStore } from '../data/LocalStore';
 import { Profile } from '../model/Profile';
-import { VitalsAlert, VitalsSample } from '../model/Vitals';
+import { VitalsAlert, VitalsSample, WatchSos } from '../model/Vitals';
+import { LiveStatus } from '../emergency/LiveStatus';
+import { HeartOkRequest } from '../common/HeartOkRequest';
+import { pulse } from '../common/Haptics';
 import { VitalsService } from '../vitals/VitalsService';
 import { WearNotifier } from '../vitals/WearNotifier';
 import { SosController } from '../emergency/SosController';
@@ -73,6 +76,7 @@ struct Index {
     WearNotifier.start();
     VitalsService.get().onAlert((a: VitalsAlert) => this.onAlert(a));
     VitalsService.get().onWatchAnswer((kind: string) => this.onWatchAnswer(kind));
+    HeartOkRequest.onSend(() => this.onNotifyOk());
     AgentCore.get().onProactive((r: AgentReply) => this.onAgentProactive(r));
     AgentPrompt.onOpenChat(() => this.openChat());
     RouteRequest.onOpen((route: string) => this.openRoute(route));
@@ -119,6 +123,10 @@ struct Index {
 
   // CRITICAL heart alert → wrist/phone alert + SOS countdown (unless one is running or in cooldown).
   private onAlert(a: VitalsAlert): void {
+    if (a.watchSos !== undefined) {
+      this.onWatchSos(a.watchSos);
+      return;
+    }
     WearNotifier.vitalsAlert(a);
     if (a.severity !== 'CRITICAL' || !SosController.get().canAutoStart(Date.now())) {
       return;
@@ -127,6 +135,29 @@ struct Index {
       a.kind.toLowerCase().replace(/_/g, ' ');
     this.checkIn = false;
     this.navStack.pushPathByName(Routes.SOS, new SosParam(false, reason, true));
+  }
+
+  // The watch counted down and sent its SOS already: show what was sent and what still needs a tap, never a second
+  // countdown (B8). An SOS page that is already open picks the new state up on its next tick.
+  private onWatchSos(w: WatchSos): void {
+    SosController.get().watchSent(Date.now(), w.withLocation);
+    LiveStatus.watchSos();
+    pulse(600);
+    this.checkIn = false;
+    if (this.navStack.getAllPathName().includes(Routes.SOS)) {
+      return;
+    }
+    const reason: string = w.reason === 'fall' ? 'a fall with no answer on your watch' : 'you asked for help on your watch';
+    this.navStack.pushPathByName(Routes.SOS, new SosParam(false, reason, true, 'WATCH'));
+  }
+
+  // "I'm OK" on a heart-alert notification answers an open check-in like the sheet's "I'm fine".
+  private onNotifyOk(): void {
+    if (!this.checkIn && !AgentCore.get().isCheckInPending()) {
+      return;
+    }
+    this.checkIn = false;
+    AgentCore.get().send(QUICK_REPLY_OK);
   }
 
   // An answer on the watch's "How do you feel?" counts as the same answer on the phone: it closes the check-in and
