@@ -1,9 +1,12 @@
 import { common } from '@kit.AbilityKit';
 import { WatchController } from '../controller/WatchController';
 import { AlertOverlay } from '../components/AlertOverlay';
+import { EmergencyOverlay } from '../components/EmergencyOverlay';
+import { FallOverlay } from '../components/FallOverlay';
 import { HeartPage } from '../components/HeartPage';
 import { LogPage } from '../components/LogPage';
 import { SettingsPage } from '../components/SettingsPage';
+import { SimulatePage } from '../components/SimulatePage';
 import { Theme } from '../components/Theme';
 
 @Entry
@@ -33,6 +36,7 @@ struct Index {
         HeartPage({ ctrl: this.ctrl })
         LogPage({ ctrl: this.ctrl })
         SettingsPage({ ctrl: this.ctrl })
+        SimulatePage({ ctrl: this.ctrl })
       }
       .loop(false)
       .indicator(new DotIndicator()
@@ -46,7 +50,11 @@ struct Index {
       .width('100%')
       .height('100%')
 
-      if (this.ctrl.alertText.length > 0) {
+      if (this.ctrl.emergencyText.length > 0) {
+        EmergencyOverlay({ ctrl: this.ctrl })
+      } else if (this.ctrl.fallCountdown > 0) {
+        FallOverlay({ ctrl: this.ctrl })
+      } else if (this.ctrl.alertText.length > 0) {
         AlertOverlay({ ctrl: this.ctrl })
       }
     }

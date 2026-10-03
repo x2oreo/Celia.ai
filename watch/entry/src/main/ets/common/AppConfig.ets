@@ -17,6 +17,8 @@ export interface AppConfigData {
   defaultSource: HrSourceKind;
   medicationName: string;
   highBpm: number;
+  /** Stricter high limit while at rest. */
+  restHighBpm: number;
   lowBpm: number;
 }
 
@@ -29,6 +31,7 @@ export class AppConfig {
       defaultSource: 'SENSOR',
       medicationName: 'nadolol',
       highBpm: 140,
+      restHighBpm: 120,
       lowBpm: 45
     };
     return cfg;
@@ -71,6 +74,9 @@ export class AppConfig {
     }
     if (typeof src.highBpm === 'number' && src.highBpm > 60 && src.highBpm < 250) {
       target.highBpm = src.highBpm;
+    }
+    if (typeof src.restHighBpm === 'number' && src.restHighBpm > 60 && src.restHighBpm < 250) {
+      target.restHighBpm = src.restHighBpm;
     }
     if (typeof src.lowBpm === 'number' && src.lowBpm > 20 && src.lowBpm < 80) {
       target.lowBpm = src.lowBpm;

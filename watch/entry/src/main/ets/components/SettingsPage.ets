@@ -46,7 +46,7 @@ export struct SettingsPage {
           }
         })
       }
-      Text(`Alert below ${this.ctrl.lowBpm} / above ${this.ctrl.highBpm} bpm`)
+      Text(`Alert <${this.ctrl.lowBpm} · rest >${this.ctrl.restHighBpm} · active >${this.ctrl.highBpm}`)
         .fontSize(10)
         .fontColor(Theme.MUTED)
     }

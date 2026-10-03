@@ -5,11 +5,13 @@ import { Logger } from '../common/Logger';
 
 export interface UploadResult {
   ok: boolean;
+  /** HTTP status, 0 for network errors. 400 means the server rejected the rows themselves. */
+  status: number;
   message: string;
 }
 
-function result(ok: boolean, message: string): UploadResult {
-  const r: UploadResult = { ok: ok, message: message };
+function result(ok: boolean, status: number, message: string): UploadResult {
+  const r: UploadResult = { ok: ok, status: status, message: message };
   return r;
 }
 
@@ -25,7 +27,7 @@ export class SupabaseUploader {
 
   async upload(rows: MetricRow[]): Promise<UploadResult> {
     if (rows.length === 0) {
-      return result(true, 'nothing to send');
+      return result(true, 200, 'nothing to send');
     }
     const req = http.createHttp();
     try {
@@ -43,13 +45,13 @@ export class SupabaseUploader {
         expectDataType: http.HttpDataType.STRING
       });
       if (resp.responseCode >= 200 && resp.responseCode < 300) {
-        return result(true, `sent ${rows.length}`);
+        return result(true, resp.responseCode, `sent ${rows.length}`);
       }
       Logger.warn(`upload HTTP ${resp.responseCode}: ${String(resp.result).slice(0, 200)}`);
-      return result(false, `HTTP ${resp.responseCode}`);
+      return result(false, resp.responseCode, `HTTP ${resp.responseCode}`);
     } catch (e) {
       const err = e as BusinessError;
-      return result(false, `network ${err.code}`);
+      return result(false, 0, `network ${err.code}`);
     } finally {
       req.destroy();
     }

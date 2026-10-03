@@ -40,6 +40,9 @@
         "name": "ohos.permission.VIBRATE"
       },
       {
+        "name": "ohos.permission.ACCELEROMETER"
+      },
+      {
         "name": "ohos.permission.READ_HEALTH_DATA",
         "reason": "$string:health_reason",
         "usedScene": {

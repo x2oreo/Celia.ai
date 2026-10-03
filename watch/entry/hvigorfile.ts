@@ -37,6 +37,7 @@ function writeConfigFromEnv(): void {
     defaultSource: str('DEFAULT_SOURCE', 'SENSOR'),
     medicationName: str('MEDICATION_NAME', 'nadolol'),
     highBpm: num('HIGH_BPM', 140),
+    restHighBpm: num('REST_HIGH_BPM', 120),
     lowBpm: num('LOW_BPM', 45)
   };
   fs.mkdirSync(path.dirname(outPath), { recursive: true });

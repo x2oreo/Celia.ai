@@ -19,6 +19,19 @@ export struct HeartPage {
     return Theme.WARN;
   }
 
+  contextLabel(): string {
+    if (!this.ctrl.onWrist) {
+      return 'bpm';
+    }
+    if (this.ctrl.activity === 'REST') {
+      return `bpm · at rest · limit ${this.ctrl.currentHighBpm}`;
+    }
+    if (this.ctrl.activity === 'ACTIVE') {
+      return `bpm · active · limit ${this.ctrl.currentHighBpm}`;
+    }
+    return 'bpm';
+  }
+
   elapsed(): string {
     const t = this.ctrl.monitoringSec;
     const h = Math.floor(t / 3600);
@@ -71,7 +84,7 @@ export struct HeartPage {
       }
       .alignItems(VerticalAlign.Center)
 
-      Text('bpm')
+      Text(this.contextLabel())
         .fontSize(12)
         .fontColor(Theme.MUTED)
 
