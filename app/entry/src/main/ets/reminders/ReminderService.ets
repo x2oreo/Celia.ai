@@ -3,8 +3,9 @@
 
 import { reminderAgentManager } from '@kit.BackgroundTasksKit';
 import { LocalStore } from '../data/LocalStore';
-import { DoseLog, DoseReminder, dayKey, doseStatus } from './DoseSchedule';
-import { notify } from '../common/Notify';
+import { DoseLog, DoseReminder, dayKey, doseStatus, takeableFromNotification } from './DoseSchedule';
+import { KEY_ACTION, KEY_KIND } from '../common/NotifyAction';
+import { cancelNotify, doseNotifyId, notify, notifyText } from '../common/Notify';
 import { Logger } from '../common/Logger';
 
 const log: Logger = new Logger('Reminders');
@@ -55,6 +56,21 @@ export class ReminderService {
     await LocalStore.get().logEvent('DOSE', JSON.stringify(detail));
   }
 
+  // "Taken" on a dose notification. Marks that reminder's dose only when it is due or missed today (never an upcoming
+  // one, see DoseSchedule.takeableFromNotification). Returns true when a dose was recorded.
+  static async takeFromNotification(reminderId: number, now: number): Promise<boolean> {
+    const all: DoseReminder[] = await ReminderService.list();
+    const r: DoseReminder | undefined = all.find((x: DoseReminder) => x.id === reminderId);
+    await cancelNotify(doseNotifyId(reminderId));
+    if (r === undefined || !takeableFromNotification(r, await ReminderService.doseLog(), now)) {
+      log.info(`notification Taken ignored for reminder ${reminderId}`);
+      return false;
+    }
+    await ReminderService.mark(r, 'TAKEN');
+    log.info(`dose ${r.medName} marked taken from the notification`);
+    return true;
+  }
+
   // Fallback while the app runs (system reminders need an AppGallery Connect quota; without it the system
   // refuses them with 1700002): post a local notification once when a dose becomes due.
   private static notified: string[] = [];
@@ -69,7 +85,7 @@ export class ReminderService {
       const key: string = `${r.id}-${dayKey(now)}`;
       if (doseStatus(r, logs, now) === 'DUE' && !ReminderService.notified.includes(key)) {
         ReminderService.notified.push(key);
-        notify(2000 + (r.id % 1000), `Time for ${r.medName}`, 'Open Celia.ai to mark it as taken.', false);
+        notify(doseNotifyId(r.id), `Time for ${r.medName}`, notifyText('ntf_dose_text'), false, r.id);
       }
     }
   }
@@ -107,7 +123,8 @@ export class ReminderService {
           { title: 'OK', type: reminderAgentManager.ActionButtonType.ACTION_BUTTON_TYPE_CLOSE },
           { title: 'Snooze 10 min', type: reminderAgentManager.ActionButtonType.ACTION_BUTTON_TYPE_SNOOZE }
         ],
-        wantAgent: { pkgName: BUNDLE, abilityName: 'EntryAbility' },
+        // Tapping the system reminder opens Reminders (EntryAbility reads the parameters; since API 12).
+        wantAgent: { pkgName: BUNDLE, abilityName: 'EntryAbility', parameters: reminderTapParams() },
         snoozeTimes: 2,
         timeInterval: 600,
         ringDuration: 5
@@ -137,6 +154,13 @@ export class ReminderService {
       return -1;
     }
   }
+}
+
+function reminderTapParams(): Record<string, Object> {
+  const p: Record<string, Object> = {};
+  p[KEY_ACTION] = 'OPEN';
+  p[KEY_KIND] = 'DOSE_DUE';
+  return p;
 }
 
 interface DoseEventDetail {

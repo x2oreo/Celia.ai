@@ -1,35 +1,80 @@
-// Local notifications (NotificationKit). Tapping one opens the app. Never throws.
+// Local notifications (NotificationKit). One slot per kind and action buttons where they help (B7); what each kind
+// and button means is in common/NotifyAction.ets. Every tap opens the app, which acts on it (EntryAbility). Never
+// throws.
 
 import { notificationManager } from '@kit.NotificationKit';
-import { wantAgent, WantAgent } from '@kit.AbilityKit';
-import { common } from '@kit.AbilityKit';
+import { common, wantAgent, WantAgent } from '@kit.AbilityKit';
 import { Logger } from './Logger';
+import {
+  buttonsFor, KEY_ACTION, KEY_ID, KEY_KIND, KEY_REMINDER, kindForId, NotifyActionId, NotifyButton, NotifyKind,
+  requestCodeFor, SlotName, slotFor
+} from './NotifyAction';
+
+export { NOTIFY_ALERT, NOTIFY_RISKY_CHECK, NOTIFY_SOS, NOTIFY_WATCH_SOS, doseNotifyId } from './NotifyAction';
 
 const log: Logger = new Logger('Notify');
 const BUNDLE: string = 'com.celiaai.app';
 
-export const NOTIFY_SOS: number = 1001;
-export const NOTIFY_ALERT: number = 1002;
-export const NOTIFY_RISKY_CHECK: number = 1003;
+// English fallbacks for the button labels when resources cannot be read (string_notify.json is the source).
+const FALLBACK: Map<string, string> = new Map<string, string>([
+  ['ntf_btn_im_ok', 'I\'m OK'], ['ntf_btn_open', 'Open'], ['ntf_btn_taken', 'Taken']
+]);
 
-let openApp: WantAgent | undefined = undefined;
+let appCtx: common.Context | undefined = undefined;
+const agents: Map<number, WantAgent> = new Map<number, WantAgent>();
 
-async function openAppAgent(): Promise<WantAgent | undefined> {
-  if (openApp !== undefined) {
-    return openApp;
+// Called once from EntryAbility.onCreate so labels come from resources.
+export function initNotify(ctx: common.Context): void {
+  appCtx = ctx;
+}
+
+export function notifyText(name: string): string {
+  try {
+    if (appCtx !== undefined) {
+      return appCtx.resourceManager.getStringByNameSync(name);
+    }
+  } catch (e) {
+    log.warn(`string ${name}: ${JSON.stringify(e)}`);
+  }
+  return FALLBACK.get(name) ?? name;
+}
+
+function slotType(name: SlotName): notificationManager.SlotType {
+  if (name === 'SOCIAL_COMMUNICATION') {
+    return notificationManager.SlotType.SOCIAL_COMMUNICATION;
+  }
+  if (name === 'SERVICE_INFORMATION') {
+    return notificationManager.SlotType.SERVICE_INFORMATION;
+  }
+  return notificationManager.SlotType.CONTENT_INFORMATION;
+}
+
+async function agentFor(id: number, kind: NotifyKind, action: NotifyActionId, reminderId: number):
+  Promise<WantAgent | undefined> {
+  const code: number = requestCodeFor(id, action);
+  const cached: WantAgent | undefined = agents.get(code);
+  if (cached !== undefined) {
+    return cached;
   }
   try {
+    const params: Record<string, Object> = {};
+    params[KEY_ACTION] = action;
+    params[KEY_KIND] = kind;
+    params[KEY_ID] = id;
+    params[KEY_REMINDER] = reminderId;
     const info: wantAgent.WantAgentInfo = {
-      wants: [{ bundleName: BUNDLE, abilityName: 'EntryAbility' }],
+      wants: [{ bundleName: BUNDLE, abilityName: 'EntryAbility', parameters: params }],
       actionType: wantAgent.OperationType.START_ABILITY,
-      requestCode: 0,
+      requestCode: code,
       actionFlags: [wantAgent.WantAgentFlags.UPDATE_PRESENT_FLAG]
     };
-    openApp = await wantAgent.getWantAgent(info);
+    const agent: WantAgent = await wantAgent.getWantAgent(info);
+    agents.set(code, agent);
+    return agent;
   } catch (e) {
     log.warn(`wantAgent failed: ${JSON.stringify(e)}`);
+    return undefined;
   }
-  return openApp;
 }
 
 // Ask once (system dialog) so alerts can reach the lock screen.
@@ -43,18 +88,33 @@ export async function askNotificationPermission(ctx: common.UIAbilityContext): P
   }
 }
 
-export async function notify(id: number, title: string, text: string, ongoing: boolean): Promise<void> {
+// The kind (slot, buttons) follows from the id; reminderId is set for dose notifications only.
+export async function notify(id: number, title: string, text: string, ongoing: boolean,
+  reminderId: number = -1): Promise<void> {
   try {
-    const agent: WantAgent | undefined = await openAppAgent();
+    const kind: NotifyKind = kindForId(id);
+    const tap: WantAgent | undefined = await agentFor(id, kind, 'OPEN', reminderId);
+    const buttons: notificationManager.NotificationActionButton[] = [];
+    for (const b of buttonsFor(id)) {
+      const button: NotifyButton = b;
+      const agent: WantAgent | undefined = await agentFor(id, kind, button.action, reminderId);
+      if (agent !== undefined) {
+        buttons.push({ title: notifyText(button.label), wantAgent: agent });
+      }
+    }
     const request: notificationManager.NotificationRequest = {
       id: id,
+      notificationSlotType: slotType(slotFor(kind)),
       content: {
         notificationContentType: notificationManager.ContentType.NOTIFICATION_CONTENT_BASIC_TEXT,
         normal: { title: title, text: text }
       },
       isOngoing: ongoing,
       tapDismissed: !ongoing,
-      wantAgent: agent
+      // The countdown is refreshed every few seconds; sound and banner only the first time.
+      isAlertOnce: ongoing,
+      wantAgent: tap,
+      actionButtons: buttons
     };
     await notificationManager.publish(request);
   } catch (e) {

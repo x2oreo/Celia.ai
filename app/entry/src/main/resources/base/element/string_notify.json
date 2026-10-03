@@ -1,0 +1,22 @@
+{
+  "string": [
+    { "name": "ntf_btn_im_ok", "value": "I'm OK" },
+    { "name": "ntf_btn_open", "value": "Open" },
+    { "name": "ntf_btn_taken", "value": "Taken" },
+    { "name": "ntf_dose_text", "value": "Tap Taken when you have taken it." },
+    { "name": "ntf_watch_sos_title", "value": "SOS from your watch" },
+    { "name": "ntf_watch_sos_text", "value": "Your watch asked for help. Open Celia to call the ambulance and your contacts." },
+    { "name": "ntf_sos_watch_title", "value": "Your watch sent an SOS" },
+    { "name": "ntf_sos_label_what", "value": "WHAT WAS SENT" },
+    { "name": "ntf_sos_label_whom", "value": "TO WHOM" },
+    { "name": "ntf_sos_label_todo", "value": "STILL NEEDS A TAP" },
+    { "name": "ntf_sos_watch_what", "value": "At %s your watch sent an SOS with your heart rate to the Celia server." },
+    { "name": "ntf_sos_watch_loc", "value": "Your watch's location was included." },
+    { "name": "ntf_sos_watch_no_loc", "value": "The watch had no location fix, so none was sent." },
+    { "name": "ntf_sos_watch_whom", "value": "This phone received it. Your emergency contacts were not alerted automatically: automatic alerts are not set up yet." },
+    { "name": "ntf_sos_phone_what", "value": "Nothing has been sent yet. Your SOS message is ready below." },
+    { "name": "ntf_sos_phone_whom", "value": "Nobody yet. Celia cannot call or text for you; the buttons below do it with your confirmation." },
+    { "name": "ntf_sos_todo", "value": "Call the ambulance (your phone asks you to confirm), then send the message to your contacts or call them." },
+    { "name": "ntf_sos_responder", "value": "For first responders" }
+  ]
+}
