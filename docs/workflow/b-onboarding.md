@@ -9,7 +9,25 @@
   (check/request notifications, microphone, location), `components/onboarding/` (`OnbParts`, `StepAbout`,
   `StepContacts`, `StepPermissions`), rewritten `pages/OnboardingPage.ets`, `string_onboarding.json`,
   `test/Onboarding.test.ets` (11 tests). `pages/Index.ets` no longer asks for notifications on every launch.
-- Validated: phone unit tests 222/222. Emulator run: see "Emulator" below.
+- Validated: phone unit tests 222/222. Emulator (phone, API 20 image, fresh install each time):
+  - Continue stays inactive until consent is ticked; one tap on the checkbox ticks it once.
+  - Every step shown with progress and "Step N of 8"; Skip on steps 2 and 4-8; the date picker fills date of birth;
+    ICD model field appears with the switch.
+  - A saved contact and a half-typed second name both survive Back → Continue.
+  - Permissions: no notification prompt at launch any more; each Allow opens its system dialog only on tap;
+    granted shows "Allowed", a denied microphone shows the Settings hint.
+  - Pair a watch opens the Pair watch page and Back returns to step 8; Finish lands on Home ("Hi Ola", LQT2 chip);
+    relaunch goes straight to Home.
+  - Timing: a scripted fresh-install run entering name, birth date, genotype, ICD + model, one medicine, one contact
+    and all three permission dialogs took **27 s** (app log: "onboarding took 29 s"). That is tap speed, not human
+    reading speed; with reading and typing by hand it is still well under the 2-minute target (14 inputs, 3 system
+    dialogs, nothing required beyond the consent tick).
+  - Screenshots: `docs/screenshots/b/onboarding-1-welcome.jpeg` … `onboarding-9-home.jpeg`
+    (+ `onboarding-7a-notification-dialog.jpeg`).
+- Found and fixed while testing: the last step still said "Continue". `components/Common.ets` `PrimaryButton`
+  passes its label to a by-value `@Builder`, which does not re-render when the label changes; the page now uses two
+  button instances. Every other caller of `PrimaryButton` with a changing label has the same bug (not fixed here —
+  Common.ets is Workstream A's; fix: pass `$$`-style by-reference params or rebuild the label in the struct).
 - Not validated: the account step and the emergency-details step run against S1's `AuthForm` and S2's
   `EmergencyDetailsForm` stubs; the real forms arrive at merge. The returning-user skip
   (`shouldFinishAfterSignIn`) is unit-tested, not run end to end (needs S1's ProfileSync).
