@@ -19,7 +19,7 @@ export interface ChatMessage {
 //   QUICK_REPLIES         payload: QuickRepliesPayload   — tappable answers; UI sends the tapped text
 //   SHOW_MEDS             payload: MedsPayload           — the user's medicines with their deterministic risk
 //   SHOW_ALTERNATIVES     payload: AlternativesPayload   — list-verified options to discuss with a doctor
-//   OPEN_PAGE             payload: OpenPagePayload       — tile that opens a page (doctor prep, reminders)
+//   OPEN_PAGE             payload: OpenPagePayload       — tile that opens a page (see OPEN_PAGES)
 export type UiActionType = 'SHOW_VERDICT' | 'SHOW_EMERGENCY_CARD' | 'START_EMERGENCY' | 'OPEN_MED_SCAN' | 'ADD_MED' |
   'SHARE_EMERGENCY_CARD' | 'QUICK_REPLIES' | 'SHOW_MEDS' | 'SHOW_ALTERNATIVES' | 'OPEN_PAGE';
 
@@ -74,8 +74,11 @@ export interface AddMedPayload {
   risk: string;         // RiskLevel, shown on the confirm card
 }
 
+// Every page an OPEN_PAGE tile can open. The agent thread needs one tile per value.
+export const OPEN_PAGES: string[] = ['DOCTOR_PREP', 'REMINDERS', 'TRENDS', 'SYMPTOM_LOG'];
+
 export interface OpenPagePayload {
-  page: string;         // 'DOCTOR_PREP' | 'REMINDERS' | 'TRENDS'
+  page: string;         // one of OPEN_PAGES
   specialty: string;    // doctor/DoctorPrep Specialty for DOCTOR_PREP, otherwise ''
 }
 

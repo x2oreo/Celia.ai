@@ -1,5 +1,6 @@
-// prepare_doctor_visit, get_dose_status, get_trends — features that used to be several taps away, one sentence away.
-// Both are read-only and deterministic: the content comes from doctor/DoctorPrep.ets and reminders/DoseSchedule.ets.
+// prepare_doctor_visit, get_dose_status, get_trends, open_symptom_log, open_reminders — features that used to be
+// several taps away, one sentence away. All are read-only and deterministic: the content comes from
+// doctor/DoctorPrep.ets, reminders/DoseSchedule.ets, vitals/Trends.ets and the symptom entries in the event log.
 
 import { AgentTool, TurnState, action, toolError } from '../ToolTypes';
 import { argString } from '../ResponseValidator';
@@ -12,6 +13,8 @@ import { ReminderService } from '../../reminders/ReminderService';
 import { DoseLog, DoseReminder, doseStatus, timeLabel } from '../../reminders/DoseSchedule';
 import { WatchInsight } from '../../model/WatchData';
 import { loadTrends, TrendData, TrendStats, trendStats } from '../../vitals/Trends';
+import { AppEvent } from '../../model/AppEvent';
+import { SymptomEntry, symptomLabel } from '../../model/SymptomEntry';
 
 const FLAGGED_WINDOW_MS: number = 90 * 24 * 60 * 60 * 1000;
 
@@ -115,6 +118,99 @@ export class GetTrendsTool implements AgentTool {
       note: (data.simulated ? 'This is SIMULATED demo data: say so. ' : '') +
         'Wrist resting heart rate only, not an ECG. Report the numbers; do not interpret them medically or say ' +
         'they are good or bad. A button to open the trends chart is on screen.'
+    };
+    return JSON.stringify(out);
+  }
+}
+
+const DAY_MS: number = 24 * 60 * 60 * 1000;
+const SYMPTOM_WINDOW_DAYS: number = 30;
+const SYMPTOM_LINES_MAX: number = 5;
+
+export interface SymptomLine {
+  symptom: string;      // label, e.g. "Chest pain"
+  severity: number;     // 1..5
+  activity: string;
+  daysAgo: number;      // 0 = today
+}
+
+export interface SymptomLogOutput {
+  entriesLast30Days: number;
+  recent: SymptomLine[];   // newest first, at most 5
+  note: string;
+}
+
+// The symptom entries of the last 30 days, newest first. Entries that do not parse are skipped, never guessed.
+export function symptomLogOutput(events: AppEvent[], now: number): SymptomLogOutput {
+  const lines: SymptomLine[] = [];
+  const since: number = now - SYMPTOM_WINDOW_DAYS * DAY_MS;
+  for (const e of events) {
+    if (e.kind !== 'SYMPTOM' || e.ts < since || e.ts > now) {
+      continue;
+    }
+    try {
+      const entry: SymptomEntry = JSON.parse(e.detail) as SymptomEntry;
+      if (typeof entry.symptom !== 'string' || typeof entry.severity !== 'number') {
+        continue;
+      }
+      const line: SymptomLine = {
+        symptom: symptomLabel(entry.symptom),
+        severity: entry.severity,
+        activity: typeof entry.activity === 'string' ? entry.activity : 'other',
+        daysAgo: Math.floor((now - e.ts) / DAY_MS)
+      };
+      lines.push(line);
+    } catch (err) {
+      continue;
+    }
+  }
+  lines.reverse();
+  const out: SymptomLogOutput = {
+    entriesLast30Days: lines.length,
+    recent: lines.slice(0, SYMPTOM_LINES_MAX),
+    note: (lines.length === 0 ? 'No symptoms were logged in the last 30 days. ' : '') +
+      'These are the user\'s own entries. Report them plainly; do not interpret them, look for a cause or say ' +
+      'whether they are serious. A button that opens the symptom log is on screen; new entries are added there or ' +
+      'by telling you about a symptom.'
+  };
+  return out;
+}
+
+export class OpenSymptomLogTool implements AgentTool {
+  name: string = 'open_symptom_log';
+
+  async execute(args: Record<string, Object>, turn: TurnState): Promise<string> {
+    const payload: OpenPagePayload = { page: 'SYMPTOM_LOG', specialty: '' };
+    turn.actions.push(action('OPEN_PAGE', payload));
+    return JSON.stringify(symptomLogOutput(await LocalStore.get().listEvents(), Date.now()));
+  }
+}
+
+interface ReminderLine {
+  medicine: string;
+  time: string;
+}
+
+interface RemindersOutput {
+  reminders: ReminderLine[];
+  note: string;
+}
+
+export class OpenRemindersTool implements AgentTool {
+  name: string = 'open_reminders';
+
+  async execute(args: Record<string, Object>, turn: TurnState): Promise<string> {
+    const reminders: DoseReminder[] = await ReminderService.list();
+    const payload: OpenPagePayload = { page: 'REMINDERS', specialty: '' };
+    turn.actions.push(action('OPEN_PAGE', payload));
+    const out: RemindersOutput = {
+      reminders: reminders.map((r: DoseReminder) => {
+        const line: ReminderLine = { medicine: r.medName, time: timeLabel(r) };
+        return line;
+      }),
+      note: 'A button that opens the reminders screen is on screen. You cannot add, change or delete a reminder: ' +
+        'the user does that there. Nothing was changed. Never suggest a dose time yourself; times come from the ' +
+        'user\'s doctor.'
     };
     return JSON.stringify(out);
   }

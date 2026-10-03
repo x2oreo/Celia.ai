@@ -149,6 +149,20 @@ export const TOOLS: FunctionTool[] = [
     },
   ),
   tool(
+    'open_symptom_log',
+    "Read the user's symptom log for the last 30 days (their own entries: symptom, severity, what they were doing) " +
+      'and put a button to the symptom log on screen. Read-only. Use when the user asks to see, review or open ' +
+      'their past symptoms. To record a new symptom use log_symptom instead.',
+    {},
+  ),
+  tool(
+    'open_reminders',
+    'List the medicine reminders that are set (medicine and time) and put a button to the reminders screen on ' +
+      'screen. Read-only: you cannot add, change or delete a reminder. Use when the user wants to set, change, ' +
+      "see or open reminders. For whether today's doses were taken use get_dose_status instead.",
+    {},
+  ),
+  tool(
     'start_new_chat',
     'Save the current conversation and start a new, empty one. Use when the user asks for a new chat, to start ' +
       'over, or to save this chat. Every chat is already kept on the phone, so nothing is lost.',

@@ -55,7 +55,10 @@ export class ToolUi {
       case 'prepare_doctor_visit':
         return $r('app.media.ic_doctor');
       case 'get_dose_status':
+      case 'open_reminders':
         return $r('app.media.ic_bell');
+      case 'open_symptom_log':
+        return $r('app.media.ic_history');
       case 'scan_medicine':
         return $r('app.media.ic_camera');
       case 'show_emergency_card':
@@ -102,6 +105,10 @@ export class ToolUi {
         return step.done ? $r('app.string.tool_get_dose_status_done') : $r('app.string.tool_get_dose_status');
       case 'get_trends':
         return step.done ? $r('app.string.tool_get_trends_done') : $r('app.string.tool_get_trends');
+      case 'open_symptom_log':
+        return step.done ? $r('app.string.tool_open_symptom_log_done') : $r('app.string.tool_open_symptom_log');
+      case 'open_reminders':
+        return step.done ? $r('app.string.tool_open_reminders_done') : $r('app.string.tool_open_reminders');
       default:
         return step.done ? $r('app.string.tool_generic_done') : $r('app.string.tool_generic');
     }
