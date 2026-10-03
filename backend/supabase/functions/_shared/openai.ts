@@ -17,25 +17,21 @@ export class UpstreamError extends Error {
   }
 }
 
-// POST JSON to OpenAI with a hard timeout. Throws UpstreamError on non-2xx or timeout.
-export async function openaiJson<T>(path: string, body: unknown, timeoutMs: number): Promise<T> {
+// Raw call to OpenAI with a hard timeout (JSON, multipart or binary). Throws UpstreamError on non-2xx or timeout.
+export async function openaiFetch(path: string, init: RequestInit, timeoutMs: number): Promise<Response> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const headers = new Headers(init.headers);
+  headers.set('Authorization', `Bearer ${env('OPENAI_API_KEY')}`);
   try {
-    const res = await fetch(`${OPENAI_BASE}${path}`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${env('OPENAI_API_KEY')}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
-      signal: controller.signal,
-    });
+    const res = await fetch(`${OPENAI_BASE}${path}`, { ...init, headers, signal: controller.signal });
     if (!res.ok) {
       const detail = (await res.text()).slice(0, 500);
       throw new UpstreamError(res.status, `OpenAI ${path} ${res.status}: ${detail}`);
     }
-    return (await res.json()) as T;
+    // Read the body inside the timeout window.
+    const body = await res.arrayBuffer();
+    return new Response(body, { status: res.status, headers: res.headers });
   } catch (err) {
     if (err instanceof UpstreamError) throw err;
     if (err instanceof DOMException && err.name === 'AbortError') {
@@ -45,6 +41,35 @@ export async function openaiJson<T>(path: string, body: unknown, timeoutMs: numb
   } finally {
     clearTimeout(timer);
   }
+}
+
+// POST JSON to OpenAI and parse the JSON response.
+export async function openaiJson<T>(path: string, body: unknown, timeoutMs: number): Promise<T> {
+  const res = await openaiFetch(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  }, timeoutMs);
+  return (await res.json()) as T;
+}
+
+// Concatenated output_text of a Responses API result.
+export function outputText(res: { output?: { type: string; content?: { type: string; text?: string }[] }[] }): string {
+  let text = '';
+  for (const item of res.output ?? []) {
+    if (item.type !== 'message') continue;
+    for (const part of item.content ?? []) {
+      if (part.type === 'output_text' && part.text) text += part.text;
+    }
+  }
+  return text;
+}
+
+export function decodeBase64(b64: string): Uint8Array<ArrayBuffer> {
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
 }
 
 export function json(status: number, body: unknown): Response {

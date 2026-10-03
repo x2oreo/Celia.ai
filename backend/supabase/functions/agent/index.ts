@@ -9,7 +9,7 @@
 
 import { buildInstructions, PROMPT_VERSION } from '../_shared/prompt.ts';
 import { TOOL_NAMES, TOOLS } from '../_shared/tools.ts';
-import { env, json, openaiJson, UpstreamError } from '../_shared/openai.ts';
+import { env, json, openaiJson, outputText, UpstreamError } from '../_shared/openai.ts';
 import { parseAgentRequest } from '../_shared/validate.ts';
 
 const UPSTREAM_TIMEOUT_MS = 18000; // the app gives up at 20 s and falls back
@@ -69,19 +69,13 @@ Deno.serve(async (req: Request): Promise<Response> => {
   try {
     const res = await openaiJson<ResponsesResult>('/responses', body, UPSTREAM_TIMEOUT_MS);
     const toolCalls: ToolCall[] = [];
-    let text = '';
     for (const item of res.output ?? []) {
-      if (item.type === 'function_call' && item.call_id && item.name) {
-        // Unknown tool names are dropped here and again on the device.
-        if (TOOL_NAMES.includes(item.name)) {
-          toolCalls.push({ callId: item.call_id, name: item.name, arguments: item.arguments ?? '{}' });
-        }
-      } else if (item.type === 'message') {
-        for (const part of item.content ?? []) {
-          if (part.type === 'output_text' && part.text) text += part.text;
-        }
+      // Unknown tool names are dropped here and again on the device.
+      if (item.type === 'function_call' && item.call_id && item.name && TOOL_NAMES.includes(item.name)) {
+        toolCalls.push({ callId: item.call_id, name: item.name, arguments: item.arguments ?? '{}' });
       }
     }
+    const text = outputText(res);
     console.log(JSON.stringify({
       fn: 'agent',
       promptVersion: PROMPT_VERSION,
