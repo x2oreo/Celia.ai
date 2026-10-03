@@ -39,6 +39,21 @@
 - Not validated: the physical tap on the alert widget from a home screen (the want it sends was replayed instead);
   the lock-screen button with the app lock on (the emulator has no screen lock to enable it); "show on card"
   switches on the emulator (unit-tested only).
+### 2026-10-04 — Georgi + Claude Code: NFC handover of the emergency card, B14 (branch `georgi/b-emergency`)
+- Asked: brief B14, write the card link as an NDEF URI record to a tag from a "Write to NFC tag" action next to the
+  QR; guard on NFC availability; mark built, unverified.
+- Produced: `emergency/NfcCard.ets` (foreground `tag.on('readerMode')` for NDEF and NDEF-formatable tags, one
+  `makeUriRecord` message, `writeNdef` or `format` for blank tags; pure `ndefUriBytes`, `smallestTagFor`,
+  `resultForError`), the action in the Emergency tab's QR panel, `ohos.permission.NFC_TAG` in `module.json5`.
+  APIs checked against the API 20 SDK declarations in DevEco (`@ohos.nfc.tag.d.ts`, `tag/nfctech.d.ts`,
+  `@ohos.nfc.controller.d.ts`); the Context7 MCP was not connected in this session.
+  The tag gets the same link as the QR: the encrypted short link (97 bytes, fits an NTAG213) when sharing is on,
+  else the in-link card (NTAG215/216, or refused when too long).
+- Validated: 4 unit tests (NDEF size layout, tag fit, error mapping). Emulator: the action is hidden because the
+  emulator reports no `SystemCapability.Communication.NFC.Tag` (`emergency-nfc-guard-emulator.jpeg`).
+- Not validated: **built, unverified** — no real tag written, reader mode and the write path never ran. Known limit:
+  editing the card replaces the encrypted link, so a written tag must be written again (the UI says so).
+
 ## README "How to verify" rows
 | Feature | How to check |
 |---|---|
@@ -47,6 +62,7 @@
 | Card payload v2 | Emergency tab → QR → open link: details shown; an old v1 link still opens (test `CardPayloadV2.oldV1LinksStillOpen`) |
 | First-responder view (B5) | Emergency tab → "For first responders": do not give, use instead, care notes, medicines, details, call buttons; works in airplane mode |
 | Responder from lock screen | Privacy → App lock on → background 5 min → lock screen → "For first responders" (built, unverified on the emulator) |
+| NFC card tag (B14) | Real phone with NFC: Emergency → Show card as QR → Write to NFC tag → hold an NTAG213+ sticker → tap the tag with another phone (built, unverified) |
 | Responder from widget | Add the 2×4 Medical alert card → tap its text (built, unverified) |
 
 ## DESIGN.md subsection (new screens only)
@@ -80,4 +96,5 @@ value; contacts and cardiologist as 52 vp outlined call rows. Footer: source and
 ## Coordinator notes
 - Touched outside my files: `pages/SettingsPage.ets` (one row + `save()` copy fix), `pages/CardViewPage.ets`
   (renders v2 rows), `entryability/EntryAbility.ets` (one `responder` tap branch).
+- Also touched for B14: `module.json5` (`ohos.permission.NFC_TAG`, system grant, no runtime prompt).
 - No backend changes, no migrations, no deploys.
