@@ -199,7 +199,8 @@ export struct VerdictCard {
         })
       } else {
         InkButton({
-          label: $r('app.string.verdict_ask_doctor'),
+          label: this.variant === 'SHEET' ? $r('app.string.verdict_ask_doctor') :
+            $r('app.string.verdict_ask_doctor_short'),
           large: this.variant === 'SHEET',
           onTap: () => {
             this.copyQuestion(v);
