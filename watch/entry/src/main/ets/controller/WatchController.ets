@@ -55,10 +55,28 @@ import { MemoryOutboxStore, MetricOutbox } from '../sync/MetricOutbox';
 import { PatientContext, PatientContextClient } from '../sync/PatientContextClient';
 import { PreferencesOutboxStore } from '../sync/PreferencesOutboxStore';
 import { DemoRpcClient } from '../sync/DemoRpcClient';
+import { deviceIdFor } from '../sync/DeviceIdStore';
+import { PairStatus, PairingClient, PairingCode, RpcResult } from '../sync/PairingClient';
+import { DoseStore } from '../sync/DoseStore';
+import {
+  DoseState,
+  NUDGE_SNOOZE_MS,
+  canSnooze,
+  dayKey,
+  emptyDoseState,
+  forToday,
+  shouldNudge
+} from '../vitals/DoseNudge';
 import { Fix, currentFix } from '../sync/SosLocation';
 import { SupabaseUploader } from '../sync/SupabaseUploader';
 
 export type SyncState = 'OFF' | 'OK' | 'PENDING' | 'ERROR';
+
+/** Settings: is this watch paired with a phone? UNKNOWN until the first pairing_status answer. */
+export type PairState = 'UNKNOWN' | 'PAIRED' | 'NOT_PAIRED' | 'ERROR';
+
+/** Pairing screen state. */
+export type PairScreen = 'LOADING' | 'CODE' | 'PAIRED' | 'EXPIRED' | 'ERROR';
 
 /** Which alert screen is up. */
 export type AlertKind = 'NONE' | 'HIGH' | 'LOW' | 'RHYTHM' | 'RECOVERY' | 'HRV' | 'SPO2';
@@ -148,6 +166,18 @@ export class WatchController {
   @Trace anomaly: Anomaly = 'none';
   /** Demo: 16 simulated days of resting HR with the last 2 elevated (missed beta-blocker), on the server. */
   @Trace betaBlockerMissed: boolean = false;
+  /** "Did you take nadolol?" glance (missed-dose nudge). */
+  @Trace doseNudgeOpen: boolean = false;
+  @Trace doseNudgeCanSnooze: boolean = true;
+  /** This watch's id (first 8 chars shown in Settings). */
+  @Trace deviceId: string = '';
+  @Trace deviceIdOverridden: boolean = false;
+  @Trace pairState: PairState = 'UNKNOWN';
+  @Trace pairingOpen: boolean = false;
+  @Trace pairScreen: PairScreen = 'LOADING';
+  @Trace pairCode: string = '';
+  @Trace pairSecondsLeft: number = 0;
+  @Trace pairError: string = '';
 
   private ctx: common.UIAbilityContext | undefined = undefined;
   private cfg: AppConfigData = AppConfig.defaults();
@@ -171,6 +201,10 @@ export class WatchController {
   private uploader: SupabaseUploader | undefined = undefined;
   private contextClient: PatientContextClient | undefined = undefined;
   private demoRpc: DemoRpcClient | undefined = undefined;
+  private pairing: PairingClient | undefined = undefined;
+  private pairTimer: number = -1;
+  private pairExpiresMs: number = 0;
+  private pairTicks: number = 0;
   private lastLiveMs: number = 0;
   private lastVitalsMs: number = 0;
   private lastMockMs: number = 0;
@@ -202,10 +236,15 @@ export class WatchController {
   private locationPermission: boolean = false;
   private ready: Promise<void> = Promise.resolve();
   private notifier: Notifier = new Notifier();
+  private doseStore: DoseStore | undefined = undefined;
+  private dose: DoseState = emptyDoseState();
 
   init(ctx: common.UIAbilityContext): void {
     this.ctx = ctx;
     this.cfg = AppConfig.load(ctx);
+    this.deviceIdOverridden = this.cfg.deviceId.length >= 3;
+    this.cfg.deviceId = deviceIdFor(ctx, this.cfg.deviceId);
+    this.deviceId = this.cfg.deviceId;
     this.demoMode = this.cfg.demoMode;
     this.sourceKind = this.demoMode ? this.cfg.defaultSource : 'SENSOR';
     this.demoSpeed = this.cfg.demoSpeed;
@@ -227,11 +266,14 @@ export class WatchController {
       Logger.warn('preferences unavailable, outbox is in-memory only');
     }
     this.pending = this.outbox.size;
+    this.doseStore = new DoseStore(ctx);
+    this.dose = this.doseStore.load();
     if (AppConfig.canUpload(this.cfg)) {
       this.uploader = new SupabaseUploader(this.cfg.supabaseUrl, this.cfg.supabaseAnonKey);
       this.contextClient = new PatientContextClient(this.cfg.supabaseUrl, this.cfg.supabaseAnonKey,
         this.cfg.deviceId);
       this.demoRpc = new DemoRpcClient(this.cfg.supabaseUrl, this.cfg.supabaseAnonKey);
+      this.pairing = new PairingClient(this.cfg.supabaseUrl, this.cfg.supabaseAnonKey);
       this.syncState = this.pending > 0 ? 'PENDING' : 'OK';
     }
     this.syncTimer = setInterval(() => {
@@ -246,6 +288,7 @@ export class WatchController {
 
   dispose(): void {
     this.pause();
+    this.stopPairPolling();
     if (this.syncTimer >= 0) {
       clearInterval(this.syncTimer);
       this.syncTimer = -1;
@@ -273,6 +316,7 @@ export class WatchController {
   /** App hidden: the OS will freeze us, so close the summary window and push what we have. */
   pause(): void {
     this.visible = false;
+    this.closePairing();
     this.stopSource();
     this.flushWindow(Date.now());
     this.syncNow();
@@ -428,8 +472,118 @@ export class WatchController {
   }
 
   logMedication(): void {
+    const now = Date.now();
     const v: MedicationTakenValues = { name: this.cfg.medicationName };
-    this.record('medication_taken', v, Date.now());
+    this.record('medication_taken', v, now);
+    this.dose = forToday(this.dose, now);
+    this.dose.lastDoseDay = dayKey(now);
+    this.saveDose();
+    this.doseNudgeOpen = false;
+  }
+
+  /** Dose nudge: "Took it" logs the dose like the Check-in page button. */
+  doseTaken(): void {
+    this.logMedication();
+  }
+
+  /** Dose nudge: "Not yet" snoozes 1 h (the nudge shows at most 3 times a day: first + 2 snoozes). */
+  doseNotYet(): void {
+    this.dose.snoozeUntilMs = Date.now() + NUDGE_SNOOZE_MS;
+    this.saveDose();
+    this.doseNudgeOpen = false;
+  }
+
+  // ---- Pairing with a phone ----------------------------------------------------------------------------------
+
+  /** Settings opened: one pairing_status call → "Paired with phone" / "Not paired". */
+  async refreshPairState(): Promise<void> {
+    if (this.pairing === undefined) {
+      this.pairState = 'ERROR';
+      return;
+    }
+    const r: RpcResult<PairStatus> = await this.pairing.status(this.deviceId);
+    if (!r.ok) {
+      this.pairState = 'ERROR';
+      return;
+    }
+    this.pairState = r.value === 'PAIRED' ? 'PAIRED' : 'NOT_PAIRED';
+  }
+
+  /** "Pair with phone" / "New code": asks the server for a 6-digit code. Returns '' or an error for a toast. */
+  async startPairing(): Promise<string> {
+    this.pairingOpen = true;
+    this.stopPairPolling();
+    if (this.pairing === undefined) {
+      this.pairScreen = 'ERROR';
+      this.pairError = 'Supabase is not configured (watch/.env)';
+      return this.pairError;
+    }
+    this.pairScreen = 'LOADING';
+    const r: RpcResult<PairingCode> = await this.pairing.start(this.deviceId);
+    if (!r.ok || r.value === undefined) {
+      this.pairScreen = 'ERROR';
+      this.pairError = r.error;
+      return r.error;
+    }
+    this.pairCode = r.value.code;
+    this.pairExpiresMs = r.value.expiresAtMs;
+    this.pairSecondsLeft = Math.max(0, Math.round((this.pairExpiresMs - Date.now()) / 1000));
+    this.pairScreen = 'CODE';
+    this.pairTicks = 0;
+    this.pairTimer = setInterval(() => {
+      this.onPairTick();
+    }, 1000);
+    Logger.info('pairing code shown');
+    return '';
+  }
+
+  /** Leaving the pairing screen stops polling. */
+  closePairing(): void {
+    this.stopPairPolling();
+    this.pairingOpen = false;
+  }
+
+  private onPairTick(): void {
+    this.pairSecondsLeft = Math.max(0, Math.round((this.pairExpiresMs - Date.now()) / 1000));
+    this.pairTicks++;
+    if (this.pairTicks % 2 === 0) {
+      this.pollPairStatus();
+    }
+  }
+
+  private async pollPairStatus(): Promise<void> {
+    if (this.pairing === undefined || this.pairScreen !== 'CODE') {
+      return;
+    }
+    const r: RpcResult<PairStatus> = await this.pairing.status(this.deviceId);
+    if (!r.ok || this.pairScreen !== 'CODE') {
+      // Keep polling: a dropped request shouldn't end pairing; the error is logged by the client.
+      return;
+    }
+    if (r.value === 'PAIRED') {
+      this.stopPairPolling();
+      this.pairScreen = 'PAIRED';
+      this.pairState = 'PAIRED';
+      this.vibrate(400);
+      Logger.info('paired with phone');
+    } else if (r.value === 'EXPIRED' || r.value === 'NONE' || this.pairSecondsLeft <= 0) {
+      this.stopPairPolling();
+      this.pairScreen = 'EXPIRED';
+    }
+  }
+
+  private stopPairPolling(): void {
+    if (this.pairTimer >= 0) {
+      clearInterval(this.pairTimer);
+      this.pairTimer = -1;
+    }
+  }
+
+  /** Simulate page: show the nudge now, without touching today's counters. */
+  showDoseNudgeNow(): void {
+    this.doseNudgeCanSnooze = true;
+    this.doseNudgeOpen = true;
+    this.vibrate(600);
   }
 
   async syncNow(): Promise<void> {
@@ -628,6 +782,7 @@ export class WatchController {
     }
     this.tickFall(now);
     this.tickSos(now);
+    this.tickDoseNudge(now);
     this.tickScenarioFall();
     if (!this.onWrist) {
       this.bpm = 0;
@@ -826,6 +981,30 @@ export class WatchController {
     this.record('fall_detected', v, this.fallStartMs);
     this.fallCountdown = 0;
     Logger.info(`fall finished: ${response}`);
+  }
+
+  // ---- Missed-dose nudge -------------------------------------------------------------------------------------
+
+  private tickDoseNudge(now: number): void {
+    // Never over an alert, fall or SOS screen, and not while the check-in is open; try again next tick.
+    if (this.doseNudgeOpen || this.alertKind !== 'NONE' || this.fallCountdown > 0 || this.sosCountdown > 0 ||
+      this.sosSent || this.checkInOpen) {
+      return;
+    }
+    if (!shouldNudge(this.dose, now, this.cfg.medReminderTime)) {
+      return;
+    }
+    this.dose = forToday(this.dose, now);
+    this.dose.timesShown += 1;
+    this.doseNudgeCanSnooze = canSnooze(this.dose);
+    this.saveDose();
+    this.doseNudgeOpen = true;
+    this.vibrate(600);
+    Logger.info(`dose nudge shown (${this.dose.timesShown}/3)`);
+  }
+
+  private saveDose(): void {
+    this.doseStore?.save(this.dose);
   }
 
   // ---- SOS -----------------------------------------------------------------------------------------------------
