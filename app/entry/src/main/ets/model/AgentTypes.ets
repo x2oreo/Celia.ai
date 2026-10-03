@@ -6,6 +6,7 @@ export interface ChatMessage {
   role: ChatRole;
   text: string;
   ts: number;
+  actions?: UiAction[];   // cards shown with the message (restored chats keep display cards only)
 }
 
 // UI actions the agent attaches to a reply. The chat UI renders one card per action.

@@ -1,7 +1,8 @@
-// scan_medicine, show_emergency_card, start_emergency, add_med, share_emergency_card.
+// scan_medicine, show_emergency_card, start_emergency, add_med, share_emergency_card, start_new_chat.
 // UI tools return an action for the chat UI. Write tools never write: they create a confirm card and report
 // AWAITING_USER_CONFIRMATION; the user's tap goes through AgentCore.resolveAction().
 
+import { TITLE_MAX_CHARS } from '../../model/Chat';
 import { AgentTool, PendingAction, PendingKind, TurnState, action, toolError } from '../ToolTypes';
 import { argString } from '../ResponseValidator';
 import { DrugChecker } from '../../drugs/DrugChecker';
@@ -131,5 +132,19 @@ export class ShareEmergencyCardTool implements AgentTool {
     const payload: ConfirmPayload = { actionId: p.id };
     turn.actions.push(action('SHARE_EMERGENCY_CARD', payload));
     return status('AWAITING_USER_CONFIRMATION', 'The user chooses where to share it on screen.');
+  }
+}
+
+// "Save this chat and start a new one." Nothing is lost: every chat is already saved on the phone. The optional
+// title renames the chat being saved. The switch happens when the turn ends (AgentCore.finish).
+export class StartNewChatTool implements AgentTool {
+  name: string = 'start_new_chat';
+
+  async execute(args: Record<string, Object>, turn: TurnState): Promise<string> {
+    turn.newChatRequested = true;
+    turn.newChatTitle = argString(args, 'title', TITLE_MAX_CHARS);
+    return status('NEW_CHAT_STARTED',
+      'The current chat is saved on this phone (open it again from Chats). Reply with one short sentence; the reply ' +
+        'starts the new chat.');
   }
 }

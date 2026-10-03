@@ -3,7 +3,7 @@
 
 import { describe, it, expect } from '@ohos/hypium';
 import { DrugVerdict, RiskLevel } from '../main/ets/model/DrugVerdict';
-import { InteractionFinding, VerdictCardPayload } from '../main/ets/model/AgentTypes';
+import { InteractionFinding, UiAction, VerdictCardPayload } from '../main/ets/model/AgentTypes';
 import { ComboResult, escalate, evaluateCombo } from '../main/ets/safety/ComboRules';
 import { SafetyGate } from '../main/ets/safety/SafetyGate';
 import { EmergencyNumbers } from '../main/ets/safety/EmergencyNumbers';
@@ -12,6 +12,13 @@ import {
 } from '../main/ets/agent/ResponseValidator';
 import { parseOfflineIntent, ParsedIntent } from '../main/ets/agent/OfflineAgent';
 import { ToolRegistry } from '../main/ets/agent/ToolRegistry';
+import { TurnState } from '../main/ets/agent/ToolTypes';
+import { ExplainConditionTool } from '../main/ets/agent/tools/InfoTools';
+import { LogSymptomTool } from '../main/ets/agent/tools/SymptomTools';
+import { buildSymptomEntry, parseSymptom, SymptomEntry } from '../main/ets/model/SymptomEntry';
+import { VitalsSample } from '../main/ets/model/Vitals';
+import { LocalStore } from '../main/ets/data/LocalStore';
+import { AppEvent } from '../main/ets/model/AppEvent';
 
 function v(ingredient: string, risk: RiskLevel): DrugVerdict {
   const d: DrugVerdict = { query: ingredient, ingredient: ingredient, risk: risk, reason: '', source: 'test' };
@@ -34,7 +41,7 @@ function kinds(r: ComboResult): string {
 // Must equal TOOL_NAMES in backend/supabase/functions/_shared/tools.ts.
 const BACKEND_TOOLS: string[] = ['check_drug', 'get_my_meds', 'get_vitals_summary', 'explain_condition',
   'suggest_alternatives', 'scan_medicine', 'add_med', 'show_emergency_card', 'start_emergency',
-  'share_emergency_card'];
+  'share_emergency_card', 'start_new_chat', 'log_symptom'];
 
 export default function agentSafetyTest() {
   describe('ComboRules', () => {
@@ -274,6 +281,70 @@ export default function agentSafetyTest() {
     it('matchesBackendToolSchemas', 0, () => {
       const names: string[] = new ToolRegistry().names().sort();
       expect(names.join(',')).assertEqual(BACKEND_TOOLS.slice().sort().join(','));
+    });
+
+    it('explainConditionCarriesGenotypeCoachTips', 0, async () => {
+      const turn: TurnState = new TurnState();
+      turn.genotype = 'LQT2';
+      const args: Record<string, Object> = { 'topic': 'triggers' };
+      const out: string = await new ExplainConditionTool().execute(args, turn);
+      const parsed: Record<string, Object> = JSON.parse(out) as Record<string, Object>;
+      const tips: string[] = parsed['triggerTips'] as string[];
+      expect(tips.length).assertEqual(3);
+      expect(tips[0].startsWith('LQT2')).assertTrue();
+    });
+  });
+
+  describe('LogSymptom', () => {
+    it('entryClampsAndAttachesOnlyNearbyHeartRate', 0, () => {
+      const at: number = 10000000;
+      const samples: VitalsSample[] = [
+        { ts: at - 60000, hr: 92, source: 'SIMULATED' },
+        { ts: at - 5 * 60000, hr: 110, source: 'SIMULATED' },
+        { ts: at - 30 * 60000, hr: 150, source: 'SIMULATED' }
+      ];
+      const e: SymptomEntry = buildSymptomEntry('DIZZINESS', 9, 'Swimming', '  felt odd ', samples, at);
+      expect(e.severity).assertEqual(5);
+      expect(e.activity).assertEqual('swimming');
+      expect(e.note).assertEqual('felt odd');
+      expect(e.hrMin).assertEqual(92);
+      expect(e.hrMax).assertEqual(110);
+      expect(buildSymptomEntry('OTHER', 0, 'skydiving', '', [], at).activity).assertEqual('other');
+      expect(buildSymptomEntry('OTHER', 0, '', '', [], at).hrMin).assertEqual(-1);
+    });
+
+    it('parsesSymptomWords', 0, () => {
+      expect(parseSymptom('chest pain')).assertEqual('CHEST_PAIN');
+      expect(parseSymptom('shortness-of-breath')).assertEqual('SHORTNESS_OF_BREATH');
+      expect(parseSymptom('headache') === undefined).assertTrue();
+    });
+
+    it('unknownSymptomIsAnErrorAndNothingIsLogged', 0, async () => {
+      const before: number = (await LocalStore.get().listEvents()).length;
+      const args: Record<string, Object> = { 'symptom': 'headache', 'severity': 2 };
+      const out: string = await new LogSymptomTool().execute(args, new TurnState());
+      expect(out.includes('error')).assertTrue();
+      expect((await LocalStore.get().listEvents()).length).assertEqual(before);
+    });
+
+    it('mildSymptomIsLoggedWithoutEmergency', 0, async () => {
+      const turn: TurnState = new TurnState();
+      const args: Record<string, Object> = { 'symptom': 'DIZZINESS', 'severity': 2, 'activity': 'resting' };
+      const out: string = await new LogSymptomTool().execute(args, turn);
+      expect(out.includes('LOGGED')).assertTrue();
+      expect(turn.emergencyStarted).assertFalse();
+      const events: AppEvent[] = await LocalStore.get().listEvents();
+      const last: AppEvent = events[events.length - 1];
+      expect(last.kind).assertEqual('SYMPTOM');
+      expect((JSON.parse(last.detail) as SymptomEntry).symptom).assertEqual('DIZZINESS');
+    });
+
+    it('redFlagStartsTheEmergencyFlowDeterministically', 0, async () => {
+      const turn: TurnState = new TurnState();
+      const args: Record<string, Object> = { 'symptom': 'FAINTING', 'severity': 1 };
+      await new LogSymptomTool().execute(args, turn);
+      expect(turn.emergencyStarted).assertTrue();
+      expect(turn.actions.some((a: UiAction) => a.type === 'START_EMERGENCY')).assertTrue();
     });
   });
 }

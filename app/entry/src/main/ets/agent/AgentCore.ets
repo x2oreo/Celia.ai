@@ -8,6 +8,10 @@
 //   any failure (offline, timeout, bad JSON, contradiction) ─► deterministic fallback (OfflineAgent / VerdictText)
 //
 // Verdicts come from DrugChecker + ComboRules only. Writes need a confirm tap (resolveAction).
+//
+// Chats: every message is saved to the open chat (LocalStore, on device). newChat()/openChat() switch chats; the
+// model only ever sees the open chat. "New chat" works by button, by fixed phrase (ChatCommands) or by the model's
+// start_new_chat tool.
 
 import {
   AgentReply, ChatMessage, QuickRepliesPayload, ToolActivity, UiAction, EmergencyPayload
@@ -32,6 +36,8 @@ import { verdictText } from './VerdictText';
 import { VitalsDigest } from './VitalsDigest';
 import { EMERGENCY_COUNTDOWN_SEC } from './tools/ActionTools';
 import { SosController } from '../emergency/SosController';
+import { ChatSummary, MAX_CHAT_MESSAGES, StoredChatMessage } from '../model/Chat';
+import { ChatCommands } from './ChatCommands';
 
 const log: Logger = new Logger('AgentCore');
 
@@ -47,7 +53,7 @@ export function alertText(alert: VitalsAlert): string {
 
 const MAX_STEPS: number = 5;            // model calls per user turn
 const HISTORY_FOR_MODEL: number = 12;   // recent text messages sent as conversation memory
-const MAX_HISTORY: number = 100;
+const CURRENT_CHAT_SETTING: string = 'agent.chat';
 const CHECK_IN_TIMEOUT_MS: number = 60000;
 const PENDING_TTL_MS: number = 10 * 60 * 1000;
 
@@ -57,6 +63,15 @@ export const QUICK_REPLY_UNWELL: string = 'I feel unwell';
 interface FallbackEvent {
   reason: string;
   tools: string[];
+}
+
+// The chat a message belongs to. A new chat gets its database row with its first message (no empty chats).
+class ChatSlot {
+  id: number;
+
+  constructor(id: number) {
+    this.id = id;
+  }
 }
 
 export class AgentCore {
@@ -74,6 +89,10 @@ export class AgentCore {
   private checkInTimer: number = -1;
   private checkInPending: boolean = false;
   private started: boolean = false;
+  private slot: ChatSlot = new ChatSlot(-1);
+  private saving: Promise<void> = Promise.resolve();
+  private restored: Promise<void> = Promise.resolve();
+  private chatChanged: Listeners<number> = new Listeners<number>();
 
   static get(): AgentCore {
     if (AgentCore.instance === undefined) {
@@ -88,6 +107,7 @@ export class AgentCore {
       return;
     }
     this.started = true;
+    this.restored = this.restoreChat();
     VitalsDigest.get().start();
     VitalsService.get().onAlert((a: VitalsAlert) => this.onVitalsAlert(a));
   }
@@ -111,6 +131,88 @@ export class AgentCore {
 
   getHistory(): ChatMessage[] {
     return this.history.slice();
+  }
+
+  // ---- chats ---------------------------------------------------------------------------------------------------
+
+  // Resolves when every message said so far is written to the store.
+  whenSaved(): Promise<void> {
+    return this.saving;
+  }
+
+  // -1 while the open chat has no messages yet.
+  currentChatId(): number {
+    return this.slot.id;
+  }
+
+  // Fires with the new chat id (-1 = new, empty chat) after newChat()/openChat(). Screens reload from getHistory().
+  onChatChanged(cb: Listener<number>): () => void {
+    return this.chatChanged.add(cb);
+  }
+
+  // Saves the open chat (it already is — every message is stored) and opens an empty one.
+  newChat(): void {
+    this.slot = new ChatSlot(-1);
+    this.history = [];
+    this.pending.clear();
+    this.saving = this.saving.then(() => LocalStore.get().setSetting(CURRENT_CHAT_SETTING, '-1'))
+      .catch((e: Error) => log.warn(`save chat setting failed: ${e.message}`));
+    this.chatChanged.emit(-1);
+  }
+
+  async openChat(id: number): Promise<boolean> {
+    await this.saving;
+    const chat: ChatSummary | undefined = await LocalStore.get().getChat(id);
+    if (chat === undefined) {
+      return false;
+    }
+    const msgs: StoredChatMessage[] = await LocalStore.get().listChatMessages(id);
+    this.slot = new ChatSlot(id);
+    this.history = msgs.map((m: StoredChatMessage) => {
+      const c: ChatMessage = { role: m.role, text: m.text, ts: m.ts, actions: m.actions };
+      return c;
+    });
+    this.pending.clear();
+    await LocalStore.get().setSetting(CURRENT_CHAT_SETTING, `${id}`);
+    this.chatChanged.emit(id);
+    return true;
+  }
+
+  async deleteChat(id: number): Promise<void> {
+    await this.saving;
+    if (id === this.slot.id) {
+      this.newChat();
+    }
+    await LocalStore.get().deleteChat(id);
+  }
+
+  private async restoreChat(): Promise<void> {
+    try {
+      const id: number = Number(await LocalStore.get().getSetting(CURRENT_CHAT_SETTING, '-1'));
+      if (id >= 0 && this.slot.id < 0 && this.history.length === 0) {
+        await this.openChat(id);
+      }
+    } catch (e) {
+      log.warn(`restore chat failed: ${String(e)}`);
+    }
+  }
+
+  // "New chat" asked for in words (fixed phrase or the model's start_new_chat tool). Renames the chat being saved
+  // when the user named it.
+  private switchChat(title: string): boolean {
+    const hadMessages: boolean = this.history.length > 0;
+    if (hadMessages && title.trim() !== '') {
+      const saved: ChatSlot = this.slot;
+      this.saving = this.saving.then(async (): Promise<void> => {
+        if (saved.id >= 0) {
+          await LocalStore.get().renameChat(saved.id, title);
+        }
+      }).catch((e: Error) => log.warn(`rename chat failed: ${e.message}`));
+    }
+    if (hadMessages) {
+      this.newChat();
+    }
+    return hadMessages;
   }
 
   // Confirm-card tap (ADD_MED, SHARE_EMERGENCY_CARD). accepted=false means the user tapped Cancel.
@@ -203,13 +305,22 @@ export class AgentCore {
   // ---------------------------------------------------------------------------------------------------------------
 
   private async handle(text: string): Promise<AgentReply> {
+    // A message sent during a cold start waits for the last chat to be reopened, so it lands in that chat instead
+    // of being replaced by it.
+    await this.restored;
     const input: string = text.trim().slice(0, 2000);
     if (input.length === 0) {
       return this.say('I didn\'t catch that. Could you say it again?', [], true);
     }
+    const gate0: GateResult = SafetyGate.classify(input, this.checkInPending);
+    if (gate0 === 'NONE' && ChatCommands.isNewChat(input)) {
+      // Not stored: the command would otherwise become the saved chat's last message (or its title).
+      return this.switchChat('') ? this.say('Saved. This is a new chat — what would you like to talk about?', [], true)
+        : this.say('This is already a new chat. What would you like to talk about?', [], true);
+    }
     this.remember('user', input);
     try {
-      const gate: GateResult = SafetyGate.classify(input, this.checkInPending);
+      const gate: GateResult = gate0;
       if (gate === 'EMERGENCY' || gate === 'UNWELL') {
         return await this.emergency(input);
       }
@@ -264,6 +375,12 @@ export class AgentCore {
   }
 
   private finish(turn: TurnState, text: string, fallback: boolean): AgentReply {
+    if (turn.newChatRequested) {
+      // The reply opens the new chat; confirm cards from this turn belonged to the saved one.
+      this.switchChat(turn.newChatTitle);
+      return this.say(text, turn.actions.filter((a: UiAction) => a.type !== 'ADD_MED' &&
+        a.type !== 'SHARE_EMERGENCY_CARD'), fallback);
+    }
     for (const p of turn.pending) {
       this.pending.set(p.id, p);
     }
@@ -283,7 +400,7 @@ export class AgentCore {
     const prefix: string = reason === 'no_backend' ? 'I\'m working offline.'
       : 'I can\'t reach my assistant service right now.';
     const offline: AgentReply = await OfflineAgent.answer(input, prefix);
-    this.remember('assistant', offline.text);
+    this.remember('assistant', offline.text, offline.actions);
     return offline;
   }
 
@@ -376,16 +493,34 @@ export class AgentCore {
     });
   }
 
-  private remember(role: 'user' | 'assistant', text: string): void {
-    const m: ChatMessage = { role: role, text: text, ts: Date.now() };
+  private remember(role: 'user' | 'assistant', text: string, actions: UiAction[] = []): void {
+    const m: ChatMessage = { role: role, text: text, ts: Date.now(), actions: actions };
     this.history.push(m);
-    if (this.history.length > MAX_HISTORY) {
-      this.history = this.history.slice(-MAX_HISTORY);
+    if (this.history.length > MAX_CHAT_MESSAGES) {
+      this.history = this.history.slice(-MAX_CHAT_MESSAGES);
     }
+    // Saved in order, to the chat that was open when the message was said.
+    const slot: ChatSlot = this.slot;
+    this.saving = this.saving.then(() => this.persist(slot, role, text, actions))
+      .catch((e: Error) => log.warn(`save message failed: ${e.message}`));
+  }
+
+  private async persist(slot: ChatSlot, role: 'user' | 'assistant', text: string, actions: UiAction[]): Promise<void> {
+    if (text.trim().length === 0 && actions.length === 0) {
+      return;
+    }
+    if (slot.id < 0) {
+      const chat: ChatSummary = await LocalStore.get().createChat();
+      slot.id = chat.id;
+      if (slot === this.slot) {
+        await LocalStore.get().setSetting(CURRENT_CHAT_SETTING, `${chat.id}`);
+      }
+    }
+    await LocalStore.get().addChatMessage(slot.id, role, text, actions);
   }
 
   private say(text: string, actions: UiAction[], fallback: boolean): AgentReply {
-    this.remember('assistant', text);
+    this.remember('assistant', text, actions);
     const r: AgentReply = { text: text, actions: actions, fallback: fallback };
     return r;
   }

@@ -4,10 +4,12 @@ import { AgentTool, TurnState, toolError } from '../ToolTypes';
 import { argString } from '../ResponseValidator';
 import { CONDITION_TOPICS, conditionFacts } from '../ConditionFacts';
 import { VitalsDigest } from '../VitalsDigest';
+import { CoachTip, tipsFor } from '../../coach/Coach';
 
 interface FactsOutput {
   topic: string;
   facts: string;
+  triggerTips: string[];   // static genotype coach (coach/Coach.ets), sourced — the model may quote, not invent
 }
 
 export class ExplainConditionTool implements AgentTool {
@@ -18,7 +20,11 @@ export class ExplainConditionTool implements AgentTool {
     if (!CONDITION_TOPICS.includes(topic)) {
       return toolError(`topic must be one of ${CONDITION_TOPICS.join(', ')}`);
     }
-    const out: FactsOutput = { topic: topic, facts: conditionFacts(topic, turn.genotype) };
+    const out: FactsOutput = {
+      topic: topic,
+      facts: conditionFacts(topic, turn.genotype),
+      triggerTips: tipsFor(turn.genotype).slice(0, 3).map((t: CoachTip) => `${t.title}: ${t.body}`)
+    };
     return JSON.stringify(out);
   }
 }

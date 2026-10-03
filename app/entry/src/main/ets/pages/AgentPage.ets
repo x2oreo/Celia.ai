@@ -3,6 +3,7 @@
 // the second mode of the same thread. Speech, text and taps all go through AgentCore (SafetyGate first, then the
 // model with deterministic tools). Cards come from deterministic tool payloads, never from model text.
 
+import { keepOnRestore } from '../model/Chat';
 import { common } from '@kit.AbilityKit';
 import { LengthMetrics } from '@kit.ArkUI';
 import { photoAccessHelper } from '@kit.MediaLibraryKit';
@@ -20,7 +21,7 @@ import { VoiceInput } from '../voice/VoiceInput';
 import { VoiceOutput } from '../voice/VoiceOutput';
 import { RealtimeSession, RealtimeStatus, VoicePhase } from '../voice/RealtimeSession';
 import { SosController } from '../emergency/SosController';
-import { CheckParam, Routes, SosParam, TabIndex } from '../common/Routes';
+import { AskParam, CheckParam, Routes, SosParam, TabIndex } from '../common/Routes';
 import { TabRequest } from '../common/TabRequest';
 import { Config } from '../common/Config';
 import { Logger } from '../common/Logger';
@@ -90,10 +91,12 @@ export struct AgentPage {
   private offs: (() => void)[] = [];
 
   aboutToAppear(): void {
-    const history: ChatMessage[] = AgentCore.get().getHistory();
-    for (const m of history) {
-      this.push(m.role, m.text, [], []);
-    }
+    this.loadChat();
+    // Another chat was opened (Chats page), a new one started (button, "new chat", start_new_chat tool) or the last
+    // chat finished loading at app start: show that chat.
+    this.offs.push(AgentCore.get().onChatChanged((id: number) => {
+      this.loadChat();
+    }));
     this.offs.push(AgentCore.get().onProactive((r: AgentReply) => {
       // Index opens the SOS screen for proactive emergencies; here we only show the message.
       this.push('assistant', r.text, r.actions, []);
@@ -158,6 +161,30 @@ export struct AgentPage {
     }
     this.offs = [];
     this.endVoice();
+  }
+
+  // Rebuilds the thread from the open chat. Restored chats carry display cards only (no confirm or SOS cards).
+  private loadChat(): void {
+    this.items = [];
+    this.liveTools = [];
+    this.userLive = '';
+    this.agentLive = '';
+    this.resolved = [];
+    this.accepted = [];
+    // Confirm, quick-reply and SOS cards belong to the moment they were shown; redrawing them would make an
+    // already answered card look actionable again (the page's resolved/accepted state is reset above).
+    for (const m of AgentCore.get().getHistory()) {
+      this.push(m.role, m.text, (m.actions ?? []).filter((a: UiAction) => keepOnRestore(a)), []);
+    }
+  }
+
+  // Header "New chat": the open chat is already saved; stop any live voice and start empty.
+  private startNewChat(): void {
+    if (this.busy) {
+      return;   // the reply in flight belongs to this chat; New chat waits for it
+    }
+    this.endVoice();
+    AgentCore.get().newChat();
   }
 
   private ctx(): common.UIAbilityContext {
@@ -943,6 +970,20 @@ export struct AgentPage {
   }
 
   @Builder
+  headerButton(icon: Resource, label: Resource, onTap: () => void) {
+    Row() {
+      Image(icon).width(22).height(22).fillColor($r('app.color.ink_2'))
+    }
+    .width($r('app.float.touch_min'))
+    .height($r('app.float.touch_min'))
+    .justifyContent(FlexAlign.Center)
+    .borderRadius(22)
+    .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.92 })
+    .accessibilityText(label)
+    .onClick(() => onTap())
+  }
+
+  @Builder
   header() {
     Row({ space: 10 }) {
       Row() {
@@ -966,9 +1007,15 @@ export struct AgentPage {
       if (!Config.hasBackend()) {
         SourceBadge({ label: $r('app.string.badge_on_device') })
       }
+      this.headerButton($r('app.media.ic_history'), $r('app.string.a11y_chats'), () => {
+        this.navStack.pushPathByName(Routes.CHATS, null);
+      })
+      this.headerButton($r('app.media.ic_plus'), $r('app.string.a11y_new_chat'), () => {
+        this.startNewChat();
+      })
     }
     .width('100%')
-    .padding({ left: 4, right: 16, top: 8, bottom: 8 })
+    .padding({ left: 4, right: 8, top: 8, bottom: 8 })
   }
 
   build() {
@@ -1013,5 +1060,13 @@ export struct AgentPage {
     }
     .hideTitleBar(true)
     .backgroundColor($r('app.color.bg'))
+    .onReady((ctx: NavDestinationContext) => {
+      // Opened with a question (e.g. "Ask the agent" from a medicine): show it typed and send it once.
+      const p: Object | undefined = ctx.pathInfo.param as Object | undefined;
+      if (p instanceof AskParam && p.question.trim().length > 0) {
+        this.setMode('CHAT');
+        this.send(p.question);
+      }
+    })
   }
 }

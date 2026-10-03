@@ -1,4 +1,4 @@
-// AgentCore end-to-end without a backend (LocalConfig is empty in tests): the deterministic paths must work.
+// AgentCore end-to-end without a backend (List.test forces Config offline): the deterministic paths must work.
 
 import { describe, it, expect } from '@ohos/hypium';
 import { AgentCore, alertText } from '../main/ets/agent/AgentCore';

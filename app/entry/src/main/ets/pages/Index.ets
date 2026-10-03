@@ -1,6 +1,7 @@
 // App root: Navigation + NavPathStack hosting the bottom tabs. Full-screen flows (onboarding, check result,
 // history, SOS, …) are pushed as NavDestinations by route name — see common/Routes.ets.
 
+import { TravelService } from '../emergency/TravelService';
 import { common } from '@kit.AbilityKit';
 import { MainTabs } from '../components/MainTabs';
 import { OnboardingPage } from './OnboardingPage';
@@ -15,6 +16,7 @@ import { PrivacyPage } from './PrivacyPage';
 import { SymptomLogPage } from './SymptomLogPage';
 import { RemindersPage } from './RemindersPage';
 import { CardViewPage } from './CardViewPage';
+import { ChatsPage } from './ChatsPage';
 import { AgentPage } from './AgentPage';
 import { ScanPage } from './ScanPage';
 import { LockScreen } from '../components/LockScreen';
@@ -60,6 +62,7 @@ struct Index {
     RouteRequest.onOpen((route: string) => this.openRoute(route));
     this.openRoute(RouteRequest.take());
     askNotificationPermission(this.getUIContext().getHostContext() as common.UIAbilityContext);
+    TravelService.detect();   // only with location already allowed; never asks
     AppLock.onLockChange((locked: boolean) => {
       this.locked = locked;
     });
@@ -194,6 +197,8 @@ struct Index {
       RemindersPage()
     } else if (name === Routes.CARD_VIEW) {
       CardViewPage()
+    } else if (name === Routes.CHATS) {
+      ChatsPage()
     } else if (name === Routes.AGENT_CHAT) {
       AgentPage()
     } else if (name === Routes.SCAN) {
