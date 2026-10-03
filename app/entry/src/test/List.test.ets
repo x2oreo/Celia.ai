@@ -5,6 +5,7 @@ import sosControllerTest from './SosController.test';
 import doctorPrepTest from './DoctorPrep.test';
 import utilsTest from './Utils.test';
 import restingTrendTest from './RestingTrend.test';
+import watchCloudSourceTest from './WatchCloudSource.test';
 
 export default function testsuite() {
   contractSmokeTest();
@@ -14,4 +15,5 @@ export default function testsuite() {
   doctorPrepTest();
   utilsTest();
   restingTrendTest();
+  watchCloudSourceTest();
 }

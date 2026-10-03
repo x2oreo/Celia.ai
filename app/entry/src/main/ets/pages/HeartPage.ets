@@ -111,12 +111,13 @@ export struct HeartPage {
         Row() {
           PageTitle({ title: $r('app.string.heart_title'), subtitle: $r('app.string.heart_subtitle') })
             .layoutWeight(1)
-          Text($r('app.string.heart_simulated'))
+          // WATCH = real sensor data from the Celia watch; SIMULATED = scripted data (phone or watch demo).
+          Text(this.latest?.source === 'WATCH' ? $r('app.string.heart_watch') : $r('app.string.heart_simulated'))
             .fontSize($r('app.float.font_caption'))
             .fontWeight(FontWeight.Bold)
-            .fontColor($r('app.color.sim_badge'))
+            .fontColor(this.latest?.source === 'WATCH' ? $r('app.color.on_accent') : $r('app.color.sim_badge'))
             .padding({ left: 10, right: 10, top: 4, bottom: 4 })
-            .backgroundColor($r('app.color.sim_badge_soft'))
+            .backgroundColor(this.latest?.source === 'WATCH' ? $r('app.color.brand_accent') : $r('app.color.sim_badge_soft'))
             .borderRadius(100)
         }
         .width('100%')
@@ -177,7 +178,8 @@ export struct HeartPage {
           }, (a: VitalsAlert) => `${a.ts}-${a.kind}`)
         }
 
-        // Simulation controls — the emulator has no watch, so the data source is simulated and says so.
+        // Simulation controls — only for the phone's own simulated source (the watch has its own Simulate page).
+        if (VitalsService.get().sourceKind() !== 'WATCH') {
         Column({ space: 10 }) {
           Row() {
             Text($r('app.string.heart_sim_controls'))
@@ -217,6 +219,7 @@ export struct HeartPage {
         .padding(16)
         .backgroundColor($r('app.color.card_bg'))
         .borderRadius($r('app.float.radius_m'))
+        }
       }
       .padding({ left: 16, right: 16, bottom: 24 })
       .width('100%')

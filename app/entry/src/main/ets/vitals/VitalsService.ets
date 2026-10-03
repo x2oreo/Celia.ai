@@ -1,4 +1,4 @@
-// Heart monitoring: a sample source (simulated on the emulator; Wear Engine on a real watch — not wired yet),
+// Heart monitoring: a sample source (the Celia watch via Supabase when a backend is configured, otherwise simulated),
 // AlarmRules per genotype, a short in-memory history for the chart, and alerts logged to LocalStore.
 
 import { VitalsAlert, VitalsSample, VitalsSourceKind } from '../model/Vitals';
@@ -8,6 +8,8 @@ import { Logger } from '../common/Logger';
 import { LocalStore, StoreTopic } from '../data/LocalStore';
 import { AlarmRules } from './AlarmRules';
 import { ScenarioName, scenarioSample } from './SimulatedSource';
+import { WatchCloudSource } from './WatchCloudSource';
+import { Config } from '../common/Config';
 
 const log: Logger = new Logger('Vitals');
 
@@ -29,6 +31,7 @@ export class VitalsService {
   private lastSampleTs: number = 0;
   private recent: VitalsSample[] = [];
   private recentAlerts: VitalsAlert[] = [];
+  private watch: WatchCloudSource | undefined = undefined;
 
   static get(): VitalsService {
     if (VitalsService.instance === undefined) {
@@ -41,11 +44,11 @@ export class VitalsService {
     if (this.source !== undefined) {
       return;
     }
-    if (source === 'WATCH') {
-      // Wear Engine needs a paired real device (see ARCHITECTURE capability table). Fall back, clearly labelled.
-      log.warn('WATCH source not available in this build — using SIMULATED');
+    if (source === 'WATCH' && !Config.hasBackend()) {
+      // The watch reaches the phone through Supabase; without a backend fall back, clearly labelled.
+      log.warn('WATCH source needs a backend (LocalConfig.ets) — using SIMULATED');
     }
-    this.source = 'SIMULATED';
+    this.source = source === 'WATCH' && Config.hasBackend() ? 'WATCH' : 'SIMULATED';
     this.loadGenotype();
     LocalStore.get().onChange((t: StoreTopic) => {
       if (t === 'profile') {
@@ -54,11 +57,24 @@ export class VitalsService {
     });
     this.scenarioStart = Date.now();
     this.lastSampleTs = Date.now();
-    this.timer = setInterval(() => this.tick(), TICK_MS);
-    log.info('started SIMULATED');
+    if (this.source === 'WATCH') {
+      const w: WatchCloudSource = new WatchCloudSource();
+      w.start({
+        onSample: (s: VitalsSample) => this.ingest(s),
+        onAlert: (a: VitalsAlert) => this.fire(a)
+      });
+      this.watch = w;
+      // Same silence check as the simulated source: no watch data for a while → WATCH_DISCONNECTED.
+      this.timer = setInterval(() => this.checkSilence(Date.now()), TICK_MS);
+    } else {
+      this.timer = setInterval(() => this.tick(), TICK_MS);
+    }
+    log.info(`started ${this.source}`);
   }
 
   stop(): void {
+    this.watch?.stop();
+    this.watch = undefined;
     if (this.timer >= 0) {
       clearInterval(this.timer);
       this.timer = -1;
@@ -100,6 +116,10 @@ export class VitalsService {
   }
 
   runScenario(name: string): void {
+    if (this.source === 'WATCH') {
+      log.info('scenarios only apply to the simulated source');
+      return;
+    }
     this.scenario = name as ScenarioName;
     this.scenarioStart = Date.now();
     this.lastSampleTs = Date.now();
@@ -117,15 +137,24 @@ export class VitalsService {
     const t: number = (now - this.scenarioStart) / 1000;
     const s: VitalsSample | undefined = scenarioSample(this.scenario, t, now);
     if (s === undefined) {
-      if (now - this.lastSampleTs > SILENCE_MS) {
-        const a: VitalsAlert | undefined = this.rules.disconnected(now);
-        if (a !== undefined) {
-          this.fire(a);
-        }
-      }
+      this.checkSilence(now);
       return;
     }
-    this.lastSampleTs = now;
+    this.ingest(s);
+  }
+
+  private checkSilence(now: number): void {
+    if (now - this.lastSampleTs > SILENCE_MS) {
+      const a: VitalsAlert | undefined = this.rules.disconnected(now);
+      if (a !== undefined) {
+        this.fire(a);
+      }
+    }
+  }
+
+  // One sample from any source: history for the chart, listeners, per-sample alarm rules.
+  private ingest(s: VitalsSample): void {
+    this.lastSampleTs = Date.now();
     this.recent.push(s);
     if (this.recent.length > KEEP_SAMPLES) {
       this.recent.shift();

@@ -187,9 +187,9 @@ export struct HomePage {
               .fontSize($r('app.float.font_title'))
               .fontWeight(FontWeight.Bold)
               .fontColor($r('sys.color.font_primary'))
-            Text($r('app.string.home_heart_sim'))
+            Text(this.hr?.source === 'WATCH' ? $r('app.string.home_heart_watch') : $r('app.string.home_heart_sim'))
               .fontSize($r('app.float.font_caption'))
-              .fontColor($r('app.color.sim_badge'))
+              .fontColor(this.hr?.source === 'WATCH' ? $r('app.color.brand_accent') : $r('app.color.sim_badge'))
           }
           .alignItems(HorizontalAlign.Start)
           .layoutWeight(1)

@@ -261,6 +261,10 @@
       "value": "SIMULATED"
     },
     {
+      "name": "heart_watch",
+      "value": "WATCH"
+    },
+    {
       "name": "heart_resting_hr",
       "value": "Resting HR"
     },
@@ -327,6 +331,10 @@
     {
       "name": "home_heart_sim",
       "value": "Heart rate · simulated"
+    },
+    {
+      "name": "home_heart_watch",
+      "value": "Heart rate · from your watch"
     },
     {
       "name": "home_meds",
