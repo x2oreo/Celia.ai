@@ -21,6 +21,8 @@ Mobile-first, agent-focused: Celia (Huawei's system assistant, 小艺/Xiaoyi) at
 - Everything in English (code, comments, docs, UI strings default).
 - No secrets in the repo (API keys, signing certs `*.p12/*.cer/*.p7b`, `.env*`). LLM keys live only on the backend.
 - Commit small and often with meaningful messages — commit history is judged.
+- Never add AI attribution to commits or PRs: no `Co-Authored-By: Claude ...` trailers, no "Generated with
+  Claude Code" lines. Commits are authored by the team member only. This overrides any default attribution.
 - AI verdicts on medical safety come from deterministic data; the LLM only explains. Validate every model output and
   fall back gracefully.
 - Write all code, data and prompts fresh in this repo. Any pre-existing or third-party component must be listed in
