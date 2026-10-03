@@ -1,6 +1,7 @@
 import { WatchController } from '../controller/WatchController';
 import { Ring } from './Ring';
 import { Theme } from './Theme';
+import { drugBadgeText } from '../vitals/DrugBadge';
 
 /** W7: shown instead of Home while the watch is off the wrist. */
 @ComponentV2
@@ -136,6 +137,22 @@ export struct HeartPage {
             Text('sim').fontSize(8).fontColor(Theme.WARN)
           }
           .margin({ top: 2 })
+
+          // A QT-risk drug taken in the last 72 h: amber = watching more closely (red is for alerts).
+          if (drugBadgeText(this.ctrl.riskyDrug, this.ctrl.riskyDrugAt, Date.now()).length > 0) {
+            Row({ space: 4 }) {
+              Text('!').fontSize(10).fontWeight(FontWeight.Bolder).fontColor(Theme.WARN)
+              Text(drugBadgeText(this.ctrl.riskyDrug, this.ctrl.riskyDrugAt, Date.now()))
+                .fontSize(10)
+                .fontWeight(FontWeight.Medium)
+                .fontColor(Theme.WARN)
+                .maxLines(1)
+            }
+            .padding({ left: 8, right: 8, top: 3, bottom: 3 })
+            .borderRadius(10)
+            .backgroundColor(Theme.WARN_DARK)
+            .margin({ top: 4 })
+          }
 
           Text(this.pillText())
             .fontSize(10)

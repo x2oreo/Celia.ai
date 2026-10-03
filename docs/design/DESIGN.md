@@ -359,6 +359,10 @@ The `Taken` pill is 44 vp tall (`chip_height`, radius 22) so a dose is logged wi
 - **Layout.** One action per screen. Buttons are 52 px pills. Every alert has at least two (I'm OK / Need help).
 - **Screens (7).** Home, HR high, HR low (gentle wake-up tone), How do you feel (Fine / Dizzy / Racing),
   SOS countdown ("Calling 112 in 10 s" + Cancel), Verdict glance, Not on wrist.
+- **Drug badge (Home).** While a QT-risk medicine the user took ("I took it" on the phone) is inside its 72 h window,
+  an amber pill under the HRV line: `!` + "Clarithromycin · 2d left" (10 px, `elevated` text on a dark amber fill).
+  Amber because the watch is watching more closely, not alarming. A high-HR alert then reads "Limit 110 · lowered
+  for Clarithromycin". It disappears when the window ends.
 - The watch shows **heart rate only. Never QT.**
 
 ---
