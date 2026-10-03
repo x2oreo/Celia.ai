@@ -69,7 +69,8 @@ const WAITING = 'Waiting for heart rate…';
 const NOT_WORN = 'Watch not worn';
 
 /**
- * All watch state and behaviour. The UI only renders it and forwards taps.
+ * The one object the screens read and call: screen state, the 1 s tick and the user's taps. The work is done by
+ * SensorHub (sensors), HeartRules (per-reading rules), SosFlow (fall + SOS), SyncEngine (upload) and PairingFlow.
  * Monitoring is always on while the app is visible: the page calls resume() on show and pause() on hide.
  * (HarmonyOS freezes background apps and has no continuous-task type for heart-rate monitoring; on a real watch
  * 24/7 data comes from the system's own HR history via Health Service Kit. See watch/README.md.)
