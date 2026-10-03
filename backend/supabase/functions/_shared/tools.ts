@@ -1,0 +1,106 @@
+// Tool schemas for the Celia.ai agent — single source of truth for /agent and /realtime-session.
+// The tools are EXECUTED ON THE DEVICE (AgentCore → ToolRegistry). The backend only advertises them to the model.
+// Every name here must have an executor in app/entry/src/main/ets/agent/tools/. Keep both lists in sync.
+//
+// Strict mode: every property is listed in `required`; optional values are nullable instead.
+
+export interface FunctionTool {
+  type: 'function';
+  name: string;
+  description: string;
+  parameters: Record<string, unknown>;
+  strict: boolean;
+}
+
+function tool(name: string, description: string, properties: Record<string, unknown>): FunctionTool {
+  return {
+    type: 'function',
+    name,
+    description,
+    parameters: {
+      type: 'object',
+      properties,
+      required: Object.keys(properties),
+      additionalProperties: false,
+    },
+    strict: true,
+  };
+}
+
+const nullableString = (description: string) => ({ type: ['string', 'null'], description });
+
+export const TOOLS: FunctionTool[] = [
+  tool(
+    'check_drug',
+    'Look up the QT-risk verdict for ONE medicine (brand or generic name) against the curated on-device list, ' +
+      "including interactions with the user's current medicines. Always call this before saying anything about " +
+      'whether a medicine is risky. The verdict in the result is final.',
+    {
+      name: { type: 'string', description: 'Medicine name as the user said it, brand or generic, e.g. "Klacid".' },
+      dosage: nullableString('Dose if the user mentioned one, e.g. "500 mg", otherwise null.'),
+    },
+  ),
+  tool('get_my_meds', "List the user's current medicines with their QT-risk category.", {}),
+  tool(
+    'get_vitals_summary',
+    'Get a short summary of recent heart-rate readings and alerts from the watch or the simulator.',
+    {},
+  ),
+  tool(
+    'explain_condition',
+    'Get verified, plain-language facts about Long QT syndrome for one topic. Use this to ground explanations.',
+    {
+      topic: {
+        type: 'string',
+        enum: ['overview', 'genotype', 'triggers', 'sick_day', 'emergency', 'beta_blockers'],
+        description: "Topic to explain. 'genotype' returns facts for the user's own genotype.",
+      },
+    },
+  ),
+  tool(
+    'suggest_alternatives',
+    'List medicines from the same class that are NOT on QT-risk lists, from the curated list only. ' +
+      'Never suggest alternatives that did not come from this tool.',
+    {
+      drug_name: { type: 'string', description: 'The risky medicine to find alternatives for.' },
+    },
+  ),
+  tool(
+    'scan_medicine',
+    'Open the camera so the user can photograph a medicine box. The app reads the name on-device and asks the ' +
+      'user to confirm it, then the verdict is shown.',
+    {},
+  ),
+  tool(
+    'add_med',
+    "Propose adding a medicine to the user's list. The user must confirm on screen; the result says whether " +
+      'they confirmed.',
+    {
+      name: { type: 'string', description: 'Medicine name, brand or generic.' },
+      dose: nullableString('Dose and frequency if known, e.g. "40 mg twice daily", otherwise null.'),
+    },
+  ),
+  tool(
+    'show_emergency_card',
+    "Open the user's emergency card (for doctors, pharmacists, paramedics).",
+    {
+      language: { type: ['string', 'null'], enum: ['en', 'pl', null], description: 'Card language, null = app language.' },
+    },
+  ),
+  tool(
+    'start_emergency',
+    'Start the emergency flow: a cancellable countdown, then calling the emergency number and alerting the ' +
+      'emergency contacts. Use when the user reports fainting, chest pain, a seizure, severe dizziness or ' +
+      'palpitations, or asks for help.',
+    {
+      reason: { type: 'string', description: 'Short reason in the user\'s words, e.g. "felt faint after alarm".' },
+    },
+  ),
+  tool(
+    'share_emergency_card',
+    'Share the emergency card through the system share sheet. The user must confirm.',
+    {},
+  ),
+];
+
+export const TOOL_NAMES: string[] = TOOLS.map((t) => t.name);
