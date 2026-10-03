@@ -1,5 +1,5 @@
--- Behaviour test for the accounts migrations (20261004100000, 100100, 100200): RLS on profiles, watch data by
--- device ↔ account binding, SOS contacts RPCs. Runs against a scratch Postgres with Supabase-like shims
+-- Behaviour test for the accounts migrations (20261004100000, 100100, 100200, 100300): RLS on profiles, watch data
+-- by device ↔ account binding, SOS contacts RPCs, the watch secret. Runs against a scratch Postgres with Supabase-like shims
 -- (roles anon / authenticated / service_role, auth.users, auth.uid() from request.jwt.claim.sub) after every
 -- migration has been applied. Each check raises on failure; the last line prints ALL ACCOUNTS RLS CHECKS PASSED.
 \set ON_ERROR_STOP 1
@@ -30,7 +30,8 @@ end $$;
 grant execute on all functions in schema pg_temp to anon, authenticated;
 
 -- Pair w1 to user one: the watch asks for a code, the signed-in phone claims it.
-select (pairing_start('watch-one') ->> 'code') as code \gset
+select (r ->> 'code') as code, (r ->> 'secret') as wsecret from (select pairing_start('watch-one') as r) x \gset
+select pg_temp.check(length(:'wsecret') = 64, 'the first pairing_start hands the watch a secret');
 select pg_temp.as_user('11111111-1111-1111-1111-111111111111');
 select (pairing_claim(:'code') ->> 'token') as tok1 \gset
 reset role;
@@ -144,7 +145,10 @@ select pg_temp.check((select count(*) from sos_profile where device_id = 'watch-
 select pg_temp.as_user('11111111-1111-1111-1111-111111111111');
 select sync_sos_contacts('watch-one', '[{"name": "Mum", "phone": "+48600000000"}]', 'Ola');
 reset role;
-select (pairing_start('watch-one') ->> 'code') as code2 \gset
+select set_config('request.headers', json_build_object('x-watch-secret', :'wsecret')::text, false);
+select (r ->> 'code') as code2, coalesce(r ->> 'secret', '') as again from (select pairing_start('watch-one') as r) x \gset
+select pg_temp.check(:'again' = '', 'the secret is handed out only once');
+select set_config('request.headers', '{}', false);
 select pg_temp.as_anon();
 select (pairing_claim(:'code2') ->> 'token') as tok2 \gset
 reset role;
@@ -170,5 +174,39 @@ reset role;
 delete from auth.users where id = '22222222-2222-2222-2222-222222222222';
 select pg_temp.check((select count(*) from emergency_contacts where device_id = 'watch-one') = 0, 'account delete removes contacts');
 select pg_temp.check((select user_id from watch_pairings where device_id = 'watch-one') is null, 'account delete unbinds the watch');
+
+-- The watch secret (part 2): without it the watch's public-key paths are closed for a watch that has one.
+do $$ begin
+  perform pairing_start('watch-one');
+  raise exception 'FAILED: pairing_start without the secret';
+exception when insufficient_privilege then raise notice 'ok: pairing_start needs the watch secret';
+end $$;
+insert into watch_context (device_id, genotype) values ('watch-one', 'LQT2') on conflict (device_id) do nothing;
+select pg_temp.as_anon();
+select pg_temp.check((select count(*) from watch_context where device_id = 'watch-one') = 0,
+  'anon without the secret cannot read the watch context');
+do $$ begin
+  insert into watch_metrics (device_id, type, payload, recorded_at, source) values ('watch-one', 'hr_live', '{}', now(), 'watch');
+  raise exception 'FAILED: upload without the secret';
+exception when insufficient_privilege then raise notice 'ok: uploads need the secret once the watch has one';
+end $$;
+do $$ begin
+  perform simulate_missed_beta_blocker('watch-one', true);
+  raise exception 'FAILED: demo RPC without the secret';
+exception when insufficient_privilege then raise notice 'ok: demo RPC needs the secret';
+end $$;
+insert into watch_metrics (device_id, type, payload, recorded_at, source) values ('never-paired-watch', 'hr_live', '{}', now(), 'watch');
+select pg_temp.check(true, 'a watch that never paired can still upload');
+select set_config('request.headers', json_build_object('x-watch-secret', :'wsecret')::text, false);
+select pg_temp.check((select count(*) from watch_context where device_id = 'watch-one') = 1,
+  'the watch reads its context with its secret');
+insert into watch_metrics (device_id, type, payload, recorded_at, source) values ('watch-one', 'hr_live', '{}', now(), 'watch');
+select pg_temp.check(simulate_missed_beta_blocker('watch-one', false) = 0, 'demo RPC works with the secret');
+select pg_temp.check((select count(*) from watch_metrics where device_id = 'watch-one') = 0,
+  'the secret does not let the watch read metrics back');
+select set_config('request.headers', json_build_object('x-watch-secret', 'wrong')::text, false);
+select pg_temp.check((select count(*) from watch_context where device_id = 'watch-one') = 0, 'a wrong secret reads nothing');
+select set_config('request.headers', '{}', false);
+reset role;
 
 select 'ALL ACCOUNTS RLS CHECKS PASSED' as result;
