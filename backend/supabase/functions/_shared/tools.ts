@@ -67,7 +67,7 @@ export const TOOLS: FunctionTool[] = [
   ),
   tool(
     'scan_medicine',
-    'Open the camera so the user can photograph a medicine box. The app reads the name on-device and asks the ' +
+    'Show a scan button so the user can pick a photo of a medicine box. The app reads the name and asks the ' +
       'user to confirm it, then the verdict is shown.',
     {},
   ),
@@ -89,8 +89,8 @@ export const TOOLS: FunctionTool[] = [
   ),
   tool(
     'start_emergency',
-    'Start the emergency flow: a cancellable countdown, then calling the emergency number and alerting the ' +
-      'emergency contacts. Use when the user reports fainting, chest pain, a seizure, severe dizziness or ' +
+    'Start the emergency flow: a cancellable countdown, then one-tap buttons to call the emergency number and ' +
+      'message the emergency contacts (nothing is dialled or sent without a tap). Use when the user reports fainting, chest pain, a seizure, severe dizziness or ' +
       'palpitations, or asks for help.',
     {
       reason: { type: 'string', description: 'Short reason in the user\'s words, e.g. "felt faint after alarm".' },

@@ -13,7 +13,7 @@ export interface ChatMessage {
 //   SHOW_VERDICT          payload: VerdictCardPayload   — deterministic verdict card (source of truth, not the text)
 //   SHOW_EMERGENCY_CARD   payload: EmergencyCardPayload
 //   START_EMERGENCY       payload: EmergencyPayload      — cancellable countdown, then call + alert contacts
-//   OPEN_MED_SCAN         payload: '{}'                  — open camera → OCR → confirm drug
+//   OPEN_MED_SCAN         payload: '{}'                  — scan tile → photo picker → OCR → confirm drug
 //   ADD_MED               payload: AddMedPayload         — confirm card; UI calls AgentCore.resolveAction()
 //   SHARE_EMERGENCY_CARD  payload: ConfirmPayload        — confirm card; UI calls AgentCore.resolveAction()
 //   QUICK_REPLIES         payload: QuickRepliesPayload   — tappable answers; UI sends the tapped text

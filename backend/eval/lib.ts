@@ -414,12 +414,14 @@ export function statusOutput(status: string, note: string): string {
 
 export function startEmergencyOutput(num: string): string {
   return statusOutput('COUNTDOWN_STARTED',
-    `In 10 seconds the phone calls ${num} and alerts the emergency contacts unless the user cancels. Tell them to ` +
-      'stay seated or lie down and that help is coming.');
+    `A 10-second countdown is on screen. When it ends the phone shows one-tap buttons to call ${num} and to send ` +
+      'the SOS message to the emergency contacts. Nothing is dialled or sent without a tap. Tell them to stay ' +
+      'seated or lie down and to tap Call if they can.');
 }
 
-export const SCAN_OUTPUT = statusOutput('CAMERA_OPENED',
-  'The user photographs the box; the app reads and confirms the name, then shows the verdict card.');
+export const SCAN_OUTPUT = statusOutput('SCAN_OFFERED',
+  'A scan button is on screen. The user taps it and picks a photo of the box; the app reads and confirms the ' +
+    'name, then shows the verdict card.');
 
 export function addMedOutput(ingredient: string, verdict: string): string {
   return JSON.stringify({
