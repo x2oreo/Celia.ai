@@ -8,8 +8,10 @@ Heart-safety companion for people with Long QT syndrome (LQTS). Targets:
 - **Watch**: round AMOLED, 466 × 466 px
 
 Everything is built natively in ArkUI, so we use only stacks, lists, cards, tabs and sheets. No blur stacks, shaders
-or web-only effects. Visual source of truth is the design file *Celia Directions*, exported as the three screenshots in
-`docs/design/` (B1–B6 phone + widgets, W1–W7 watch). That is the **locked direction** (see [Locked layout](#10-locked-layout-and-screen-specs)).
+or web-only effects. Visual source of truth is the design file *Celia Directions*: `docs/design/v2/` (screens 01–07,
+orb states 09) is the **current direction** for the phone, specified in [10.1a](#101a-v2-layout-current-direction).
+`docs/design/v1/` (B1–B6 phone + widgets, W1–W7 watch) stays the reference for the watch, the widgets and every
+component v2 does not redraw. Where 10.1a and an older section disagree, 10.1a wins.
 
 Units: lengths in `vp`, font sizes in `fp` (ArkUI). The design file uses px/dp, and they map 1:1.
 
@@ -234,53 +236,68 @@ gap 6.
 
 Three sizes: **inline chat card**, **full-screen sheet**, **2 × 2 widget**.
 
+**Interactions with my medicines** (sheet size): one Possible-tint row per interacting medicine (Possible shape 20,
+bold title in `risk_possible_text`, the deterministic reason in `body-sm` `ink-2`, radius 12, padding 12), enzyme
+interactions first. Any interaction raises the **header band** one level (Not listed or Conditional → Possible,
+Possible → Known; Unknown never changes), and the subtitle then reads "Higher with your medicines". The reason
+line and the doctor question keep the medicine's own category. The chat card and the sheet use the same rule, so
+they always show the same word.
+
 ### 6.5 Tab bar
 
-Four tabs: **Agent · Medicines · Heart · Emergency**.
+Four tabs and the agent in the middle: **Today · Medicines · (orb) · Health · Emergency**.
 
-The bar stays at four tabs. Emergency is never removed or merged. The Agent tab is the agent conversation itself
-(10.1a). Every tab has an `accessibilityText` ("Agent tab", …, "Emergency tab, SOS").
-
-- Bar: `surface`, 1 vp top border, padding 8 × 6.
-- Labels 11 fp. Inactive: 600, `#7A716B`. Active: 700, `brand-text` + filled icon.
-- Agent tab icon is the small agent avatar (24 vp).
+- Bar: `surface`, 1 vp top `border`, height `tab_bar_height` (64). Five equal slots; the middle one is the orb.
+- Tab: 24 vp icon over an 11 fp label. Inactive: 600, `tab_inactive`. Active: 700, `brand_text`, icon in `brand`.
+- **Orb** (middle): the silk orb at `avatar_tab` (56) on a 68 vp `surface` disc, raised so about half of it stands
+  above the bar. Label "Talk" under it. Tap: opens the agent stage (10.1a). It is not a tab and never looks selected.
+  A 12 vp `ink` dot with a 2 vp `surface` ring at its top-right means the agent has something to say (a dose is due
+  or was missed); the same sentence is the agent line on Today.
 - **Emergency** is always tinted: a `brand-tint` pill (height 24, radius 12) reading `SOS` (10 fp / 800, +0.06em),
-  label in `#B42318`. Findable but calm.
+  label in `risk_known_text`. Selected: the pill turns solid `danger` with white text. Long press starts the SOS
+  countdown (the same 10 s, cancellable countdown as the Start SOS tile).
 
-### 6.6 Agent avatar
+### 6.6 Agent avatar: the silk orb
 
 - Name: "the agent" (persona name not final).
-- **Orb (locked)**: radial gradient `#FFC2BE` → `#E5484D` (68%) → `#C7353A`, highlight at 35% / 30%.
-- Sizes: **28 / 40 / 96** vp.
-- Idle: breathing ~4 s.
-- A soft sheen (`orb_sheen` → `orb_sheen_clear`, a second radial gradient at 30% / 24%) sits on top of the body.
-- Pulse-line avatar is rejected for now because it reads as an ECG.
+- **Orb (locked): the silk orb, palette "Dawn".** A soft sphere with no hard outline, silky white bands that wrap and
+  turn around it, and colour that drifts inside: coral shifting to peach with a touch of rose-violet. No rings, no
+  orbit arc: the orb itself carries the state.
+- Palette (RGB, in `components/SilkOrb.ets`; the body stops are also `orb_light` / `orb_mid` / `orb_dark`):
+
+| Part | Value |
+|---|---|
+| Body, radial, highlight up-left | `#FFCEB0` → `#F27470` (60%) → `#D4609C` |
+| Drifting blobs | `#FFDCAA` 80%, `#C460B2` 50%, `#FF8C76` 70% |
+| Bands | `#FFF6F0`, 0.8–1.9 vp wide, 16–66% opacity |
+| Own glow under the orb | `#F27470` at 16% |
+| Halo | `#F27470` (the agent) or `ink-4` (the user), up to 26% |
+
+- Build: one ArkUI `Canvas`, 2D context. Body gradient, three soft blobs, three groups of eight bands (latitude
+  circles of a sphere whose axis slowly tumbles, front half only; four per group at tab size), then a radial alpha
+  mask (`destination-in`) for the soft edge, and the glow and halo painted behind (`destination-over`). No shader,
+  no blur.
+- Sizes: **168** stage, **84** stage with a thread, **56** tab bar (animated, four bands per group).
+  **28 / 40** inline (`components/AgentAvatar.ets`): a still Dawn gradient with the sheen, no bands.
+- Idle: one slow breath (4 s). Never a double beat that could read as a pulse; nothing that looks like an ECG.
 
 ### 6.6a Voice orb (hero of the conversation)
 
-The orb is the agent's face while you talk. `components/VoiceOrb.ets`. Size **168** before anything is said
-(`avatar_hero`), **84** once the conversation has content. Plain shapes and gradients only.
+The orb is the agent's face while you talk. `components/VoiceOrb.ets` → `components/SilkOrb.ets`.
 
-Layers, back to front:
+| State | The orb | Label under the orb |
+|---|---|---|
+| Off | bands faint, turning slowly, slow single breath | "Tap to talk" |
+| Connecting | bands brighten and pick up speed | "Connecting…" |
+| Listening (waiting for you) | calm; a soft neutral halo appears behind it | "I'm listening" |
+| Hearing (you are speaking) | neutral halo follows your voice, bands ripple with it, orb draws in slightly | "Listening…" |
+| Thinking | all bands line up and spin together on one axis, slightly dimmer | "Thinking…" or the running tool step |
+| Speaking | orb swells with the agent's voice, bands bright and fast, warm halo | "Speaking" |
+| Muted | faded (45%) and still | "Muted. Tap the mic to unmute." |
 
-1. **Halos**: two circles the size of the core, at 8% and 14% opacity, resting at scale 1.2 and 1.08. They swell
-   with the loudness of whoever is talking (up to +0.42 and +0.2).
-2. **Core**: the locked orb gradient, the sheen turning slowly (14 s), breathing as in 6.6. A soft coral glow
-   underneath (`orb_glow`, radius 0.28 × size, offset 0.08 × size) is the one shadow allowed outside sheets.
-3. **Orbit arc**: a 3 vp coral arc circling at 1.16 × size, 1.6 s per turn.
-
-| State | Halo colour | Motion | Label under the orb |
-|---|---|---|---|
-| Off | coral, half strength | breathing only | "Tap to talk" (`title-3` when the screen is empty) |
-| Connecting | coral | orbit arc | "Connecting…" |
-| Listening (waiting for you) | `ink-4` | halos follow the room at half gain | "I'm listening" |
-| Hearing (you are speaking) | `ink-4` | halos follow your voice | "Listening…" |
-| Thinking | coral | orbit arc | "Thinking…" or the running tool step |
-| Speaking | coral | halos and core follow the agent's voice | "Speaking" |
-| Muted | — | core at 50% opacity, halos still | "Muted. Tap the mic to unmute." |
-
-Neutral halos mean "your voice", coral means "the agent". The label always says the state in words, so it never
-depends on colour or motion alone.
+Neutral halo means "your voice", warm means "the agent". The label always says the state in words, so it never
+depends on colour or motion alone. While live the label carries a 8 vp dot in the same colour family
+(`brand` for the agent, `ink-4` for you).
 
 ### 6.7 States
 
@@ -339,7 +356,10 @@ labelled and separate.
      quiet `Ask the agent` (opens the chat and sends "Tell me about X…"), then the source caption.
 - **Add-medicine preview** (`AddMedForm`): once the name resolves, a `surface` box (radius 12, 1 vp `border`, padding
   12) shows the ingredient (`body` / 700), class in `caption`, compact risk badge, "what it's for" in `body-sm` and
-  the first tip. It fades in over 180 ms. An unknown name keeps the one-line "not recognised" row.
+  the first tip. It fades in over 180 ms. An unknown name keeps the one-line "not recognised" row. When the
+  medicine interacts with one already saved, each interaction follows inside the box as a row: Possible shape 20,
+  "With your medicines" in `caption` / 700 `risk_possible_text`, the reason in `body-sm` `ink-2`. The agent's
+  confirm card shows the badge after the same rule.
 - **Dose status** (Reminders) is not a verdict, so it never uses risk red or risk shapes:
 
 | Status | Rail dot | Word (caps, 11 fp / 700) | Card |
@@ -376,7 +396,7 @@ The `Taken` pill is 44 vp tall (`chip_height`, radius 22) so a dose is logged wi
 |---|---|
 | **Heartbeat pulse** | Live HR icon scales 1 → 1.25 → 1 → 1.15 → 1 over ~1.1 s (keyframes at 0 / 15 / 30 / 45 / 100%). Home ring pulses opacity in time. Stops when the source disconnects. |
 | **Agent breathing** | Avatar scale 0.92 ↔ 1.04 (opacity 0.92 ↔ 1) over 4 s ease-in-out, infinite. |
-| **Voice orb** | Halos and core follow the voice level with a 160 ms ease-out. Sheen turns once in 14 s, the thinking arc once in 1.6 s, both linear. The orb eases between 168 and 84 in 320 ms when the conversation starts. |
+| **Voice orb** | Canvas frames every 33 ms (50 ms at tab size); values ease towards the state (≈ 170 ms time constant), the voice level a little faster. Thinking: bands align and turn at 2.4 rad/s. The stage eases between its sizes in 320 ms. Reduced motion: one settled frame per state, labels stay. |
 | **Live words** | The user's bubble sits at 60% opacity while the words are still being recognised (three dots before the first word), then becomes solid. The agent's text grows word by word. No cursor, no typewriter effect. |
 | **Typing** | Three 7 vp dots, 1.2 s loop, staggered 150 ms. Pair with a label like "Reading the box…" when the wait is known. |
 | **Verdict reveal** | Card slides up 12 vp and fades in over 240 ms. Badge settles 100 ms later. No bounce or shake, even for Known risk. |
@@ -464,47 +484,95 @@ A size or radius that changes with the orb must not sit under a looping `.animat
 - **Widgets** (B6): "Can I take this?" 2 × 2 (ink card, orb corner, coral `Scan or type`) and Medical alert 2 × 4
   (coral-ringed "Call 112" circle, `MEDICAL ALERT` label, condition, ICD + meds, AVOID line, quiet ICE button).
 
-### 10.1a Agent home (tab 0, structure only)
+### 10.1a v2 layout (current direction)
 
-This replaces the Home dashboard (B1) and the pushed Conversation page (B2) of 10.1: the first tab **is** the agent
-conversation. It describes what is on the screen, in what order, and what a tap does. The look of every piece comes
-from the components and tokens that already exist; the visual pass is separate.
+Source: `docs/design/v2/` (01 Today, 02 agent stage empty, 03 agent stage live, 04 Health, 05 Medicines,
+06 Emergency, 07 Doctor visit). The feeling, the order and the positions are the spec; the content is ours (more
+than one health metric, the travel banner, interactions, the extra tools).
 
-The tab bar keeps **four tabs with Emergency** (6.5). The SOS pill stays always tinted.
+**Shared rules**
 
-Top to bottom:
+- Tab pages: `title-1` title, a 44 vp round `surface` settings button (1 vp `border`) on the right.
+- Pushed pages: back chevron + `headline` title, **one primary action pinned at the bottom** on a `bg` strip with a
+  1 vp top `border`, padding 16.
+- Cards: `surface`, 1 vp `border`, `radius_l`, padding 16. Caps labels: 12 fp / 700, +0.06em, `ink-3`.
+- Dose styling is neutral, never a risk colour (6.9).
 
-1. **Status strip** (one row, `touch_min` high).
-   - Heart-rate chip ("74 bpm", or "waiting for a reading") with the source badge (`WATCH` / `SIMULATED`) next to
-     it. Tap: Heart tab.
-   - Medicines chip ("N to review" with the risk shape, "Medicines OK", "No medicines yet"). Tap: Medicines tab.
-   - Chats button (history icon). Tap: saved chats. New chat is on that page and by voice ("new chat").
-   - Settings gear. Tap: Settings.
-   - The chips scroll sideways when they do not fit; the two buttons never move.
-2. **Notes strip** (collapsible, closed by default). Closed: one line, the agent's greeting sentence, and a chevron.
-   Open, in this order: the full greeting sentence, one row per interaction between the user's medicines, the
-   "Gentle alarm on" chip (tap: Heart tab), the tip of the day (F-39, static), and the travel banner when abroad
-   (tap: pharmacy card). The greeting uses the part of the day: 05:00–11:59 morning, 12:00–17:59 afternoon,
-   18:00–23:59 evening, 00:00–04:59 a plain "Hi". The date and the genotype chip of the old Home are dropped: the
-   date is on the system bar and the genotype is in the tip label and in Settings.
-3. **Voice stage** (voice mode only): the orb (6.6a), its state label, the `SIMULATED VOICE INPUT` badge in demo
-   mode. Tap on the orb while idle: start talking. While a session is live and nothing has been said yet, the stage
-   takes the whole height between the notes strip and the dock (welcome and quick actions are hidden); with the
-   first words it steps back to the compact orb above the thread.
-4. **Thread**, or the **welcome** (hint and three starter chips) while nothing has been said. The last chat is
-   restored at start, as before.
-5. **Quick-action row** (chips, scrolls sideways): Scan a box (scan page), Log how I feel (symptom log), Doctor
-   prep, Trends.
-6. **Dock**: voice dock (camera, mic, keyboard or end) or the chat bar (camera, input, send or back to voice).
-7. `ON-DEVICE` / voice-unavailable status strips keep their place above the stage.
+**01 Today (tab 0, cold start)**. Everything above the fold on 360 × 780, top to bottom:
 
-Rules:
+1. Header: date (`body-sm`, `ink-3`), greeting in `title-3` / 800 ("Good afternoon, Ola"; 00:00–04:59 a plain
+   "Hi, Ola"), genotype chip, settings button.
+2. Travel banner (only abroad, unchanged from T23).
+3. **Agent line**: card, orb 40, one sentence from deterministic data (`components/agent/HomeBrief.ets`: a dose due
+   or missed, then an interaction, then a known-risk medicine, else a calm line), chevron. Tap: the agent stage.
+4. **Next dose**: caps "NEXT DOSE" + coral link "All reminders ›". Pill well 44, name + dose in `headline`,
+   "Due at 14:00 · in 10 min" in `body-sm` `ink-3`, ink `Taken` pill (44). After the last dose: "All done for
+   today". No reminders: one line and the link "Set a reminder".
+5. **Resting · 7 days**: ring 84 with the live bpm and its source badge, seven bars (the last one `brand`, the
+   others `brand-tint`), "64 avg · 2 lower than last week" in `body-sm`. Tap: Health. Bars are daily averages,
+   never a trace.
+6. **Quick actions**, 2 × 2 tiles (height 64, icon well 36 on `brand-tint`, 15 fp / 700): Scan a box, Log how I
+   feel, Doctor visit, Check a medicine.
+7. Medicines chip ("All 3 medicines checked" with the Not-listed shape, or "N to review" with the worst risk
+   shape). Interactions between the user's medicines follow as Possible-tint rows.
+8. **Tip** (collapsed): `surface-alt` row, caps "TIP" + the title + chevron; open shows the body.
 
-- Cold start lands here. One tap (orb or mic) starts talking. The microphone never opens by itself.
-- A live voice session ends when another tab is selected or a page is pushed over the tabs.
-- There is one conversation. `Routes.AGENT_CHAT` is kept for its callers as a see-through redirect: it hands the
-  question (if any) to the agent, clears the stack and selects tab 0. "Ask the agent" from any screen does the same.
-- Every control has an `accessibilityText`.
+**02 Agent stage, empty** (pushed full screen from the orb, the agent line, or "Ask the agent"):
+
+- Header: chevron-down (close), then `Chats` pill and a round `+` (new chat), both `surface` with 1 vp `border`.
+- Orb 168, "Tap to talk" in `brand_text` 15 fp / 700, then the agent line of Today centred in `title-3`.
+- Caps "ASK ME": starter chips stacked, start-aligned (white, 1.5 vp `border-strong`).
+- Caps "OR GO STRAIGHT TO": feature chips on `surface-alt`, no border (Scan a box, Log how I feel, Doctor visit,
+  Trends), wrapping.
+- Dock: 60 round `surface` camera, **80 coral mic**, 60 round `surface` "Aa" (typing). The microphone only opens on
+  a tap.
+
+**03 Agent stage, live voice**:
+
+- Header: chevron-down, then mono caps "VOICE · 0:42" centred (elapsed time of the session).
+- Orb 168 until the first words, then 120; state label with its dot.
+- **Captions** instead of a chat list: "You: …" in `body` `ink-3`, the agent's sentence in `title-2` / 700 growing
+  word by word, the tool step pill, then the cards of this turn (verdict card, confirm cards, tiles) sliding in
+  under the captions. A verdict never needs a page change.
+- "Show conversation" (chevron-up, 14 fp / 600) swaps the captions for the full thread; "Hide conversation" swaps
+  back. Typing mode always shows the thread.
+- Dock: 60 round `Mute`, **80 ink `End`** (✕ over the word; ink, not red: ending a call is not an emergency),
+  60 round "Aa".
+- Leaving the stage (close, a pushed page, the app going to the background) ends the live session.
+
+**04 Health (tab 2)**: the graph is the screen.
+
+1. "Now" card: heart glyph in `brand`, bpm in `title-1`, "bpm now", source badge and one line in words on the right
+   ("In your usual range", "Above your usual range at rest", "Asleep", "Active").
+2. Three quiet cells: resting HR, HRV, rhythm.
+3. Segmented control `Today · 14 days · 30 days` (`surface-alt` track, radius 14, selected segment `surface`).
+4. Chart card: Today = the last-minutes line; 14 / 30 days = resting heart rate per day with the dose and symptom
+   rows, `SIMULATED` / `WATCH` badge top-right, caption "Heart rate only. This is not an ECG."
+5. Three stat tiles (average resting, last 7 days vs before, days dosed n/N), then "WHAT STANDS OUT" (fixed-rule
+   findings). Numbers are reported, never judged.
+6. Alerts, then demo controls.
+7. Pinned above the tab bar: coral `Log how I feel` + secondary `Doctor visit`, so they are never hunted for.
+
+**05 Medicines (tab 1)**: header with a round History button next to settings; "Can I take…" field + coral camera
+stay first. **Today's doses** (caps + "All ›" to Reminders) as a sideways row of 132 vp cards: taken (`surface-alt`,
+"✓ Taken 08:04"), due (1.5 vp `ink` border, ink `Taken` pill), missed (same, word "Missed" in `risk_possible_text`),
+later (dashed border, "Later"). Then recently checked, then the grid.
+
+**06 Emergency (tab 3)**, new order: `Start SOS` tile (`danger` fill, "10 s countdown, you can cancel") next to a
+`Call 112` tile (`surface`, 1.5 vp `danger` border, number in `risk_known_text`); **Show responder view** (ink tile,
+caps "FOR THE PERSON HELPING ME"); **Medical card** summary (caps in `risk_known_text`, condition, facts, "Inside:
+languages, read aloud, QR, share") whose "Open ›" unfolds the full card with its language row, read aloud and QR;
+contact call buttons; Pharmacy card row; NEARBY (Hospital, Pharmacy, AED); "Test SOS (nothing is sent)" last and
+small. Layout only: every action keeps its logic.
+
+**07 Doctor visit (pushed)**: specialty chips in one sideways row (selected = ink), section cards with a caps label
+and the lines in `body` / 600, the AI summary on `surface-alt` under a mono caps "AI SUMMARY · CHECK BEFORE SHARING"
+label, visually separate. Pinned: coral `Share with doctor` + secondary `Copy`. Share-as-text stays as a quiet link
+in the page.
+
+Rules kept from the earlier direction: one conversation in the app (`Routes.AGENT_CHAT` is the stage; "Ask the
+agent" from any screen opens it with the question); every control has an `accessibilityText`; verdict colours come
+from deterministic payloads only.
 
 ### 10.2 Screens without a drawing (derived)
 
