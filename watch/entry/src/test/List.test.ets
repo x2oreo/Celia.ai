@@ -1,3 +1,4 @@
+import sosFlowTest from './SosFlow.test';
 import watchControllerTest from './WatchController.test';
 import alarmRulesTest from './AlarmRules.test';
 import doseNudgeTest from './DoseNudge.test';
@@ -22,4 +23,5 @@ export default function testsuite() {
   pairingTest();
   drugBadgeTest();
   watchControllerTest();
+  sosFlowTest();
 }

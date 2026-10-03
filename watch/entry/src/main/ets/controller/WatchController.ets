@@ -7,7 +7,6 @@ import { NOTIFY_FALL, NOTIFY_HR, NOTIFY_SOS, NOTIFY_VITALS, Notifier } from '../
 import {
   Activity,
   FallResponse,
-  FallValues,
   Genotype,
   HrAlertValues,
   HrLiveValues,
@@ -68,6 +67,7 @@ import {
   shouldNudge
 } from '../vitals/DoseNudge';
 import { Fix, currentFix } from '../sync/SosLocation';
+import { FallRecord, FallTick, SosFlow } from './SosFlow';
 import { SupabaseUploader } from '../sync/SupabaseUploader';
 import { shortDrugName } from '../vitals/DrugBadge';
 
@@ -100,12 +100,8 @@ const SUMMARY_WINDOW_MS = 5 * 60 * 1000;
  * stays valid this long; after that we show "waiting" and stop evaluating.
  */
 const READING_VALID_MS = 30000;
-/** How long the wearer has to answer "Are you OK?" after a fall. */
-const FALL_COUNTDOWN_SEC = 30;
 /** Demo speeds offered in Settings. */
 const DEMO_SPEEDS: number[] = [1, 2, 4, 8];
-/** SOS countdown before the emergency row is sent; Cancel stops it. */
-const SOS_COUNTDOWN_SEC = 10;
 /** Simulated cadence while active in demo scenarios (steps per second). */
 const SIM_STEPS_PER_SEC = 2;
 const BATCH = 50;
@@ -148,17 +144,11 @@ export class WatchController {
   @Trace alertText: string = '';
   /** "How do you feel?" screen. */
   @Trace checkInOpen: boolean = false;
-  @Trace sosCountdown: number = 0;
-  @Trace sosSent: boolean = false;
-  // True once the `sos` row reached the server. Until then the screen says saved, not sent.
-  @Trace sosDelivered: boolean = false;
   /** Drug-verdict glance: shown once when a new risky drug arrives. */
   @Trace verdictDrug: string = '';
   @Trace riskyDrugRisk: string = '';
   /** When the risky drug was taken (epoch ms); 0 if none or unknown. Drives the home badge's time left. */
   @Trace riskyDrugAt: number = 0;
-  /** Seconds left to answer "Are you OK?"; 0 = no fall in progress. */
-  @Trace fallCountdown: number = 0;
   @Trace statusText: string = '';
   @Trace syncState: SyncState = 'OFF';
   @Trace pending: number = 0;
@@ -225,12 +215,8 @@ export class WatchController {
   private motionAvailable: boolean = false;
   private sensorStepsBase: number = -1;
   private simSteps: number = 0;
-  private fallStartMs: number = 0;
-  private fallBpm: number = 0;
   private scenarioFallDone: boolean = false;
-  private sosStartMs: number = 0;
-  private sosReason: SosReason = 'need_help';
-  private sosFix: Fix | undefined = undefined;
+  private sos: SosFlow = new SosFlow();
   private tickTimer: number = -1;
   private syncTimer: number = -1;
   private syncing: boolean = false;
@@ -291,6 +277,24 @@ export class WatchController {
   dispose(): void {
     this.pause();
     this.stopPairPolling();
+  }
+
+  /** Seconds left to answer "Are you OK?"; 0 = no fall in progress. */
+  get fallCountdown(): number {
+    return this.sos.fallCountdown;
+  }
+
+  get sosCountdown(): number {
+    return this.sos.sosCountdown;
+  }
+
+  get sosSent(): boolean {
+    return this.sos.sosSent;
+  }
+
+  /** True once the `sos` row reached the server. Until then the screen says saved, not sent. */
+  get sosDelivered(): boolean {
+    return this.sos.sosDelivered;
   }
 
   get scenarioLabel(): string {
@@ -462,12 +466,12 @@ export class WatchController {
   }
 
   cancelSos(): void {
-    this.sosCountdown = 0;
+    this.sos.cancelSos();
     Logger.info('SOS cancelled');
   }
 
   dismissSosSent(): void {
-    this.sosSent = false;
+    this.sos.dismissSent();
   }
 
   dismissVerdict(): void {
@@ -952,43 +956,29 @@ export class WatchController {
   // ---- Fall / faint ------------------------------------------------------------------------------------------
 
   private startFall(): void {
-    if (this.fallCountdown > 0) {
+    if (!this.sos.startFall(this.bpm, Date.now())) {
       return;
     }
     this.alertKind = 'NONE';
     this.checkInOpen = false;
-    this.fallBpm = this.bpm;
-    this.fallStartMs = Date.now();
-    this.fallCountdown = FALL_COUNTDOWN_SEC;
     this.notifier.alert(NOTIFY_FALL, 'Fall detected', 'Open the watch and answer within 30 s, or SOS starts.');
     this.vibrate(2000);
     Logger.info('fall countdown started');
   }
 
   private tickFall(now: number): void {
-    if (this.fallCountdown <= 0) {
-      return;
-    }
-    const left = FALL_COUNTDOWN_SEC - Math.floor((now - this.fallStartMs) / 1000);
-    if (left <= 0) {
+    const t: FallTick = this.sos.tickFall(now);
+    if (t === 'TIMED_OUT') {
       this.finishFall('no_response');
       this.startSos('fall');
-    } else {
-      this.fallCountdown = left;
-      if (left % 5 === 0) {
-        this.vibrate(600);
-      }
+    } else if (t === 'VIBRATE') {
+      this.vibrate(600);
     }
   }
 
   private finishFall(response: FallResponse): void {
-    const v: FallValues = {
-      bpm: this.fallBpm,
-      response: response,
-      responseSec: Math.round((Date.now() - this.fallStartMs) / 1000)
-    };
-    this.record('fall_detected', v, this.fallStartMs);
-    this.fallCountdown = 0;
+    const r: FallRecord = this.sos.finishFall(response, Date.now());
+    this.record('fall_detected', r.values, r.atMs);
     Logger.info(`fall finished: ${response}`);
   }
 
@@ -1019,16 +1009,12 @@ export class WatchController {
   // ---- SOS -----------------------------------------------------------------------------------------------------
 
   private startSos(reason: SosReason): void {
-    if (this.sosCountdown > 0) {
+    if (!this.sos.startSos(reason, Date.now())) {
       return;
     }
-    this.sosReason = reason;
-    this.sosStartMs = Date.now();
-    this.sosCountdown = SOS_COUNTDOWN_SEC;
-    this.sosFix = undefined;
     if (this.locationPermission) {
       currentFix().then((f: Fix | undefined) => {
-        this.sosFix = f;
+        this.sos.setFix(f);
         Logger.info(f !== undefined ? `SOS location fix, accuracy ${f.accuracyM} m` : 'SOS without location');
       });
     }
@@ -1037,36 +1023,22 @@ export class WatchController {
   }
 
   private tickSos(now: number): void {
-    if (this.sosCountdown <= 0) {
+    // The phone app / agent picks the row up and runs the emergency flow (ICE contacts, 112 prompt).
+    const v: SosValues | undefined = this.sos.tickSos(now, this.bpm, this.activity);
+    if (v === undefined) {
       return;
-    }
-    const left = SOS_COUNTDOWN_SEC - Math.floor((now - this.sosStartMs) / 1000);
-    if (left > 0) {
-      this.sosCountdown = left;
-      return;
-    }
-    this.sosCountdown = 0;
-    // The phone app / agent picks this row up and runs the emergency flow (ICE contacts, 112 prompt).
-    const v: SosValues = { reason: this.sosReason, bpm: this.bpm, activity: this.activity };
-    if (this.sosFix !== undefined) {
-      v.lat = this.sosFix.lat;
-      v.lon = this.sosFix.lon;
-      v.accuracyM = this.sosFix.accuracyM;
     }
     this.record('sos', v, now);
-    this.sosSent = true;
-    this.sosDelivered = false;
     this.vibrate(3000);
     Logger.info('SOS queued');
     this.syncNow();
   }
 
-  // Runs after each successful upload. A dropped (server-rejected) `sos` row never gets here, so it stays "saved".
+  // Runs after each successful upload.
   private confirmSosDelivery(): void {
-    if (!this.sosSent || this.sosDelivered || this.outbox.has('sos')) {
+    if (!this.sos.confirmDelivery(this.outbox.has('sos'))) {
       return;
     }
-    this.sosDelivered = true;
     this.notifier.alert(NOTIFY_SOS, 'SOS sent', 'Open Celia on your phone for the call and message buttons.');
     Logger.info('SOS delivered');
   }
