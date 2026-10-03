@@ -65,3 +65,14 @@ what it produced, how we validated it.
   agent message has no chat listener yet (`onProactive`).
 - **Worked in parallel** with the watch session: the watch button was handed over as a written spec instead of
   editing the same files, to avoid merge conflicts.
+
+### 2026-10-03 — Mark + Claude Code: watch data the phone was ignoring
+- **Asked:** check what the watch sends that the phone doesn't use yet.
+- **Found (AI, from the code on main):** the phone's `WatchCloudSource` uses `vitals`, `sos`, `fall_detected`,
+  `hr_recovery` and `vitals_alert`, but ignores `medication_taken`, `symptom` and `wear_state`.
+- **Produced:** migration `…240000_watch_phone_views.sql` with three read-only views for the phone team:
+  `watch_status` (ON_WRIST / OFF_WRIST / OFFLINE), `watch_doses` (doses confirmed on the watch) and
+  `watch_symptoms`. Phone code was left to the phone team (newer app on `app_development`).
+- **Validated:** all migrations applied in order on a local Postgres 17 (except `pg_net`, which is Supabase-only);
+  the views were checked with test rows: wear state, offline detection, empty names and unknown symptom kinds
+  filtered out, simulated rows labelled.
