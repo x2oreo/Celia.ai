@@ -2002,7 +2002,7 @@
     },
     {
       "name": "tool_log_dose_done",
-      "value": "Dose ready to confirm"
+      "value": "Checked for a dose that is due"
     },
     {
       "name": "agent_log_dose_title",

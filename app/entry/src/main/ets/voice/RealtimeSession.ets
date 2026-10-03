@@ -30,7 +30,7 @@ import { AgentReply, VerdictCardPayload } from '../model/AgentTypes';
 import { VoiceOutput } from './VoiceOutput';
 import { PcmStreamPlayer } from './PcmStreamPlayer';
 import { pcmLevel } from './Wav';
-import { DemoVoice } from './DemoVoice';
+import { DemoScript, DemoVoice } from './DemoVoice';
 
 const log: Logger = new Logger('Realtime');
 
@@ -49,6 +49,8 @@ const CLIP_CHUNK_BYTES: number = 4800;
 const CLIP_CHUNK_MS: number = 100;
 const CLIP_LEAD_MS: number = 800;
 const CLIP_TAIL_CHUNKS: number = 15;
+// Demo barge-in: how long the agent speaks before the interrupting clip starts.
+const CLIP_BARGE_MS: number = 1500;
 
 interface SessionRequest {
   context: RelayContext;
@@ -119,6 +121,7 @@ export class RealtimeSession {
   private ws: webSocket.WebSocket | undefined = undefined;
   private capturer: audio.AudioCapturer | undefined = undefined;
   private clipTimer: number = -1;
+  private bargeClip: string = '';   // demo: clip to play over the agent's first spoken answer
   private player: PcmStreamPlayer = new PcmStreamPlayer();
   private base64: util.Base64Helper = new util.Base64Helper();
   private status: RealtimeStatus = 'IDLE';
@@ -271,9 +274,10 @@ export class RealtimeSession {
       this.setStatus('LIVE');
       this.setPhase('LISTENING');
       if (demo) {
-        const clip: string = DemoVoice.nextClip();
+        const script: DemoScript = DemoVoice.nextScript();
+        this.bargeClip = script.interrupt;
         setTimeout(() => {
-          this.playClip(clip);
+          this.playClip(script.first);
         }, CLIP_LEAD_MS);
       }
       log.info(`realtime live (${session.model}, prompt ${session.promptVersion})`);
@@ -307,6 +311,9 @@ export class RealtimeSession {
     }
     switch (ev.type) {
       case 'input_audio_buffer.speech_started':
+        if (this.player.isPlaying()) {
+          log.info('barge-in: user speech while the agent was speaking, playback cleared');
+        }
         this.player.clear();        // barge-in: the server also interrupts the response
         this.userPartial = '';
         this.setPhase('HEARING');
@@ -505,6 +512,13 @@ export class RealtimeSession {
       this.setPhase('LISTENING');
       return;
     }
+    if (playing && this.bargeClip !== '') {
+      const clip: string = this.bargeClip;
+      this.bargeClip = '';
+      setTimeout(() => {
+        this.playClip(clip);
+      }, CLIP_BARGE_MS);
+    }
     this.emitLevel(level);
   }
 
@@ -612,6 +626,7 @@ export class RealtimeSession {
   }
 
   private async teardown(status: RealtimeStatus): Promise<void> {
+    this.bargeClip = '';
     this.stopClip();
     const capturer: audio.AudioCapturer | undefined = this.capturer;
     this.capturer = undefined;
