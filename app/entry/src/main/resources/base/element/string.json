@@ -1606,7 +1606,7 @@
     },
     {
       "name": "em_start_sos_sub",
-      "value": "10 s countdown, you can cancel"
+      "value": "30 s countdown, you can cancel"
     },
     {
       "name": "em_responder_label",

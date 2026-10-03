@@ -255,7 +255,7 @@ Four tabs and the agent in the middle: **Today · Medicines · (orb) · Health �
   or was missed); the same sentence is the agent line on Today.
 - **Emergency** is always tinted: a `brand-tint` pill (height 24, radius 12) reading `SOS` (10 fp / 800, +0.06em),
   label in `risk_known_text`. Selected: the pill turns solid `danger` with white text. Long press starts the SOS
-  countdown (the same 10 s, cancellable countdown as the Start SOS tile).
+  countdown (the same 30 s, cancellable countdown as the Start SOS tile).
 
 ### 6.6 Agent avatar: the silk orb
 
@@ -485,7 +485,7 @@ simulate today (HRV, oxygen, breathing) always carry the `SIMULATED` badge and t
 | **Live words** | The user's bubble sits at 60% opacity while the words are still being recognised (three dots before the first word), then becomes solid. The agent's text grows word by word. No cursor, no typewriter effect. |
 | **Typing** | Three 7 vp dots, 1.2 s loop, staggered 150 ms. Pair with a label like "Reading the box…" when the wait is known. |
 | **Verdict reveal** | Card slides up 12 vp and fades in over 240 ms. Badge settles 100 ms later. No bounce or shake, even for Known risk. |
-| **Sheets** | Bottom sheets rise over 280 ms with a 45% scrim. SOS countdown ring drains linearly over 10 s. Every sheet body is a full-height `Scroll` (`height('100%')`), so long content scrolls inside the sheet instead of being clipped. One `bindSheet` per node. |
+| **Sheets** | Bottom sheets rise over 280 ms with a 45% scrim. SOS countdown ring drains linearly over 30 s (10 s for Test SOS). Every sheet body is a full-height `Scroll` (`height('100%')`), so long content scrolls inside the sheet instead of being clipped. One `bindSheet` per node. |
 
 In ArkUI, use `animateTo` / `.animation()` with `Curve.EaseInOut` and `iterations: -1` for loops, and
 `keyframeAnimateTo` for the heartbeat. Respect the system reduced-motion setting by dropping loops to static.
@@ -657,7 +657,7 @@ stay first. **Today's doses** (caps + "All ›" to Reminders) as a sideways row 
 "✓ Taken 08:04"), due (1.5 vp `ink` border, ink `Taken` pill), missed (same, word "Missed" in `risk_possible_text`),
 later (dashed border, "Later"). Then recently checked, then the grid.
 
-**06 Emergency (tab 3)**, new order: `Start SOS` tile (`danger` fill, "10 s countdown, you can cancel") next to a
+**06 Emergency (tab 3)**, new order: `Start SOS` tile (`danger` fill, "30 s countdown, you can cancel") next to a
 `Call 112` tile (`surface`, 1.5 vp `danger` border, number in `risk_known_text`); **Show responder view** (ink tile,
 caps "FOR THE PERSON HELPING ME"); **Medical card** summary (caps in `risk_known_text`, condition, facts, "Inside:
 languages, read aloud, QR, share") whose "Open ›" unfolds the full card with its language row, read aloud and QR;
