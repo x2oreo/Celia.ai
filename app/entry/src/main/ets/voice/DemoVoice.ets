@@ -12,7 +12,17 @@ import { Logger } from '../common/Logger';
 const log: Logger = new Logger('DemoVoice');
 
 // In session order. The emergency one is last: it ends the conversation with the SOS flow.
-const CLIPS: string[] = ['ondansetron', 'dentist', 'dizzy'];
+const CLIPS: string[] = ['ondansetron', 'dentist', 'doses', 'trends', 'symptoms', 'reminders', 'tookdose', 'dizzy'];
+
+// What each clip says, for the log and the tests (the audio is the source of truth).
+//   ondansetron  "Can I take ondansetron?"            → check_drug
+//   dentist      a dentist visit is coming up          → prepare_doctor_visit
+//   doses        "Did I take my nadolol today?"        → get_dose_status
+//   trends       "How has my heart been over the last two weeks?" → get_trends
+//   symptoms     "Show me the symptoms I logged recently."        → open_symptom_log
+//   reminders    "Open my medicine reminders."         → open_reminders
+//   tookdose     "I just took my nadolol."             → log_dose (confirm card)
+//   dizzy        a dizzy spell                         → safety gate / emergency flow
 
 export class DemoVoice {
   private static context: common.UIAbilityContext | undefined = undefined;
