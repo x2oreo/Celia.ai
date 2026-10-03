@@ -141,6 +141,10 @@
       "value": "Check another medicine"
     },
     {
+      "name": "check_ask_prompt",
+      "value": "I was offered %s. Is it safe for me, and what should I ask my doctor?"
+    },
+    {
       "name": "check_title",
       "value": "Medicine check"
     },
@@ -247,6 +251,22 @@
     {
       "name": "history_empty_filter",
       "value": "Nothing matches this filter."
+    },
+    {
+      "name": "history_empty_action",
+      "value": "Check a medicine"
+    },
+    {
+      "name": "history_show_all",
+      "value": "Show all checks"
+    },
+    {
+      "name": "history_interaction",
+      "value": "interaction"
+    },
+    {
+      "name": "history_when_interaction",
+      "value": "%s · interaction"
     },
     {
       "name": "heart_waiting",
@@ -789,6 +809,14 @@
       "value": "HOW BAD?"
     },
     {
+      "name": "sym_severity_value",
+      "value": "%d / 5"
+    },
+    {
+      "name": "sym_severity_a11y",
+      "value": "How bad, %d out of 5"
+    },
+    {
       "name": "sym_doing",
       "value": "WHAT WERE YOU DOING?"
     },
@@ -823,6 +851,14 @@
     {
       "name": "rem_taken",
       "value": "Taken"
+    },
+    {
+      "name": "rem_taken_a11y",
+      "value": "Mark %s as taken"
+    },
+    {
+      "name": "a11y_rem_row_hint",
+      "value": "Long press to delete this reminder"
     },
     {
       "name": "rem_new",
@@ -899,6 +935,14 @@
     {
       "name": "teach_title",
       "value": "New box — teach Celia once"
+    },
+    {
+      "name": "teach_barcode",
+      "value": "Barcode %s"
+    },
+    {
+      "name": "teach_country_box",
+      "value": "%s box · %s"
     },
     {
       "name": "teach_body",
@@ -1189,6 +1233,14 @@
       "value": "Collapsed"
     },
     {
+      "name": "a11y_trace_expanded",
+      "value": "Expanded. Double tap to hide the lookup steps."
+    },
+    {
+      "name": "a11y_trace_collapsed",
+      "value": "Collapsed. Double tap to show the lookup steps."
+    },
+    {
       "name": "a11y_camera",
       "value": "Scan a medicine box"
     },
@@ -1227,6 +1279,10 @@
     {
       "name": "scan_found",
       "value": "Found"
+    },
+    {
+      "name": "scan_found_name",
+      "value": "✓ Found: %s"
     },
     {
       "name": "a11y_close",
@@ -1629,6 +1685,14 @@
       "value": "Open now"
     },
     {
+      "name": "chats_count_one",
+      "value": "1 message · %s"
+    },
+    {
+      "name": "chats_count_many",
+      "value": "%d messages · %s"
+    },
+    {
       "name": "chats_rename",
       "value": "Rename"
     },
@@ -1655,6 +1719,10 @@
     {
       "name": "a11y_chats",
       "value": "Chats"
+    },
+    {
+      "name": "a11y_chats_row_hint",
+      "value": "Long press to rename or delete"
     },
     {
       "name": "a11y_new_chat",
@@ -2095,6 +2163,14 @@
     {
       "name": "trends_not_ecg",
       "value": "Daily resting heart rate from the watch. This is not an ECG."
+    },
+    {
+      "name": "a11y_trend_chart",
+      "value": "Resting heart rate per day. %d of %d days have a reading, between %d and %d beats per minute. A dose was logged on %d days and a symptom on %d days."
+    },
+    {
+      "name": "a11y_trend_chart_empty",
+      "value": "Resting heart rate per day. No readings in the last %d days."
     },
     {
       "name": "trends_bpm",

@@ -7,7 +7,7 @@ import { ComboVerdict, DrugVerdict, LookupStep } from '../model/DrugVerdict';
 import { Genotype } from '../model/Profile';
 import { RiskUi } from '../common/RiskUi';
 import { copyText } from '../common/Clipboard';
-import { InkButton, RiskShape, SecondaryButton } from './Common';
+import { InkButton, resText, RiskShape, SecondaryButton } from './Common';
 import { Motion } from '../common/Motion';
 import { toast } from '../common/Toast';
 
@@ -68,12 +68,14 @@ export struct VerdictCard {
         .layoutWeight(1)
     }
     .width('100%')
+    .accessibilityGroup(true)
   }
 
   @Builder
   header(v: DrugVerdict) {
     Row({ space: 10 }) {
       RiskShape({ risk: v.risk, dim: this.variant === 'SHEET' ? 40 : 32 })
+        .accessibilityLevel('no-hide-descendants')   // the word is the next text
       Column({ space: 1 }) {
         Text(RiskUi.label(v.risk))
           .fontSize(this.variant === 'SHEET' ? $r('app.float.font_title_3') : $r('app.float.font_body'))
@@ -90,6 +92,8 @@ export struct VerdictCard {
     .padding({ left: 14, right: 14, top: 12, bottom: 12 })
     .backgroundColor(RiskUi.tint(v.risk))
     .borderRadius(this.variant === 'SHEET' ? $r('app.float.radius_m') : 0)
+    // Announced by its word and subtitle ("Known risk, Can affect heart rhythm"), never by colour.
+    .accessibilityGroup(true)
   }
 
   @Builder
@@ -98,6 +102,7 @@ export struct VerdictCard {
     if (this.combo !== undefined && this.combo.kind !== 'NONE') {
       Row({ space: 10 }) {
         RiskShape({ risk: 'POSSIBLE_RISK', dim: 20 })
+          .accessibilityLevel('no-hide-descendants')
         Column({ space: 4 }) {
           Text(this.combo.kind === 'CYP_INTERACTION' ? $r('app.string.combo_cyp_title') :
             $r('app.string.combo_additive_title'))
@@ -116,6 +121,7 @@ export struct VerdictCard {
       .padding(12)
       .backgroundColor($r('app.color.risk_possible_tint'))
       .borderRadius($r('app.float.radius_s'))
+      .accessibilityGroup(true)
     }
 
     if ((v.alternatives ?? []).length > 0) {
@@ -130,6 +136,7 @@ export struct VerdictCard {
       }
       .alignItems(HorizontalAlign.Start)
       .width('100%')
+      .accessibilityGroup(true)
     }
 
     if (v.risk !== 'NOT_LISTED') {
@@ -161,8 +168,8 @@ export struct VerdictCard {
       .width('100%')
       .height($r('app.float.chip_height'))
       .accessibilityGroup(true)
-      .accessibilityDescription(this.showTrace ? 'Expanded. Double tap to hide the lookup steps.' :
-        'Collapsed. Double tap to show the lookup steps.')
+      .accessibilityDescription(resText(this.getUIContext(), this.showTrace ? $r('app.string.a11y_trace_expanded') :
+        $r('app.string.a11y_trace_collapsed')))
       .onClick(() => {
         this.showTrace = !this.showTrace;
       })
