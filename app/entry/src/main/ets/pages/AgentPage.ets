@@ -790,6 +790,11 @@ export struct AgentPage {
         .maxLines(1)
         .textOverflow({ overflow: TextOverflow.Ellipsis })
         .padding({ left: 20, right: 20 })
+
+      if (Config.DEMO_VOICE_INPUT) {
+        SourceBadge({ label: $r('app.string.demo_voice_badge') })
+          .margin({ top: 8 })
+      }
     }
     .width('100%')
     .padding({ bottom: 12 })

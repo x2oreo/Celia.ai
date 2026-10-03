@@ -30,6 +30,7 @@ import { AgentReply, VerdictCardPayload } from '../model/AgentTypes';
 import { VoiceOutput } from './VoiceOutput';
 import { PcmStreamPlayer } from './PcmStreamPlayer';
 import { pcmLevel } from './Wav';
+import { DemoVoice } from './DemoVoice';
 
 const log: Logger = new Logger('Realtime');
 
@@ -43,6 +44,11 @@ export type VoicePhase = 'OFF' | 'CONNECTING' | 'LISTENING' | 'HEARING' | 'THINK
 // The user's transcript arrives after the model may already have answered; wait this long to keep the order.
 const USER_TRANSCRIPT_WAIT_MS: number = 1500;
 const LEVEL_INTERVAL_MS: number = 70;
+// Demo clip streaming: 100 ms of 24 kHz PCM16 mono per tick, then silence so server VAD ends the turn.
+const CLIP_CHUNK_BYTES: number = 4800;
+const CLIP_CHUNK_MS: number = 100;
+const CLIP_LEAD_MS: number = 800;
+const CLIP_TAIL_CHUNKS: number = 15;
 
 interface SessionRequest {
   context: RelayContext;
@@ -112,6 +118,7 @@ export class RealtimeSession {
 
   private ws: webSocket.WebSocket | undefined = undefined;
   private capturer: audio.AudioCapturer | undefined = undefined;
+  private clipTimer: number = -1;
   private player: PcmStreamPlayer = new PcmStreamPlayer();
   private base64: util.Base64Helper = new util.Base64Helper();
   private status: RealtimeStatus = 'IDLE';
@@ -257,9 +264,18 @@ export class RealtimeSession {
       }
       this.player.onLevel((level: number, playing: boolean) => this.onPlayback(level, playing));
       await this.player.open();
-      await this.startMic();
+      const demo: boolean = DemoVoice.enabled();
+      if (!demo) {
+        await this.startMic();
+      }
       this.setStatus('LIVE');
       this.setPhase('LISTENING');
+      if (demo) {
+        const clip: string = DemoVoice.nextClip();
+        setTimeout(() => {
+          this.playClip(clip);
+        }, CLIP_LEAD_MS);
+      }
       log.info(`realtime live (${session.model}, prompt ${session.promptVersion})`);
       return true;
     } catch (e) {
@@ -546,6 +562,39 @@ export class RealtimeSession {
     await capturer.start();
   }
 
+  // Demo input: streams a bundled clip at real-time pace exactly as the microphone would, then silence.
+  async playClip(name: string): Promise<boolean> {
+    const pcm: Uint8Array | undefined = await DemoVoice.load(name);
+    if (pcm === undefined || this.status !== 'LIVE' || this.clipTimer !== -1) {
+      return false;
+    }
+    log.info(`demo voice input: ${name} (${pcm.length} bytes)`);
+    const silence: Uint8Array = new Uint8Array(CLIP_CHUNK_BYTES);
+    const chunks: number = Math.ceil(pcm.length / CLIP_CHUNK_BYTES);
+    let i: number = 0;
+    this.clipTimer = setInterval(() => {
+      if (this.status !== 'LIVE' || i >= chunks + CLIP_TAIL_CHUNKS) {
+        this.stopClip();
+        return;
+      }
+      const bytes: Uint8Array = i < chunks ? pcm.subarray(i * CLIP_CHUNK_BYTES, (i + 1) * CLIP_CHUNK_BYTES) : silence;
+      i++;
+      const ev: AppendEvent = { type: 'input_audio_buffer.append', audio: this.base64.encodeToStringSync(bytes) };
+      this.send(JSON.stringify(ev));
+      if (this.phase === 'LISTENING' || this.phase === 'HEARING') {
+        this.emitLevel(pcmLevel(bytes));
+      }
+    }, CLIP_CHUNK_MS);
+    return true;
+  }
+
+  private stopClip(): void {
+    if (this.clipTimer !== -1) {
+      clearInterval(this.clipTimer);
+      this.clipTimer = -1;
+    }
+  }
+
   // ---- plumbing ------------------------------------------------------------------------------------------------
 
   private send(data: string): void {
@@ -563,6 +612,7 @@ export class RealtimeSession {
   }
 
   private async teardown(status: RealtimeStatus): Promise<void> {
+    this.stopClip();
     const capturer: audio.AudioCapturer | undefined = this.capturer;
     this.capturer = undefined;
     if (capturer !== undefined) {

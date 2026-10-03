@@ -1967,6 +1967,10 @@
     {
       "name": "intake_retry",
       "value": "Send to watch"
+    },
+    {
+      "name": "demo_voice_badge",
+      "value": "SIMULATED VOICE INPUT"
     }
   ]
 }

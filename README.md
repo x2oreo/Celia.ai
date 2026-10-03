@@ -107,6 +107,9 @@ medicines register, cima.aemps.es), UPCitemdb (free trial API) and Open Food / P
 medicine name or a barcode is sent to those APIs; no personal data.
 Nearby help opens Google Maps search URLs (developers.google.com/maps/documentation/urls, no key, no location sent
 by the app).
+The three demo voice clips in `app/entry/src/main/resources/rawfile/voice/` were made with the macOS system voice
+(`say`); they stand in for the microphone on the emulator when `DEMO_VOICE_INPUT` is `'on'` in `LocalConfig.ets`, and
+the agent screen then shows a `SIMULATED VOICE INPUT` badge.
 App code, data and prompts are written in this repo.
 
 ### What leaves the phone

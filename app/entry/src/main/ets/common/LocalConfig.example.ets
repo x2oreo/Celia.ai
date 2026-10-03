@@ -13,4 +13,6 @@ export class LocalConfig {
   // Share backend override (default: the deployed Supabase project) and its public client key (anon JWT).
   static readonly SHARE_BACKEND_URL: string = '';
   static readonly SHARE_ANON_KEY: string = '';
+  // 'on' → live voice plays bundled clips instead of opening the microphone (emulator has none). Labelled in the UI.
+  static readonly DEMO_VOICE_INPUT: string = '';
 }

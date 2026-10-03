@@ -16,6 +16,8 @@ export class Config {
   // Static viewer pages for encrypted share links (Vercel; Supabase cannot serve HTML). Ends with '/'.
   static readonly SHARE_VIEWER_URL: string =
     LocalConfig.SHARE_VIEWER_URL.length > 0 ? LocalConfig.SHARE_VIEWER_URL : 'https://celia-share.vercel.app/';
+  // Live voice fed from bundled clips instead of the microphone (voice/DemoVoice.ets). Off unless LocalConfig says 'on'.
+  static readonly DEMO_VOICE_INPUT: boolean = LocalConfig.DEMO_VOICE_INPUT === 'on';
   static readonly AGENT_TIMEOUT_MS: number = 20000;
   static readonly DRUG_CHECK_TIMEOUT_MS: number = 5000;   // FDA-label path measured 0.3-3.1 s; on timeout the offline verdict stands
   // Shared demo watch, used until this phone is paired with a watch (data/WatchPairing.ets sets WATCH_DEVICE_ID at

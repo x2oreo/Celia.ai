@@ -52,6 +52,11 @@ user ─► SafetyGate ──(red flag)─────────────�
 any network error / timeout (20 s) / malformed response ─────────────────────► OfflineAgent fallback
 ```
 
+**Voice on the emulator:** the emulator has no microphone. With `DEMO_VOICE_INPUT = 'on'` (`LocalConfig.ets`) a live
+session streams a bundled clip into the same audio buffer the microphone feeds (`voice/DemoVoice.ets`), so voice
+detection, transcription, the safety gate and the tools run for real; only the sound source is simulated, and the
+screen says `SIMULATED VOICE INPUT`. Verified on the emulator with "Can I take ondansetron?" → Known-risk card.
+
 **Voice and vision data:** with on-device Core Speech and Core Vision, audio and photos stay on the phone. In the
 cloud fallbacks, audio (push-to-talk or a Realtime session) and a downscaled box photo go to OpenAI through our Edge
 Functions or the Realtime WebSocket. They are not stored by us, and our logs record only sizes and timings.
