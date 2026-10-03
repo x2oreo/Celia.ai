@@ -43,3 +43,9 @@ Thumbs.db
 
 # Claude local settings
 .claude/settings.local.json
+
+# Watch app runtime config (generated from watch/.env by watch/entry/hvigorfile.ts)
+watch/entry/src/main/resources/rawfile/config.json
+
+# Supabase CLI local state (supabase link / login)
+**/supabase/.temp/

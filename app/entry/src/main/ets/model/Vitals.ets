@@ -15,7 +15,7 @@ export interface VitalsSample {
 }
 
 export type AlertKind = 'TACHY_AT_REST' | 'BRADY' | 'HR_ALARM_FROM_WATCH' | 'WATCH_DISCONNECTED' |
-  'IRREGULAR_RHYTHM' | 'HRV_DROP' | 'HIGH_HR_EXERTION';
+  'IRREGULAR_RHYTHM' | 'HRV_DROP' | 'HIGH_HR_EXERTION' | 'RESTING_HR_RISE';
 
 export type AlertSeverity = 'INFO' | 'WARN' | 'CRITICAL';
 

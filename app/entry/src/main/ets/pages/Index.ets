@@ -26,6 +26,7 @@ import { SosController } from '../emergency/SosController';
 import { askNotificationPermission } from '../common/Notify';
 import { AppLock } from '../common/AppLock';
 import { ReminderService } from '../reminders/ReminderService';
+import { BetaBlockerWatch } from '../vitals/BetaBlockerWatch';
 
 @Entry
 @ComponentV2
@@ -37,6 +38,7 @@ struct Index {
     this.showOnboardingIfNeeded();
     VitalsService.get().start('SIMULATED');
     WearNotifier.start();
+    BetaBlockerWatch.start();
     VitalsService.get().onAlert((a: VitalsAlert) => this.onAlert(a));
     askNotificationPermission(this.getUIContext().getHostContext() as common.UIAbilityContext);
     AppLock.onLockChange((locked: boolean) => {

@@ -9,6 +9,8 @@ Agent-first heart-safety companion for people with Long QT syndrome — HarmonyO
 - [Plan](docs/PLAN.md) — checkpoints, mentor questions, submission checklist
 - [Tasks](docs/TASKS.md) — feature expansion (F-19..F-34) as implementable tasks
 - Per person: [Kaloyan — agent](docs/team/kaloyan-agent.md) · [Georgie — app](docs/team/georgie-app.md) · [Mark — data & watch](docs/team/mark-data-watch.md)
+- [Watch app](watch/README.md) — HarmonyOS wearable app (emulator), metrics → Supabase
+- [SOS backend](backend/supabase/functions/sos/README.md) — watch SOS → SMS + call to emergency contacts (Twilio)
 - Background: [task text](docs/hackathon/huawei-task.txt) · [condition research](docs/hackathon/conditions-research.md)
 
 ## Build & run

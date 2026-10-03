@@ -6,6 +6,7 @@ import doctorPrepTest from './DoctorPrep.test';
 import utilsTest from './Utils.test';
 import boxCatalogTest from './BoxCatalog.test';
 import cardLinkTest from './CardLink.test';
+import restingTrendTest from './RestingTrend.test';
 
 export default function testsuite() {
   contractSmokeTest();
@@ -16,4 +17,5 @@ export default function testsuite() {
   utilsTest();
   boxCatalogTest();
   cardLinkTest();
+  restingTrendTest();
 }
