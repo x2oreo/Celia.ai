@@ -40,8 +40,9 @@ function userText(i: SummaryInput): string {
     `Symptoms logged (90 days): ${i.symptoms}`,
     block('This visit is likely about', i.visitFor),
     block('Known-risk medicines flagged for this visit (the word "known risk" is final)', i.avoid),
-    `Reason for this visit: <patient_words>${i.reason === '' ? 'not given' : i.reason}</patient_words>`,
-    `What worries the patient: <patient_words>${i.worries === '' ? 'not given' : i.worries}</patient_words>`,
+    // Left out when empty, so the model has nothing to say about a missing reason (the visit page sends none).
+    ...(i.reason === '' ? [] : [`Reason for this visit: <patient_words>${i.reason}</patient_words>`]),
+    ...(i.worries === '' ? [] : [`What worries the patient: <patient_words>${i.worries}</patient_words>`]),
   ].join('\n');
 }
 
