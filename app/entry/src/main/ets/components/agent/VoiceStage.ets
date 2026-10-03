@@ -35,6 +35,7 @@ export struct VoiceStage {
       .width('100%')
       .height(this.compact ? STAGE_COMPACT : STAGE_OPEN)
       .animation({ duration: STAGE_MS, curve: Curve.EaseInOut })
+      .accessibilityGroup(true)
       .accessibilityText($r('app.string.a11y_orb'))
       .onClick(() => {
         this.onOrbTap();

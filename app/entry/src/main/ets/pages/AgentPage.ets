@@ -1,7 +1,10 @@
-// The agent conversation, a pushed page. Voice is the main way in: a live orb, the words of both sides written out
-// as they are spoken, and the agent's tools shown as steps and cards (DESIGN.md §10.1 B2, §6.6a, §6.8). Typing is
-// the second mode of the same thread. Speech, text and taps all go through AgentCore (SafetyGate first, then the
-// model with deterministic tools). Cards come from deterministic tool payloads, never from model text.
+// The agent conversation. Voice is the main way in: a live orb, the words of both sides written out as they are
+// spoken, and the agent's tools shown as steps and cards (DESIGN.md §10.1a, §6.6a, §6.8). Typing is the second mode
+// of the same thread. Speech, text and taps all go through AgentCore (SafetyGate first, then the model with
+// deterministic tools). Cards come from deterministic tool payloads, never from model text.
+//
+// AgentConversation is embedded in tab 0 (pages/HomePage.ets) and is the only conversation in the app.
+// AgentPage keeps Routes.AGENT_CHAT working for its callers: it hands the question over and shows tab 0.
 
 import { keepOnRestore } from '../model/Chat';
 import { common } from '@kit.AbilityKit';
@@ -17,11 +20,11 @@ import { VoiceInput } from '../voice/VoiceInput';
 import { VoiceOutput } from '../voice/VoiceOutput';
 import { RealtimeSession, RealtimeStatus, VoicePhase } from '../voice/RealtimeSession';
 import { SosController } from '../emergency/SosController';
-import { AskParam, Routes, SosParam } from '../common/Routes';
+import { AskParam, Routes, SosParam, TabIndex } from '../common/Routes';
+import { TabRequest } from '../common/TabRequest';
 import { Config } from '../common/Config';
 import { Logger } from '../common/Logger';
-import { SourceBadge, StatusStrip } from '../components/Common';
-import { AgentAvatar } from '../components/AgentAvatar';
+import { StatusStrip } from '../components/Common';
 import { ToolStep, ToolUi, toolArg } from '../components/AgentCards';
 import { stagePhase } from '../components/agent/AgentLogic';
 import { VoiceStage } from '../components/agent/VoiceStage';
@@ -31,8 +34,10 @@ import { ChatBar, VoiceDock } from '../components/agent/AgentDock';
 const log: Logger = new Logger('AgentPage');
 
 @ComponentV2
-export struct AgentPage {
+export struct AgentConversation {
   @Consumer('navStack') navStack: NavPathStack = new NavPathStack();
+  @Param active: boolean = true;       // false while another tab or a pushed page is in front
+  @BuilderParam aboveDock: () => void = this.nothing;   // the home's quick-action row
   @Local mode: AgentMode = 'VOICE';
   @Local items: ChatItem[] = [];
   @Local draft: string = '';
@@ -141,15 +146,6 @@ export struct AgentPage {
     for (const m of AgentCore.get().getHistory()) {
       this.push(m.role, m.text, (m.actions ?? []).filter((a: UiAction) => keepOnRestore(a)), []);
     }
-  }
-
-  // Header "New chat": the open chat is already saved; stop any live voice and start empty.
-  private startNewChat(): void {
-    if (this.busy) {
-      return;   // the reply in flight belongs to this chat; New chat waits for it
-    }
-    this.endVoice();
-    AgentCore.get().newChat();
   }
 
   private ctx(): common.UIAbilityContext {
@@ -481,142 +477,116 @@ export struct AgentPage {
   }
 
   @Builder
-  headerButton(icon: Resource, label: Resource, onTap: () => void) {
-    Row() {
-      Image(icon).width(22).height(22).fillColor($r('app.color.ink_2'))
-    }
-    .width($r('app.float.touch_min'))
-    .height($r('app.float.touch_min'))
-    .justifyContent(FlexAlign.Center)
-    .borderRadius(22)
-    .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.92 })
-    .accessibilityText(label)
-    .onClick(() => onTap())
+  nothing() {
   }
 
-  @Builder
-  header() {
-    Row({ space: 10 }) {
-      Row() {
-        Image($r('app.media.ic_chevron_left')).width(24).height(24).fillColor($r('app.color.ink'))
-      }
-      .width($r('app.float.touch_min'))
-      .height($r('app.float.touch_min'))
-      .justifyContent(FlexAlign.Center)
-      .accessibilityText($r('app.string.a11y_back'))
-      .onClick(() => {
-        this.navStack.pop();
-      })
-      if (this.mode === 'CHAT') {
-        AgentAvatar({ dim: 40 })
-      }
-      Text($r('app.string.agent_name'))
-        .fontSize($r('app.float.font_subtitle'))
-        .fontWeight(FontWeight.Bold)
-        .fontColor($r('app.color.ink'))
-        .layoutWeight(1)
-      if (!Config.hasBackend()) {
-        SourceBadge({ label: $r('app.string.badge_on_device') })
-      }
-      this.headerButton($r('app.media.ic_history'), $r('app.string.a11y_chats'), () => {
-        this.navStack.pushPathByName(Routes.CHATS, null);
-      })
-      this.headerButton($r('app.media.ic_plus'), $r('app.string.a11y_new_chat'), () => {
-        this.startNewChat();
-      })
+  // The embedded conversation is not destroyed on a tab switch: end live voice when it goes out of sight.
+  @Monitor('active')
+  onActiveChange(m: IMonitor): void {
+    if (!this.active && (this.voiceActive() || RealtimeSession.get().getStatus() === 'CONNECTING')) {
+      this.endVoice();
     }
-    .width('100%')
-    .padding({ left: 4, right: 8, top: 8, bottom: 8 })
   }
 
   build() {
-    NavDestination() {
-      Column() {
-        this.header()
-
-        if (this.micBlocked && this.mode === 'VOICE') {
-          StatusStrip({
-            kind: 'ERROR',
-            label: $r('app.string.agent_voice_unavailable'),
-            action: $r('app.string.agent_type_instead'),
-            onAction: () => {
-              this.setMode('CHAT');
-            }
-          })
-            .padding({ left: 20, right: 20, bottom: 8 })
-        } else if (!Config.hasBackend()) {
-          StatusStrip({ label: $r('app.string.agent_offline') })
-            .padding({ left: 20, right: 20, bottom: 8 })
-        }
-
-        if (this.mode === 'VOICE') {
-          VoiceStage({
-            phase: this.stage(),
-            level: this.level,
-            muted: this.muted,
-            compact: this.hasThread(),
-            label: this.stageLabel(),
-            onOrbTap: () => {
-              if (this.phase === 'OFF' && !this.recording) {
-                this.onMic();
-              }
-            }
-          })
-        }
-        if (this.hasThread()) {
-          this.thread()
-        } else {
-          this.welcome()
-        }
-        if (this.mode === 'VOICE') {
-          VoiceDock({
-            phase: this.phase,
-            recording: this.recording,
-            muted: this.muted,
-            active: this.voiceActive(),
-            onMic: () => {
-              this.onMic();
-            },
-            onScan: () => {
-              this.pickAndScan();
-            },
-            onEnd: () => {
-              this.endVoice();
-            },
-            onKeyboard: () => {
-              this.setMode('CHAT');
-            }
-          })
-        } else {
-          ChatBar({
-            draft: this.draft,
-            onDraft: (text: string) => {
-              this.draft = text;
-            },
-            onSend: () => {
-              this.send(this.draft);
-            },
-            onScan: () => {
-              this.pickAndScan();
-            },
-            onVoice: () => {
-              this.setMode('VOICE');
-            }
-          })
-        }
+    Column() {
+      if (this.micBlocked && this.mode === 'VOICE') {
+        StatusStrip({
+          kind: 'ERROR',
+          label: $r('app.string.agent_voice_unavailable'),
+          action: $r('app.string.agent_type_instead'),
+          onAction: () => {
+            this.setMode('CHAT');
+          }
+        })
+          .padding({ left: 20, right: 20, bottom: 8 })
+      } else if (!Config.hasBackend()) {
+        StatusStrip({ label: $r('app.string.agent_offline') })
+          .padding({ left: 20, right: 20, bottom: 8 })
       }
-      .width('100%')
-      .height('100%')
+
+      if (this.mode === 'VOICE') {
+        VoiceStage({
+          phase: this.stage(),
+          level: this.level,
+          muted: this.muted,
+          compact: this.hasThread(),
+          label: this.stageLabel(),
+          onOrbTap: () => {
+            if (this.phase === 'OFF' && !this.recording) {
+              this.onMic();
+            }
+          }
+        })
+      }
+      if (this.hasThread()) {
+        this.thread()
+      } else {
+        this.welcome()
+      }
+      this.aboveDock()
+      if (this.mode === 'VOICE') {
+        VoiceDock({
+          phase: this.phase,
+          recording: this.recording,
+          muted: this.muted,
+          active: this.voiceActive(),
+          onMic: () => {
+            this.onMic();
+          },
+          onScan: () => {
+            this.pickAndScan();
+          },
+          onEnd: () => {
+            this.endVoice();
+          },
+          onKeyboard: () => {
+            this.setMode('CHAT');
+          }
+        })
+      } else {
+        ChatBar({
+          draft: this.draft,
+          onDraft: (text: string) => {
+            this.draft = text;
+          },
+          onSend: () => {
+            this.send(this.draft);
+          },
+          onScan: () => {
+            this.pickAndScan();
+          },
+          onVoice: () => {
+            this.setMode('VOICE');
+          }
+        })
+      }
+    }
+    .width('100%')
+    .height('100%')
+  }
+}
+
+// Routes.AGENT_CHAT, kept for its callers (Medicines "ask", Chats). A see-through destination that hands the
+// question to the one conversation, then clears the stack and shows tab 0.
+@ComponentV2
+export struct AgentPage {
+  @Consumer('navStack') navStack: NavPathStack = new NavPathStack();
+
+  build() {
+    NavDestination() {
     }
     .hideTitleBar(true)
-    .backgroundColor($r('app.color.bg'))
+    .mode(NavDestinationMode.DIALOG)
     .onReady((ctx: NavDestinationContext) => {
-      // Opened with a question (e.g. "Ask the agent" from a medicine): show it typed and send it once.
       const p: Object | undefined = ctx.pathInfo.param as Object | undefined;
-      if (p instanceof AskParam && p.question.trim().length > 0) {
-        this.setMode('CHAT');
-        this.send(p.question);
+      if (p instanceof AskParam) {
+        AgentPrompt.ask(p.question);
       }
+      setTimeout((): void => {
+        this.navStack.clear(false);
+        TabRequest.open(TabIndex.HOME);
+      }, 0);
     })
   }
 }

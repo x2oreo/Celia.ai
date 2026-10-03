@@ -20,7 +20,8 @@ import { ChatsPage } from './ChatsPage';
 import { AgentPage } from './AgentPage';
 import { ScanPage } from './ScanPage';
 import { LockScreen } from '../components/LockScreen';
-import { Routes, SosParam } from '../common/Routes';
+import { Routes, SosParam, TabIndex } from '../common/Routes';
+import { TabRequest } from '../common/TabRequest';
 import { LocalStore } from '../data/LocalStore';
 import { Profile } from '../model/Profile';
 import { VitalsAlert, VitalsSample } from '../model/Vitals';
@@ -101,13 +102,18 @@ struct Index {
     this.navStack.pushPathByName(route, null);
   }
 
-  // "Ask the agent" from anywhere: bring the chat page to the front (once).
+  // The agent conversation lives on tab 0. It is in front when that tab is selected and nothing is pushed over it.
+  private chatInFront(): boolean {
+    return this.navStack.size() === 0 && TabRequest.current() === TabIndex.HOME;
+  }
+
+  // "Ask the agent" from anywhere: bring the conversation to the front. A running SOS stays where it is.
   private openChat(): void {
-    const names: string[] = this.navStack.getAllPathName();
-    if (names.length > 0 && names[names.length - 1] === Routes.AGENT_CHAT) {
+    if (this.chatInFront() || this.navStack.getAllPathName().includes(Routes.SOS)) {
       return;
     }
-    this.navStack.pushPathByName(Routes.AGENT_CHAT, null);
+    this.navStack.clear();
+    TabRequest.open(TabIndex.HOME);
   }
 
   // CRITICAL heart alert → wrist/phone alert + SOS countdown (unless one is running or in cooldown).
@@ -156,10 +162,10 @@ struct Index {
 
   // The agent asks "are you OK?" as a sheet, unless the chat is already in front (it shows the same question).
   private showCheckIn(text: string): void {
-    const names: string[] = this.navStack.getAllPathName();
-    if (names.length > 0 && names[names.length - 1] === Routes.AGENT_CHAT) {
+    if (this.chatInFront()) {
       return;
     }
+    const names: string[] = this.navStack.getAllPathName();
     // Never ask "are you OK?" on top of a running or just-sent SOS.
     if (names.includes(Routes.SOS) || SosController.get().state !== 'IDLE') {
       return;
@@ -243,6 +249,10 @@ struct Index {
       .mode(NavigationMode.Stack)
       .backgroundColor($r('app.color.bg'))
       .navDestination(this.routeMap)
+      .onNavBarStateChange((visible: boolean) => {
+        // The agent on tab 0 ends live voice while a pushed page covers the tabs.
+        TabRequest.setCovered(!visible);
+      })
 
       // App lock (F-45): covers private data; the emergency card and bystander help stay reachable from it.
       if (this.locked) {

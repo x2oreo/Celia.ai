@@ -1,5 +1,5 @@
 // Bottom tab bar hosted inside the root Navigation (pages/Index.ets): Agent · Medicines · Heart · Emergency
-// (DESIGN.md §6.5). Any descendant can switch tabs through @Consumer('tabIndex') — see TabIndex in
+// (DESIGN.md §6.5). Tab 0 is the agent conversation itself (§10.1a). Any descendant can switch tabs through @Consumer('tabIndex') — see TabIndex in
 // common/Routes.ets. Pushed pages use TabRequest instead.
 
 import { HomePage } from '../pages/HomePage';
@@ -24,6 +24,13 @@ export struct MainTabs {
     this.offOpen = TabRequest.onOpen((tab: number) => {
       this.currentIndex = tab;
     });
+    TabRequest.setCurrent(this.currentIndex);
+  }
+
+  // The tab also changes from descendants (@Consumer('tabIndex')); keep TabRequest in step with all of them.
+  @Monitor('currentIndex')
+  onTabChange(m: IMonitor): void {
+    TabRequest.setCurrent(this.currentIndex);
   }
 
   aboutToDisappear(): void {
@@ -41,7 +48,7 @@ export struct MainTabs {
   }
 
   @Builder
-  iconTab(index: number, text: Resource, icon: Resource) {
+  iconTab(index: number, text: Resource, icon: Resource, a11y: Resource) {
     Column({ space: 4 }) {
       Image(icon)
         .width(24)
@@ -52,6 +59,8 @@ export struct MainTabs {
     .width('100%')
     .height('100%')
     .justifyContent(FlexAlign.Center)
+    .accessibilityGroup(true)
+    .accessibilityText(a11y)
   }
 
   // The agent tab uses the small orb; it only breathes while its tab is active.
@@ -69,6 +78,8 @@ export struct MainTabs {
     .width('100%')
     .height('100%')
     .justifyContent(FlexAlign.Center)
+    .accessibilityGroup(true)
+    .accessibilityText($r('app.string.a11y_tab_agent'))
   }
 
   // Emergency is always tinted: an SOS pill plus a risk-text label. Findable but calm.
@@ -76,7 +87,7 @@ export struct MainTabs {
   emergencyTab() {
     Column({ space: 4 }) {
       Text($r('app.string.tab_sos'))
-        .fontSize(10)
+        .fontSize(10)   // DESIGN.md §6.5: 10 fp; no float token has this value (font_micro is 11, font_mono 9)
         .fontWeight(800)
         .letterSpacing(0.6)
         .fontColor($r('app.color.risk_known_text'))
@@ -90,15 +101,19 @@ export struct MainTabs {
     .width('100%')
     .height('100%')
     .justifyContent(FlexAlign.Center)
+    .accessibilityGroup(true)
+    .accessibilityText($r('app.string.a11y_tab_emergency'))
   }
 
   build() {
     Tabs({ barPosition: BarPosition.End, index: this.currentIndex }) {
       TabContent() { HomePage() }.tabBar(this.agentTab())
       TabContent() { MedicinesPage() }
-        .tabBar(this.iconTab(TabIndex.MEDICINES, $r('app.string.tab_medicines'), $r('app.media.ic_tab_medicines')))
+        .tabBar(this.iconTab(TabIndex.MEDICINES, $r('app.string.tab_medicines'), $r('app.media.ic_tab_medicines'),
+          $r('app.string.a11y_tab_medicines')))
       TabContent() { HeartPage() }
-        .tabBar(this.iconTab(TabIndex.HEART, $r('app.string.tab_heart'), $r('app.media.ic_tab_heart')))
+        .tabBar(this.iconTab(TabIndex.HEART, $r('app.string.tab_heart'), $r('app.media.ic_tab_heart'),
+          $r('app.string.a11y_tab_heart')))
       TabContent() { EmergencyPage() }.tabBar(this.emergencyTab())
     }
     .scrollable(false)

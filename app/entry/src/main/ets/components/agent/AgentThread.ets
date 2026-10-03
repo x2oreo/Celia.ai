@@ -224,36 +224,59 @@ export struct AgentWelcome {
     }
   }
 
+  // One row that scrolls sideways: under the full-size orb there is no room for wrapped chips.
+  @Builder
+  starterRow() {
+    Scroll() {
+      Row({ space: 8 }) {
+        this.starter($r('app.string.agent_starter_ibuprofen'))
+        this.starter($r('app.string.agent_starter_avoid'))
+        this.starter($r('app.string.agent_starter_meds'))
+      }
+      .padding({ left: 20, right: 20 })
+    }
+    .scrollable(ScrollDirection.Horizontal)
+    .scrollBar(BarState.Off)
+    .width('100%')
+    .align(Alignment.Start)
+  }
+
   build() {
     if (this.mode === 'VOICE') {
-      Column({ space: 20 }) {
+      Column({ space: 12 }) {
         Text($r('app.string.agent_voice_idle_hint'))
           .fontSize($r('app.float.font_small'))
           .lineHeight(20)
           .fontColor($r('app.color.ink_3'))
           .textAlign(TextAlign.Center)
-        this.starters()
+          .padding({ left: 20, right: 20 })
+        this.starterRow()
       }
       .width('100%')
       .height('100%')
-      .padding({ left: 20, right: 20 })
+      .clip(true)
     } else {
-      Column({ space: 20 }) {
-        AgentAvatar({ dim: 96 })
-        Text($r('app.string.agent_welcome_title'))
-          .fontSize($r('app.float.font_title'))
-          .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.ink'))
-        Text($r('app.string.agent_welcome'))
-          .fontSize($r('app.float.font_small'))
-          .lineHeight(20)
-          .fontColor($r('app.color.ink_3'))
-          .textAlign(TextAlign.Center)
-        this.starters()
+      Scroll() {
+        Column({ space: 20 }) {
+          AgentAvatar({ dim: 96 })
+          Text($r('app.string.agent_welcome_title'))
+            .fontSize($r('app.float.font_title'))
+            .fontWeight(FontWeight.Bold)
+            .fontColor($r('app.color.ink'))
+          Text($r('app.string.agent_welcome'))
+            .fontSize($r('app.float.font_small'))
+            .lineHeight(20)
+            .fontColor($r('app.color.ink_3'))
+            .textAlign(TextAlign.Center)
+          this.starters()
+        }
+        .width('100%')
+        .padding({ top: 40, left: 28, right: 28 })
       }
       .width('100%')
       .height('100%')
-      .padding({ top: 40, left: 28, right: 28 })
+      .align(Alignment.Top)
+      .scrollBar(BarState.Off)
     }
   }
 }

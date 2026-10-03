@@ -35,3 +35,19 @@ export function stagePhase(busy: boolean, phase: VoicePhase): VoicePhase {
   }
   return phase;
 }
+
+// The opening words of the agent's greeting. Night hours get a plain "Hi" (no "Morning" at 01:10).
+export function dayGreeting(hour: number, name: string): string {
+  let part: string = '';
+  if (hour >= 5 && hour < 12) {
+    part = 'Morning';
+  } else if (hour >= 12 && hour < 18) {
+    part = 'Afternoon';
+  } else if (hour >= 18) {
+    part = 'Evening';
+  }
+  if (part === '') {
+    return name.length > 0 ? `Hi, ${name}.` : 'Hi.';
+  }
+  return name.length > 0 ? `${part}, ${name}.` : `Good ${part.toLowerCase()}.`;
+}

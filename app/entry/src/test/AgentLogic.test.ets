@@ -1,5 +1,5 @@
 import { describe, it, expect } from '@ohos/hypium';
-import { confirmStateOf, stagePhase, verdictOf } from '../main/ets/components/agent/AgentLogic';
+import { confirmStateOf, dayGreeting, stagePhase, verdictOf } from '../main/ets/components/agent/AgentLogic';
 import { VerdictCardPayload } from '../main/ets/model/AgentTypes';
 
 export default function agentLogicTest() {
@@ -28,6 +28,16 @@ export default function agentLogicTest() {
       expect(stagePhase(true, 'SPEAKING')).assertEqual('SPEAKING');
       expect(stagePhase(false, 'OFF')).assertEqual('OFF');
       expect(stagePhase(false, 'HEARING')).assertEqual('HEARING');
+    });
+
+    it('greetingFollowsThePartOfTheDay', 0, () => {
+      expect(dayGreeting(1, 'Ola')).assertEqual('Hi, Ola.');
+      expect(dayGreeting(4, '')).assertEqual('Hi.');
+      expect(dayGreeting(5, 'Ola')).assertEqual('Morning, Ola.');
+      expect(dayGreeting(11, '')).assertEqual('Good morning.');
+      expect(dayGreeting(12, 'Ola')).assertEqual('Afternoon, Ola.');
+      expect(dayGreeting(18, 'Ola')).assertEqual('Evening, Ola.');
+      expect(dayGreeting(23, '')).assertEqual('Good evening.');
     });
   });
 }

@@ -29,6 +29,22 @@
       "value": "Emergency"
     },
     {
+      "name": "a11y_tab_agent",
+      "value": "Agent tab"
+    },
+    {
+      "name": "a11y_tab_medicines",
+      "value": "Medicines tab"
+    },
+    {
+      "name": "a11y_tab_heart",
+      "value": "Heart tab"
+    },
+    {
+      "name": "a11y_tab_emergency",
+      "value": "Emergency tab, SOS"
+    },
+    {
       "name": "agent_title",
       "value": "Your heart-safety agent"
     },
@@ -1093,6 +1109,14 @@
       "value": "Scan a box"
     },
     {
+      "name": "home_log_feel",
+      "value": "Log how I feel"
+    },
+    {
+      "name": "home_doctor_prep",
+      "value": "Doctor prep"
+    },
+    {
       "name": "home_ask",
       "value": "Ask something"
     },
@@ -1103,6 +1127,10 @@
     {
       "name": "home_meds_none",
       "value": "No medicines yet"
+    },
+    {
+      "name": "home_meds_review",
+      "value": "%d to review"
     },
     {
       "name": "home_alarm_on",
@@ -1123,6 +1151,10 @@
     {
       "name": "home_bpm_waiting",
       "value": "waiting for a reading"
+    },
+    {
+      "name": "home_bpm_chip",
+      "value": "%d bpm"
     },
     {
       "name": "a11y_back",
@@ -1587,6 +1619,22 @@
     {
       "name": "a11y_chats",
       "value": "Chats"
+    },
+    {
+      "name": "a11y_home_hr",
+      "value": "Heart rate. Opens the Heart tab."
+    },
+    {
+      "name": "a11y_home_meds",
+      "value": "Your medicines. Opens the Medicines tab."
+    },
+    {
+      "name": "a11y_notes_open",
+      "value": "Show the notes for today"
+    },
+    {
+      "name": "a11y_notes_close",
+      "value": "Hide the notes for today"
     },
     {
       "name": "a11y_new_chat",
