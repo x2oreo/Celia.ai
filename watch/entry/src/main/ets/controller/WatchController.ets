@@ -55,7 +55,7 @@ import { PatientContext, PatientContextClient } from '../sync/PatientContextClie
 import { PreferencesOutboxStore } from '../sync/PreferencesOutboxStore';
 import { DemoRpcClient } from '../sync/DemoRpcClient';
 import { deviceIdFor } from '../sync/DeviceIdStore';
-import { PairStatus, PairingClient, PairingCode, RpcResult } from '../sync/PairingClient';
+import { PairingClient } from '../sync/PairingClient';
 import { DoseStore } from '../sync/DoseStore';
 import {
   DoseState,
@@ -68,16 +68,11 @@ import {
 } from '../vitals/DoseNudge';
 import { Fix, currentFix } from '../sync/SosLocation';
 import { FallRecord, FallTick, SosFlow } from './SosFlow';
+import { PairScreen, PairState, PairingFlow } from './PairingFlow';
 import { SupabaseUploader } from '../sync/SupabaseUploader';
 import { shortDrugName } from '../vitals/DrugBadge';
 
 export type SyncState = 'OFF' | 'OK' | 'PENDING' | 'ERROR';
-
-/** Settings: is this watch paired with a phone? UNKNOWN until the first pairing_status answer. */
-export type PairState = 'UNKNOWN' | 'PAIRED' | 'NOT_PAIRED' | 'ERROR';
-
-/** Pairing screen state. */
-export type PairScreen = 'LOADING' | 'CODE' | 'PAIRED' | 'EXPIRED' | 'ERROR';
 
 /** Which alert screen is up. */
 export type AlertKind = 'NONE' | 'HIGH' | 'LOW' | 'RHYTHM' | 'RECOVERY' | 'HRV' | 'SPO2';
@@ -167,12 +162,6 @@ export class WatchController {
   /** This watch's id (first 8 chars shown in Settings). */
   @Trace deviceId: string = '';
   @Trace deviceIdOverridden: boolean = false;
-  @Trace pairState: PairState = 'UNKNOWN';
-  @Trace pairingOpen: boolean = false;
-  @Trace pairScreen: PairScreen = 'LOADING';
-  @Trace pairCode: string = '';
-  @Trace pairSecondsLeft: number = 0;
-  @Trace pairError: string = '';
 
   private ctx: common.UIAbilityContext | undefined = undefined;
   private cfg: AppConfigData = AppConfig.defaults();
@@ -196,10 +185,7 @@ export class WatchController {
   private uploader: SupabaseUploader | undefined = undefined;
   private contextClient: PatientContextClient | undefined = undefined;
   private demoRpc: DemoRpcClient | undefined = undefined;
-  private pairing: PairingClient | undefined = undefined;
-  private pairTimer: number = -1;
-  private pairExpiresMs: number = 0;
-  private pairTicks: number = 0;
+  private pairing: PairingFlow = new PairingFlow();
   private lastLiveMs: number = 0;
   private lastVitalsMs: number = 0;
   private lastMockMs: number = 0;
@@ -264,7 +250,9 @@ export class WatchController {
       this.contextClient = new PatientContextClient(this.cfg.supabaseUrl, this.cfg.supabaseAnonKey,
         this.cfg.deviceId);
       this.demoRpc = new DemoRpcClient(this.cfg.supabaseUrl, this.cfg.supabaseAnonKey);
-      this.pairing = new PairingClient(this.cfg.supabaseUrl, this.cfg.supabaseAnonKey);
+      this.pairing.configure(new PairingClient(this.cfg.supabaseUrl, this.cfg.supabaseAnonKey), () => {
+        this.vibrate(400);
+      });
       this.syncState = this.pending > 0 ? 'PENDING' : 'OK';
     }
     this.monitoringSinceMs = Date.now();
@@ -276,7 +264,7 @@ export class WatchController {
 
   dispose(): void {
     this.pause();
-    this.stopPairPolling();
+    this.pairing.stopPolling();
   }
 
   /** Seconds left to answer "Are you OK?"; 0 = no fall in progress. */
@@ -295,6 +283,30 @@ export class WatchController {
   /** True once the `sos` row reached the server. Until then the screen says saved, not sent. */
   get sosDelivered(): boolean {
     return this.sos.sosDelivered;
+  }
+
+  get pairState(): PairState {
+    return this.pairing.pairState;
+  }
+
+  get pairingOpen(): boolean {
+    return this.pairing.pairingOpen;
+  }
+
+  get pairScreen(): PairScreen {
+    return this.pairing.pairScreen;
+  }
+
+  get pairCode(): string {
+    return this.pairing.pairCode;
+  }
+
+  get pairSecondsLeft(): number {
+    return this.pairing.pairSecondsLeft;
+  }
+
+  get pairError(): string {
+    return this.pairing.pairError;
   }
 
   get scenarioLabel(): string {
@@ -509,86 +521,17 @@ export class WatchController {
 
   /** Settings opened: one pairing_status call → "Paired with phone" / "Not paired". */
   async refreshPairState(): Promise<void> {
-    if (this.pairing === undefined) {
-      this.pairState = 'ERROR';
-      return;
-    }
-    const r: RpcResult<PairStatus> = await this.pairing.status(this.deviceId);
-    if (!r.ok) {
-      this.pairState = 'ERROR';
-      return;
-    }
-    this.pairState = r.value === 'PAIRED' ? 'PAIRED' : 'NOT_PAIRED';
+    await this.pairing.refresh(this.deviceId);
   }
 
   /** "Pair with phone" / "New code": asks the server for a 6-digit code. Returns '' or an error for a toast. */
   async startPairing(): Promise<string> {
-    this.pairingOpen = true;
-    this.stopPairPolling();
-    if (this.pairing === undefined) {
-      this.pairScreen = 'ERROR';
-      this.pairError = 'Supabase is not configured (watch/.env)';
-      return this.pairError;
-    }
-    this.pairScreen = 'LOADING';
-    const r: RpcResult<PairingCode> = await this.pairing.start(this.deviceId);
-    if (!r.ok || r.value === undefined) {
-      this.pairScreen = 'ERROR';
-      this.pairError = r.error;
-      return r.error;
-    }
-    this.pairCode = r.value.code;
-    this.pairExpiresMs = r.value.expiresAtMs;
-    this.pairSecondsLeft = Math.max(0, Math.round((this.pairExpiresMs - Date.now()) / 1000));
-    this.pairScreen = 'CODE';
-    this.pairTicks = 0;
-    this.pairTimer = setInterval(() => {
-      this.onPairTick();
-    }, 1000);
-    Logger.info('pairing code shown');
-    return '';
+    return this.pairing.start(this.deviceId);
   }
 
   /** Leaving the pairing screen stops polling. */
   closePairing(): void {
-    this.stopPairPolling();
-    this.pairingOpen = false;
-  }
-
-  private onPairTick(): void {
-    this.pairSecondsLeft = Math.max(0, Math.round((this.pairExpiresMs - Date.now()) / 1000));
-    this.pairTicks++;
-    if (this.pairTicks % 2 === 0) {
-      this.pollPairStatus();
-    }
-  }
-
-  private async pollPairStatus(): Promise<void> {
-    if (this.pairing === undefined || this.pairScreen !== 'CODE') {
-      return;
-    }
-    const r: RpcResult<PairStatus> = await this.pairing.status(this.deviceId);
-    if (!r.ok || this.pairScreen !== 'CODE') {
-      // Keep polling: a dropped request shouldn't end pairing; the error is logged by the client.
-      return;
-    }
-    if (r.value === 'PAIRED') {
-      this.stopPairPolling();
-      this.pairScreen = 'PAIRED';
-      this.pairState = 'PAIRED';
-      this.vibrate(400);
-      Logger.info('paired with phone');
-    } else if (r.value === 'EXPIRED' || r.value === 'NONE' || this.pairSecondsLeft <= 0) {
-      this.stopPairPolling();
-      this.pairScreen = 'EXPIRED';
-    }
-  }
-
-  private stopPairPolling(): void {
-    if (this.pairTimer >= 0) {
-      clearInterval(this.pairTimer);
-      this.pairTimer = -1;
-    }
+    this.pairing.close();
   }
 
   /** Simulate page: show the nudge now, without touching today's counters. */

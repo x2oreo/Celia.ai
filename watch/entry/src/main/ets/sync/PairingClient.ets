@@ -39,8 +39,15 @@ function ok<T>(value: T): RpcResult<T> {
   return r;
 }
 
+/** The two pairing RPCs; `PairingClient` on the watch, a fake in tests. */
+export interface PairingApi {
+  start(deviceId: string): Promise<RpcResult<PairingCode>>;
+
+  status(deviceId: string): Promise<RpcResult<PairStatus>>;
+}
+
 /** Watch ↔ phone pairing via Supabase RPCs (migration 20261003260000_watch_pairing.sql). */
-export class PairingClient {
+export class PairingClient implements PairingApi {
   private baseUrl: string;
   private anonKey: string;
 
