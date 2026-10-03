@@ -15,10 +15,11 @@ without blocking each other. Change a contract → tell the team on Discord + up
  │                                                                                                   │
  │  UI (Georgie)            Agent (Kaloyan)                 Vitals (Mark)          Data (Mark)       │
  │  ─────────────           ────────────────                ───────────────        ──────────────    │
- │  Chat / Home      ───►   AgentCore                       VitalsSource           LocalStore (RDB)  │
- │  Med check               ├─ ToolRegistry  ──calls──►     ├─ WearEngineSource    profile, meds,    │
- │  Emergency               ├─ AgentClient (HTTP/SSE)       ├─ SimulatedSource     events, vitals,   │
- │  Vitals                  └─ ResponseValidator            └─ AlarmRules ──event──► EventBus        │
+ │  Chat / Home      ───►   AgentCore (runs the tool loop)  VitalsSource           LocalStore (RDB)  │
+ │  Med check               ├─ SafetyGate (pre-LLM)         ├─ WearEngineSource    profile, meds,    │
+ │  Emergency               ├─ ToolRegistry  ──calls──►     ├─ SimulatedSource     events, vitals,   │
+ │  Vitals                  ├─ AgentClient (HTTP)           └─ AlarmRules ──event──► EventBus        │
+ │                          ├─ ResponseValidator · OfflineAgent · ComboRules                         │
  │  Onboarding/Profile                                                                               │
  │  Widget (Form Kit)       DrugChecker (deterministic) ◄── used by tools, UI, intents               │
  │                          OcrService (Core Vision)                                                 │
@@ -29,7 +30,7 @@ without blocking each other. Change a contract → tell the team on Discord + up
  ┌───────────────────────────── Backend: Supabase, EU region (Mark: DB, Kaloyan: agent fn) ──────────┐
  │  Postgres: drugs, drug_aliases, drug_risk (curated LQTS list), agent_logs (de-identified)        │
  │  Edge Function  /drug-check   → deterministic lookup (name/alias/INN → risk)                     │
- │  Edge Function  /agent        → LLM tool-calling loop (Claude API key lives here only)           │
+ │  Edge Function  /agent        → one OpenAI model step; tools run in the app (key lives here only) │
  └───────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -119,8 +120,10 @@ export interface VitalsAlert { ts: number; kind: AlertKind; hr: number; message:
 
 // model/AgentTypes.ets
 export interface ChatMessage { role: 'user' | 'assistant'; text: string; ts: number; }
-export type UiActionType = 'SHOW_VERDICT' | 'SHOW_EMERGENCY_CARD' | 'START_EMERGENCY' | 'OPEN_MED_SCAN' | 'ADD_MED';
-export interface UiAction { type: UiActionType; payload: string; }   // payload = JSON string, parsed per type
+export type UiActionType = 'SHOW_VERDICT' | 'SHOW_EMERGENCY_CARD' | 'START_EMERGENCY' | 'OPEN_MED_SCAN' | 'ADD_MED'
+  | 'SHARE_EMERGENCY_CARD' | 'QUICK_REPLIES';
+export interface UiAction { type: UiActionType; payload: string; }   // payload = JSON string; payload interfaces
+                                                                       // (VerdictCardPayload, AddMedPayload, …) in the file
 export interface AgentReply { text: string; actions: UiAction[]; fallback: boolean; }
 ```
 
@@ -138,6 +141,8 @@ start(source: 'WATCH' | 'SIMULATED') / stop() / onSample(cb) / onAlert(cb) / run
 // agent/AgentCore.ets              (Kaloyan — Georgie's chat UI calls it)
 send(text: string): Promise<AgentReply>
 onProactive(cb: (reply: AgentReply) => void)   // triggered by VitalsAlert
+resolveAction(actionId: string, accepted: boolean): Promise<AgentReply>   // confirm-card tap (ADD_MED, SHARE_…)
+emergencyCancelled(): void                     // user cancelled the START_EMERGENCY countdown
 ```
 
 ## Backend API
@@ -145,18 +150,21 @@ onProactive(cb: (reply: AgentReply) => void)   // triggered by VitalsAlert
 `POST /functions/v1/drug-check` → `{ "query": "clarithromycin" }` →
 `{ "query": "...", "ingredient": "clarithromycin", "risk": "KNOWN_RISK", "reason": "...", "source": "..." }`
 
-`POST /functions/v1/agent` → request:
+`POST /functions/v1/agent` — **one model step** (OpenAI Responses API). The tool loop runs **in the app**
+(`AgentCore`): the function returns tool calls, the app executes them on-device and calls again with the outputs.
+Full contract: `backend/supabase/functions/README.md`.
 ```json
-{ "messages": [{ "role": "user", "text": "Can I take this?" }],
-  "context": { "condition": "LQTS", "genotype": "LQT2", "meds": ["bisoprolol"], "vitals": "HR 72 resting, no alerts 24h" } }
+{ "context": { "condition": "LQTS", "genotype": "LQT2", "meds": ["nadolol"], "vitals": "HR 72 at rest, no alerts (simulated)",
+               "emergencyNumber": "112", "locale": "en-PL" },
+  "messages": [{ "role": "user", "text": "Can I take Klacid?" }],
+  "continuation": null }
+→ { "promptVersion": "…", "responseId": "resp_…", "toolCalls": [{ "callId": "…", "name": "check_drug", "arguments": "{…}" }], "text": "" }
 ```
-response (validated in app by `ResponseValidator`; anything invalid → `fallback: true` deterministic reply):
-```json
-{ "text": "Clarithromycin is on the known-risk list…", "actions": [{ "type": "SHOW_VERDICT", "payload": "{...DrugVerdict}" }] }
-```
-Server-side tools in the loop: `check_drug` (DB lookup), `explain_condition` (static, curated text). Client context
-is sent with each request, so the server never stores personal data. Auth: Supabase anon key + RLS (read-only on
-drug tables); the LLM key is an Edge Function secret. Timeouts: app 20 s → fallback.
+Tools (schemas in `_shared/tools.ts`, executors in `app/.../agent/tools/`): `check_drug`, `get_my_meds`,
+`get_vitals_summary`, `explain_condition`, `suggest_alternatives`, `scan_medicine`, `add_med`, `show_emergency_card`,
+`start_emergency`, `share_emergency_card`. Write tools only create confirm cards. Responses are validated in the app
+(`ResponseValidator`); anything invalid → `fallback: true` deterministic reply. Auth: Supabase anon key; the OpenAI
+key is an Edge Function secret. Timeouts: app 20 s per step → fallback.
 
 ## Agent design rules (Kaloyan, applies everywhere)
 
@@ -171,14 +179,15 @@ drug tables); the LLM key is an Edge Function secret. Timeouts: app 20 s → fal
 | Capability | Kit | Where | Runs on emulator? |
 |---|---|---|---|
 | Watch HR / alarms / notifications | `@kit.WearEngine` | `vitals/VitalsService.ets`, `vitals/WearNotifier.ets` | ❌ not wired yet — `SimulatedSource` (labelled SIMULATED); wrist alerts fall back to phone notification + haptic |
-| On-device OCR of medicine boxes | `@kit.CoreVisionKit` | `drugs/OcrService.ets` | ⚠️ verify early |
+| On-device OCR of medicine boxes | `@kit.CoreVisionKit` (+ `/vision-extract` names-only fallback) | `drugs/OcrService.ets`, `agent/MedicineScanFlow.ets` | ⚠️ verify early |
 | System assistant entry | Intents Kit (`@kit.AbilityKit`) | `insightintents/` | ⚠️ verify early |
 | Agent-to-agent (stretch) | `@kit.AgentFrameworkKit` | `agentextability/` | ⚠️ ask mentors |
 | Home widget | Form Kit | `widget/` | ⏸ not built yet |
 | Online drug check (optional) | `@kit.NetworkKit` → Supabase `/drug-check` | `drugs/DrugCheckClient.ets`, `common/Net.ets`, `backend/supabase/` | ✅ offline-first; only for names the bundle does not know, logged in the privacy ledger |
 | Local DB | `@kit.ArkData` RDB (`encrypt: true`) | `data/LocalStore.ets` | ✅ verified |
 | Notifications / call | `@kit.NotificationKit`, `call.makeCall` (dialer) | `common/Notify.ets`, `common/Dialer.ets` | ✅ verified |
-| Voice (stretch) | `@kit.CoreSpeechKit` | agent | ⚠️ check English support |
+| Voice (push-to-talk) | `@kit.CoreSpeechKit` + `@kit.AudioKit` (cloud STT/TTS fallback) | `voice/` | ⚠️ Core Speech en-US unverified; cloud path works anywhere with network |
+| Voice (hands-free) | OpenAI Realtime over `@kit.NetworkKit` WebSocket + AudioKit | `voice/RealtimeSession.ets` | ✅ needs network + mic |
 | SOS location (F-28) | `@kit.LocationKit` | `emergency/SosService.ets` | ⚠️ permission flow verified; emulator has no fix → message says "location unknown" |
 | Card QR (F-30) | ArkUI `QRCode` → link to static viewer `site/card/` (GitHub Pages); card JSON → base64url in the `#fragment` (never sent to the server, no requests besides the page itself) | `emergency/CardLink.ets`, `pages/EmergencyPage.ets`, `pages/CardViewPage.ets`, `site/card/index.html` | ✅ (Pages must be enabled: Settings → Pages → GitHub Actions) |
 | SOS message (F-28) | `@kit.ShareKit` system share sheet | `common/Share.ets` | ✅ — direct SMS needs `SEND_MESSAGES` (system apps only), so the user sends via SMS/messenger/e-mail |

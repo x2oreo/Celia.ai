@@ -2,19 +2,71 @@
   "color": [
     {
       "name": "start_window_background",
-      "value": "#000000"
+      "value": "#14100F"
     },
     {
       "name": "brand_accent",
-      "value": "#FF6369"
+      "value": "#F26B6F"
     },
     {
       "name": "brand_accent_soft",
-      "value": "#3B1416"
+      "value": "#3B1A1A"
+    },
+    {
+      "name": "brand_text",
+      "value": "#F58A8D"
     },
     {
       "name": "on_accent",
       "value": "#FFFFFF"
+    },
+    {
+      "name": "bg",
+      "value": "#14100F"
+    },
+    {
+      "name": "surface",
+      "value": "#1F1A17"
+    },
+    {
+      "name": "surface_alt",
+      "value": "#2A2421"
+    },
+    {
+      "name": "border",
+      "value": "#332C28"
+    },
+    {
+      "name": "border_strong",
+      "value": "#4A413B"
+    },
+    {
+      "name": "ink",
+      "value": "#F5F0EC"
+    },
+    {
+      "name": "ink_2",
+      "value": "#E2D9D3"
+    },
+    {
+      "name": "ink_3",
+      "value": "#B8AEA8"
+    },
+    {
+      "name": "ink_4",
+      "value": "#948A84"
+    },
+    {
+      "name": "tab_inactive",
+      "value": "#948A84"
+    },
+    {
+      "name": "scrim",
+      "value": "#99000000"
+    },
+    {
+      "name": "shadow_sheet",
+      "value": "#66000000"
     },
     {
       "name": "risk_known",
@@ -37,52 +89,120 @@
       "value": "#98A2B3"
     },
     {
-      "name": "page_bg",
-      "value": "#000000"
+      "name": "risk_known_tint",
+      "value": "#3A1A17"
     },
     {
-      "name": "card_bg",
-      "value": "#1C1C1E"
+      "name": "risk_possible_tint",
+      "value": "#3A2A12"
     },
     {
-      "name": "card_bg_pressed",
-      "value": "#2C2C2E"
+      "name": "risk_conditional_tint",
+      "value": "#36300F"
     },
     {
-      "name": "divider",
-      "value": "#2C2C2E"
+      "name": "risk_not_listed_tint",
+      "value": "#132C1F"
     },
     {
-      "name": "field_bg",
-      "value": "#2C2C2E"
+      "name": "risk_unknown_tint",
+      "value": "#272A2F"
+    },
+    {
+      "name": "risk_known_text",
+      "value": "#FDA29B"
+    },
+    {
+      "name": "risk_possible_text",
+      "value": "#FEC84B"
+    },
+    {
+      "name": "risk_conditional_text",
+      "value": "#FDE272"
+    },
+    {
+      "name": "risk_not_listed_text",
+      "value": "#75E0A7"
+    },
+    {
+      "name": "risk_unknown_text",
+      "value": "#D0D5DD"
+    },
+    {
+      "name": "risk_known_border",
+      "value": "#7A2A24"
+    },
+    {
+      "name": "risk_known_subtitle",
+      "value": "#FDA29B"
+    },
+    {
+      "name": "risk_possible_border",
+      "value": "#7A5A1A"
+    },
+    {
+      "name": "risk_conditional_border",
+      "value": "#6E5E14"
+    },
+    {
+      "name": "risk_not_listed_border",
+      "value": "#1F5A3B"
+    },
+    {
+      "name": "risk_unknown_border",
+      "value": "#475467"
+    },
+    {
+      "name": "danger",
+      "value": "#E5483C"
     },
     {
       "name": "risk_known_soft",
-      "value": "#3A1714"
+      "value": "#3A1A17"
     },
     {
       "name": "risk_possible_soft",
-      "value": "#3A2A0B"
+      "value": "#3A2A12"
     },
     {
       "name": "risk_conditional_soft",
-      "value": "#36300A"
+      "value": "#36300F"
     },
     {
       "name": "risk_not_listed_soft",
-      "value": "#0E2A1C"
+      "value": "#132C1F"
     },
     {
       "name": "risk_unknown_soft",
-      "value": "#26282C"
+      "value": "#272A2F"
+    },
+    {
+      "name": "page_bg",
+      "value": "#14100F"
+    },
+    {
+      "name": "card_bg",
+      "value": "#1F1A17"
+    },
+    {
+      "name": "card_bg_pressed",
+      "value": "#2A2421"
+    },
+    {
+      "name": "divider",
+      "value": "#2A2421"
+    },
+    {
+      "name": "field_bg",
+      "value": "#2A2421"
     },
     {
       "name": "sim_badge",
-      "value": "#B692F6"
+      "value": "#F5F0EC"
     },
     {
       "name": "sim_badge_soft",
-      "value": "#2A1D4A"
+      "value": "#1F1A17"
     },
     {
       "name": "emergency_card_bg",
@@ -90,7 +210,67 @@
     },
     {
       "name": "emergency_header",
-      "value": "#D92D20"
+      "value": "#B42318"
+    },
+    {
+      "name": "card_fixed_bg",
+      "value": "#FFFFFF"
+    },
+    {
+      "name": "card_fixed_ink",
+      "value": "#1F1A17"
+    },
+    {
+      "name": "card_fixed_ink_2",
+      "value": "#3D3530"
+    },
+    {
+      "name": "card_fixed_ink_3",
+      "value": "#6B625C"
+    },
+    {
+      "name": "card_fixed_border",
+      "value": "#ECE6E1"
+    },
+    {
+      "name": "card_fixed_alert",
+      "value": "#B42318"
+    },
+    {
+      "name": "card_fixed_alert_tint",
+      "value": "#FEE4E2"
+    },
+    {
+      "name": "chat_user_bg",
+      "value": "#F5F0EC"
+    },
+    {
+      "name": "chat_user_text",
+      "value": "#1F1A17"
+    },
+    {
+      "name": "status_offline_bg",
+      "value": "#2A2421"
+    },
+    {
+      "name": "status_offline_text",
+      "value": "#D6CCC6"
+    },
+    {
+      "name": "orb_light",
+      "value": "#FFC2BE"
+    },
+    {
+      "name": "orb_mid",
+      "value": "#F26B6F"
+    },
+    {
+      "name": "orb_dark",
+      "value": "#C7353A"
+    },
+    {
+      "name": "widget_ink",
+      "value": "#1F1A17"
     }
   ]
 }

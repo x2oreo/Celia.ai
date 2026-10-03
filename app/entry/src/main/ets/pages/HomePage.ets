@@ -120,7 +120,7 @@ export struct HomePage {
         Row() {
           Column({ space: 4 }) {
             Text(this.greeting())
-              .fontSize($r('app.float.font_headline'))
+              .fontSize($r('app.float.font_title_1'))
               .fontWeight(FontWeight.Bold)
               .fontColor($r('sys.color.font_primary'))
             Text(this.profile === undefined ? '' : `Long QT · ${this.profile.genotype === 'UNKNOWN' ? 'genotype unknown' :
@@ -146,6 +146,9 @@ export struct HomePage {
         Row({ space: 10 }) {
           this.action($r('app.media.ic_search'), $r('app.string.home_check'), true, () => {
             this.activeTab = TabIndex.MEDICINES;
+          })
+          this.action($r('app.media.ic_tab_agent'), $r('app.string.agent_ask_celia'), false, () => {
+            this.activeTab = TabIndex.AGENT;
           })
           this.action($r('app.media.ic_tab_emergency'), $r('app.string.home_card'), false, () => {
             this.activeTab = TabIndex.EMERGENCY;

@@ -18,6 +18,59 @@ export class RiskUi {
     }
   }
 
+  // Badge and header-band background (DESIGN.md 3).
+  static tint(risk: RiskLevel): Resource {
+    return RiskUi.soft(risk);
+  }
+
+  // Word colour on the tint background.
+  static text(risk: RiskLevel): Resource {
+    switch (risk) {
+      case 'KNOWN_RISK':
+        return $r('app.color.risk_known_text');
+      case 'POSSIBLE_RISK':
+        return $r('app.color.risk_possible_text');
+      case 'CONDITIONAL_RISK':
+        return $r('app.color.risk_conditional_text');
+      case 'NOT_LISTED':
+        return $r('app.color.risk_not_listed_text');
+      default:
+        return $r('app.color.risk_unknown_text');
+    }
+  }
+
+  // Verdict-card outline.
+  static border(risk: RiskLevel): Resource {
+    switch (risk) {
+      case 'KNOWN_RISK':
+        return $r('app.color.risk_known_border');
+      case 'POSSIBLE_RISK':
+        return $r('app.color.risk_possible_border');
+      case 'CONDITIONAL_RISK':
+        return $r('app.color.risk_conditional_border');
+      case 'NOT_LISTED':
+        return $r('app.color.risk_not_listed_border');
+      default:
+        return $r('app.color.risk_unknown_border');
+    }
+  }
+
+  // One-line subtitle under the verdict word.
+  static subtitle(risk: RiskLevel): Resource {
+    switch (risk) {
+      case 'KNOWN_RISK':
+        return $r('app.string.risk_sub_known');
+      case 'POSSIBLE_RISK':
+        return $r('app.string.risk_sub_possible');
+      case 'CONDITIONAL_RISK':
+        return $r('app.string.risk_sub_conditional');
+      case 'NOT_LISTED':
+        return $r('app.string.risk_sub_not_listed');
+      default:
+        return $r('app.string.risk_sub_unknown');
+    }
+  }
+
   static soft(risk: RiskLevel): Resource {
     switch (risk) {
       case 'KNOWN_RISK':

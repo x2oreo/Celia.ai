@@ -9,8 +9,16 @@
       "value": "8vp"
     },
     {
+      "name": "space_sm",
+      "value": "12vp"
+    },
+    {
       "name": "space_m",
       "value": "16vp"
+    },
+    {
+      "name": "space_screen",
+      "value": "20vp"
     },
     {
       "name": "space_l",
@@ -21,52 +29,128 @@
       "value": "32vp"
     },
     {
+      "name": "radius_xs",
+      "value": "6vp"
+    },
+    {
+      "name": "radius_s",
+      "value": "12vp"
+    },
+    {
+      "name": "radius_btn",
+      "value": "14vp"
+    },
+    {
       "name": "radius_m",
       "value": "16vp"
     },
     {
-      "name": "font_title",
-      "value": "24fp"
-    },
-    {
-      "name": "font_body",
-      "value": "16fp"
-    },
-    {
-      "name": "font_caption",
-      "value": "12fp"
-    },
-    {
-      "name": "font_headline",
-      "value": "32fp"
-    },
-    {
-      "name": "font_subtitle",
-      "value": "18fp"
-    },
-    {
-      "name": "font_small",
-      "value": "14fp"
-    },
-    {
-      "name": "font_hero",
-      "value": "56fp"
-    },
-    {
-      "name": "radius_s",
-      "value": "10vp"
+      "name": "radius_ml",
+      "value": "20vp"
     },
     {
       "name": "radius_l",
       "value": "24vp"
     },
     {
+      "name": "radius_sheet",
+      "value": "28vp"
+    },
+    {
+      "name": "font_display",
+      "value": "60fp"
+    },
+    {
+      "name": "font_hero",
+      "value": "56fp"
+    },
+    {
+      "name": "font_title_1",
+      "value": "28fp"
+    },
+    {
+      "name": "font_title",
+      "value": "24fp"
+    },
+    {
+      "name": "font_title_3",
+      "value": "20fp"
+    },
+    {
+      "name": "font_subtitle",
+      "value": "18fp"
+    },
+    {
+      "name": "font_headline",
+      "value": "17fp"
+    },
+    {
+      "name": "font_body",
+      "value": "16fp"
+    },
+    {
+      "name": "font_button",
+      "value": "15fp"
+    },
+    {
+      "name": "font_small",
+      "value": "14fp"
+    },
+    {
+      "name": "font_badge",
+      "value": "13fp"
+    },
+    {
+      "name": "font_caption",
+      "value": "12fp"
+    },
+    {
+      "name": "font_micro",
+      "value": "11fp"
+    },
+    {
+      "name": "font_mono",
+      "value": "9fp"
+    },
+    {
       "name": "button_height",
       "value": "48vp"
     },
     {
+      "name": "button_height_sheet",
+      "value": "52vp"
+    },
+    {
       "name": "button_height_l",
       "value": "64vp"
+    },
+    {
+      "name": "chip_height",
+      "value": "44vp"
+    },
+    {
+      "name": "touch_min",
+      "value": "48vp"
+    },
+    {
+      "name": "tab_bar_height",
+      "value": "64vp"
+    },
+    {
+      "name": "avatar_s",
+      "value": "28vp"
+    },
+    {
+      "name": "avatar_m",
+      "value": "40vp"
+    },
+    {
+      "name": "avatar_l",
+      "value": "96vp"
+    },
+    {
+      "name": "avatar_tab",
+      "value": "24vp"
     }
   ]
 }

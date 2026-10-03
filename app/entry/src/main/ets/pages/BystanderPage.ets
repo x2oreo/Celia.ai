@@ -98,7 +98,7 @@ export struct BystanderPage {
       Scroll() {
         Column({ space: 12 }) {
           Text($r('app.string.by_title'))
-            .fontSize($r('app.float.font_headline'))
+            .fontSize($r('app.float.font_title_1'))
             .fontWeight(FontWeight.Bold)
             .fontColor($r('sys.color.font_primary'))
             .width('100%')

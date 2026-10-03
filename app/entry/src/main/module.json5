@@ -55,6 +55,14 @@
         "name": "ohos.permission.LOCATION",
         "reason": "$string:perm_location_reason",
         "usedScene": { "abilities": ["EntryAbility"], "when": "inuse" }
+      },
+      {
+        "name": "ohos.permission.MICROPHONE",
+        "reason": "$string:mic_reason",
+        "usedScene": {
+          "abilities": ["EntryAbility"],
+          "when": "inuse"
+        }
       }
     ]
   }

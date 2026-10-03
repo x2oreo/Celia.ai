@@ -19,6 +19,10 @@ export class Listeners<T> {
     }
   }
 
+  size(): number {
+    return this.items.length;
+  }
+
   clear(): void {
     this.items = [];
   }

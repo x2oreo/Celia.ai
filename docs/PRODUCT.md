@@ -11,7 +11,7 @@
 |---|---|---|
 | D1 | **Stack: native HarmonyOS only** — ArkTS + ArkUI, Stage model, DevEco Studio 6.x, hvigor/ohpm/hdc. System kits called directly from ArkTS. No cross-platform layer (no React Native / RNOH, Flutter). | CLAUDE.md, ARCHITECTURE |
 | D2 | **API 20** min and target (`compatibleSdkVersion` / `targetSdkVersion` = `6.0.0(20)`). Everything core runs on the **emulator**. Bundle **`com.celiaai.app`**. | task, ARCHITECTURE, `app/AppScope/app.json5` |
-| D3 | **Backend: Supabase, EU region (Frankfurt).** Postgres (`drugs`, `drug_aliases`, `agent_logs`) + Edge Functions `/drug-check` (deterministic lookup) and `/agent` (Claude tool-calling loop). The Claude key lives only in Edge Function secrets; the app holds just the public anon key (RLS read-only). | ARCHITECTURE, PLAN decisions log |
+| D3 | **Backend: Supabase, EU region (Frankfurt).** Postgres (`drugs`, `drug_aliases`, `agent_logs`) + Edge Functions `/drug-check` (deterministic lookup) and `/agent` (one OpenAI model step; the tool loop runs in the app). The OpenAI key lives only in Edge Function secrets; the app holds just the public anon key (RLS read-only). | ARCHITECTURE, PLAN decisions log |
 | D4 | **Verdicts are deterministic** (curated LQTS drug list, `DrugChecker`). The LLM only explains and picks tools; if its text contradicts the verdict, the text is dropped. Unknown input → `UNKNOWN_DRUG`, never "safe". | IDEA scope rules, ARCHITECTURE agent rules |
 | D5 | **Offline:** `DrugChecker` uses the bundled `rawfile/drugs.json`; `/drug-check` is the online/fresh path with fallback to the bundle on error/timeout. No network → agent says it is offline, drug checks still work. | ARCHITECTURE, Kaloyan DoD |
 | D6 | **Data on device:** profile, meds, ICE contacts, vitals, events live only in on-device ArkData RDB (no system backup). The backend gets drug names and, for `/agent`, a de-identified context (condition, genotype, med names, vitals summary). | ARCHITECTURE data rule |
@@ -35,8 +35,8 @@ emergency card · cardiologist reading the report.
 ## 2. How it works
 
 ```
- user text / photo of box ─► Agent chat ─► AgentCore ──► /agent (Supabase Edge Fn, Claude)
-                                  │            │            server tools: check_drug, explain_condition
+ user text / photo of box ─► Agent chat ─► AgentCore ──► /agent (Supabase Edge Fn, OpenAI)
+                                  │            │            tools run on-device: check_drug, add_med, …
                                   │            ▼
                                   │      ResponseValidator ── invalid / timeout 20 s ──► deterministic fallback
                                   ▼

@@ -7,6 +7,7 @@ import { MedicinesPage } from '../pages/MedicinesPage';
 import { HeartPage } from '../pages/HeartPage';
 import { EmergencyPage } from '../pages/EmergencyPage';
 import { TabIndex } from '../common/Routes';
+import { TabRequest } from '../common/TabRequest';
 
 class TabSpec {
   index: number;
@@ -31,6 +32,23 @@ export struct MainTabs {
     new TabSpec(TabIndex.EMERGENCY, $r('app.string.tab_emergency'), $r('app.media.ic_tab_emergency')),
     new TabSpec(TabIndex.AGENT, $r('app.string.tab_agent'), $r('app.media.ic_tab_agent'))
   ];
+
+  private offOpen: () => void = () => {
+  };
+
+  aboutToAppear(): void {
+    const pending: number = TabRequest.take();
+    if (pending >= 0) {
+      this.currentIndex = pending;
+    }
+    this.offOpen = TabRequest.onOpen((tab: number) => {
+      this.currentIndex = tab;
+    });
+  }
+
+  aboutToDisappear(): void {
+    this.offOpen();
+  }
 
   @Builder
   tabBar(spec: TabSpec) {

@@ -1,0 +1,6 @@
+{
+  "insightIntentsSrcEntry": [
+    { "srcEntry": "./ets/insightintents/CheckDrugIntent.ets" },
+    { "srcEntry": "./ets/insightintents/ShowEmergencyCardIntent.ets" }
+  ]
+}
