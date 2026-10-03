@@ -662,6 +662,10 @@ export class WatchController {
     if (now - this.lastLiveMs >= LIVE_EVERY_MS) {
       this.lastLiveMs = now;
       const live: HrLiveValues = { bpm: this.bpm, activity: this.activity };
+      if (this.hrvMs > 0) {
+        live.hrvMs = this.hrvMs;
+      }
+      live.irregular = this.irregularRhythm;
       this.record('hr_live', live, now);
     }
     if (now - this.lastVitalsMs >= VITALS_EVERY_MS) {

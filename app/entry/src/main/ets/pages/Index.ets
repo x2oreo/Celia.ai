@@ -50,7 +50,8 @@ struct Index {
 
   aboutToAppear(): void {
     this.showOnboardingIfNeeded();
-    VitalsService.get().start('SIMULATED');
+    // The Celia watch via Supabase when a backend is configured; otherwise the labelled simulated source.
+    VitalsService.get().start('WATCH');
     WearNotifier.start();
     BetaBlockerWatch.start();
     VitalsService.get().onAlert((a: VitalsAlert) => this.onAlert(a));

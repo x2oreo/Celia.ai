@@ -10,8 +10,7 @@ import { DailyResting } from './RestingTrend';
 
 const log: Logger = new Logger('RestingHistory');
 
-// Watch paired with this phone. Hackathon: one demo watch (see watch/entry/src/main/ets/common/AppConfig.ets).
-const WATCH_DEVICE_ID: string = 'demo-watch-1';
+const WATCH_DEVICE_ID: string = Config.WATCH_DEVICE_ID;
 const DAYS_TO_LOAD: number = 21;
 const DAY_MS: number = 24 * 3600 * 1000;
 

@@ -28,6 +28,9 @@ export type SymptomKind = 'fine' | 'palpitations' | 'dizziness' | 'fainting' | '
 export interface HrLiveValues {
   bpm: number;
   activity: Activity;
+  /** Latest (simulated) HRV and rhythm flag, so the phone shows them live instead of every 30 s. */
+  hrvMs?: number;
+  irregular?: boolean;
 }
 
 export interface HrSessionValues {

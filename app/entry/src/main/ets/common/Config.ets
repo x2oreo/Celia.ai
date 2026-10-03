@@ -9,6 +9,8 @@ export class Config {
   static readonly SUPABASE_ANON_KEY: string = LocalConfig.SUPABASE_ANON_KEY;
   static readonly AGENT_TIMEOUT_MS: number = 20000;
   static readonly DRUG_CHECK_TIMEOUT_MS: number = 5000;
+  // Watch paired with this phone. Hackathon: one demo watch (watch/.env WATCH_DEVICE_ID).
+  static readonly WATCH_DEVICE_ID: string = 'demo-watch-1';
 
   static hasBackend(): boolean {
     return Config.BACKEND_URL.length > 0 && Config.SUPABASE_ANON_KEY.length > 0;

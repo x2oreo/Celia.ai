@@ -61,7 +61,8 @@ export async function postJson(path: string, fields: Record<string, string>, tim
 }
 
 // GET for read-only PostgREST views (no request body, so nothing personal leaves the device; still ledgered).
-export async function getJson(path: string, timeoutMs: number): Promise<NetResult> {
+// Polling callers pass ledger=false after their first call so a 2 s poll doesn't flood the 200-entry ledger.
+export async function getJson(path: string, timeoutMs: number, ledger: boolean = true): Promise<NetResult> {
   const entry: LedgerEntry = { ts: Date.now(), endpoint: path, fields: [], bytes: 0, outcome: 'OK' };
   if (!Config.hasBackend()) {
     return new NetResult(false, 0, '');
@@ -79,11 +80,15 @@ export async function getJson(path: string, timeoutMs: number): Promise<NetResul
     };
     const res: http.HttpResponse = await req.request(`${Config.BACKEND_URL}${path}`, options);
     entry.outcome = res.responseCode === 200 ? 'OK' : 'ERROR';
-    await Ledger.add(entry);
+    if (ledger) {
+      await Ledger.add(entry);
+    }
     return new NetResult(res.responseCode === 200, res.responseCode, res.result as string);
   } catch (e) {
     entry.outcome = 'ERROR';
-    await Ledger.add(entry);
+    if (ledger) {
+      await Ledger.add(entry);
+    }
     log.warn(`request ${path} failed: ${JSON.stringify(e)}`);
     return new NetResult(false, 0, '');
   } finally {
