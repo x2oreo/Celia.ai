@@ -2,7 +2,7 @@
 // card and the small pills. Everything shown comes from the saved visit and the fixed visit plan, never from AI text.
 
 import { Specialty, specialtyName } from '../doctor/DoctorPrep';
-import { DoctorVisit } from '../doctor/VisitStore';
+import { DoctorVisit, visitWhen } from '../doctor/VisitStore';
 import { knownNames, PlanGroup, visitPlan } from '../doctor/VisitPlan';
 import { dayLabel } from '../common/Format';
 import { RiskShape } from './Common';
@@ -121,8 +121,8 @@ export struct VisitCard {
                 .fontColor($r('app.color.ink'))
                 .maxLines(1)
                 .textOverflow({ overflow: TextOverflow.Ellipsis })
-              Text(this.visit.doctor.length > 0 ? `${this.visit.doctor} · ${dayLabel(this.visit.createdAt, Date.now())}` :
-                dayLabel(this.visit.createdAt, Date.now()))
+              Text(this.visit.doctor.length > 0 ? `${this.visit.doctor} · ${dayLabel(visitWhen(this.visit), Date.now())}` :
+                dayLabel(visitWhen(this.visit), Date.now()))
                 .fontSize($r('app.float.font_caption'))
                 .fontColor($r('app.color.ink_3'))
                 .maxLines(1)
@@ -133,7 +133,7 @@ export struct VisitCard {
             Image($r('app.media.ic_chevron_right')).width(18).height(18).fillColor($r('app.color.ink_4'))
           } else {
             Blank()
-            Text(dayLabel(this.visit.createdAt, Date.now()))
+            Text(dayLabel(visitWhen(this.visit), Date.now()))
               .fontSize($r('app.float.font_caption'))
               .fontColor($r('app.color.ink_3'))
           }

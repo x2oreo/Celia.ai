@@ -2689,6 +2689,26 @@
       "value": "%d known-risk medicines will be flagged for the doctor"
     },
     {
+      "name": "dv_when",
+      "value": "WHEN"
+    },
+    {
+      "name": "dv_change_date",
+      "value": "Change date"
+    },
+    {
+      "name": "dv_worries",
+      "value": "WHAT WORRIES YOU? (OPTIONAL)"
+    },
+    {
+      "name": "dv_worries_hint",
+      "value": "e.g. I get dizzy when I stand up"
+    },
+    {
+      "name": "dv_worries_label",
+      "value": "WHAT WORRIES ME"
+    },
+    {
       "name": "dv_create",
       "value": "Create visit page"
     },

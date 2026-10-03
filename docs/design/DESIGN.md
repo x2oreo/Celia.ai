@@ -684,15 +684,18 @@ QT dataset); the only model text is the labelled AI summary.
   **guess card** on `surface-alt`, radius 20: caps "LOOKS LIKE", one row per purpose (title 15 fp / 700, what is
   likely in `caption`; "From your words" in `brand-text` when the reason named it, otherwise "Usual for this
   doctor"), a Known-tint strip with the shape and "N known-risk medicines will be flagged for the doctor", and a
-  caption that says the match is fixed rules on this phone. It updates while typing. Optional doctor's name last.
-  Pinned: coral `Create visit page`.
+  caption that says the match is fixed rules on this phone. It updates while typing. Then caps "WHEN" + a 56 vp
+  `surface` row (1 vp `border`, `radius_m`): the date in `headline` ("Today" by default) and "Change date" in
+  `brand-text`, which opens the system date picker (one year back, two ahead). Caps "WHAT WORRIES YOU? (OPTIONAL)"
+  + a 72 vp text area like the reason's. Optional doctor's name last. Pinned: coral `Create visit page`. The cards
+  and the visit header show the visit date, not the day it was created.
 - **Visit page** (`pages/DoctorVisitPage.ets`), the page handed to the doctor. **Share is in the header**, not
   pinned at the bottom: back, specialty in `headline` over "Dr X · date" in `caption`, then a coral `Share` pill
   (height 44, share icon). This is the one exception to the pinned-action rule: the screen is read top-down by
   someone else, so the action stays out of the content. Top to bottom:
   1. **At a glance** card: well 44, patient name in `title-3` / 800, "Long QT syndrome · LQT2 · ICD: no" in
      `brand-text`; divider; caps "HERE FOR" + the reason in `body` / 500 + the purposes as quiet pills (height 28,
-     `surface-alt`); divider; caps "TAKES NOW" + up to four medicines, each with its compact risk badge; profile
+     `surface-alt`); when given, caps "WHAT WORRIES ME" + the words in `body`; divider; caps "TAKES NOW" + up to four medicines, each with its compact risk badge; profile
      notes in a `surface-alt` well.
   2. **Don't prescribe** card: the verdict-card container (radius 20, 1.5 vp `risk_known_border`). Header band on
      the Known tint: octagon 32, "Please don't prescribe" 16 fp / 800, "On the known-risk QT list". Body: one caps

@@ -9,7 +9,7 @@ import { parseSummary, summaryFields } from '../main/ets/doctor/DoctorSummary';
 import {
   AvoidDrug, cautionNames, guessPurposes, knownNames, PlanGroup, visitPlan, visitText
 } from '../main/ets/doctor/VisitPlan';
-import { DoctorVisit, parseVisits } from '../main/ets/doctor/VisitStore';
+import { DoctorVisit, parseVisits, visitWhen } from '../main/ets/doctor/VisitStore';
 import { ReportVisit, reportVisit } from '../main/ets/doctor/ReportPayload';
 
 function profile(): Profile {
@@ -22,6 +22,19 @@ const NOW: number = 1790000000000;
 
 export default function doctorPrepTest() {
   describe('DoctorSummary', () => {
+    it('keepsTheVisitDateAndWorries', 0, () => {
+      const raw: string = JSON.stringify([
+        { id: 2, specialty: 'DENTIST', createdAt: 100, date: '2026-10-20', worries: 'Dizzy when I stand' },
+        { id: 1, specialty: 'GP', createdAt: 50, date: '20/10/2026' }
+      ]);
+      const visits: DoctorVisit[] = parseVisits(raw);
+      expect(visits[0].date).assertEqual('2026-10-20');
+      expect(visits[0].worries).assertEqual('Dizzy when I stand');
+      expect(new Date(visitWhen(visits[0])).getDate()).assertEqual(20);
+      expect(visits[1].date).assertEqual('');            // not YYYY-MM-DD: dropped
+      expect(visitWhen(visits[1])).assertEqual(50);       // falls back to the day it was created
+    });
+
     it('sendsNoNameNotesOrSymptomText', 0, () => {
       const p: Profile = profile();
       p.name = 'Anna Kowalska';

@@ -10,9 +10,10 @@ import { Profile } from '../model/Profile';
 import { Medication } from '../model/Medication';
 import { RiskLevel } from '../model/DrugVerdict';
 import { DrugChecker } from '../drugs/DrugChecker';
-import { BriefSection, buildBrief, specialtyName } from '../doctor/DoctorPrep';
+import { BriefSection, buildBrief, specialtyName, VisitAnswers } from '../doctor/DoctorPrep';
 import { AvoidDrug, cautionNames, knownNames, PlanGroup, visitPlan, visitText } from '../doctor/VisitPlan';
-import { DoctorVisit, VisitStore } from '../doctor/VisitStore';
+import { DoctorVisit, VisitStore, visitWhen } from '../doctor/VisitStore';
+import { dayKey } from '../reminders/DoseSchedule';
 import { DoctorSummary, SummaryOutcome, SummaryResult } from '../doctor/DoctorSummary';
 import { buildReport, ReportPayload, reportVisit } from '../doctor/ReportPayload';
 import { contentHash, ShareRecord, ShareService } from '../share/ShareService';
@@ -39,7 +40,7 @@ const MEDS_SHOWN: number = 4;
 const SKIPPED_SECTIONS: string[] = ['Patient'];          // shown in the top card instead
 
 const NO_VISIT: DoctorVisit = {
-  id: 0, specialty: 'GP', doctor: '', reason: '', createdAt: 0, summary: '', sharedAt: 0
+  id: 0, specialty: 'GP', doctor: '', reason: '', date: '', worries: '', createdAt: 0, summary: '', sharedAt: 0
 };
 const NO_PROFILE: Profile = { condition: 'LQTS', genotype: 'UNKNOWN', hasIcd: false, notes: '', contacts: [] };
 
@@ -78,7 +79,7 @@ export struct DoctorVisitPage {
     }
     this.meds = await LocalStore.get().listMeds();
     this.sections = buildBrief(this.profile, this.meds, await LocalStore.get().listScans(),
-      await LocalStore.get().listEvents(), v.specialty, Date.now());
+      await LocalStore.get().listEvents(), v.specialty, Date.now(), this.answers(v));
     this.plan = visitPlan(v.reason, v.specialty);
     this.visit = v;
     if (v.summary.length > 0) {
@@ -108,11 +109,18 @@ export struct DoctorVisitPage {
 
   private async save(v: DoctorVisit, summary: string, sharedAt: number): Promise<void> {
     const next: DoctorVisit = {
-      id: v.id, specialty: v.specialty, doctor: v.doctor, reason: v.reason, createdAt: v.createdAt,
-      summary: summary, sharedAt: sharedAt
+      id: v.id, specialty: v.specialty, doctor: v.doctor, reason: v.reason, date: v.date, worries: v.worries,
+      createdAt: v.createdAt, summary: summary, sharedAt: sharedAt
     };
     this.visit = next;
     await VisitStore.update(next);
+  }
+
+  // "This visit" (date) and "What worries me" in the brief. The reason is left out: the page and the shared text
+  // already lead with it.
+  private answers(v: DoctorVisit): VisitAnswers {
+    const a: VisitAnswers = { date: dayKey(visitWhen(v)), reason: '', worries: v.worries };
+    return a;
   }
 
   private ctx(): common.UIAbilityContext {
@@ -242,8 +250,8 @@ export struct DoctorVisitPage {
           .fontColor($r('app.color.ink'))
           .maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
-        Text(this.v.doctor.length > 0 ? `${this.v.doctor} · ${dayLabel(this.v.createdAt, Date.now())}` :
-          dayLabel(this.v.createdAt, Date.now()))
+        Text(this.v.doctor.length > 0 ? `${this.v.doctor} · ${dayLabel(visitWhen(this.v), Date.now())}` :
+          dayLabel(visitWhen(this.v), Date.now()))
           .fontSize($r('app.float.font_caption'))
           .fontColor($r('app.color.ink_3'))
           .maxLines(1)
@@ -313,6 +321,14 @@ export struct DoctorVisitPage {
           }, (g: PlanGroup) => g.purpose)
         }
         .width('100%')
+        if (this.v.worries.length > 0) {
+          CapsLabel({ text: $r('app.string.dv_worries_label') })
+            .margin({ top: 6 })
+          Text(this.v.worries)
+            .fontSize($r('app.float.font_body'))
+            .fontColor($r('app.color.ink'))
+            .lineHeight(23)
+        }
       }
       .width('100%')
       .alignItems(HorizontalAlign.Start)

@@ -9,6 +9,8 @@ import { DOCTOR_MAX_CHARS, DoctorVisit, REASON_MAX_CHARS, VisitStore } from '../
 import { CapsLabel, PrimaryButton, RiskShape, ScreenHeader } from '../components/Common';
 import { specialtyIcon } from '../components/VisitParts';
 import { Motion } from '../common/Motion';
+import { dayLabel } from '../common/Format';
+import { dayKey } from '../reminders/DoseSchedule';
 import { Logger } from '../common/Logger';
 
 const log: Logger = new Logger('NewVisitPage');
@@ -19,6 +21,8 @@ export struct NewVisitPage {
   @Local specialty: Specialty = 'GP';
   @Local doctor: string = '';
   @Local reason: string = '';
+  @Local date: string = dayKey(Date.now());   // YYYY-MM-DD of the appointment
+  @Local worries: string = '';
   @Local saving: boolean = false;
 
   @Computed
@@ -32,12 +36,25 @@ export struct NewVisitPage {
     }
     this.saving = true;
     try {
-      const v: DoctorVisit = await VisitStore.add(this.specialty, this.doctor, this.reason, Date.now());
+      const v: DoctorVisit = await VisitStore.add(this.specialty, this.doctor, this.reason, Date.now(), this.date,
+        this.worries);
       this.navStack.replacePath({ name: Routes.DOCTOR_VISIT, param: new VisitParam(v.id) });
     } catch (e) {
       log.warn(`create visit: ${(e as Error).message}`);
       this.saving = false;
     }
+  }
+
+  private pickDate(): void {
+    const now: Date = new Date();
+    this.getUIContext().showDatePickerDialog({
+      start: new Date(now.getFullYear() - 1, 0, 1),
+      end: new Date(now.getFullYear() + 2, 11, 31),
+      selected: new Date(`${this.date}T12:00:00`),
+      onDateAccept: (d: Date) => {
+        this.date = dayKey(d.getTime());
+      }
+    });
   }
 
   private addStarter(s: string): void {
@@ -186,6 +203,45 @@ export struct NewVisitPage {
             .width('100%')
 
             this.guess()
+
+            CapsLabel({ text: $r('app.string.dv_when') })
+              .margin({ top: 10 })
+            Row({ space: 8 }) {
+              Text(dayLabel(new Date(`${this.date}T12:00:00`).getTime(), Date.now()))
+                .fontSize($r('app.float.font_headline'))
+                .fontWeight(FontWeight.Bold)
+                .fontColor($r('app.color.ink'))
+                .layoutWeight(1)
+              Text($r('app.string.dv_change_date'))
+                .fontSize($r('app.float.font_small'))
+                .fontWeight(FontWeight.Bold)
+                .fontColor($r('app.color.brand_text'))
+            }
+            .width('100%')
+            .height(56)
+            .padding({ left: 16, right: 16 })
+            .backgroundColor($r('app.color.surface'))
+            .border({ width: 1, color: $r('app.color.border') })
+            .borderRadius($r('app.float.radius_m'))
+            .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.98 })
+            .accessibilityGroup(true)
+            .onClick(() => {
+              this.pickDate();
+            })
+
+            CapsLabel({ text: $r('app.string.dv_worries') })
+              .margin({ top: 10 })
+            TextArea({ text: this.worries, placeholder: $r('app.string.dv_worries_hint') })
+              .height(72)
+              .fontSize($r('app.float.font_body'))
+              .fontColor($r('app.color.ink'))
+              .backgroundColor($r('app.color.surface'))
+              .border({ width: 1.5, color: $r('app.color.border_strong') })
+              .borderRadius($r('app.float.radius_m'))
+              .maxLength(REASON_MAX_CHARS)
+              .onChange((v: string) => {
+                this.worries = v;
+              })
 
             CapsLabel({ text: $r('app.string.dv_doctor_name') })
               .margin({ top: 10 })

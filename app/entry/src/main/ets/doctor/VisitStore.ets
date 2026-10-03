@@ -14,6 +14,8 @@ export interface DoctorVisit {
   specialty: Specialty;
   doctor: string;       // optional name, '' when not given
   reason: string;       // the user's own words, '' when not given
+  date: string;         // YYYY-MM-DD of the appointment, '' for visits saved before the date was asked
+  worries: string;      // "What worries me", the user's own words, '' when not given
   createdAt: number;
   summary: string;      // checked AI summary, '' when none
   sharedAt: number;     // last time a link or the text was shared, 0 = never
@@ -21,6 +23,18 @@ export interface DoctorVisit {
 
 function text(v: Object | undefined, max: number): string {
   return typeof v === 'string' ? (v as string).slice(0, max) : '';
+}
+
+const DATE_RE: RegExp = /^\d{4}-\d{2}-\d{2}$/;
+
+function day(v: Object | undefined): string {
+  return typeof v === 'string' && DATE_RE.test(v as string) ? v as string : '';
+}
+
+// When the visit is: the appointment date (noon, local time) or, for older visits, the day it was created.
+export function visitWhen(v: DoctorVisit): number {
+  const t: number = v.date === '' ? NaN : new Date(`${v.date}T12:00:00`).getTime();
+  return isNaN(t) ? v.createdAt : t;
 }
 
 function num(v: Object | undefined): number {
@@ -54,6 +68,8 @@ export function parseVisits(raw: string): DoctorVisit[] {
       specialty: s,
       doctor: text(r['doctor'], DOCTOR_MAX_CHARS),
       reason: text(r['reason'], REASON_MAX_CHARS),
+      date: day(r['date']),
+      worries: text(r['worries'], REASON_MAX_CHARS),
       createdAt: num(r['createdAt']),
       summary: text(r['summary'], 600),
       sharedAt: num(r['sharedAt'])
@@ -77,7 +93,8 @@ export class VisitStore {
     await LocalStore.get().setSetting(KEY, JSON.stringify(visits.slice(0, MAX_VISITS)));
   }
 
-  static async add(specialty: Specialty, doctor: string, reason: string, now: number): Promise<DoctorVisit> {
+  static async add(specialty: Specialty, doctor: string, reason: string, now: number, date: string = '',
+    worries: string = ''): Promise<DoctorVisit> {
     const visits: DoctorVisit[] = await VisitStore.list();
     let id: number = now;
     while (visits.some((x: DoctorVisit) => x.id === id)) {
@@ -88,6 +105,8 @@ export class VisitStore {
       specialty: specialty,
       doctor: doctor.trim().slice(0, DOCTOR_MAX_CHARS),
       reason: reason.trim().slice(0, REASON_MAX_CHARS),
+      date: day(date),
+      worries: worries.trim().slice(0, REASON_MAX_CHARS),
       createdAt: now,
       summary: '',
       sharedAt: 0
