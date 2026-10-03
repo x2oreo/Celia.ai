@@ -384,15 +384,25 @@ export struct OnboardingPage {
         .scrollBar(BarState.Off)
 
         Column({ space: 8 }) {
-          PrimaryButton({
-            label: isLastStep(this.step) ? $r('app.string.onb_done') : $r('app.string.onb_continue'),
-            active: canContinue(this.step, this.consented, this.draft) && !this.finishing,
-            onTap: () => {
-              if (canContinue(this.step, this.consented, this.draft)) {
-                this.next();
+          // Two instances, not one with a changing label: PrimaryButton passes its label to a by-value @Builder,
+          // which does not re-render when the label changes.
+          if (isLastStep(this.step)) {
+            PrimaryButton({
+              label: $r('app.string.onb_done'),
+              active: !this.finishing,
+              onTap: () => this.next()
+            })
+          } else {
+            PrimaryButton({
+              label: $r('app.string.onb_continue'),
+              active: canContinue(this.step, this.consented, this.draft),
+              onTap: () => {
+                if (canContinue(this.step, this.consented, this.draft)) {
+                  this.next();
+                }
               }
-            }
-          })
+            })
+          }
           Row() {
             if (this.step > 0) {
               Text($r('app.string.onb_back'))
