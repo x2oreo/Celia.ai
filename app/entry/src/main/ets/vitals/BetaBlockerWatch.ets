@@ -1,4 +1,5 @@
-// Runs the missed beta-blocker check (RestingTrend) at launch and every few hours. Asks at most once per day.
+// Runs the missed beta-blocker check (RestingTrend) at launch and every minute (one small GET), so the watch's
+// "Missed beta-blocker" simulation shows up quickly. Asks at most once per distinct pattern per day.
 // The finding becomes a WARN vitals alert (Heart tab, notification, event log) and a proactive agent message.
 
 import { AgentCore } from '../agent/AgentCore';
@@ -14,8 +15,8 @@ import { loadRestingHistory } from './RestingHistory';
 import { VitalsService } from './VitalsService';
 
 const log: Logger = new Logger('BetaBlockerWatch');
-const CHECK_EVERY_MS: number = 6 * 3600 * 1000;
-const KEY_LAST_ASKED: string = 'betaBlockerAskedDay';
+const CHECK_EVERY_MS: number = 60 * 1000;
+const KEY_LAST_ASKED: string = 'betaBlockerAsked';
 
 export class BetaBlockerWatch {
   private static timer: number = -1;
@@ -32,19 +33,25 @@ export class BetaBlockerWatch {
 
   static async check(now: number): Promise<BetaBlockerFinding | undefined> {
     try {
-      const today: string = dayKey(now);
-      if ((await LocalStore.get().getSetting(KEY_LAST_ASKED, '')) === today) {
-        return undefined;
-      }
       const meds: Medication[] = await LocalStore.get().listMeds();
       const reminders: DoseReminder[] = await ReminderService.list();
       const logs: DoseLog[] = await ReminderService.doseLog();
       const history: DailyResting[] = await loadRestingHistory(now);
       const f: BetaBlockerFinding | undefined = checkBetaBlocker(history, meds, reminders, logs, now);
       if (f === undefined) {
+        // Pattern gone (back to baseline, or simulation turned off): the next rise asks again. An empty history
+        // (network error) is not evidence of anything, so it keeps the marker.
+        if (history.length > 0 && (await LocalStore.get().getSetting(KEY_LAST_ASKED, '')) !== '') {
+          await LocalStore.get().setSetting(KEY_LAST_ASKED, '');
+        }
         return undefined;
       }
-      await LocalStore.get().setSetting(KEY_LAST_ASKED, today);
+      // Same day + same raised days = already asked. A new simulation run (new values) asks again.
+      const key: string = `${dayKey(now)}|${f.recent.map((d: DailyResting) => `${d.day}:${d.bpm}`).join(',')}`;
+      if ((await LocalStore.get().getSetting(KEY_LAST_ASKED, '')) === key) {
+        return undefined;
+      }
+      await LocalStore.get().setSetting(KEY_LAST_ASKED, key);
       const label: string = f.simulated ? ' (demo data)' : '';
       const alert: VitalsAlert = {
         ts: now,

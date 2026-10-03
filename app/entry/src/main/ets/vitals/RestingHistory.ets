@@ -1,6 +1,6 @@
-// Daily resting heart rate history for RestingTrend. Real data: the `watch_resting_daily` view over the watch's
-// `vitals` rows (Supabase). Without a backend or watch data, a labelled demo history so the emulator can show the
-// missed-dose question; every demo day has `simulated: true`.
+// Daily resting heart rate history for RestingTrend: the `watch_resting_daily` view over the watch's `vitals` rows
+// (Supabase). The watch's Simulate page can fill it with labelled simulated days. Without a backend configured, a
+// built-in demo history so the emulator can still show the missed-dose question; every demo day is `simulated`.
 
 import { Config } from '../common/Config';
 import { getJson, NetResult } from '../common/Net';
@@ -58,17 +58,16 @@ export async function loadRestingHistory(now: number): Promise<DailyResting[]> {
     const path: string = `/rest/v1/watch_resting_daily?device_id=eq.${WATCH_DEVICE_ID}` +
       `&select=day,resting_bpm,rest_minutes,simulated&order=day.desc&limit=${DAYS_TO_LOAD}`;
     const res: NetResult = await getJson(path, Config.DRUG_CHECK_TIMEOUT_MS);
-    if (res.ok) {
-      try {
-        const days: DailyResting[] = toDaily(res.body);
-        if (days.length > 0) {
-          return days;
-        }
-      } catch (e) {
-        log.warn(`bad watch_resting_daily response: ${JSON.stringify(e)}`);
-      }
+    if (!res.ok) {
+      return [];
+    }
+    try {
+      return toDaily(res.body);
+    } catch (e) {
+      log.warn(`bad watch_resting_daily response: ${JSON.stringify(e)}`);
+      return [];
     }
   }
-  log.info('no watch history — using demo history (SIMULATED)');
+  log.info('no backend — using built-in demo history (SIMULATED)');
   return demoHistory(now);
 }
