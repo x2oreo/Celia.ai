@@ -206,15 +206,15 @@
     },
     {
       "name": "orb_light",
-      "value": "#FFC2BE"
+      "value": "#FFCEB0"
     },
     {
       "name": "orb_mid",
-      "value": "#F26B6F"
+      "value": "#F27470"
     },
     {
       "name": "orb_dark",
-      "value": "#C7353A"
+      "value": "#D4609C"
     },
     {
       "name": "widget_ink",
@@ -242,7 +242,7 @@
     },
     {
       "name": "orb_glow",
-      "value": "#59F26B6F"
+      "value": "#59F27470"
     }
   ]
 }

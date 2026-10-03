@@ -146,7 +146,7 @@
     },
     {
       "name": "avatar_tab",
-      "value": "24vp"
+      "value": "56vp"
     },
     {
       "name": "avatar_hero",
@@ -154,11 +154,11 @@
     },
     {
       "name": "dock_side",
-      "value": "52vp"
+      "value": "60vp"
     },
     {
       "name": "dock_main",
-      "value": "72vp"
+      "value": "80vp"
     }
   ]
 }

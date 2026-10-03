@@ -1,5 +1,5 @@
-// The agent's orb avatar (DESIGN.md §6.6): coral radial gradient with a soft sheen, breathing while idle.
-// Sizes: 24 (tab), 28, 40, 96. The conversation's hero orb is VoiceOrb, which shares these colours.
+// The agent's small avatar (DESIGN.md §6.6): the Dawn orb as a still gradient with a soft sheen, breathing while
+// idle. Sizes 28 and 40 (inline). From 56 up the orb is the animated SilkOrb (tab bar, stage).
 
 import { Motion } from '../common/Motion';
 
