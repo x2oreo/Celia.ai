@@ -86,15 +86,15 @@
     },
     {
       "name": "risk_conditional",
-      "value": "Conditional risk"
+      "value": "Conditional"
     },
     {
       "name": "risk_not_listed",
-      "value": "Not on QT lists"
+      "value": "Not listed"
     },
     {
       "name": "risk_unknown",
-      "value": "Not recognised"
+      "value": "Unknown"
     },
     {
       "name": "error_generic",
@@ -126,7 +126,7 @@
     },
     {
       "name": "verdict_ask_doctor",
-      "value": "Copy a question for my doctor"
+      "value": "Ask your doctor"
     },
     {
       "name": "meds_added",
@@ -810,7 +810,7 @@
     },
     {
       "name": "agent_name",
-      "value": "Celia"
+      "value": "The agent"
     },
     {
       "name": "agent_status",
@@ -935,6 +935,54 @@
     {
       "name": "agent_emergency_cancelled",
       "value": "Emergency cancelled"
+    },
+    {
+      "name": "risk_sub_known",
+      "value": "Can affect heart rhythm"
+    },
+    {
+      "name": "risk_sub_possible",
+      "value": "Possible QT effect"
+    },
+    {
+      "name": "risk_sub_conditional",
+      "value": "Risky only in some situations"
+    },
+    {
+      "name": "risk_sub_not_listed",
+      "value": "Not on the QT list"
+    },
+    {
+      "name": "risk_sub_unknown",
+      "value": "Couldn't identify"
+    },
+    {
+      "name": "verdict_source",
+      "value": "CredibleMeds-derived list · Not a medical device. Always ask your doctor or pharmacist."
+    },
+    {
+      "name": "verdict_source_short",
+      "value": "CredibleMeds-derived list · Not a medical device."
+    },
+    {
+      "name": "badge_watch",
+      "value": "WATCH"
+    },
+    {
+      "name": "badge_simulated",
+      "value": "SIMULATED"
+    },
+    {
+      "name": "badge_on_device",
+      "value": "ON-DEVICE"
+    },
+    {
+      "name": "unit_bpm",
+      "value": "bpm"
+    },
+    {
+      "name": "verdict_ask_doctor_short",
+      "value": "Ask doctor"
     }
   ]
 }
