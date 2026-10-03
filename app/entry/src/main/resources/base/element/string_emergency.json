@@ -73,6 +73,10 @@
       "value": "Phone"
     },
     {
+      "name": "em_notes",
+      "value": "Notes for paramedics"
+    },
+    {
       "name": "em_hospital",
       "value": "Hospital"
     },

@@ -1,5 +1,5 @@
 // Editor for the emergency details (Workstream B4): date of birth, sex, blood type, allergies, ICD model,
-// cardiologist, hospital, extra fields and the per-field "show on card" switches.
+// cardiologist, hospital, notes for paramedics, extra fields and the per-field "show on card" switches.
 // Contract: used by pages/EmergencyProfilePage.ets and by onboarding. It never saves; the host saves onChange.
 // Every change emits a new Profile (a deep copy), so hosts can store it as is.
 
@@ -9,9 +9,13 @@ import { MAX_EXTRA, cloneProfile, parseList, shownOnCard, validBirthDate, withSh
 
 const SEXES: Sex[] = ['FEMALE', 'MALE', 'OTHER'];
 
+const NOTES_MAX_CHARS: number = 400;
+
 @ComponentV2
 export struct EmergencyDetailsForm {
   @Param profile: Profile | undefined = undefined;
+  // Onboarding asks for the date of birth on its "About you" step, so it hides the field here.
+  @Param showDob: boolean = true;
   @Event onChange: (profile: Profile) => void = (profile: Profile) => {
   };
   // Text being typed. Kept locally so the host's echo of our own change never rewrites what is being typed.
@@ -22,6 +26,7 @@ export struct EmergencyDetailsForm {
   @Local cardioName: string = '';
   @Local cardioPhone: string = '';
   @Local hospital: string = '';
+  @Local notes: string = '';
   @Local extraLabel: string = '';
   @Local extraValue: string = '';
   private lastEmitted: Profile | undefined = undefined;
@@ -46,6 +51,7 @@ export struct EmergencyDetailsForm {
     this.cardioName = p?.cardiologistName ?? '';
     this.cardioPhone = p?.cardiologistPhone ?? '';
     this.hospital = p?.hospital ?? '';
+    this.notes = p?.notes ?? '';
   }
 
   private edit(mutate: (p: Profile) => void): void {
@@ -109,25 +115,27 @@ export struct EmergencyDetailsForm {
   build() {
     Column({ space: 12 }) {
       // Date of birth
-      Column({ space: 8 }) {
-        this.fieldHeader($r('app.string.em_dob'), CardField.DATE_OF_BIRTH)
-        FieldInput({ text: this.dob, hint: $r('app.string.em_dob_hint'), inputType: InputType.Normal, onInput: (v: string) => {
-          this.dob = v;
-          this.dobBad = !validBirthDate(v, Date.now());
-          if (!this.dobBad) {
-            this.edit((p: Profile) => {
-              p.dateOfBirth = this.optional(v);
-            });
+      if (this.showDob) {
+        Column({ space: 8 }) {
+          this.fieldHeader($r('app.string.em_dob'), CardField.DATE_OF_BIRTH)
+          FieldInput({ text: this.dob, hint: $r('app.string.em_dob_hint'), inputType: InputType.Normal, onInput: (v: string) => {
+            this.dob = v;
+            this.dobBad = !validBirthDate(v, Date.now());
+            if (!this.dobBad) {
+              this.edit((p: Profile) => {
+                p.dateOfBirth = this.optional(v);
+              });
+            }
+          } })
+          if (this.dobBad && this.dob.trim().length >= 10) {
+            Text($r('app.string.em_dob_invalid'))
+              .fontSize($r('app.float.font_caption'))
+              .fontColor($r('app.color.risk_possible_text'))
           }
-        } })
-        if (this.dobBad && this.dob.trim().length >= 10) {
-          Text($r('app.string.em_dob_invalid'))
-            .fontSize($r('app.float.font_caption'))
-            .fontColor($r('app.color.risk_possible_text'))
         }
+        .alignItems(HorizontalAlign.Start)
+        .groupBox()
       }
-      .alignItems(HorizontalAlign.Start)
-      .groupBox()
 
       // Sex
       Column({ space: 8 }) {
@@ -225,6 +233,26 @@ export struct EmergencyDetailsForm {
             p.hospital = this.optional(v);
           });
         } })
+      }
+      .alignItems(HorizontalAlign.Start)
+      .groupBox()
+
+      // Notes for paramedics: free text, on the card and the responder view
+      Column({ space: 8 }) {
+        this.fieldHeader($r('app.string.em_notes'), CardField.NOTES)
+        TextArea({ text: this.notes, placeholder: $r('app.string.onb_notes_hint') })
+          .width('100%')
+          .height(96)
+          .fontSize($r('app.float.font_body'))
+          .backgroundColor($r('app.color.surface_alt'))
+          .borderRadius($r('app.float.radius_s'))
+          .maxLength(NOTES_MAX_CHARS)
+          .onChange((v: string) => {
+            this.notes = v;
+            this.edit((p: Profile) => {
+              p.notes = v.trim();
+            });
+          })
       }
       .alignItems(HorizontalAlign.Start)
       .groupBox()

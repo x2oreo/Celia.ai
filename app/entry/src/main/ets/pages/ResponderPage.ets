@@ -91,8 +91,14 @@ export struct ResponderPage {
 
   // Detail rows except the ones already in the header (date of birth → age, ICD model → ICD line).
   private details(): CardRow[] {
-    return detailRows(this.p(), cardLabels(this.p().cardLanguage), Date.now())
+    const rows: CardRow[] = detailRows(this.p(), cardLabels(this.p().cardLanguage), Date.now())
       .filter((r: CardRow) => r.id !== CardField.DATE_OF_BIRTH && r.id !== CardField.ICD_MODEL);
+    const notes: string = this.p().notes.trim();
+    if (notes.length > 0 && shownOnCard(this.p(), CardField.NOTES)) {
+      const r: CardRow = { id: CardField.NOTES, label: this.t().notes, value: notes };
+      rows.push(r);
+    }
+    return rows;
   }
 
   private callTargets(): CallTarget[] {
