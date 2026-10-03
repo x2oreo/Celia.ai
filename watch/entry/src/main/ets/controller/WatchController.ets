@@ -69,6 +69,7 @@ import {
 } from '../vitals/DoseNudge';
 import { Fix, currentFix } from '../sync/SosLocation';
 import { SupabaseUploader } from '../sync/SupabaseUploader';
+import { shortDrugName } from '../vitals/DrugBadge';
 
 export type SyncState = 'OFF' | 'OK' | 'PENDING' | 'ERROR';
 
@@ -152,6 +153,8 @@ export class WatchController {
   /** Drug-verdict glance: shown once when a new risky drug arrives. */
   @Trace verdictDrug: string = '';
   @Trace riskyDrugRisk: string = '';
+  /** When the risky drug was taken (epoch ms); 0 if none or unknown. Drives the home badge's time left. */
+  @Trace riskyDrugAt: number = 0;
   /** Seconds left to answer "Are you OK?"; 0 = no fall in progress. */
   @Trace fallCountdown: number = 0;
   @Trace statusText: string = '';
@@ -410,9 +413,9 @@ export class WatchController {
   /** Demo stand-in for the phone app's drug scan: toggles a recent known-risk drug. */
   toggleRiskyDrug(): void {
     if (this.riskyDrug.length > 0) {
-      this.setRiskyDrug('', '');
+      this.setRiskyDrug('', '', 0);
     } else {
-      this.setRiskyDrug('Clarithromycin', 'KNOWN_RISK');
+      this.setRiskyDrug('Clarithromycin', 'KNOWN_RISK', Date.now());
     }
   }
 
@@ -936,7 +939,7 @@ export class WatchController {
         return;
       }
       this.genotype = c.genotype;
-      this.setRiskyDrug(c.riskyDrug, c.riskyDrugRisk);
+      this.setRiskyDrug(c.riskyDrug, c.riskyDrugRisk, c.riskyDrugAt);
     });
   }
 
@@ -1093,12 +1096,13 @@ export class WatchController {
   }
 
   /** New risky drug from the phone (or Simulate) → limits change and the verdict glance pops up once. */
-  private setRiskyDrug(name: string, risk: string): void {
+  private setRiskyDrug(name: string, risk: string, takenAtMs: number): void {
     if (name.length > 0 && name !== this.riskyDrug) {
       this.verdictDrug = name;
     }
     this.riskyDrug = name;
     this.riskyDrugRisk = risk;
+    this.riskyDrugAt = name.length > 0 ? takenAtMs : 0;
     this.applyLimits();
   }
 
@@ -1140,8 +1144,10 @@ export class WatchController {
   }
 
   private raiseAlert(alert: HrAlertValues, tsMs: number): void {
-    this.showAlert(alert.direction === 'high' ? 'HIGH' : 'LOW', alert.bpm,
-      `Limit ${alert.limitBpm} · ${this.limitReason}`);
+    // A lowered high limit says which drug lowered it (the reason alone only says "drug").
+    const why = alert.direction === 'high' && this.riskyDrug.length > 0 ?
+      `lowered for ${shortDrugName(this.riskyDrug)}` : this.limitReason;
+    this.showAlert(alert.direction === 'high' ? 'HIGH' : 'LOW', alert.bpm, `Limit ${alert.limitBpm} · ${why}`);
     this.record('hr_alert', alert, tsMs);
     if (alert.direction === 'low' && alert.activity === 'ASLEEP') {
       this.vibrate(400);

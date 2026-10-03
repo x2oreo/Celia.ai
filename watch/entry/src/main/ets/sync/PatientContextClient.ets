@@ -13,9 +13,11 @@ interface ContextRow {
 
 export interface PatientContext {
   genotype: Genotype;
-  /** Name of a QT-risk drug scanned in the last 72 h, '' if none. */
+  /** Name of a QT-risk drug taken in the last 72 h, '' if none. */
   riskyDrug: string;
   riskyDrugRisk: string;
+  /** When it was taken (epoch ms, from the phone's "I took it"); 0 if none. */
+  riskyDrugAt: number;
 }
 
 /** A scanned drug counts as "recent" for this long. */
@@ -61,7 +63,8 @@ export class PatientContextClient {
       const ctx: PatientContext = {
         genotype: toGenotype(typeof row.genotype === 'string' ? row.genotype : ''),
         riskyDrug: recent && row.risky_drug !== null ? row.risky_drug : '',
-        riskyDrugRisk: recent && row.risky_drug_risk !== null ? row.risky_drug_risk : ''
+        riskyDrugRisk: recent && row.risky_drug_risk !== null ? row.risky_drug_risk : '',
+        riskyDrugAt: recent ? at : 0
       };
       return ctx;
     } catch (e) {

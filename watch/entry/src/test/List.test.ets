@@ -7,6 +7,7 @@ import motionAnalyzerTest from './MotionAnalyzer.test';
 import scenariosTest from './Scenarios.test';
 import sessionStatsTest from './SessionStats.test';
 import trackersTest from './Trackers.test';
+import drugBadgeTest from './DrugBadge.test';
 
 export default function testsuite() {
   alarmRulesTest();
@@ -18,4 +19,5 @@ export default function testsuite() {
   trackersTest();
   doseNudgeTest();
   pairingTest();
+  drugBadgeTest();
 }
