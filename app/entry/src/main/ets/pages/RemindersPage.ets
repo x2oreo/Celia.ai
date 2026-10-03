@@ -13,7 +13,10 @@ import { medRisk } from './MedicinesPage';
 import { toast } from '../common/Toast';
 import { pulse } from '../common/Haptics';
 import { Motion } from '../common/Motion';
-import { PrimaryButton, RiskShape } from '../components/Common';
+import { EmptyCard, fmtText, PrimaryButton, resText, RiskShape, ScreenHeader } from '../components/Common';
+import { RiskUi } from '../common/RiskUi';
+import { TabRequest } from '../common/TabRequest';
+import { TabIndex } from '../common/Routes';
 
 class TimePreset {
   label: Resource;
@@ -41,6 +44,7 @@ function hhmm(hour: number, minute: number): string {
 
 @ComponentV2
 export struct RemindersPage {
+  @Consumer('navStack') navStack: NavPathStack = new NavPathStack();
   @Local reminders: DoseReminder[] = [];
   @Local logs: DoseLog[] = [];
   @Local meds: Medication[] = [];
@@ -108,6 +112,13 @@ export struct RemindersPage {
   private riskFor(r: DoseReminder): RiskLevel {
     const m: Medication | undefined = this.medFor(r);
     return m === undefined ? 'UNKNOWN_DRUG' : medRisk(m);
+  }
+
+  // "Bisoprolol, 08:00, due now, Known risk": status and verdict by their words.
+  private spoken(r: DoseReminder): string {
+    const ui: UIContext = this.getUIContext();
+    return [r.medName, timeLabel(r), resText(ui, this.statusWord(this.statusOf(r))),
+      resText(ui, RiskUi.label(this.riskFor(r)))].join(', ');
   }
 
   private statusWord(s: DoseStatus): Resource {
@@ -211,6 +222,7 @@ export struct RemindersPage {
     .backgroundColor($r('app.color.surface'))
     .border({ width: 1, color: $r('app.color.border') })
     .borderRadius($r('app.float.radius_l'))
+    .accessibilityGroup(true)
   }
 
   // ── Timeline ───────────────────────────────────────────────────────────────────────────────
@@ -258,6 +270,7 @@ export struct RemindersPage {
         .fontFeature('"tnum" on')
         .width(48)
         .margin({ top: 14 })
+        .accessibilityLevel('no')   // the time is read with the card
 
       // Rail
       Column() {
@@ -297,6 +310,9 @@ export struct RemindersPage {
             .textCase(TextCase.UpperCase)
         }
         .width('100%')
+        .accessibilityGroup(true)
+        .accessibilityText(this.spoken(r))
+        .accessibilityDescription(resText(this.getUIContext(), $r('app.string.a11y_rem_row_hint')))
         if (this.medFor(r) !== undefined && medSubtitle(this.medFor(r) as Medication) !== '') {
           Text(medSubtitle(this.medFor(r) as Medication))
             .fontSize($r('app.float.font_caption'))
@@ -333,7 +349,8 @@ export struct RemindersPage {
             $r('app.color.brand_accent'))
           .borderRadius(22)
           .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.96 })
-          .accessibilityText($r('app.string.rem_taken'))
+          .accessibilityGroup(true)
+          .accessibilityText(fmtText(this.getUIContext(), $r('app.string.rem_taken_a11y'), r.medName))
           .onClick(() => {
             this.markTaken(r);
           })
@@ -415,7 +432,9 @@ export struct RemindersPage {
     })
     .borderRadius($r('app.float.radius_s'))
     .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.97 })
-    .accessibilityText(m.name)
+    .accessibilityGroup(true)
+    .accessibilityText(`${m.name}, ${resText(this.getUIContext(), RiskUi.label(medRisk(m)))}`)
+    .accessibilitySelected(this.pickMedId === m.id)
     .onClick(() => {
       this.pickMedId = m.id;
     })
@@ -443,6 +462,8 @@ export struct RemindersPage {
     .borderRadius($r('app.float.radius_s'))
     .animation({ duration: 150, curve: Curve.EaseOut })
     .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.96 })
+    .accessibilityGroup(true)
+    .accessibilitySelected(selected)
     .onClick(onTap)
   }
 
@@ -471,10 +492,13 @@ export struct RemindersPage {
             this.minute = p.minute;
           })
         }, (p: TimePreset, i: number) => `${i}-${this.preset === i}`)
-        this.timeChip($r('app.string.rem_custom'), this.preset === CUSTOM ? hhmm(this.hour, this.minute) : '',
-          this.preset === CUSTOM, () => {
-            this.preset = CUSTOM;
-          })
+        // Keyed like the presets: builder arguments are passed by value, so the chip is rebuilt when its state changes.
+        ForEach([CUSTOM], (c: number) => {
+          this.timeChip($r('app.string.rem_custom'), this.preset === c ? hhmm(this.hour, this.minute) : '',
+            this.preset === c, () => {
+              this.preset = c;
+            })
+        }, (c: number) => `${c}-${this.preset === c}-${this.hour}-${this.minute}`)
       }
       .width('100%')
       if (this.preset === CUSTOM) {
@@ -524,6 +548,8 @@ export struct RemindersPage {
 
   build() {
     NavDestination() {
+      Column() {
+      ScreenHeader({ title: $r('app.string.rem_title') })
       Scroll() {
         Column({ space: 12 }) {
           this.summary()
@@ -543,9 +569,15 @@ export struct RemindersPage {
 
           this.sectionLabel($r('app.string.rem_new'))
           if (this.meds.length === 0) {
-            Text($r('app.string.rem_need_meds'))
-              .fontSize($r('app.float.font_body'))
-              .fontColor($r('app.color.ink_3'))
+            // No dead end: straight to the Medicines tab.
+            EmptyCard({
+              message: $r('app.string.rem_need_meds'),
+              action: $r('app.string.meds_add_tile'),
+              onAction: () => {
+                this.navStack.clear();
+                TabRequest.open(TabIndex.MEDICINES);
+              }
+            })
           } else {
             this.newReminder()
           }
@@ -554,12 +586,15 @@ export struct RemindersPage {
         .width('100%')
       }
       .width('100%')
-      .height('100%')
+      .layoutWeight(1)
       .align(Alignment.Top)
       .scrollBar(BarState.Off)
       .edgeEffect(EdgeEffect.Spring)
+      }
+      .width('100%')
+      .height('100%')
     }
-    .title($r('app.string.rem_title'))
+    .hideTitleBar(true)
     .backgroundColor($r('app.color.bg'))
     .onReady((ctx: NavDestinationContext) => {
       const p: Object | undefined = ctx.pathInfo.param as Object | undefined;

@@ -1,5 +1,5 @@
 // Heart-rate ring hero (Home and Heart): bezel ring, pulsing heart, display bpm, state line and source badge.
-// Heart rate only. The ring colour follows the alert zone and is always paired with a word.
+// Heart rate only. The ring colour follows the alert zone and is always paired with a word. Read as one group.
 
 import { Motion } from '../common/Motion';
 import { SourceBadge } from './Common';
@@ -54,6 +54,7 @@ export struct HrRing {
         .color(this.ringColor())
         .backgroundColor($r('app.color.border'))
         .style({ strokeWidth: 12 })
+        .accessibilityLevel('no')
       Column({ space: 2 }) {
         Image($r('app.media.ic_heart_fill'))
           .width(20)
@@ -66,6 +67,7 @@ export struct HrRing {
           .fontColor($r('app.color.ink'))
           .fontFeature('"tnum" on')
           .lineHeight(64)
+          .accessibilityLevel(this.bpm > 0 ? 'auto' : 'no')
         Text(this.caption)
           .fontSize($r('app.float.font_body'))
           .fontWeight(FontWeight.Medium)
@@ -79,6 +81,8 @@ export struct HrRing {
     }
     .width(this.dim)
     .height(this.dim)
+    // One sentence for a screen reader: "69, bpm · resting, SIMULATED".
+    .accessibilityGroup(true)
     .onAppear(() => this.startBeat())
   }
 }

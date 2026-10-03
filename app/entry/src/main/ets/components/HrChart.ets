@@ -48,6 +48,10 @@ export struct HrChart {
     }
     .width(this.chartWidth)
     .height(this.chartHeight)
+    // The line itself says nothing to a screen reader: read the range instead.
+    .accessibilityGroup(true)
+    .accessibilityText(this.hrs.length === 0 ? $r('app.string.a11y_hr_chart_empty') :
+      $r('app.string.a11y_hr_chart', Math.round(Math.min(...this.hrs)), Math.round(Math.max(...this.hrs))))
   }
 
   private yFor(bpm: number): number {

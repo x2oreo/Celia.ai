@@ -7,7 +7,7 @@ import { DrugEntry } from '../drugs/DrugDataset';
 import { gtinCountry } from '../drugs/Gs1';
 import { learnBox } from '../drugs/BarcodeService';
 import { emergencyFor } from '../common/EmergencyNumbers';
-import { PrimaryButton, RiskBadge } from './Common';
+import { fmtText, PrimaryButton, RiskBadge } from './Common';
 
 @ComponentV2
 export struct TeachBoxForm {
@@ -21,7 +21,8 @@ export struct TeachBoxForm {
 
   private countryLine(): string {
     const code: string = gtinCountry(this.gtin);
-    return code.length === 0 ? `Barcode ${this.gtin}` : `${emergencyFor(code).name} box · ${this.gtin}`;
+    return code.length === 0 ? fmtText(this.getUIContext(), $r('app.string.teach_barcode'), this.gtin) :
+      fmtText(this.getUIContext(), $r('app.string.teach_country_box'), emergencyFor(code).name, this.gtin);
   }
 
   private async save(): Promise<void> {

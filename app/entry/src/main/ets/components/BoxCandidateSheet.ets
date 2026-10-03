@@ -5,7 +5,7 @@
 import { BoxCandidate } from '../drugs/BoxIdentifyClient';
 import { gtinCountry } from '../drugs/Gs1';
 import { emergencyFor } from '../common/EmergencyNumbers';
-import { InkButton, SecondaryButton, SourceBadge } from './Common';
+import { fmtText, InkButton, SecondaryButton, SourceBadge } from './Common';
 
 export type LookupPhase = 'FAST' | 'DEEP' | 'FOUND';
 
@@ -21,7 +21,8 @@ export struct BoxCandidateSheet {
 
   private barcodeLine(): string {
     const code: string = gtinCountry(this.gtin);
-    return code.length === 0 ? `Barcode ${this.gtin}` : `${emergencyFor(code).name} box · ${this.gtin}`;
+    return code.length === 0 ? fmtText(this.getUIContext(), $r('app.string.teach_barcode'), this.gtin) :
+      fmtText(this.getUIContext(), $r('app.string.teach_country_box'), emergencyFor(code).name, this.gtin);
   }
 
   private detailLine(c: BoxCandidate): string {

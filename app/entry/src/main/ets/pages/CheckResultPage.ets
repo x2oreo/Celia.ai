@@ -8,7 +8,9 @@ import { BoxInfo } from '../model/BoxInfo';
 import { Genotype, Profile } from '../model/Profile';
 import { VerdictCard } from '../components/VerdictCard';
 import { MedicineInfoCard } from '../components/MedicineInfoCard';
-import { BackHeader, QuietButton, SecondaryButton, StatusStrip, TypingDots } from '../components/Common';
+import {
+  fmtText, QuietButton, ScreenHeader, SecondaryButton, StatusStrip, TypingDots
+} from '../components/Common';
 import { Logger } from '../common/Logger';
 import { toast } from '../common/Toast';
 import { AgentPrompt } from '../agent/AgentPrompt';
@@ -25,8 +27,11 @@ export struct CheckResultPage {
   @Local genotype: Genotype = 'UNKNOWN';
   @Local alreadyMine: boolean = false;
   @Local failed: boolean = false;
+  private param: CheckParam | undefined = undefined;
 
   private async load(param: CheckParam): Promise<void> {
+    this.param = param;
+    this.failed = false;
     try {
       const profile: Profile | undefined = await LocalStore.get().getProfile();
       this.genotype = profile?.genotype ?? 'UNKNOWN';
@@ -63,18 +68,13 @@ export struct CheckResultPage {
     }
     const v: DrugVerdict = this.outcome.verdict;
     this.navStack.clear();
-    AgentPrompt.ask(`I was offered ${v.query}. Is it safe for me, and what should I ask my doctor?`);
+    AgentPrompt.ask(fmtText(this.getUIContext(), $r('app.string.check_ask_prompt'), v.query));
   }
 
   build() {
     NavDestination() {
       Column() {
-        BackHeader({
-          title: $r('app.string.check_title'),
-          onBack: () => {
-            this.navStack.pop();
-          }
-        })
+        ScreenHeader({ title: $r('app.string.check_title') })
         Scroll() {
           Column({ space: 12 }) {
             if (this.failed) {
@@ -83,6 +83,15 @@ export struct CheckResultPage {
                 label: $r('app.string.check_failed'),
                 action: $r('app.string.check_retry'),
                 onAction: () => {
+                  if (this.param !== undefined) {
+                    this.load(this.param);
+                  }
+                }
+              })
+              SecondaryButton({
+                label: $r('app.string.check_another'),
+                icon: $r('app.media.ic_search'),
+                onTap: () => {
                   this.navStack.pop();
                 }
               })

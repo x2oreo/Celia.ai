@@ -10,7 +10,7 @@ import { VitalsService } from '../vitals/VitalsService';
 import { Routes, SosParam } from '../common/Routes';
 import { dateTime } from '../common/Format';
 import { toast } from '../common/Toast';
-import { PrimaryButton, SectionHeader } from '../components/Common';
+import { PrimaryButton, ScreenHeader, SectionHeader } from '../components/Common';
 
 @ComponentV2
 export struct SymptomLogPage {
@@ -50,6 +50,7 @@ export struct SymptomLogPage {
       .backgroundColor(this.symptom === sym ? $r('app.color.chat_user_bg') : $r('app.color.surface'))
       .border({ width: this.symptom === sym ? 0 : 1.5, color: $r('app.color.border_strong') })
       .borderRadius(100)
+      .accessibilitySelected(this.symptom === sym)
       .onClick(() => {
         this.symptom = sym;
       })
@@ -65,6 +66,7 @@ export struct SymptomLogPage {
       .backgroundColor(this.activity === a ? $r('app.color.chat_user_bg') : $r('app.color.surface'))
       .border({ width: this.activity === a ? 0 : 1.5, color: $r('app.color.border_strong') })
       .borderRadius(100)
+      .accessibilitySelected(this.activity === a)
       .onClick(() => {
         this.activity = a;
       })
@@ -72,6 +74,8 @@ export struct SymptomLogPage {
 
   build() {
     NavDestination() {
+      Column() {
+      ScreenHeader({ title: $r('app.string.sym_title') })
       Scroll() {
         Column({ space: 12 }) {
           SectionHeader({ title: $r('app.string.sym_what') })
@@ -108,12 +112,14 @@ export struct SymptomLogPage {
             Slider({ value: this.severity, min: 1, max: 5, step: 1, style: SliderStyle.InSet })
               .showSteps(true)
               .selectedColor($r('app.color.brand_accent'))
+              .accessibilityText($r('app.string.sym_severity_a11y', this.severity))
               .onChange((v: number) => {
                 this.severity = Math.round(v);
               })
-            Text(`${this.severity} / 5`)
+            Text($r('app.string.sym_severity_value', this.severity))
               .fontSize($r('app.float.font_small'))
               .fontColor($r('app.color.ink_3'))
+              .accessibilityLevel('no')
           }
           .width('100%')
           .padding(12)
@@ -157,11 +163,14 @@ export struct SymptomLogPage {
         .width('100%')
       }
       .width('100%')
-      .height('100%')
+      .layoutWeight(1)
       .align(Alignment.Top)
       .scrollBar(BarState.Off)
+      }
+      .width('100%')
+      .height('100%')
     }
-    .title($r('app.string.sym_title'))
+    .hideTitleBar(true)
     .backgroundColor($r('app.color.bg'))
   }
 

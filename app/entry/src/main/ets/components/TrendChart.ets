@@ -1,13 +1,20 @@
 // Resting heart rate per day as a trend line, with two aligned rows under it: dose logged and symptom reported.
 // A daily trend, never an ECG-style trace (DESIGN.md §10.2). Marks are ink, not risk colours.
 
-import { dayX, TrendDay, TrendPoint, trendPoints, TrendScale, trendScale } from '../vitals/Trends';
+import { dayX, TrendDay, TrendPoint, trendPoints, TrendScale, trendScale, trendStats } from '../vitals/Trends';
 
 const LINE_H: number = 140;
 const ROW_H: number = 22;
 const AXIS_W: number = 30;
 const DOT: number = 6;
 const MARK: number = 8;
+
+// Axis text. Not a @Builder with an argument: those are passed by value and kept the old dates when the span changed.
+@Extend(Text)
+function axisLabel() {
+  .fontSize($r('app.float.font_micro'))
+  .fontColor($r('app.color.ink_3'))
+}
 
 @ComponentV2
 export struct TrendChart {
@@ -37,6 +44,16 @@ export struct TrendChart {
     return `${d.substring(8, 10)}.${d.substring(5, 7)}`;
   }
 
+  // The drawing says nothing to a screen reader: read the range and how many days have a value.
+  private spoken(): Resource {
+    const bpm: number[] = this.days.filter((d: TrendDay) => d.restingBpm > 0).map((d: TrendDay) => d.restingBpm);
+    if (bpm.length === 0) {
+      return $r('app.string.a11y_trend_chart_empty', this.days.length);
+    }
+    return $r('app.string.a11y_trend_chart', bpm.length, this.days.length, Math.min(...bpm), Math.max(...bpm),
+      trendStats(this.days).doseDays, trendStats(this.days).symptomDays);
+  }
+
   @Builder
   guide(y: number) {
     Line()
@@ -44,13 +61,6 @@ export struct TrendChart {
       .endPoint([this.plotWidth, y])
       .stroke($r('app.color.border_strong'))
       .strokeDashArray([4, 4])
-  }
-
-  @Builder
-  axisLabel(text: string) {
-    Text(text)
-      .fontSize($r('app.float.font_micro'))
-      .fontColor($r('app.color.ink_3'))
   }
 
   @Builder
@@ -89,9 +99,9 @@ export struct TrendChart {
     Column() {
       Row() {
         Column() {
-          this.axisLabel(`${this.range().max}`)
+          Text(`${this.range().max}`).axisLabel()
           Blank()
-          this.axisLabel(`${this.range().min}`)
+          Text(`${this.range().min}`).axisLabel()
         }
         .width(AXIS_W)
         .height(LINE_H)
@@ -126,9 +136,9 @@ export struct TrendChart {
 
       if (this.days.length > 0) {
         Row() {
-          this.axisLabel(this.label(0))
+          Text(this.label(0)).axisLabel()
           Blank()
-          this.axisLabel(this.label(this.days.length - 1))
+          Text(this.label(this.days.length - 1)).axisLabel()
         }
         .width('100%')
         .padding({ left: AXIS_W, top: 4, bottom: 8 })
@@ -139,5 +149,7 @@ export struct TrendChart {
     }
     .width('100%')
     .alignItems(HorizontalAlign.Start)
+    .accessibilityGroup(true)
+    .accessibilityText(this.spoken())
   }
 }

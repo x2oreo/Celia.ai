@@ -20,7 +20,7 @@ import { MedicineInfoCard } from '../components/MedicineInfoCard';
 import { TeachBoxForm } from '../components/TeachBoxForm';
 import { CardPayload, parseCardLink, parsePayloadJson } from '../emergency/CardLink';
 import { parseShareLink, ShareService, viewerUrl } from '../share/ShareService';
-import { PrimaryButton, StatusStrip } from '../components/Common';
+import { PrimaryButton, ScreenHeader, StatusStrip } from '../components/Common';
 import { Logger } from '../common/Logger';
 import { toast } from '../common/Toast';
 
@@ -254,22 +254,11 @@ export struct ScanPage {
   build() {
     NavDestination() {
       Column() {
+        ScreenHeader({ title: $r('app.string.scan_title'), onDark: true })
         Row({ space: 12 }) {
-          Row() {
-            Image($r('app.media.ic_close')).width(20).height(20).fillColor($r('app.color.on_accent'))
-          }
-          .width($r('app.float.touch_min'))
-          .height($r('app.float.touch_min'))
-          .justifyContent(FlexAlign.Center)
-          .borderRadius(24)
-          .backgroundColor($r('app.color.scan_frame'))
-          .accessibilityText($r('app.string.a11y_close'))
-          .onClick(() => {
-            this.navStack.pop();
-          })
           if (this.outcome !== undefined && (this.outcome.verdict.ingredient !== '' || this.outcome.box !== undefined)) {
             // "Found" is about identification only; the risk is on the sheet.
-            Text(`✓ Found: ${this.found()}`)
+            Text($r('app.string.scan_found_name', this.found()))
               .fontSize($r('app.float.font_small'))
               .fontWeight(FontWeight.Bold)
               .fontColor($r('app.color.on_accent'))
@@ -281,7 +270,8 @@ export struct ScanPage {
           }
         }
         .width('100%')
-        .padding({ left: 16, right: 16, top: 12 })
+        .constraintSize({ minHeight: 36 })
+        .padding({ left: 16, right: 16 })
 
         Blank()
 
@@ -297,6 +287,7 @@ export struct ScanPage {
           .height(180)
           .justifyContent(FlexAlign.Center)
           .padding(20)
+          .accessibilityGroup(true)
           .backgroundColor($r('app.color.scan_frame'))
           .border({
             width: 2,

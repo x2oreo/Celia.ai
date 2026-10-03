@@ -7,7 +7,7 @@ import { AgentCore } from '../agent/AgentCore';
 import { LocalStore, StoreTopic } from '../data/LocalStore';
 import { ChatSummary, TITLE_MAX_CHARS } from '../model/Chat';
 import { Routes } from '../common/Routes';
-import { BackHeader, EmptyCard, PrimaryButton } from '../components/Common';
+import { EmptyCard, PrimaryButton, ScreenHeader } from '../components/Common';
 import { Logger } from '../common/Logger';
 
 const log: Logger = new Logger('ChatsPage');
@@ -134,7 +134,8 @@ export struct ChatsPage {
         .maxLines(1)
         .textOverflow({ overflow: TextOverflow.Ellipsis })
       Row({ space: 8 }) {
-        Text(`${c.messageCount} ${c.messageCount === 1 ? 'message' : 'messages'} · ${chatWhen(c.updatedAt, Date.now())}`)
+        Text(c.messageCount === 1 ? $r('app.string.chats_count_one', chatWhen(c.updatedAt, Date.now())) :
+          $r('app.string.chats_count_many', c.messageCount, chatWhen(c.updatedAt, Date.now())))
           .fontSize($r('app.float.font_caption'))
           .fontColor($r('app.color.ink_3'))
           .layoutWeight(1)
@@ -154,6 +155,8 @@ export struct ChatsPage {
     .border({ width: 1, color: $r('app.color.border') })
     .borderRadius($r('app.float.radius_m'))
     .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.98 })
+    .accessibilityGroup(true)
+    .accessibilityDescription(this.str($r('app.string.a11y_chats_row_hint')))
     .onClick(() => {
       this.open(c.id);
     })
@@ -194,12 +197,7 @@ export struct ChatsPage {
   build() {
     NavDestination() {
       Column() {
-        BackHeader({
-          title: $r('app.string.chats_title'),
-          onBack: () => {
-            this.navStack.pop();
-          }
-        })
+        ScreenHeader({ title: $r('app.string.chats_title') })
         Scroll() {
           Column({ space: 10 }) {
             PrimaryButton({

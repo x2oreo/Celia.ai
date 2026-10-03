@@ -115,6 +115,7 @@ export struct MedicineDetailSheet {
     }
     .width('100%')
     .alignItems(VerticalAlign.Top)
+    .accessibilityGroup(true)
   }
 
   @Builder
@@ -145,6 +146,7 @@ export struct MedicineDetailSheet {
       .layoutWeight(1)
     }
     .width('100%')
+    .accessibilityGroup(true)
   }
 
   private subline(): string {
@@ -230,6 +232,7 @@ export struct MedicineDetailSheet {
         }
         Row({ space: 12 }) {
           RiskShape({ risk: 'POSSIBLE_RISK', dim: 20 })
+            .accessibilityLevel('no-hide-descendants')
           Column({ space: 2 }) {
             Text(c.drugs.length > 1 ? `+ ${c.drugs[1]}` : '')
               .fontSize($r('app.float.font_body'))
@@ -245,6 +248,7 @@ export struct MedicineDetailSheet {
         }
         .width('100%')
         .alignItems(VerticalAlign.Top)
+        .accessibilityGroup(true)
       }, (c: ComboVerdict) => c.drugs.join('+'))
       if (this.facts.alternatives.length > 0) {
         Divider().color($r('app.color.divider'))

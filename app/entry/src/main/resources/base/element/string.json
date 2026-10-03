@@ -157,6 +157,10 @@
       "value": "Check another medicine"
     },
     {
+      "name": "check_ask_prompt",
+      "value": "I was offered %s. Is it safe for me, and what should I ask my doctor?"
+    },
+    {
       "name": "check_title",
       "value": "Medicine check"
     },
@@ -209,8 +213,20 @@
       "value": "My medicines"
     },
     {
+      "name": "meds_mine_count",
+      "value": "My medicines · %d"
+    },
+    {
       "name": "meds_empty",
       "value": "No medicines yet. Add one or scan a box."
+    },
+    {
+      "name": "meds_link_reminders",
+      "value": "Reminders"
+    },
+    {
+      "name": "meds_link_history",
+      "value": "History"
     },
     {
       "name": "meds_swipe_hint",
@@ -253,6 +269,22 @@
       "value": "Nothing matches this filter."
     },
     {
+      "name": "history_empty_action",
+      "value": "Check a medicine"
+    },
+    {
+      "name": "history_show_all",
+      "value": "Show all checks"
+    },
+    {
+      "name": "history_interaction",
+      "value": "interaction"
+    },
+    {
+      "name": "history_when_interaction",
+      "value": "%s · interaction"
+    },
+    {
       "name": "heart_waiting",
       "value": "Waiting for data"
     },
@@ -293,6 +325,14 @@
       "value": "Rhythm"
     },
     {
+      "name": "heart_rhythm_regular",
+      "value": "Regular"
+    },
+    {
+      "name": "heart_rhythm_irregular",
+      "value": "Irregular"
+    },
+    {
       "name": "heart_alerts",
       "value": "ALERTS"
     },
@@ -301,8 +341,32 @@
       "value": "No alerts. Everything looks calm."
     },
     {
+      "name": "heart_bpm_value",
+      "value": "%d bpm"
+    },
+    {
+      "name": "heart_alert_critical_a11y",
+      "value": "Urgent alert, %d beats per minute"
+    },
+    {
+      "name": "heart_alert_warn_a11y",
+      "value": "Warning, %d beats per minute"
+    },
+    {
+      "name": "heart_alert_info_a11y",
+      "value": "Note, %d beats per minute"
+    },
+    {
       "name": "heart_sim_controls",
       "value": "Demo controls"
+    },
+    {
+      "name": "heart_link_symptom",
+      "value": "Log a symptom"
+    },
+    {
+      "name": "heart_link_doctor",
+      "value": "Doctor prep"
     },
     {
       "name": "emergency_subtitle",
@@ -761,6 +825,14 @@
       "value": "HOW BAD?"
     },
     {
+      "name": "sym_severity_value",
+      "value": "%d / 5"
+    },
+    {
+      "name": "sym_severity_a11y",
+      "value": "How bad, %d out of 5"
+    },
+    {
       "name": "sym_doing",
       "value": "WHAT WERE YOU DOING?"
     },
@@ -795,6 +867,14 @@
     {
       "name": "rem_taken",
       "value": "Taken"
+    },
+    {
+      "name": "rem_taken_a11y",
+      "value": "Mark %s as taken"
+    },
+    {
+      "name": "a11y_rem_row_hint",
+      "value": "Long press to delete this reminder"
     },
     {
       "name": "rem_new",
@@ -871,6 +951,14 @@
     {
       "name": "teach_title",
       "value": "New box — teach Celia once"
+    },
+    {
+      "name": "teach_barcode",
+      "value": "Barcode %s"
+    },
+    {
+      "name": "teach_country_box",
+      "value": "%s box · %s"
     },
     {
       "name": "teach_body",
@@ -1161,6 +1249,30 @@
       "value": "Back"
     },
     {
+      "name": "a11y_unavailable",
+      "value": "Not available yet"
+    },
+    {
+      "name": "a11y_loading",
+      "value": "Loading"
+    },
+    {
+      "name": "a11y_expanded",
+      "value": "Expanded"
+    },
+    {
+      "name": "a11y_collapsed",
+      "value": "Collapsed"
+    },
+    {
+      "name": "a11y_trace_expanded",
+      "value": "Expanded. Double tap to hide the lookup steps."
+    },
+    {
+      "name": "a11y_trace_collapsed",
+      "value": "Collapsed. Double tap to show the lookup steps."
+    },
+    {
       "name": "a11y_camera",
       "value": "Scan a medicine box"
     },
@@ -1201,6 +1313,10 @@
       "value": "Found"
     },
     {
+      "name": "scan_found_name",
+      "value": "✓ Found: %s"
+    },
+    {
       "name": "a11y_close",
       "value": "Close"
     },
@@ -1219,6 +1335,14 @@
     {
       "name": "heart_only_hr",
       "value": "Heart rate only. This app does not measure QT."
+    },
+    {
+      "name": "a11y_hr_chart",
+      "value": "Heart rate over the last minutes: between %d and %d beats per minute"
+    },
+    {
+      "name": "a11y_hr_chart_empty",
+      "value": "No heart rate history yet"
     },
     {
       "name": "checkin_from_watch",
@@ -1593,6 +1717,14 @@
       "value": "Open now"
     },
     {
+      "name": "chats_count_one",
+      "value": "1 message · %s"
+    },
+    {
+      "name": "chats_count_many",
+      "value": "%d messages · %s"
+    },
+    {
       "name": "chats_rename",
       "value": "Rename"
     },
@@ -1635,6 +1767,10 @@
     {
       "name": "a11y_notes_close",
       "value": "Hide the notes for today"
+    },
+    {
+      "name": "a11y_chats_row_hint",
+      "value": "Long press to rename or delete"
     },
     {
       "name": "a11y_new_chat",
@@ -2077,6 +2213,14 @@
       "value": "Daily resting heart rate from the watch. This is not an ECG."
     },
     {
+      "name": "a11y_trend_chart",
+      "value": "Resting heart rate per day. %d of %d days have a reading, between %d and %d beats per minute. A dose was logged on %d days and a symptom on %d days."
+    },
+    {
+      "name": "a11y_trend_chart_empty",
+      "value": "Resting heart rate per day. No readings in the last %d days."
+    },
+    {
       "name": "trends_bpm",
       "value": "bpm"
     },
@@ -2114,7 +2258,11 @@
     },
     {
       "name": "trends_offline",
-      "value": "Couldn't load your watch history. Check your connection and open this page again."
+      "value": "Couldn't load your watch history. Check your connection and try again."
+    },
+    {
+      "name": "trends_no_rows",
+      "value": "Your watch has not sent any data in the last %d days. Wear it and keep it paired, then open this page again."
     },
     {
       "name": "trends_disclaimer",

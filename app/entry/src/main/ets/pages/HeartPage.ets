@@ -1,12 +1,13 @@
-// Heart tab (DESIGN.md §10.2): ring hero, trend line, extra vitals, recent alerts, links to the symptom log and
-// doctor report, and the demo controls (clearly labelled). Heart rate only, never QT.
+// Heart tab (DESIGN.md §10.2): header, ring hero, quick links (Trends, symptom log, doctor prep) seen without
+// scrolling, trend line, extra vitals, recent alerts, and the demo controls (clearly labelled). Heart rate only,
+// never QT.
 
 import { VitalsAlert, VitalsSample } from '../model/Vitals';
 import { VitalsService } from '../vitals/VitalsService';
 import { SCENARIOS, ScenarioName } from '../vitals/SimulatedSource';
 import { clock } from '../common/Format';
 import { HrChart } from '../components/HrChart';
-import { NavRow, PageTitle, QuickReplyChip, RiskShape, SectionHeader } from '../components/Common';
+import { QuickReplyChip, RiskShape, ScreenHeader, SectionHeader } from '../components/Common';
 import { HrRing, HrZone } from '../components/HrRing';
 import { Routes } from '../common/Routes';
 import { LengthMetrics } from '@kit.ArkUI';
@@ -19,6 +20,32 @@ export function severityColor(a: VitalsAlert): Resource {
       return $r('app.color.risk_possible');
     default:
       return $r('app.color.risk_unknown');
+  }
+}
+
+// One extra vital: value over its label. A component, not a @Builder with arguments: builder arguments are passed by
+// value, so the tiles would keep the first reading.
+@ComponentV2
+struct HeartStat {
+  @Param label: ResourceStr = '';
+  @Param value: ResourceStr = '';
+
+  build() {
+    Column({ space: 2 }) {
+      Text(this.value)
+        .fontSize($r('app.float.font_subtitle'))
+        .fontWeight(FontWeight.Bold)
+        .fontColor($r('app.color.ink'))
+      Text(this.label)
+        .fontSize($r('app.float.font_caption'))
+        .fontColor($r('app.color.ink_3'))
+    }
+    .layoutWeight(1)
+    .alignItems(HorizontalAlign.Start)
+    .padding(12)
+    .backgroundColor($r('app.color.surface_alt'))
+    .borderRadius($r('app.float.radius_s'))
+    .accessibilityGroup(true)
   }
 }
 
@@ -77,22 +104,42 @@ export struct HeartPage {
     return (resting && bpm >= 120) || bpm < 45 ? 'ELEVATED' : 'CALM';
   }
 
-  @Builder
-  stat(label: Resource, value: string) {
-    Column({ space: 2 }) {
-      Text(value)
-        .fontSize($r('app.float.font_subtitle'))
-        .fontWeight(FontWeight.Bold)
-        .fontColor($r('app.color.ink'))
-      Text(label)
-        .fontSize($r('app.float.font_caption'))
-        .fontColor($r('app.color.ink_3'))
+  private alertWord(a: VitalsAlert): Resource {
+    const bpm: number = Math.round(a.hr);
+    if (a.severity === 'CRITICAL') {
+      return $r('app.string.heart_alert_critical_a11y', bpm);
     }
-    .layoutWeight(1)
-    .alignItems(HorizontalAlign.Start)
-    .padding(12)
-    .backgroundColor($r('app.color.surface_alt'))
-    .borderRadius($r('app.float.radius_s'))
+    return a.severity === 'WARN' ? $r('app.string.heart_alert_warn_a11y', bpm) :
+      $r('app.string.heart_alert_info_a11y', bpm);
+  }
+
+  // Quick links: the pages that used to sit under the alerts, now right under the ring.
+  @Builder
+  quickLinks() {
+    Flex({ wrap: FlexWrap.Wrap, space: { main: LengthMetrics.vp(8), cross: LengthMetrics.vp(8) } }) {
+      QuickReplyChip({
+        label: $r('app.string.heart_link_symptom'),
+        icon: $r('app.media.ic_tab_heart'),
+        onTap: () => {
+          this.navStack.pushPathByName(Routes.SYMPTOM_LOG, null);
+        }
+      })
+      QuickReplyChip({
+        label: $r('app.string.trends_title'),
+        icon: $r('app.media.ic_wave'),
+        onTap: () => {
+          this.navStack.pushPathByName(Routes.TRENDS, null);
+        }
+      })
+      QuickReplyChip({
+        label: $r('app.string.heart_link_doctor'),
+        icon: $r('app.media.ic_doctor'),
+        onTap: () => {
+          this.navStack.pushPathByName(Routes.DOCTOR_PREP, null);
+        }
+      })
+    }
+    .width('100%')
   }
 
   // Alert row: out-of-range chip (risk tint + shape + value) and the plain-English message.
@@ -103,7 +150,9 @@ export struct HeartPage {
         Row({ space: 6 }) {
           RiskShape({ risk: a.severity === 'CRITICAL' ? 'KNOWN_RISK' : (a.severity === 'WARN' ? 'POSSIBLE_RISK' :
             'UNKNOWN_DRUG'), dim: 18 })
-          Text(a.hr > 0 ? `${Math.round(a.hr)} bpm` : '—')
+            .accessibilityLevel('no-hide-descendants')
+          Text(a.hr > 0 ? $r('app.string.heart_bpm_value', Math.round(a.hr)) : '—')
+            .accessibilityText(this.alertWord(a))
             .fontSize($r('app.float.font_badge'))
             .fontWeight(FontWeight.Bold)
             .fontColor(a.severity === 'CRITICAL' ? $r('app.color.risk_known_text') : (a.severity === 'WARN' ?
@@ -135,12 +184,13 @@ export struct HeartPage {
     .backgroundColor($r('app.color.surface'))
     .border({ width: 1, color: $r('app.color.border') })
     .borderRadius($r('app.float.radius_m'))
+    .accessibilityGroup(true, { accessibilityPreferred: true })
   }
 
   build() {
     Scroll() {
       Column({ space: 12 }) {
-        PageTitle({ title: $r('app.string.heart_title') })
+        ScreenHeader({ title: $r('app.string.heart_title'), back: false })
 
         HrRing({
           bpm: this.latest?.hr ?? 0,
@@ -152,6 +202,8 @@ export struct HeartPage {
         })
           .margin({ top: 4, bottom: 8 })
 
+        this.quickLinks()
+
         // Trend + extra vitals
         Column({ space: 12 }) {
           Text($r('app.string.heart_trend'))
@@ -160,11 +212,19 @@ export struct HeartPage {
             .fontColor($r('app.color.ink_3'))
           HrChart({ hrs: this.hrs, chartWidth: this.chartWidth, chartHeight: 96 })
           Row({ space: 8 }) {
-            this.stat($r('app.string.heart_resting_hr'),
-              this.latest?.restingHr === undefined ? '--' : `${this.latest?.restingHr}`)
-            this.stat($r('app.string.heart_hrv'), this.latest?.hrv === undefined ? '--' :
-              `${Math.round(this.latest?.hrv ?? 0)} ms`)
-            this.stat($r('app.string.heart_rhythm'), this.latest?.irregular === true ? 'Irregular' : 'Regular')
+            HeartStat({
+              label: $r('app.string.heart_resting_hr'),
+              value: this.latest?.restingHr === undefined ? '--' : `${this.latest?.restingHr}`
+            })
+            HeartStat({
+              label: $r('app.string.heart_hrv'),
+              value: this.latest?.hrv === undefined ? '--' : `${Math.round(this.latest?.hrv ?? 0)} ms`
+            })
+            HeartStat({
+              label: $r('app.string.heart_rhythm'),
+              value: this.latest?.irregular === true ? $r('app.string.heart_rhythm_irregular') :
+                $r('app.string.heart_rhythm_regular')
+            })
           }
           .width('100%')
           Text($r('app.string.heart_only_hr'))
@@ -197,31 +257,6 @@ export struct HeartPage {
           }, (a: VitalsAlert) => `${a.ts}-${a.kind}`)
         }
 
-        NavRow({
-          icon: $r('app.media.ic_wave'),
-          title: $r('app.string.trends_title'),
-          subtitle: $r('app.string.trends_subtitle'),
-          onTap: () => {
-            this.navStack.pushPathByName(Routes.TRENDS, null);
-          }
-        })
-          .margin({ top: 8 })
-        NavRow({
-          icon: $r('app.media.ic_tab_heart'),
-          title: $r('app.string.sym_title'),
-          subtitle: $r('app.string.sym_subtitle'),
-          onTap: () => {
-            this.navStack.pushPathByName(Routes.SYMPTOM_LOG, null);
-          }
-        })
-          .margin({ top: 8 })
-        NavRow({
-          icon: $r('app.media.ic_doctor'),
-          title: $r('app.string.home_doctor'),
-          onTap: () => {
-            this.navStack.pushPathByName(Routes.DOCTOR_PREP, null);
-          }
-        })
 
         // Demo controls — only for the phone's own simulated source (the watch has its own Simulate page).
         if (VitalsService.get().sourceKind() !== 'WATCH') {
@@ -242,7 +277,7 @@ export struct HeartPage {
           .width('100%')
           .height($r('app.float.chip_height'))
           .accessibilityGroup(true)
-          .accessibilityDescription(this.showSim ? 'Expanded' : 'Collapsed')
+          .accessibilityDescription(this.showSim ? $r('app.string.a11y_expanded') : $r('app.string.a11y_collapsed'))
           .onClick(() => {
             this.showSim = !this.showSim;
           })
