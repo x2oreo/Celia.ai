@@ -121,7 +121,8 @@ export default function agentSafetyTest() {
     });
 
     it('emergencyNumberByRegion', 0, () => {
-      expect(EmergencyNumbers.forRegion('PL')).assertEqual('112');
+      expect(EmergencyNumbers.forRegion('PL')).assertEqual('999');   // ambulance; same table as the SOS screen
+      expect(EmergencyNumbers.forRegion('DE')).assertEqual('112');
       expect(EmergencyNumbers.forRegion('us')).assertEqual('911');
       expect(EmergencyNumbers.forRegion('GB')).assertEqual('999');
       expect(EmergencyNumbers.forRegion('')).assertEqual('112');

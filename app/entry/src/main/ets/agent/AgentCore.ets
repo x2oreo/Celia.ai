@@ -248,7 +248,8 @@ export class AgentCore {
 
   private async emergency(reason: string): Promise<AgentReply> {
     this.cancelCheckIn();
-    const num: string = EmergencyNumbers.current();
+    const profile: Profile | undefined = await LocalStore.get().getProfile();
+    const num: string = EmergencyNumbers.current(profile?.country);
     const payload: EmergencyPayload = { reason: reason.slice(0, 200), emergencyNumber: num,
       countdownSec: EMERGENCY_COUNTDOWN_SEC };
     try {
@@ -297,7 +298,7 @@ export class AgentCore {
     const profile: Profile | undefined = await LocalStore.get().getProfile();
     const meds: Medication[] = await LocalStore.get().listMeds();
     turn.genotype = profile !== undefined ? profile.genotype : 'UNKNOWN';
-    turn.emergencyNumber = EmergencyNumbers.current();
+    turn.emergencyNumber = EmergencyNumbers.current(profile?.country);
     // De-identified: condition, genotype, ingredient names, vitals line. No names, phones or IDs.
     const ctx: RelayContext = {
       condition: profile !== undefined ? profile.condition : 'LQTS',

@@ -1,33 +1,19 @@
-// Emergency number by region (ISO 3166-1 alpha-2). 112 works across the EU and on most GSM phones,
-// so it is the default. Never hardcode 911 (HeartBeat lesson).
+// Agent-side view of the emergency number. The country table lives in common/EmergencyNumbers (shared with the
+// SOS and emergency card screens), so Celia always says the same number those screens dial.
 
 import { i18n } from '@kit.LocalizationKit';
-
-const NUMBERS: Record<string, string> = {
-  'US': '911',
-  'CA': '911',
-  'MX': '911',
-  'GB': '999',
-  'AU': '000',
-  'NZ': '111',
-  'IN': '112',
-  'CN': '120',
-  'JP': '119',
-  'KR': '119'
-};
+import { emergencyFor, systemCountry } from '../common/EmergencyNumbers';
 
 export class EmergencyNumbers {
+  // Ambulance number for an ISO 3166-1 alpha-2 region; unknown → 112.
   static forRegion(region: string): string {
-    const n: string | undefined = NUMBERS[region.toUpperCase()];
-    return n !== undefined ? n : '112';
+    return emergencyFor(region).ambulance;
   }
 
-  static current(): string {
-    try {
-      return EmergencyNumbers.forRegion(i18n.System.getSystemRegion());
-    } catch (e) {
-      return '112';
-    }
+  // Profile country first (set in onboarding), then the phone's region.
+  static current(profileCountry?: string): string {
+    const country: string = profileCountry !== undefined && profileCountry.length > 0 ? profileCountry : systemCountry();
+    return EmergencyNumbers.forRegion(country);
   }
 
   static locale(): string {
