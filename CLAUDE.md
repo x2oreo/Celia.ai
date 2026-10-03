@@ -2,7 +2,10 @@
 
 ## Project idea
 
-_TBD — to be filled in once the idea is locked._
+An agent-first heart-safety companion for people with Long QT syndrome (LQTS): an agent you talk to, a deterministic
+medicine check (type, scan or photograph a box), a watch app that monitors heart rate, an emergency card and SOS
+flow, and a doctor-visit brief. Verdicts come from fixed data; the LLM only explains. Full description:
+`docs/IDEA.md` and `docs/PRODUCT.md`.
 
 ## Platform & stack
 

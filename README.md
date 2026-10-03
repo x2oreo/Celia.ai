@@ -82,7 +82,7 @@ Everything below runs on the emulator with no backend and no watch. Heart data i
 | Watch context (T15) | With the cloud backend, a risky check writes `watch_context` (genotype, ingredient, risk) and the Celia watch shows the verdict glance within 60 s. |
 | Privacy, app lock (F-45, F-46) | Settings → What left my phone: every outbound request — drug check, agent, voice, vision, explanations, share links, live voice — with field names and size, never values; **Export the list**. App lock needs a screen lock (PIN) on the device. |
 
-Unit tests: `app/scripts/test.sh` — **206 tests, 0 failures** (3 Oct 2026): drug data + checker, interactions,
+Unit tests: `app/scripts/test.sh` — **211 tests, 0 failures** (3 Oct 2026): drug data + checker, interactions,
 agent safety gate + validator + tool registry, offline agent, saved chats, alarm rules, SOS state machine and message,
 doctor brief + AI summary guard, report payload + share links, medicine info + AI reply guard, symptom tool, GS1,
 emergency numbers, card text + read-aloud privacy, dose schedule, travel, privacy guard + ledger. Tests never call the
