@@ -7,7 +7,9 @@ import { DrugChecker } from '../../drugs/DrugChecker';
 import { LocalStore } from '../../data/LocalStore';
 import { DrugVerdict } from '../../model/DrugVerdict';
 import { Medication } from '../../model/Medication';
-import { InteractionFinding, VerdictCardPayload } from '../../model/AgentTypes';
+import {
+  AlternativesPayload, InteractionFinding, MedLinePayload, MedsPayload, VerdictCardPayload
+} from '../../model/AgentTypes';
 
 interface CheckDrugOutput {
   query: string;
@@ -45,29 +47,26 @@ export class CheckDrugTool implements AgentTool {
   }
 }
 
-interface MedLine {
-  name: string;
-  ingredient: string;
-  dose: string;
-  risk: string;
-}
 
-interface MyMedsOutput {
-  medicines: MedLine[];
+// The user's medicines, each with the list's risk. Shared by the tool and the offline agent.
+export async function myMedsPayload(): Promise<MedsPayload> {
+  const meds: Medication[] = await LocalStore.get().listMeds();
+  const lines: MedLinePayload[] = [];
+  for (const m of meds) {
+    const v: DrugVerdict = await DrugChecker.get().check(m.ingredient !== '' ? m.ingredient : m.name);
+    const line: MedLinePayload = { name: m.name, ingredient: m.ingredient, dose: m.dose, risk: v.risk };
+    lines.push(line);
+  }
+  const out: MedsPayload = { medicines: lines };
+  return out;
 }
 
 export class GetMyMedsTool implements AgentTool {
   name: string = 'get_my_meds';
 
   async execute(args: Record<string, Object>, turn: TurnState): Promise<string> {
-    const meds: Medication[] = await LocalStore.get().listMeds();
-    const lines: MedLine[] = [];
-    for (const m of meds) {
-      const v: DrugVerdict = await DrugChecker.get().check(m.ingredient !== '' ? m.ingredient : m.name);
-      const line: MedLine = { name: m.name, ingredient: m.ingredient, dose: m.dose, risk: v.risk };
-      lines.push(line);
-    }
-    const out: MyMedsOutput = { medicines: lines };
+    const out: MedsPayload = await myMedsPayload();
+    turn.actions.push(action('SHOW_MEDS', out));
     return JSON.stringify(out);
   }
 }
@@ -128,6 +127,12 @@ export class SuggestAlternativesTool implements AgentTool {
         }
       }
     }
+    const card: AlternativesPayload = {
+      forDrug: v.ingredient !== '' ? v.ingredient : query,
+      alternatives: verified,
+      note: group !== undefined ? group.note : ''
+    };
+    turn.actions.push(action('SHOW_ALTERNATIVES', card));
     const out: AlternativesOutput = {
       forDrug: v.ingredient !== '' ? v.ingredient : query,
       alternatives: verified,

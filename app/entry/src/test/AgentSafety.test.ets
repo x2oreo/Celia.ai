@@ -265,6 +265,7 @@ export default function agentSafetyTest() {
       expect(parseOfflineIntent('show my emergency card').intent).assertEqual('EMERGENCY_CARD');
       expect(parseOfflineIntent('let me scan the box').intent).assertEqual('SCAN');
       expect(parseOfflineIntent('what are my meds').intent).assertEqual('MY_MEDS');
+      expect(parseOfflineIntent('Check my current medicines').intent).assertEqual('MY_MEDS');
       expect(parseOfflineIntent('hello').intent).assertEqual('UNKNOWN');
     });
   });

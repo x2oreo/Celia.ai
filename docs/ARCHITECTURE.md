@@ -121,7 +121,7 @@ export interface VitalsAlert { ts: number; kind: AlertKind; hr: number; message:
 // model/AgentTypes.ets
 export interface ChatMessage { role: 'user' | 'assistant'; text: string; ts: number; }
 export type UiActionType = 'SHOW_VERDICT' | 'SHOW_EMERGENCY_CARD' | 'START_EMERGENCY' | 'OPEN_MED_SCAN' | 'ADD_MED'
-  | 'SHARE_EMERGENCY_CARD' | 'QUICK_REPLIES';
+  | 'SHARE_EMERGENCY_CARD' | 'QUICK_REPLIES' | 'SHOW_MEDS' | 'SHOW_ALTERNATIVES';
 export interface UiAction { type: UiActionType; payload: string; }   // payload = JSON string; payload interfaces
                                                                        // (VerdictCardPayload, AddMedPayload, …) in the file
 export interface AgentReply { text: string; actions: UiAction[]; fallback: boolean; }
