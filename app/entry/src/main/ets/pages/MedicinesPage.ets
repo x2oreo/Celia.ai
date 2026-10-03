@@ -1,6 +1,6 @@
 // Medicines tab (design B4): search-first check, recently checked chips, my medicines as a two-column grid.
 
-import { CheckParam, Routes } from '../common/Routes';
+import { AskParam, CheckParam, Routes } from '../common/Routes';
 import { DrugChecker } from '../drugs/DrugChecker';
 import { DrugEntry } from '../drugs/DrugDataset';
 import { LocalStore, StoreTopic } from '../data/LocalStore';
@@ -8,6 +8,8 @@ import { Medication } from '../model/Medication';
 import { ScanRecord } from '../model/ScanRecord';
 import { RiskLevel } from '../model/DrugVerdict';
 import { AddMedForm } from '../components/AddMedForm';
+import { MedicineDetailSheet } from '../components/MedicineDetailSheet';
+import { medSubtitle } from '../drugs/MedFacts';
 import { EmptyCard, NavRow, PageTitle, RiskBadge, SectionHeader, StatusChip } from '../components/Common';
 
 export function medRisk(m: Medication): RiskLevel {
@@ -16,6 +18,7 @@ export function medRisk(m: Medication): RiskLevel {
 }
 
 const RECENT_MAX: number = 6;
+const MED_CARD_HEIGHT: number = 164;
 
 @ComponentV2
 export struct MedicinesPage {
@@ -24,6 +27,8 @@ export struct MedicinesPage {
   @Local meds: Medication[] = [];
   @Local recent: ScanRecord[] = [];
   @Local showAdd: boolean = false;
+  @Local detail: Medication | undefined = undefined;
+  @Local showDetail: boolean = false;
   private unsubscribe: () => void = () => {
   };
 
@@ -70,20 +75,26 @@ export struct MedicinesPage {
 
   @Builder
   addSheet() {
-    Column({ space: 16 }) {
-      Text($r('app.string.meds_add_title'))
-        .fontSize($r('app.float.font_title'))
-        .fontWeight(FontWeight.Bold)
-        .fontColor($r('app.color.ink'))
-      AddMedForm({
-        onAdded: () => {
-          this.showAdd = false;
-        }
-      })
+    Scroll() {
+      Column({ space: 16 }) {
+        Text($r('app.string.meds_add_title'))
+          .fontSize($r('app.float.font_title'))
+          .fontWeight(FontWeight.Bold)
+          .fontColor($r('app.color.ink'))
+        AddMedForm({
+          onAdded: () => {
+            this.showAdd = false;
+          }
+        })
+      }
+      .padding(20)
+      .width('100%')
+      .alignItems(HorizontalAlign.Start)
     }
-    .padding(20)
     .width('100%')
-    .alignItems(HorizontalAlign.Start)
+    .height('100%')
+    .align(Alignment.Top)
+    .scrollBar(BarState.Off)
   }
 
   @Builder
@@ -97,6 +108,31 @@ export struct MedicinesPage {
   }
 
   @Builder
+  detailSheet() {
+    MedicineDetailSheet({
+      med: this.detail,
+      meds: this.meds,
+      onCheck: (m: Medication) => {
+        this.showDetail = false;
+        this.navStack.pushPathByName(Routes.CHECK_RESULT, new CheckParam(m.ingredient === '' ? m.name : m.ingredient,
+          false));
+      },
+      onRemind: (m: Medication) => {
+        this.showDetail = false;
+        this.navStack.pushPathByName(Routes.REMINDERS, m.id);
+      },
+      onAsk: (m: Medication) => {
+        this.showDetail = false;
+        const ctx: Context | undefined = this.getUIContext().getHostContext();
+        const label: string = m.name.length > 0 ? m.name.charAt(0).toUpperCase() + m.name.slice(1) : m.name;
+        const q: string = ctx === undefined ? `Tell me about ${label}.` :
+          ctx.resourceManager.getStringSync($r('app.string.med_ask_prompt').id, label);
+        this.navStack.pushPathByName(Routes.AGENT_CHAT, new AskParam(q));
+      }
+    })
+  }
+
+  @Builder
   medCard(m: Medication) {
     Column() {
       RiskBadge({ risk: medRisk(m), compact: true })
@@ -107,24 +143,37 @@ export struct MedicinesPage {
         .fontColor($r('app.color.ink'))
         .maxLines(1)
         .textOverflow({ overflow: TextOverflow.Ellipsis })
-      Text(m.dose === '' ? (m.ingredient === '' ? '—' : m.ingredient) : m.dose)
-        .fontSize($r('app.float.font_small'))
+      Text(medSubtitle(m) === '' ? (m.ingredient === '' ? '—' : m.ingredient) : medSubtitle(m))
+        .fontSize($r('app.float.font_caption'))
         .fontColor($r('app.color.ink_3'))
-        .maxLines(1)
+        .lineHeight(16)
+        .maxLines(2)
         .textOverflow({ overflow: TextOverflow.Ellipsis })
-        .margin({ top: 2 })
+        .margin({ top: 4 })
+      if (m.dose !== '') {
+        Text(m.dose)
+          .fontSize($r('app.float.font_micro'))
+          .fontWeight(FontWeight.Bold)
+          .fontColor($r('app.color.ink_2'))
+          .height(20)
+          .padding({ left: 8, right: 8 })
+          .backgroundColor($r('app.color.surface_alt'))
+          .borderRadius(10)
+          .margin({ top: 8 })
+      }
     }
     .width('100%')
-    .height(132)
+    .height(MED_CARD_HEIGHT)
     .alignItems(HorizontalAlign.Start)
     .padding(14)
     .backgroundColor($r('app.color.surface'))
     .border({ width: 1, color: $r('app.color.border') })
     .borderRadius($r('app.float.radius_ml'))
     .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.98 })
+    .accessibilityText(`${m.name}. ${medSubtitle(m)}`)
     .onClick(() => {
-      this.navStack.pushPathByName(Routes.CHECK_RESULT, new CheckParam(m.ingredient === '' ? m.name : m.ingredient,
-        false));
+      this.detail = m;
+      this.showDetail = true;
     })
     .bindContextMenu(this.medMenu(m), ResponseType.LongPress)
   }
@@ -139,7 +188,7 @@ export struct MedicinesPage {
         .fontColor($r('app.color.ink_3'))
     }
     .width('100%')
-    .height(132)
+    .height(MED_CARD_HEIGHT)
     .justifyContent(FlexAlign.Center)
     .border({ width: 2, color: $r('app.color.border_strong'), style: BorderStyle.Dashed })
     .borderRadius($r('app.float.radius_ml'))
@@ -260,6 +309,14 @@ export struct MedicinesPage {
       }
       .padding({ left: $r('app.float.space_screen'), right: $r('app.float.space_screen'), bottom: 24 })
       .width('100%')
+      .bindSheet(this.showDetail, this.detailSheet(), {
+        detents: [SheetSize.LARGE, SheetSize.MEDIUM],
+        showClose: true,
+        backgroundColor: $r('app.color.bg'),
+        onDisappear: () => {
+          this.showDetail = false;
+        }
+      })
     }
     .width('100%')
     .height('100%')

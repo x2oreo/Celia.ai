@@ -40,54 +40,60 @@ export struct TeachBoxForm {
   }
 
   build() {
-    Column({ space: 12 }) {
-      Text($r('app.string.teach_title'))
-        .fontSize($r('app.float.font_title'))
-        .fontWeight(FontWeight.Bold)
-        .fontColor($r('app.color.ink'))
-      Text(this.countryLine())
-        .fontSize($r('app.float.font_caption'))
-        .fontColor($r('app.color.ink_2'))
-      Text($r('app.string.teach_body'))
-        .fontSize($r('app.float.font_body'))
-        .fontColor($r('app.color.ink_2'))
-      TextInput({ text: this.name, placeholder: $r('app.string.teach_name_hint') })
-        .height(48)
-        .backgroundColor($r('app.color.surface_alt'))
-        .onChange((v: string) => {
-          this.name = v;
-          this.resolved = v.trim().length >= 3 ? DrugChecker.get().resolve(v) : undefined;
-        })
-      TextInput({ text: this.strength, placeholder: $r('app.string.teach_strength_hint') })
-        .height(48)
-        .backgroundColor($r('app.color.surface_alt'))
-        .onChange((v: string) => {
-          this.strength = v;
-        })
-      if (this.name.trim().length >= 3) {
-        Row({ space: 8 }) {
-          Text(this.resolved === undefined ? $r('app.string.teach_unrecognised') : this.resolved.ingredient)
-            .fontSize($r('app.float.font_caption'))
-            .fontColor($r('app.color.ink_2'))
-            .layoutWeight(1)
-          RiskBadge({ risk: this.resolved === undefined ? 'UNKNOWN_DRUG' : this.resolved.risk, compact: true })
+    Scroll() {
+      Column({ space: 12 }) {
+        Text($r('app.string.teach_title'))
+          .fontSize($r('app.float.font_title'))
+          .fontWeight(FontWeight.Bold)
+          .fontColor($r('app.color.ink'))
+        Text(this.countryLine())
+          .fontSize($r('app.float.font_caption'))
+          .fontColor($r('app.color.ink_2'))
+        Text($r('app.string.teach_body'))
+          .fontSize($r('app.float.font_body'))
+          .fontColor($r('app.color.ink_2'))
+        TextInput({ text: this.name, placeholder: $r('app.string.teach_name_hint') })
+          .height(48)
+          .backgroundColor($r('app.color.surface_alt'))
+          .onChange((v: string) => {
+            this.name = v;
+            this.resolved = v.trim().length >= 3 ? DrugChecker.get().resolve(v) : undefined;
+          })
+        TextInput({ text: this.strength, placeholder: $r('app.string.teach_strength_hint') })
+          .height(48)
+          .backgroundColor($r('app.color.surface_alt'))
+          .onChange((v: string) => {
+            this.strength = v;
+          })
+        if (this.name.trim().length >= 3) {
+          Row({ space: 8 }) {
+            Text(this.resolved === undefined ? $r('app.string.teach_unrecognised') : this.resolved.ingredient)
+              .fontSize($r('app.float.font_caption'))
+              .fontColor($r('app.color.ink_2'))
+              .layoutWeight(1)
+            RiskBadge({ risk: this.resolved === undefined ? 'UNKNOWN_DRUG' : this.resolved.risk, compact: true })
+          }
+          .width('100%')
         }
-        .width('100%')
+        PrimaryButton({
+          label: $r('app.string.teach_save'),
+          icon: $r('app.media.ic_search'),
+          active: this.name.trim().length > 0 && !this.saving,
+          onTap: () => {
+            this.save();
+          }
+        })
+        Text($r('app.string.teach_privacy'))
+          .fontSize($r('app.float.font_caption'))
+          .fontColor($r('app.color.ink_3'))
       }
-      PrimaryButton({
-        label: $r('app.string.teach_save'),
-        icon: $r('app.media.ic_search'),
-        active: this.name.trim().length > 0 && !this.saving,
-        onTap: () => {
-          this.save();
-        }
-      })
-      Text($r('app.string.teach_privacy'))
-        .fontSize($r('app.float.font_caption'))
-        .fontColor($r('app.color.ink_3'))
+      .padding(20)
+      .width('100%')
+      .alignItems(HorizontalAlign.Start)
     }
-    .padding(20)
     .width('100%')
-    .alignItems(HorizontalAlign.Start)
+    .height('100%')
+    .align(Alignment.Top)
+    .scrollBar(BarState.Off)
   }
 }

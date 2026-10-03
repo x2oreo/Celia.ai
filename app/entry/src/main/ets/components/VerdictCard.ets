@@ -160,6 +160,9 @@ export struct VerdictCard {
       }
       .width('100%')
       .height($r('app.float.chip_height'))
+      .accessibilityGroup(true)
+      .accessibilityDescription(this.showTrace ? 'Expanded. Double tap to hide the lookup steps.' :
+        'Collapsed. Double tap to show the lookup steps.')
       .onClick(() => {
         this.showTrace = !this.showTrace;
       })
