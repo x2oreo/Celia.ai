@@ -1,6 +1,7 @@
 import { describe, it, expect } from '@ohos/hypium';
 import {
-  MAX_SOS_CONTACTS, SosPayload, SosStatus, callingCode, firstName, parseSosStatus, sosPayload, toE164
+  MAX_SOS_CONTACTS, SosPayload, SosStatus, callingCode, firstName, parseSosStatus, sosPayload, toE164,
+  watchSosWhom
 } from '../main/ets/account/SosContacts';
 import { watchAccess } from '../main/ets/data/WatchPairing';
 import { sendsUserToken } from '../main/ets/common/Net';
@@ -23,6 +24,25 @@ const PROJECT: string = 'https://jxiggumhircfuhianmel.supabase.co';
 
 export default function sosContactsTest() {
   describe('SosContacts', () => {
+    it('watchSosSaysWhoWasAlerted', 0, () => {
+      const sentAt: number = Date.parse('2026-10-04T10:00:00Z');
+      const st: SosStatus = new SosStatus();
+      expect(watchSosWhom(false, true, st, sentAt)).assertEqual('OFF');
+      expect(watchSosWhom(true, false, st, sentAt)).assertEqual('OFF');
+      expect(watchSosWhom(true, true, undefined, sentAt)).assertEqual('PENDING');
+      st.lastStatus = 'sent';
+      st.lastAt = sentAt - 3600000;   // the previous SOS, an hour earlier
+      expect(watchSosWhom(true, true, st, sentAt)).assertEqual('PENDING');
+      st.lastAt = sentAt + 4000;
+      expect(watchSosWhom(true, true, st, sentAt)).assertEqual('SENT');
+      st.lastStatus = 'dry_run';
+      expect(watchSosWhom(true, true, st, sentAt)).assertEqual('DRY_RUN');
+      st.lastStatus = 'skipped_global_limit';
+      expect(watchSosWhom(true, true, st, sentAt)).assertEqual('SKIPPED');
+      st.lastStatus = 'unknown';
+      expect(watchSosWhom(true, true, st, sentAt)).assertEqual('FAILED');
+    });
+
     it('makesNumbersInternational', 0, () => {
       expect(toE164('+48 600 123 456', 'PL')).assertEqual('+48600123456');
       expect(toE164('0048 600-123-456', 'BG')).assertEqual('+48600123456');

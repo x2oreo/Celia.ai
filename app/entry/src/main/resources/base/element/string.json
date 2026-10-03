@@ -594,7 +594,7 @@
     },
     {
       "name": "onb_contacts_subtitle",
-      "value": "Emergency contacts appear on your card and get your SOS."
+      "value": "Emergency contacts appear on your card, and the SOS page has a button to call or message each of them."
     },
     {
       "name": "onb_contact_name",
@@ -730,7 +730,7 @@
     },
     {
       "name": "sos_explain",
-      "value": "If you don't answer, we prepare the SOS: call the ambulance and alert your contacts."
+      "value": "If you don't answer, the SOS page opens with buttons to call the ambulance and message your contacts. Nothing is sent without a tap."
     },
     {
       "name": "sos_im_ok",
@@ -1570,7 +1570,7 @@
     },
     {
       "name": "em_sos_sub",
-      "value": "Alerts your contacts if you don't answer"
+      "value": "Opens the call and message buttons if you don't answer"
     },
     {
       "name": "em_bystander_sub",

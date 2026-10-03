@@ -21,6 +21,8 @@ import { toast } from '../common/Toast';
 import { BackHeader, InkButton, PrimaryButton, SecondaryButton } from '../components/Common';
 import { LiveStatus } from '../emergency/LiveStatus';
 import { AgentCore } from '../agent/AgentCore';
+import { SosContacts, SosStatus, watchSosWhom, WatchSosWhom } from '../account/SosContacts';
+import { Session } from '../account/Session';
 
 @ComponentV2
 export struct SosPage {
@@ -36,6 +38,9 @@ export struct SosPage {
   @Local sentBy: SosSender = 'PHONE';
   @Local sentAt: number = -1;
   @Local watchLocation: boolean = false;
+  @Local whom: WatchSosWhom = 'OFF';
+  private whomTimer: number = -1;
+  private whomTries: number = 0;
   private timer: number = -1;
   private lastSecond: number = -1;
   private trigger: string = 'BUTTON';
@@ -65,6 +70,7 @@ export struct SosPage {
       this.record('SENT');
     }
     this.load();
+    this.checkWhom();
   }
 
   private async load(): Promise<void> {
@@ -72,6 +78,44 @@ export struct SosPage {
     this.meds = await LocalStore.get().listMeds();
     this.where = await SosService.requestLocation(this.ctx());
     this.locating = false;
+  }
+
+  // Watch SOS: the server alerts the contacts (with consent), so ask it what happened. The dispatch can land a few
+  // seconds after the phone hears of the SOS: check again every 5 s, at most 12 times.
+  private async checkWhom(): Promise<void> {
+    if (this.sentBy !== 'WATCH') {
+      return;
+    }
+    const consent: boolean = await SosContacts.consent();
+    const st: SosStatus | undefined = Session.isSignedIn() && consent ? await SosContacts.status() : undefined;
+    this.whom = watchSosWhom(Session.isSignedIn(), consent, st, this.sentAt);
+    this.whomTries++;
+    if (this.whom === 'PENDING' && this.whomTries < 12) {
+      this.whomTimer = setTimeout(() => {
+        this.checkWhom();
+      }, 5000);
+    }
+  }
+
+  private whomText(): Resource {
+    switch (this.whom) {
+      case 'PENDING':
+        return $r('app.string.ntf_sos_whom_pending');
+      case 'SENT':
+        return $r('app.string.ntf_sos_whom_sent');
+      case 'PARTIAL':
+        return $r('app.string.ntf_sos_whom_partial');
+      case 'FAILED':
+        return $r('app.string.ntf_sos_whom_failed');
+      case 'DRY_RUN':
+        return $r('app.string.ntf_sos_whom_dry_run');
+      case 'NO_CONTACTS':
+        return $r('app.string.ntf_sos_whom_no_contacts');
+      case 'SKIPPED':
+        return $r('app.string.ntf_sos_whom_skipped');
+      default:
+        return $r('app.string.ntf_sos_watch_whom');
+    }
   }
 
   private syncSent(c: SosController): void {
@@ -107,6 +151,7 @@ export struct SosPage {
   }
 
   private onSent(): void {
+    this.checkWhom();
     stopPulse();
     LiveStatus.end('SENT');
     this.record('SENT');
@@ -168,6 +213,9 @@ export struct SosPage {
   }
 
   aboutToDisappear(): void {
+    if (this.whomTimer !== -1) {
+      clearTimeout(this.whomTimer);
+    }
     if (this.timer >= 0) {
       clearInterval(this.timer);
     }
@@ -285,7 +333,7 @@ export struct SosPage {
           $r('app.string.ntf_sos_watch_what', clock(this.sentAt)),
           this.watchLocation ? $r('app.string.ntf_sos_watch_loc') : $r('app.string.ntf_sos_watch_no_loc'))
         Divider().color($r('app.color.divider'))
-        this.statusRow($r('app.string.ntf_sos_label_whom'), $r('app.string.ntf_sos_watch_whom'), '')
+        this.statusRow($r('app.string.ntf_sos_label_whom'), this.whomText(), '')
       } else {
         this.statusRow($r('app.string.ntf_sos_label_what'), $r('app.string.ntf_sos_phone_what'), '')
         Divider().color($r('app.color.divider'))

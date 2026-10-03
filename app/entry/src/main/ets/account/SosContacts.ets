@@ -154,6 +154,40 @@ export function parseSosStatus(body: string): SosStatus | undefined {
   }
 }
 
+// What the SOS page says under "TO WHOM" for a watch SOS (the server alerts contacts, not this phone).
+//   OFF      not signed in, or the consent switch is off: nobody was alerted automatically
+//   PENDING  consent on, the server has not recorded a dispatch for this SOS yet
+//   SENT / PARTIAL / FAILED / DRY_RUN / NO_CONTACTS / SKIPPED  the server's dispatch for this SOS
+export type WatchSosWhom = 'OFF' | 'PENDING' | 'SENT' | 'PARTIAL' | 'FAILED' | 'DRY_RUN' | 'NO_CONTACTS' | 'SKIPPED';
+
+// A dispatch counts for this SOS when the server recorded it no earlier than a minute before the phone heard of it.
+const DISPATCH_SLACK_MS: number = 60000;
+
+export function watchSosWhom(signedIn: boolean, consent: boolean, status: SosStatus | undefined,
+  sentAt: number): WatchSosWhom {
+  if (!signedIn || !consent) {
+    return 'OFF';
+  }
+  if (status === undefined || status.lastStatus === undefined || status.lastAt < sentAt - DISPATCH_SLACK_MS) {
+    return 'PENDING';
+  }
+  switch (status.lastStatus) {
+    case 'sent':
+      return 'SENT';
+    case 'partial':
+      return 'PARTIAL';
+    case 'dry_run':
+      return 'DRY_RUN';
+    case 'no_contacts':
+      return 'NO_CONTACTS';
+    case 'skipped_cooldown':
+    case 'skipped_global_limit':
+      return 'SKIPPED';
+    default:
+      return 'FAILED';
+  }
+}
+
 export type SosSyncResult = 'SENT' | 'CLEARED' | 'NOT_SIGNED_IN' | 'NOT_PAIRED' | 'OFFLINE' | 'ERROR';
 
 class SyncBody {
