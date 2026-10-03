@@ -238,6 +238,9 @@ Three sizes: **inline chat card**, **full-screen sheet**, **2 × 2 widget**.
 
 Four tabs: **Agent · Medicines · Heart · Emergency**.
 
+The bar stays at four tabs. Emergency is never removed or merged. The Agent tab is the agent conversation itself
+(10.1a). Every tab has an `accessibilityText` ("Agent tab", …, "Emergency tab, SOS").
+
 - Bar: `surface`, 1 vp top border, padding 8 × 6.
 - Labels 11 fp. Inactive: 600, `#7A716B`. Active: 700, `brand-text` + filled icon.
 - Agent tab icon is the small agent avatar (24 vp).
@@ -410,7 +413,7 @@ In ArkUI, use `animateTo` / `.animation()` with `Curve.EaseInOut` and `iteration
 
 ### 10.1 Direction (locked)
 
-- **Home** (B1) = the Agent tab: date, "Hi {name}", genotype chip, settings gear. Heart-rate ring (track `border`,
+- **Home** (B1), superseded by 10.1a; kept for the look of the pieces that moved. Was the Agent tab: date, "Hi {name}", genotype chip, settings gear. Heart-rate ring (track `border`,
   arc `brand`, `display` bpm, "bpm · resting", source badge), status chips, then the **agent card** (orb 28, name,
   time, `body` message, `Scan a box` primary + `Ask something` quiet).
   Below it, the **tip of the day** (F-39 genotype coach, `coach/Coach.ets`, static and sourced, no AI): `surface` card
@@ -421,7 +424,8 @@ In ArkUI, use `animateTo` / `.animation()` with `Curve.EaseInOut` and `iteration
   above the HR ring, `surface` card, 1 vp `border`, `radius_m`, padding 14, location icon 18 `ink_2`, "You're in
   {Germany}" in `headline`, "Emergency {112} · Pharmacy card in {Deutsch}" in `body-sm` `ink_2`; the whole card
   (min 44 vp) opens the pharmacy card. The pharmacy card then shows the local language large and English small.
-- **Conversation** (B2, revised: voice first) is a pushed page, not a tab. Header: back, "The agent", `ON-DEVICE`
+- **Conversation** (B2, revised: voice first) was a pushed page; it is now tab 0 without the back / title header
+  (10.1a). The modes, thread and dock below are unchanged. Header: back, "The agent", `ON-DEVICE`
   badge when there is no backend, then two 44 icon buttons in `ink_2`: **Chats** (history icon, opens the chats list)
   and **New chat** (plus). New chat saves the open chat and returns to the empty state (orb 168, starters). It has two modes over the same thread.
   - **Voice (default)**: the voice orb (6.6a) with its state label, then the thread, then the dock: 52 camera
@@ -446,6 +450,46 @@ In ArkUI, use `animateTo` / `.animation()` with `Curve.EaseInOut` and `iteration
 - **Scan** (B5): dark camera surface, close button, green "Found: X" pill, verdict sheet (sheet-size verdict card).
 - **Widgets** (B6): "Can I take this?" 2 × 2 (ink card, orb corner, coral `Scan or type`) and Medical alert 2 × 4
   (coral-ringed "Call 112" circle, `MEDICAL ALERT` label, condition, ICD + meds, AVOID line, quiet ICE button).
+
+### 10.1a Agent home (tab 0, structure only)
+
+This replaces the Home dashboard (B1) and the pushed Conversation page (B2) of 10.1: the first tab **is** the agent
+conversation. It describes what is on the screen, in what order, and what a tap does. The look of every piece comes
+from the components and tokens that already exist; the visual pass is separate.
+
+The tab bar keeps **four tabs with Emergency** (6.5). The SOS pill stays always tinted.
+
+Top to bottom:
+
+1. **Status strip** (one row, `touch_min` high).
+   - Heart-rate chip ("74 bpm", or "waiting for a reading") with the source badge (`WATCH` / `SIMULATED`) next to
+     it. Tap: Heart tab.
+   - Medicines chip ("N to review" with the risk shape, "Medicines OK", "No medicines yet"). Tap: Medicines tab.
+   - Chats button (history icon). Tap: saved chats. New chat is on that page and by voice ("new chat").
+   - Settings gear. Tap: Settings.
+   - The chips scroll sideways when they do not fit; the two buttons never move.
+2. **Notes strip** (collapsible, closed by default). Closed: one line, the agent's greeting sentence, and a chevron.
+   Open, in this order: the full greeting sentence, one row per interaction between the user's medicines, the
+   "Gentle alarm on" chip (tap: Heart tab), the tip of the day (F-39, static), and the travel banner when abroad
+   (tap: pharmacy card). The greeting uses the part of the day: 05:00–11:59 morning, 12:00–17:59 afternoon,
+   18:00–23:59 evening, 00:00–04:59 a plain "Hi". The date and the genotype chip of the old Home are dropped: the
+   date is on the system bar and the genotype is in the tip label and in Settings.
+3. **Voice stage** (voice mode only): the orb (6.6a), its state label, the `SIMULATED VOICE INPUT` badge in demo
+   mode. Tap on the orb while idle: start talking.
+4. **Thread**, or the **welcome** (hint and three starter chips) while nothing has been said. The last chat is
+   restored at start, as before.
+5. **Quick-action row** (chips, scrolls sideways): Scan a box (scan page), Log how I feel (symptom log), Doctor
+   prep, Trends.
+6. **Dock**: voice dock (camera, mic, keyboard or end) or the chat bar (camera, input, send or back to voice).
+7. `ON-DEVICE` / voice-unavailable status strips keep their place above the stage.
+
+Rules:
+
+- Cold start lands here. One tap (orb or mic) starts talking. The microphone never opens by itself.
+- A live voice session ends when another tab is selected or a page is pushed over the tabs.
+- There is one conversation. `Routes.AGENT_CHAT` is kept for its callers as a see-through redirect: it hands the
+  question (if any) to the agent, clears the stack and selects tab 0. "Ask the agent" from any screen does the same.
+- Every control has an `accessibilityText`.
 
 ### 10.2 Screens without a drawing (derived)
 
