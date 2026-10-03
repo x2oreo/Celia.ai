@@ -7,14 +7,15 @@ The app's main design rule is that **verdicts come from deterministic data and t
 
 | Feature | AI involved | Deterministic part |
 |---|---|---|
-| Chat agent ("Can I take Klacid?") | OpenAI model chooses tools and writes the explanation | Verdict from `DrugChecker` (curated list) + `ComboRules` (interactions) |
+| Chat agent ("Can I take Klacid?"), Agent tab | OpenAI model chooses tools and writes the explanation | Verdict from `CheckService` (same path as the check screen: curated dataset, barcode, online fallback) + interactions from `ComboRules` ∪ `DrugChecker.checkCombo`; the chat renders the verdict card from this data, never from model text |
 | Emergency detection | **none** | `SafetyGate` regex (EN/PL) runs before any model call |
-| Proactive heart-rate check-in | **none** | Vitals alert → fixed message → 60 s without answer → emergency countdown |
+| Proactive heart-rate check-in | **none** | Vitals alert → fixed message → 60 s without answer → SOS countdown screen. Critical alerts go straight to the SOS screen |
 | Offline / failure mode | **none** | `OfflineAgent` pattern intents + templated verdict text |
 | Medicine photo | On-device OCR (Core Vision); fallback `/vision-extract` reads **names only** (strict JSON schema, low-confidence dropped) | Every name → `DrugChecker`; user confirms the drug before any verdict |
 | Push-to-talk voice | Core Speech ASR/TTS on device (en-US) or `/transcribe` + `/speak` (OpenAI) | Transcript goes through the same `SafetyGate` → agent → validator path as text |
 | Hands-free voice | OpenAI Realtime (speech-to-speech) via a 2-minute client secret from `/realtime-session` | Same on-device tools; input transcripts pass `SafetyGate`; a streaming check of the model's words cancels any reassurance about a medicine and speaks the deterministic verdict instead |
 | Celia system assistant | none | Intents `CheckDrugSafety` / `ShowEmergencyCard` call the deterministic paths directly |
+| Emergency hand-off | **none** | Any agent emergency (typed, spoken, unanswered check-in) opens the app's SOS countdown; the agent quotes the same ambulance number and countdown that screen uses |
 
 ## 2. Model and inference flow
 
@@ -90,7 +91,7 @@ gate, the validator, offline intents, tool-schema parity with the backend, and t
 
 ## 5. Limitations
 
-- The interaction rules (`ComboRules`) are a simplified, hand-curated subset: additive QT, a few CYP inhibitor–substrate
+- The interaction rules (`ComboRules`, unioned with `DrugChecker.checkCombo`) are a simplified, hand-curated subset: additive QT, a few CYP inhibitor–substrate
   pairs, and three or more QT drugs. They are not a full clinical interaction checker.
 - Verdict quality depends on the curated drug list (`DrugChecker`, owned by Mark). A drug that isn't in the list is
   reported as unknown, never as safe.

@@ -178,3 +178,38 @@ the app that works with the tools (medicine check, emergency card…), then plan
 - Validation 25/25 and robustness 7/7.
 - Agent eval on the new prompt: 17/17, with no validator false positives. Realtime smoke: pass.
 - Total eval spend for the day: about $1.98 of the $3 cap.
+
+### 2026-10-03 (cont.) — merging the app from main and wiring the AI into it (Kaloyan, with Claude Code)
+
+**Prompt:** "wait for one of the agents to finish … push. Then … get what there is in main … make sure everything is
+connected and is working correctly with the AI"
+
+**What was done**
+1. Confirmed with the parallel Claude Code sessions that the eval fixes were finished, then pushed `kaloyan/ai-layer`.
+2. Merged `origin/main` (the full app: home, medicines, SOS, reminders, doctor prep, LocalStore, AppLock, Supabase drug
+   dataset). Conflicts were resolved by hand. EntryAbility starts LocalStore/AppLock and the agent. Permissions are
+   main's plus MICROPHONE. Main's strings get `mic_reason`, main's deletion of the `pl_PL` strings is kept, both test
+   suites are registered, and the architecture table takes main's version with our OCR and voice rows.
+3. **One drug-check path.** The agent's `checkDrugFull` now runs through main's `CheckService`, so the barcode, the
+   offline dataset, the online fallback, scan history and the watch buzz are shared with the check screen.
+   Interaction findings are the union of `ComboRules` and `DrugChecker.checkCombo`. This was a safety issue found
+   during the merge: the two engines have different enzyme tables, so the chat and the check screen could have
+   disagreed.
+4. **One emergency number table.** `safety/EmergencyNumbers` is now a thin adapter over main's
+   `common/EmergencyNumbers` and prefers the onboarding country. In Poland Celia now says 999, the number the SOS
+   screen dials; before, it said 112.
+5. **Agent tab.** `AgentPage` replaces the placeholder. It covers text, push-to-talk and live voice, renders the
+   deterministic cards (verdict, confirm, quick replies, emergency, box scan via the photo picker) and shows an
+   offline strip when there is no backend. New colour resources are documented in DESIGN.md §2.1a.
+6. **Entry points.** "Ask Celia" on Home, plus "Ask Celia about this" on the check result (through `AgentPrompt` and
+   the new `common/TabRequest`).
+7. **Emergency hand-off.** Agent emergencies open main's SOS countdown, and the agent quotes its 30 s length.
+   Critical vitals alerts no longer start a second agent check-in, and "I'm OK" on SOS tells the agent.
+8. **Intent bug.** `ShowEmergencyCard` set an AppStorage key that nothing read. It now uses `TabRequest`.
+
+**Verification**
+- HAP build clean with 0 ArkTS warnings, and unit tests 101/101 (2 new).
+- Backend `validation.ts` all pass. It is free, and the backend is unchanged.
+- **Not verified:** the emulator, because no `hdc` target was connected; `LocalConfig.ets` has no backend URL, so the
+  app runs in offline mode; and the Edge Functions are not yet redeployed with prompt `2026-10-03.2`.
+
