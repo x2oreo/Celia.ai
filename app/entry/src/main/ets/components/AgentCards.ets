@@ -51,7 +51,10 @@ export class ToolUi {
       case 'get_vitals_summary':
         return $r('app.media.ic_heart_fill');
       case 'explain_condition':
+      case 'prepare_doctor_visit':
         return $r('app.media.ic_doctor');
+      case 'get_dose_status':
+        return $r('app.media.ic_bell');
       case 'scan_medicine':
         return $r('app.media.ic_camera');
       case 'show_emergency_card':
@@ -91,6 +94,11 @@ export class ToolUi {
       case 'share_emergency_card':
         return step.done ? $r('app.string.tool_share_emergency_card_done') :
           $r('app.string.tool_share_emergency_card');
+      case 'prepare_doctor_visit':
+        return step.done ? $r('app.string.tool_prepare_doctor_visit_done') :
+          $r('app.string.tool_prepare_doctor_visit');
+      case 'get_dose_status':
+        return step.done ? $r('app.string.tool_get_dose_status_done') : $r('app.string.tool_get_dose_status');
       default:
         return step.done ? $r('app.string.tool_generic_done') : $r('app.string.tool_generic');
     }

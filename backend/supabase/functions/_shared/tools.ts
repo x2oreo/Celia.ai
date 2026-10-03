@@ -122,6 +122,24 @@ export const TOOLS: FunctionTool[] = [
     },
   ),
   tool(
+    'prepare_doctor_visit',
+    'Get the fixed list of things to tell and ask a doctor before a visit, for one kind of doctor, and put a ' +
+      'button to the full visit brief on screen. Use when the user mentions an upcoming appointment or procedure.',
+    {
+      specialty: {
+        type: 'string',
+        enum: ['GP', 'CARDIOLOGIST', 'DENTIST', 'SURGEON', 'ANESTHESIOLOGIST', 'PSYCHIATRIST', 'EMERGENCY'],
+        description: 'Closest kind of doctor. Use GP if unsure.',
+      },
+    },
+  ),
+  tool(
+    'get_dose_status',
+    "Read today's medicine doses from the reminder log on the phone (taken, due, missed, upcoming). Read-only. " +
+      'Use when the user asks whether they took a medicine or what is due.',
+    {},
+  ),
+  tool(
     'start_new_chat',
     'Save the current conversation and start a new, empty one. Use when the user asks for a new chat, to start ' +
       'over, or to save this chat. Every chat is already kept on the phone, so nothing is lost.',

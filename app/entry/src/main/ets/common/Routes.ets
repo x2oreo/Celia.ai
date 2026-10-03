@@ -30,6 +30,15 @@ export class TabIndex {
   static readonly EMERGENCY: number = 3;
 }
 
+// Opens doctor prep on this specialty (doctor/DoctorPrep Specialty), e.g. from the agent's tile.
+export class DoctorPrepParam {
+  specialty: string;
+
+  constructor(specialty: string) {
+    this.specialty = specialty;
+  }
+}
+
 export class SosParam {
   test: boolean;
   reason: string;   // e.g. "heart rate 165 at rest" — shown on screen and in the message

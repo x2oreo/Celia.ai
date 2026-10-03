@@ -1971,6 +1971,30 @@
     {
       "name": "demo_voice_badge",
       "value": "SIMULATED VOICE INPUT"
+    },
+    {
+      "name": "agent_open_brief_sub",
+      "value": "Open the full brief for this visit"
+    },
+    {
+      "name": "agent_open_reminders_sub",
+      "value": "See and mark today's doses"
+    },
+    {
+      "name": "tool_prepare_doctor_visit",
+      "value": "Preparing your visit"
+    },
+    {
+      "name": "tool_prepare_doctor_visit_done",
+      "value": "Visit brief ready"
+    },
+    {
+      "name": "tool_get_dose_status",
+      "value": "Checking today's doses"
+    },
+    {
+      "name": "tool_get_dose_status_done",
+      "value": "Checked today's doses"
     }
   ]
 }

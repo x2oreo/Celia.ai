@@ -6,6 +6,7 @@ import { LocalStore } from '../data/LocalStore';
 import { Profile } from '../model/Profile';
 import { BriefSection, briefText, buildBrief, Specialty, SPECIALTIES, specialtyName } from '../doctor/DoctorPrep';
 import { copyText } from '../common/Clipboard';
+import { DoctorPrepParam } from '../common/Routes';
 import { shareText } from '../common/Share';
 import { toast } from '../common/Toast';
 import { PrimaryButton, QuietButton, SecondaryButton, SourceBadge, TypingDots } from '../components/Common';
@@ -293,5 +294,13 @@ export struct DoctorPrepPage {
     }
     .title($r('app.string.home_doctor'))
     .backgroundColor($r('app.color.bg'))
+    .onReady((ctx: NavDestinationContext) => {
+      const p: DoctorPrepParam | undefined = ctx.pathInfo.param as DoctorPrepParam | undefined;
+      const s: Specialty | undefined = SPECIALTIES.find((x: Specialty) => x === p?.specialty);
+      if (s !== undefined && s !== this.specialty) {
+        this.specialty = s;
+        this.build_();
+      }
+    })
   }
 }
