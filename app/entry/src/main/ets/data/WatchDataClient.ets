@@ -9,7 +9,7 @@ import { WatchSource } from '../vitals/WatchSource';
 import { Logger } from '../common/Logger';
 import {
   WatchDaySummary, WatchDose, WatchInsight, WatchInsightKind, WatchInsightSeverity, WatchStatus, WatchSymptom,
-  WatchSymptomKind, WatchWearStatus
+  WatchSymptomKind, WatchVitalsDay, WatchWearStatus
 } from '../model/WatchData';
 
 const log: Logger = new Logger('WatchData');
@@ -57,6 +57,20 @@ interface InsightRow {
   severity: string;
   ts: string;
   message: string;
+  simulated: boolean;
+}
+
+interface VitalsDayRow {
+  day: string;
+  avg_bpm: number | null;
+  min_bpm: number | null;
+  max_bpm: number | null;
+  hrv_ms: number | null;
+  spo2: number | null;
+  breathing_rate: number | null;
+  sleep_minutes: number | null;
+  stress_minutes: number | null;
+  steps: number | null;
   simulated: boolean;
 }
 
@@ -203,6 +217,36 @@ export function parseInsights(body: string): WatchInsight[] | undefined {
   return out;
 }
 
+export function parseVitalsDaily(body: string): WatchVitalsDay[] | undefined {
+  const rows: VitalsDayRow[] | undefined = rowsOf<VitalsDayRow>(body);
+  if (rows === undefined) {
+    return undefined;
+  }
+  const out: WatchVitalsDay[] = [];
+  for (const r of rows) {
+    if (typeof r.day !== 'string' || !DAY_RE.test(r.day)) {
+      continue;
+    }
+    // Oxygen keeps its decimal; anything outside what a wrist can report is dropped, not shown.
+    const spo2: number = typeof r.spo2 === 'number' && r.spo2 >= 50 && r.spo2 <= 100 ? Math.round(r.spo2 * 10) / 10 : 0;
+    const d: WatchVitalsDay = {
+      day: r.day,
+      avgBpm: count(r.avg_bpm),
+      minBpm: count(r.min_bpm),
+      maxBpm: count(r.max_bpm),
+      hrvMs: count(r.hrv_ms),
+      spo2: spo2,
+      breathingRate: count(r.breathing_rate),
+      sleepMinutes: count(r.sleep_minutes),
+      stressMinutes: count(r.stress_minutes),
+      steps: count(r.steps),
+      simulated: r.simulated === true
+    };
+    out.push(d);
+  }
+  return out;
+}
+
 export class WatchDataClient {
   /** Device filter for every query. Hackathon: one demo watch (Config.WATCH_DEVICE_ID). */
   private static dev(): string {
@@ -265,5 +309,16 @@ export class WatchDataClient {
       `/rest/v1/watch_insights?device_id=eq.${WatchDataClient.dev()}&select=kind,severity,ts,message,simulated`, ledger,
       target);
     return body === undefined ? undefined : parseInsights(body);
+  }
+
+  /** Daily vitals (heart rate range, HRV, oxygen, breathing, sleep, stress time, steps), newest first. */
+  static async vitalsDaily(days: number, ledger: boolean = true,
+    target?: NetTarget): Promise<WatchVitalsDay[] | undefined> {
+    const n: number = Math.max(1, Math.min(90, Math.round(days)));
+    const body: string | undefined = await WatchDataClient.get(
+      `/rest/v1/watch_vitals_daily?device_id=eq.${WatchDataClient.dev()}` +
+        '&select=day,avg_bpm,min_bpm,max_bpm,hrv_ms,spo2,breathing_rate,sleep_minutes,stress_minutes,steps,' +
+        `simulated&order=day.desc&limit=${n}`, ledger, target);
+    return body === undefined ? undefined : parseVitalsDaily(body);
   }
 }

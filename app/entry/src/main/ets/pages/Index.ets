@@ -37,6 +37,7 @@ import { BetaBlockerWatch } from '../vitals/BetaBlockerWatch';
 import { WatchPairing } from '../data/WatchPairing';
 import { WatchSource } from '../vitals/WatchSource';
 import { TrendsPage } from './TrendsPage';
+import { MetricPage } from './MetricPage';
 import { PairWatchPage } from './PairWatchPage';
 import { AgentCore, QUICK_REPLY_OK, QUICK_REPLY_UNWELL } from '../agent/AgentCore';
 import { CheckInSheet } from '../components/CheckInSheet';
@@ -247,6 +248,8 @@ struct Index {
       PairWatchPage()
     } else if (name === Routes.TRENDS) {
       TrendsPage()
+    } else if (name === Routes.METRIC) {
+      MetricPage()
     }
   }
 

@@ -421,7 +421,7 @@ ArkUI shapes so every colour is a resource and dark mode follows.
 1. **Readout**: the selected day's value in `headline` / 700 with the unit and the date in `body-sm` `ink-3`. It
    starts on the latest reading. Touching or dragging across the plot moves it: a 1 vp `border-strong` crosshair and
    a 10 vp `brand` dot with a 2 vp `surface` ring. The readout is the tooltip, so nothing floats over the data.
-2. **Plot** (160 on a detail page): the **usual range** as a `surface-alt` band behind the marks, three or four 1 vp
+2. **Plot** (160 on a detail page): the **usual range** as a `surface-alt` band behind the marks, up to six 1 vp
    `border` grid lines with their values in `micro` `ink-4` on the left. One y axis, never two.
 3. **Dates**: first, middle, last in `micro` `ink-3`.
 4. **Legend line**: a `surface-alt` swatch + "Your usual range: 53–63 bpm" (own baseline) or "Usual range: 95–100 %"
@@ -432,8 +432,8 @@ Series colour is always `brand`; values and labels stay ink. Mini charts on card
 no axes and one emphasised last mark.
 
 **Metric card** (Health grid): `surface`, 1 vp `border`, `radius_ml`, padding 14. Caps label + `SIMULATED` badge
-when the signal is simulated, value in `title-2` / 800 with the unit in `caption`, the mini chart, then the status
-pill and the change ("↑ 3"). Whole card is the touch target.
+when the signal is simulated, value in `title-2` / 800 with the unit in `caption`, the change ("↑ 3") at its
+right, the mini chart, then the status pill. Whole card is the touch target.
 
 **Status** is a fixed rule on the user's own numbers, never model output and never a diagnosis. Word + shape + tint,
 never colour alone:
@@ -593,9 +593,9 @@ than one health metric, the travel banner, interactions, the extra tools).
 4. **Next dose**: caps "NEXT DOSE" + coral link "All reminders ›". Pill well 44, name + dose in `headline`,
    "Due at 14:00 · in 10 min" in `body-sm` `ink-3`, ink `Taken` pill (44). After the last dose: "All done for
    today". No reminders: one line and the link "Set a reminder".
-5. **Resting · 7 days**: ring 84 with the live bpm and its source badge, seven bars (the last one `brand`, the
-   others `brand-tint`), "64 avg · 2 lower than last week" in `body-sm`. Tap: Health. Bars are daily averages,
-   never a trace.
+5. **Resting · 7 days**: ring 84 with the live bpm and its source badge, the mini chart of the Health tab's
+   resting heart rate card (6.10: the same component, `brand` line, last day as a dot) at 40 vp, "64 avg · 2 lower
+   than last week" in `body-sm`. Tap: Health. The line joins daily averages, never a trace.
 6. **Quick actions**, 2 × 2 tiles (height 64, icon well 36 on `brand-tint`, 15 fp / 700): Scan a box, Log how I
    feel, Doctor visit, Check a medicine.
 7. Medicines chip ("All 3 medicines checked" with the Not-listed shape, or "N to review" with the worst risk
@@ -645,6 +645,9 @@ sits above it.
 2. Caps "FROM YOUR WATCH · 14 DAYS", then the **metric cards** (6.10): Resting heart rate full width, then a
    2-column grid: HRV, Blood oxygen, Breathing, Sleep, Steps, Stress time. Tap: the metric's detail page.
 3. "WHAT STANDS OUT" (fixed-rule findings), alerts, then demo controls.
+   Demo controls (dashed card, collapsed): caps "DATA SOURCE" with two quick-reply chips, `Watch` / `Simulated`
+   (selected style on the active one; shown when the watch's Supabase project can be reached), then the scenario
+   chips, which only show for the simulated source. Switching restarts the live line and reloads the metric cards.
 4. Pinned above the tab bar: coral `Log how I feel` + secondary `Doctor visit`, so they are never hunted for.
 
 **04a Metric detail (pushed)**: header with the metric name. Big value + unit with the source badge, segmented

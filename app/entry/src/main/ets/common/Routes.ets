@@ -22,6 +22,7 @@ export class Routes {
   static readonly SCAN: string = 'scan';
   static readonly PAIR_WATCH: string = 'pairWatch';
   static readonly TRENDS: string = 'trends';
+  static readonly METRIC: string = 'metric';             // one health metric; param: MetricParam
 }
 
 // Tab indexes of components/MainTabs.ets. The first tab is the agent conversation itself; Routes.AGENT_CHAT only
@@ -31,6 +32,15 @@ export class TabIndex {
   static readonly MEDICINES: number = 1;
   static readonly HEART: number = 2;
   static readonly EMERGENCY: number = 3;
+}
+
+// Opens the page of one health metric (vitals/Metrics MetricKind).
+export class MetricParam {
+  kind: string;
+
+  constructor(kind: string) {
+    this.kind = kind;
+  }
 }
 
 // Opens one saved doctor visit (doctor/VisitStore DoctorVisit.id).

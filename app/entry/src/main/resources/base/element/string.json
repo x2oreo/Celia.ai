@@ -449,6 +449,18 @@
       "value": "Demo controls"
     },
     {
+      "name": "heart_source",
+      "value": "Data source"
+    },
+    {
+      "name": "heart_source_watch",
+      "value": "Watch"
+    },
+    {
+      "name": "heart_source_simulated",
+      "value": "Simulated"
+    },
+    {
       "name": "heart_link_symptom",
       "value": "Log a symptom"
     },
@@ -2767,6 +2779,222 @@
     {
       "name": "dv_not_found",
       "value": "This visit is no longer on this phone."
+    },
+    {
+      "name": "health_from_watch",
+      "value": "From your watch · %d days"
+    },
+    {
+      "name": "health_see_days",
+      "value": "See by day"
+    },
+    {
+      "name": "badge_sim",
+      "value": "SIM"
+    },
+    {
+      "name": "metric_heart_rate",
+      "value": "Heart rate"
+    },
+    {
+      "name": "metric_resting_hr",
+      "value": "Resting heart rate"
+    },
+    {
+      "name": "metric_hrv",
+      "value": "Heart rate variability"
+    },
+    {
+      "name": "metric_hrv_short",
+      "value": "HRV"
+    },
+    {
+      "name": "metric_spo2",
+      "value": "Blood oxygen"
+    },
+    {
+      "name": "metric_breathing",
+      "value": "Breathing rate"
+    },
+    {
+      "name": "metric_breathing_short",
+      "value": "Breathing"
+    },
+    {
+      "name": "metric_sleep",
+      "value": "Sleep"
+    },
+    {
+      "name": "metric_steps",
+      "value": "Steps"
+    },
+    {
+      "name": "metric_stress",
+      "value": "Stress time"
+    },
+    {
+      "name": "metric_stress_short",
+      "value": "Stress"
+    },
+    {
+      "name": "metric_about_heart_rate",
+      "value": "Beats per minute through the day. Each bar runs from the lowest to the highest reading of that day and the dot is the average."
+    },
+    {
+      "name": "metric_about_resting_hr",
+      "value": "Your heart rate when you are still or asleep. A beta-blocker keeps it low, so a rise that lasts a few days can mean a missed dose, an illness or stress."
+    },
+    {
+      "name": "metric_about_hrv",
+      "value": "How much the time between beats varies, in milliseconds. A value lower than your usual often goes with stress, illness or a bad night."
+    },
+    {
+      "name": "metric_about_spo2",
+      "value": "How much oxygen your blood carries. Most people stay at 95% or higher."
+    },
+    {
+      "name": "metric_about_breathing",
+      "value": "Breaths per minute while you rest. Adults usually take 12 to 20."
+    },
+    {
+      "name": "metric_about_sleep",
+      "value": "Hours the watch saw you asleep, counted per calendar day. Short nights add strain, so a steady routine helps."
+    },
+    {
+      "name": "metric_about_steps",
+      "value": "Steps the watch counted. There is no target here: how much exercise is right for you is for your cardiologist to say."
+    },
+    {
+      "name": "metric_about_stress",
+      "value": "Minutes with a raised heart rate while you were sitting still. Sudden stress is a known trigger in some types of Long QT, so calm days matter."
+    },
+    {
+      "name": "status_good",
+      "value": "Good"
+    },
+    {
+      "name": "status_okay",
+      "value": "Okay"
+    },
+    {
+      "name": "status_attention",
+      "value": "Worth a look"
+    },
+    {
+      "name": "status_none",
+      "value": "No data"
+    },
+    {
+      "name": "status_in_range",
+      "value": "Inside the usual range."
+    },
+    {
+      "name": "status_slightly_high",
+      "value": "A little above the usual range."
+    },
+    {
+      "name": "status_slightly_low",
+      "value": "A little below the usual range."
+    },
+    {
+      "name": "status_high",
+      "value": "Well above the usual range. Mention it to your doctor."
+    },
+    {
+      "name": "status_low",
+      "value": "Well below the usual range. Mention it to your doctor."
+    },
+    {
+      "name": "status_no_data",
+      "value": "Not enough readings yet."
+    },
+    {
+      "name": "metric_up",
+      "value": "Up %s from the week before."
+    },
+    {
+      "name": "metric_down",
+      "value": "Down %s from the week before."
+    },
+    {
+      "name": "metric_steady",
+      "value": "Steady compared with the week before."
+    },
+    {
+      "name": "metric_no_change",
+      "value": "Not enough days yet to compare with the week before."
+    },
+    {
+      "name": "metric_usual_personal",
+      "value": "Your usual range: %s"
+    },
+    {
+      "name": "metric_usual_fixed",
+      "value": "Usual range: %s"
+    },
+    {
+      "name": "metric_readout_avg",
+      "value": "%s · avg %s"
+    },
+    {
+      "name": "metric_simulated_note",
+      "value": "Simulated signal. Watch apps can't read this one from the watch yet."
+    },
+    {
+      "name": "metric_from_watch_note",
+      "value": "Worked out by the watch from heart rate and movement."
+    },
+    {
+      "name": "metric_rules_note",
+      "value": "Fixed rules on your own numbers. Not a diagnosis. Always ask your doctor."
+    },
+    {
+      "name": "metric_means",
+      "value": "What this means"
+    },
+    {
+      "name": "metric_about",
+      "value": "About this number"
+    },
+    {
+      "name": "metric_avg",
+      "value": "Average"
+    },
+    {
+      "name": "metric_lowest",
+      "value": "Lowest"
+    },
+    {
+      "name": "metric_highest",
+      "value": "Highest"
+    },
+    {
+      "name": "metric_now",
+      "value": "Now"
+    },
+    {
+      "name": "metric_ask",
+      "value": "Ask the agent about this"
+    },
+    {
+      "name": "metric_no_history",
+      "value": "No readings from the watch for this yet."
+    },
+    {
+      "name": "a11y_metric_chart",
+      "value": "%s chart. %d of %d days have a reading, from %s to %s %s."
+    },
+    {
+      "name": "a11y_metric_chart_empty",
+      "value": "%s chart. No readings yet."
+    },
+    {
+      "name": "a11y_metric_card",
+      "value": "%s, %s %s, %s. Opens the details."
+    },
+    {
+      "name": "metric_spo2_short",
+      "value": "Oxygen"
     }
   ]
 }

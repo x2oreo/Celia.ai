@@ -1,21 +1,24 @@
-// Health tab (DESIGN.md §10.1a, screen 04): the graph is the screen. Now card, three vitals, a Today / 14 days /
-// 30 days switch over one chart card (last minutes, or resting heart rate per day with dose and symptom rows), stat
-// tiles, what stands out, alerts, demo controls. Log how I feel and Doctor visit stay pinned above the tab bar.
-// Heart rate only, never QT.
+// Health tab (DESIGN.md §10.1a, screen 04; §6.10): every watch metric one tap from its graph. Now card with the
+// live heart-rate line, a card per metric (value, mini chart, fixed-rule status), what stands out, alerts, demo
+// controls. Log how I feel and Doctor visit stay pinned above the tab bar. Never QT, never an ECG.
 
-import { VitalsAlert, VitalsSample } from '../model/Vitals';
+import { VitalsAlert, VitalsSample, VitalsSourceKind } from '../model/Vitals';
 import { VitalsService } from '../vitals/VitalsService';
 import { SCENARIOS, ScenarioName } from '../vitals/SimulatedSource';
+import { WatchSource } from '../vitals/WatchSource';
 import { clock } from '../common/Format';
-import { HrChart } from '../components/HrChart';
 import {
   CapsLabel, EmptyCard, PrimaryButton, QuickReplyChip, RiskShape, ScreenHeader, SecondaryButton, SectionHeader,
   SourceBadge
 } from '../components/Common';
-import { TrendChart } from '../components/TrendChart';
+import { MetricChart } from '../components/MetricChart';
+import { MetricCard } from '../components/MetricParts';
 import { WatchInsight } from '../model/WatchData';
-import { loadTrends, TrendData, TrendStats, trendStats } from '../vitals/Trends';
-import { Routes, TabIndex } from '../common/Routes';
+import { loadMetrics, MetricsData } from '../vitals/MetricHistory';
+import {
+  liveDays, liveHrBand, MetricBand, MetricDay, MetricKind, MetricSeries, metricStatus, sampleBand, seriesFor
+} from '../vitals/Metrics';
+import { MetricParam, Routes, TabIndex } from '../common/Routes';
 import { LengthMetrics } from '@kit.ArkUI';
 
 export function severityColor(a: VitalsAlert): Resource {
@@ -29,46 +32,21 @@ export function severityColor(a: VitalsAlert): Resource {
   }
 }
 
-// One extra vital: value over its label. A component, not a @Builder with arguments: builder arguments are passed by
-// value, so the tiles would keep the first reading.
-@ComponentV2
-struct HeartStat {
-  @Param label: ResourceStr = '';
-  @Param value: ResourceStr = '';
-
-  build() {
-    Column({ space: 2 }) {
-      Text(this.value)
-        .fontSize($r('app.float.font_subtitle'))
-        .fontWeight(FontWeight.Bold)
-        .fontColor($r('app.color.ink'))
-      Text(this.label)
-        .fontSize($r('app.float.font_caption'))
-        .fontColor($r('app.color.ink_3'))
-    }
-    .layoutWeight(1)
-    .alignItems(HorizontalAlign.Start)
-    .padding(12)
-    .backgroundColor($r('app.color.surface'))
-    .border({ width: 1, color: $r('app.color.border') })
-    .borderRadius($r('app.float.radius_m'))
-    .accessibilityGroup(true)
-  }
-}
-
-const SPANS: number[] = [0, 14, 30];   // 0 = today (the last minutes)
+const SPAN: number = 14;
+const LIVE_SLOTS: number = 90;
+// The grid under the full-width resting heart rate card, two per row.
+const GRID: MetricKind[][] = [['HRV', 'SPO2'], ['BREATHING', 'SLEEP'], ['STEPS', 'STRESS']];
 
 @ComponentV2
 export struct HeartPage {
   @Consumer('navStack') navStack: NavPathStack = new NavPathStack();
   @Local latest: VitalsSample | undefined = undefined;
-  @Local hrs: number[] = [];
+  @Local live: MetricDay[] = [];
   @Local alerts: VitalsAlert[] = [];
   @Local scenario: ScenarioName = 'normal';
   @Local showSim: boolean = false;
-  @Local chartWidth: number = 320;
-  @Local span: number = 14;
-  @Local data: TrendData | undefined = undefined;
+  @Local source: VitalsSourceKind = WatchSource.active();
+  @Local data: MetricsData | undefined = undefined;
   @Consumer('tabIndex') activeTab: number = TabIndex.HOME;
   private offSample: () => void = () => {
   };
@@ -78,14 +56,13 @@ export struct HeartPage {
   aboutToAppear(): void {
     const svc: VitalsService = VitalsService.get();
     this.latest = svc.latest();
-    this.hrs = svc.history().map((s: VitalsSample) => s.hr);
+    this.live = liveDays(svc.history(), LIVE_SLOTS);
     this.alerts = svc.alertHistory();
     this.scenario = svc.currentScenario();
+    this.source = WatchSource.active();
     this.offSample = svc.onSample((s: VitalsSample) => {
       this.latest = s;
-      const next: number[] = this.hrs.slice(this.hrs.length >= 90 ? 1 : 0);
-      next.push(s.hr);
-      this.hrs = next;
+      this.live = liveDays(VitalsService.get().history(), LIVE_SLOTS);
     });
     this.offAlert = svc.onAlert(() => {
       this.alerts = VitalsService.get().alertHistory();
@@ -102,37 +79,40 @@ export struct HeartPage {
   }
 
   private async load(): Promise<void> {
-    const forSpan: number = this.span;
-    if (forSpan === 0) {
+    this.data = await loadMetrics(Date.now(), SPAN);
+  }
+
+  // Watch ↔ simulation: the live line starts again and the history is loaded from the new source.
+  private async pick(kind: VitalsSourceKind): Promise<void> {
+    if (kind === this.source) {
       return;
     }
-    const d: TrendData = await loadTrends(Date.now(), forSpan);
-    if (forSpan === this.span) {
-      this.data = d;
-    }
+    await WatchSource.set(kind);
+    const svc: VitalsService = VitalsService.get();
+    svc.restart();
+    this.source = WatchSource.active();
+    this.scenario = svc.currentScenario();
+    this.latest = undefined;
+    this.live = liveDays([], LIVE_SLOTS);
+    this.data = undefined;
+    this.load();
   }
 
-  private pick(n: number): void {
-    if (this.span === n) {
-      return;
-    }
-    this.span = n;
-    if (n > 0) {
-      this.data = undefined;
-      this.load();
-    }
+  private series(kind: MetricKind): MetricSeries {
+    return seriesFor(this.data !== undefined ? this.data.series : [], kind);
   }
 
-  private stats(): TrendStats {
-    return trendStats(this.data !== undefined ? this.data.days : []);
+  private open(kind: MetricKind): void {
+    this.navStack.pushPathByName(Routes.METRIC, new MetricParam(kind));
   }
 
-  private changeText(): string {
-    const s: TrendStats = this.stats();
-    if (!s.hasChange) {
-      return '–';
-    }
-    return s.change > 0 ? `+${s.change}` : `${s.change}`;
+  // The reading's own label; before the first reading, the source picked.
+  private badgeSource(): VitalsSourceKind {
+    return this.latest !== undefined ? this.latest.source : this.source;
+  }
+
+  private liveBand(): MetricBand {
+    return this.latest !== undefined ? sampleBand(this.latest) : liveHrBand(false, false);
   }
 
   aboutToDisappear(): void {
@@ -168,107 +148,87 @@ export struct HeartPage {
       $r('app.string.heart_alert_info_a11y', bpm);
   }
 
+  // Now: the number in words, the live line of the last minutes, the rhythm flag. Opens the heart-rate page.
   @Builder
   nowCard() {
-    Row({ space: 10 }) {
-      Image($r('app.media.ic_heart_fill')).width(22).height(22).fillColor($r('app.color.brand_accent'))
-      Text(this.latest === undefined ? '--' : `${Math.round(this.latest.hr)}`)
-        .fontSize($r('app.float.font_title_1'))
-        .fontWeight(800)
-        .fontColor($r('app.color.ink'))
-      Text($r('app.string.health_bpm_now'))
-        .fontSize($r('app.float.font_small'))
-        .fontWeight(FontWeight.Medium)
-        .fontColor($r('app.color.ink_3'))
-        .layoutWeight(1)
-      Column({ space: 4 }) {
-        SourceBadge({
-          label: this.latest?.source === 'WATCH' ? $r('app.string.badge_watch') : $r('app.string.badge_simulated'),
-          solid: this.latest?.source === 'WATCH'
-        })
-        Text(this.rangeLine())
-          .fontSize($r('app.float.font_caption'))
-          .fontWeight(FontWeight.Medium)
-          .fontColor($r('app.color.ink_2'))
-          .textAlign(TextAlign.End)
-      }
-      .alignItems(HorizontalAlign.End)
-    }
-    .width('100%')
-    .padding({ left: 16, right: 16, top: 14, bottom: 14 })
-    .backgroundColor($r('app.color.surface'))
-    .border({ width: 1, color: $r('app.color.border') })
-    .borderRadius($r('app.float.radius_ml'))
-    .accessibilityGroup(true)
-  }
-
-  @Builder
-  vitals() {
-    Row({ space: 8 }) {
-      HeartStat({
-        label: $r('app.string.heart_resting_hr'),
-        value: this.latest?.restingHr === undefined ? '--' : `${this.latest?.restingHr}`
-      })
-      HeartStat({
-        label: $r('app.string.heart_hrv'),
-        value: this.latest?.hrv === undefined ? '--' : `${Math.round(this.latest?.hrv ?? 0)} ms`
-      })
-      HeartStat({
-        label: $r('app.string.heart_rhythm'),
-        value: this.latest?.irregular === true ? $r('app.string.heart_rhythm_irregular') :
-          $r('app.string.heart_rhythm_regular')
-      })
-    }
-    .width('100%')
-  }
-
-  // Today · 14 days · 30 days: surface-alt track, the selected segment on surface.
-  @Builder
-  segments() {
-    Row() {
-      ForEach(SPANS, (n: number) => {
-        Text(n === 0 ? $r('app.string.health_today') : $r('app.string.trends_days', n))
-          .fontSize($r('app.float.font_small'))
-          .fontWeight(this.span === n ? FontWeight.Bold : FontWeight.Medium)
-          .fontColor(this.span === n ? $r('app.color.ink') : $r('app.color.ink_3'))
-          .textAlign(TextAlign.Center)
-          .layoutWeight(1)
-          .height(36)
-          .borderRadius(10)
-          .backgroundColor(this.span === n ? $r('app.color.surface') : Color.Transparent)
-          .accessibilityText(n === 0 ? $r('app.string.health_today') : $r('app.string.trends_days_a11y', n))
-          .accessibilitySelected(this.span === n)
-          .onClick(() => {
-            this.pick(n);
-          })
-      }, (n: number) => `${n}`)
-    }
-    .width('100%')
-    .padding(4)
-    .backgroundColor($r('app.color.surface_alt'))
-    .borderRadius($r('app.float.radius_btn'))
-  }
-
-  @Builder
-  todayCard() {
     Column({ space: 12 }) {
-      Text($r('app.string.heart_trend'))
-        .fontSize($r('app.float.font_headline'))
-        .fontWeight(FontWeight.Bold)
-        .fontColor($r('app.color.ink'))
-      HrChart({ hrs: this.hrs, chartWidth: this.chartWidth, chartHeight: 120 })
-      Text($r('app.string.heart_only_hr'))
-        .fontSize($r('app.float.font_caption'))
-        .fontColor($r('app.color.ink_3'))
+      Row({ space: 10 }) {
+        Image($r('app.media.ic_heart_fill')).width(22).height(22).fillColor($r('app.color.brand_accent'))
+        Text(this.latest === undefined ? '--' : `${Math.round(this.latest.hr)}`)
+          .fontSize($r('app.float.font_title_1'))
+          .fontWeight(800)
+          .fontColor($r('app.color.ink'))
+        Text($r('app.string.health_bpm_now'))
+          .fontSize($r('app.float.font_small'))
+          .fontWeight(FontWeight.Medium)
+          .fontColor($r('app.color.ink_3'))
+          .layoutWeight(1)
+        Column({ space: 4 }) {
+          SourceBadge({
+            label: this.badgeSource() === 'WATCH' ? $r('app.string.badge_watch') : $r('app.string.badge_simulated'),
+            solid: this.badgeSource() === 'WATCH'
+          })
+          Text(this.rangeLine())
+            .fontSize($r('app.float.font_caption'))
+            .fontWeight(FontWeight.Medium)
+            .fontColor($r('app.color.ink_2'))
+            .textAlign(TextAlign.End)
+        }
+        .alignItems(HorizontalAlign.End)
+      }
+      .width('100%')
+      .accessibilityGroup(true)
+
+      MetricChart({
+        kind: 'HEART_RATE',
+        days: this.live,
+        form: 'LINE',
+        band: this.liveBand(),
+        plotHeight: 96,
+        live: true,
+        readout: false
+      })
+
+      Row({ space: 6 }) {
+        Text($r('app.string.heart_rhythm'))
+          .fontSize($r('app.float.font_caption'))
+          .fontColor($r('app.color.ink_3'))
+        Text(this.latest?.irregular === true ? $r('app.string.heart_rhythm_irregular') :
+          $r('app.string.heart_rhythm_regular'))
+          .fontSize($r('app.float.font_caption'))
+          .fontWeight(FontWeight.Bold)
+          .fontColor($r('app.color.ink'))
+        Blank()
+        Text($r('app.string.health_see_days'))
+          .fontSize($r('app.float.font_caption'))
+          .fontWeight(FontWeight.Bold)
+          .fontColor($r('app.color.brand_text'))
+        Image($r('app.media.ic_chevron_right')).width(14).height(14).fillColor($r('app.color.brand_text'))
+      }
+      .width('100%')
+      .accessibilityGroup(true)
     }
     .width('100%')
-    .alignItems(HorizontalAlign.Start)
     .padding(16)
     .backgroundColor($r('app.color.surface'))
     .border({ width: 1, color: $r('app.color.border') })
     .borderRadius($r('app.float.radius_l'))
-    .onAreaChange((oldArea: Area, newArea: Area) => {
-      this.chartWidth = Math.max(100, (newArea.width as number) - 34);
+    .onClick(() => {
+      this.open('HEART_RATE');
+    })
+  }
+
+  @Builder
+  metricCard(kind: MetricKind, wide: boolean) {
+    MetricCard({
+      kind: kind,
+      days: this.series(kind).days,
+      status: metricStatus(kind, this.series(kind).days),
+      simulated: this.series(kind).simulated,
+      wide: wide,
+      onTap: () => {
+        this.open(kind);
+      }
     })
   }
 
@@ -282,13 +242,13 @@ export struct HeartPage {
       .width('100%')
   }
 
-  // Resting heart rate per day with the dose and symptom rows, then the numbers and the fixed-rule findings.
+  // A card per metric over the last 14 days, then the fixed-rule findings.
   @Builder
-  trendBlock() {
+  metrics() {
     if (this.data === undefined) {
       LoadingProgress().width(32).height(32).color($r('app.color.ink_3')).margin({ top: 32, bottom: 32 })
         .accessibilityText($r('app.string.a11y_loading'))
-    } else if (this.data.source === 'OFFLINE') {
+    } else if (this.data.trend.source === 'OFFLINE') {
       EmptyCard({
         message: $r('app.string.trends_offline'),
         action: $r('app.string.check_retry'),
@@ -297,64 +257,26 @@ export struct HeartPage {
           this.load();
         }
       })
-    } else if (this.data.source === 'WATCH' && this.stats().daysWithData === 0) {
-      // The project answered, but this watch has no rows in the span: say so, never fill in demo data.
-      EmptyCard({
-        message: $r('app.string.trends_no_rows', this.data.days.length),
-        action: this.span === 14 ? $r('app.string.trends_days', 30) : '',
-        onAction: () => {
-          this.pick(30);
-        }
-      })
     } else {
-      Column({ space: 8 }) {
-        Row() {
-          Text($r('app.string.trends_chart_title'))
-            .fontSize($r('app.float.font_headline'))
-            .fontWeight(FontWeight.Bold)
-            .fontColor($r('app.color.ink'))
-            .layoutWeight(1)
-          // Honest source label: SIMULATED for demo history or watch rows marked simulated, WATCH for real rows.
-          if (this.data.simulated) {
-            SourceBadge({ label: $r('app.string.badge_simulated') })
-          } else if (this.data.source === 'WATCH') {
-            SourceBadge({ label: $r('app.string.badge_watch'), solid: true })
+      this.metricCard('RESTING_HR', true)
+      ForEach(GRID, (pair: MetricKind[]) => {
+        Row({ space: 12 }) {
+          Column() {
+            this.metricCard(pair[0], false)
           }
+          .layoutWeight(1)
+          Column() {
+            this.metricCard(pair[1], false)
+          }
+          .layoutWeight(1)
         }
         .width('100%')
-        TrendChart({
-          days: this.data.days,
-          doseLabel: $r('app.string.trends_row_dose'),
-          symptomLabel: $r('app.string.trends_row_symptom')
-        })
-        Text($r('app.string.health_not_ecg'))
-          .fontSize($r('app.float.font_caption'))
-          .fontColor($r('app.color.ink_3'))
-      }
-      .width('100%')
-      .alignItems(HorizontalAlign.Start)
-      .padding(16)
-      .backgroundColor($r('app.color.surface'))
-      .border({ width: 1, color: $r('app.color.border') })
-      .borderRadius($r('app.float.radius_l'))
+      }, (pair: MetricKind[]) => pair[0])
 
-      Row({ space: 8 }) {
-        HeartStat({
-          label: $r('app.string.health_resting_avg'),
-          value: this.stats().avgResting > 0 ? `${this.stats().avgResting}` : '–'
-        })
-        HeartStat({ label: $r('app.string.health_vs_before'), value: this.changeText() })
-        HeartStat({
-          label: $r('app.string.health_days_dosed'),
-          value: `${this.stats().doseDays}/${this.data.days.length}`
-        })
-      }
-      .width('100%')
-
-      if (this.data.insights.length > 0) {
+      if (this.data.trend.insights.length > 0) {
         Column({ space: 8 }) {
           CapsLabel({ text: $r('app.string.trends_findings') })
-          ForEach(this.data.insights, (i: WatchInsight) => {
+          ForEach(this.data.trend.insights, (i: WatchInsight) => {
             this.insightLine(i)
           }, (i: WatchInsight) => `${i.kind}-${i.ts}`)
         }
@@ -446,13 +368,10 @@ export struct HeartPage {
         ScreenHeader({ title: $r('app.string.health_title'), back: false })
 
         this.nowCard()
-        this.vitals()
-        this.segments()
-        if (this.span === 0) {
-          this.todayCard()
-        } else {
-          this.trendBlock()
-        }
+        CapsLabel({ text: $r('app.string.health_from_watch', SPAN) })
+          .width('100%')
+          .margin({ top: 8 })
+        this.metrics()
 
         SectionHeader({ title: $r('app.string.heart_alerts') })
         if (this.alerts.length === 0) {
@@ -471,8 +390,9 @@ export struct HeartPage {
         }
 
 
-        // Demo controls — only for the phone's own simulated source (the watch has its own Simulate page).
-        if (VitalsService.get().sourceKind() !== 'WATCH') {
+        // Demo controls: the data source (when the watch's project can be reached) and, for the phone's own
+        // simulated source, the scenarios (the watch has its own Simulate page).
+        if (this.source !== 'WATCH' || WatchSource.available()) {
         Column({ space: 12 }) {
           Row() {
             Text($r('app.string.heart_sim_controls'))
@@ -494,7 +414,30 @@ export struct HeartPage {
           .onClick(() => {
             this.showSim = !this.showSim;
           })
-          if (this.showSim) {
+          if (this.showSim && WatchSource.available()) {
+            Column({ space: 8 }) {
+              CapsLabel({ text: $r('app.string.heart_source') })
+              Row({ space: 8 }) {
+                QuickReplyChip({
+                  label: $r('app.string.heart_source_watch'),
+                  chipStyle: this.source === 'WATCH' ? 'SELECTED' : 'DEFAULT',
+                  onTap: () => {
+                    this.pick('WATCH');
+                  }
+                })
+                QuickReplyChip({
+                  label: $r('app.string.heart_source_simulated'),
+                  chipStyle: this.source === 'SIMULATED' ? 'SELECTED' : 'DEFAULT',
+                  onTap: () => {
+                    this.pick('SIMULATED');
+                  }
+                })
+              }
+            }
+            .width('100%')
+            .alignItems(HorizontalAlign.Start)
+          }
+          if (this.showSim && this.source !== 'WATCH') {
             Flex({ wrap: FlexWrap.Wrap, space: { main: LengthMetrics.vp(8), cross: LengthMetrics.vp(8) } }) {
               ForEach(SCENARIOS, (name: ScenarioName) => {
                 QuickReplyChip({

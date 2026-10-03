@@ -17,14 +17,15 @@ import { AgentAvatar } from '../components/AgentAvatar';
 import { RiskShape, RoundIconButton, SourceBadge, StatusChip } from '../components/Common';
 import { ReminderService } from '../reminders/ReminderService';
 import { loadTrends, TrendData, TrendDay, TrendStats, trendStats } from '../vitals/Trends';
+import { chartForm, MetricBand, metricBand, metricDay, MetricDay, NO_VALUE } from '../vitals/Metrics';
+import { MiniChart } from '../components/MetricChart';
 import { pulse } from '../common/Haptics';
 
 const MONTHS: string[] = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September',
   'October', 'November', 'December'];
 const DAYS: string[] = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const WEEK: number = 7;
-const BAR_MAX: number = 40;
-const BAR_MIN: number = 8;
+const CHART_H: number = 40;
 const RING: number = 84;
 
 @ComponentV2
@@ -146,14 +147,13 @@ export struct HomePage {
     return this.week().some((d: TrendDay) => d.restingBpm > 0);
   }
 
-  private barHeight(d: TrendDay): number {
-    const values: number[] = this.week().filter((x: TrendDay) => x.restingBpm > 0).map((x: TrendDay) => x.restingBpm);
-    if (d.restingBpm <= 0 || values.length === 0) {
-      return 2;
-    }
-    const lo: number = Math.min(...values) - 6;
-    const hi: number = Math.max(...values);
-    return hi <= lo ? BAR_MAX : BAR_MIN + (BAR_MAX - BAR_MIN) * (d.restingBpm - lo) / (hi - lo);
+  private restingDays(days: TrendDay[]): MetricDay[] {
+    return days.map((d: TrendDay) => metricDay(d.day, d.restingBpm > 0 ? d.restingBpm : NO_VALUE));
+  }
+
+  // The usual range comes from every loaded day, as on the Health card, so both charts sit on the same scale rule.
+  private restingBand(): MetricBand {
+    return metricBand('RESTING_HR', this.restingDays(this.trend === undefined ? [] : this.trend.days));
   }
 
   // "64 avg · 2 lower than last week": numbers reported, never judged.
@@ -391,7 +391,7 @@ export struct HomePage {
     .borderRadius($r('app.float.radius_l'))
   }
 
-  // Live bpm in a small ring with its source badge, then the week as seven bars. Daily averages, never a trace.
+  // Live bpm in a small ring with its source badge, then the week as the Health tab's mini chart. Daily averages, never a trace.
   @Builder
   restingWeek() {
     Row({ space: 16 }) {
@@ -420,19 +420,13 @@ export struct HomePage {
       }
       Column({ space: 8 }) {
         this.capsLabel($r('app.string.today_resting_week'))
-        Row({ space: 4 }) {
-          ForEach(this.week(), (d: TrendDay, i: number) => {
-            Row()
-              .layoutWeight(1)
-              .height(this.barHeight(d))
-              .borderRadius(4)
-              .backgroundColor(i === this.week().length - 1 ? $r('app.color.brand_accent') :
-                $r('app.color.brand_accent_soft'))
-          }, (d: TrendDay, i: number) => `${d.day}-${d.restingBpm}-${i}`)
-        }
-        .width('100%')
-        .height(BAR_MAX)
-        .alignItems(VerticalAlign.Bottom)
+        MiniChart({
+          kind: 'RESTING_HR',
+          days: this.restingDays(this.week()),
+          form: chartForm('RESTING_HR'),
+          band: this.restingBand(),
+          chartHeight: CHART_H
+        })
         Text(this.weekLine())
           .fontSize($r('app.float.font_small'))
           .fontWeight(FontWeight.Medium)

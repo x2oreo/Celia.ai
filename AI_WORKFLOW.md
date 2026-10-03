@@ -811,6 +811,34 @@ The tap-to-talk fallback is also untested end to end.
   In one typed turn the agent answered a symptom-log question and also re-opened the dentist brief from earlier in
   the chat; that needs an eval case before the prompt is called stable.
 
+### 2026-10-04 (morning) — Kaloyan + Claude Code: Health tab with every watch metric and one chart system (branch `kaloyan/agent-home`)
+
+- **Goal:** the owner wanted the Health tab to show all the useful watch data, not only heart rate, each graph
+  opening a page with more detail and a small box that says in plain words whether the number is up or down and
+  good, okay or bad; and a chart designed for health data.
+- **What the AI decided and why:** it read what the watch really uploads (`vitals` snapshots: heart rate, resting
+  rate, activity, stress flag, steps, and simulated HRV / SpO2 / breathing). There is no ECG signal anywhere in the
+  data and a wrist app cannot get one, so no ECG trace was drawn: a made-up trace in a Long QT app would read as the
+  user's own. The status is a fixed rule (own baseline for heart rate, resting rate and HRV; reference ranges for
+  oxygen, breathing, sleep, stress time; steps never judged past Okay), never model output, and never red.
+- **What changed:** `vitals/Metrics.ets` (kinds, usual range, status, change, scale, monotone smoothing, touch
+  lookup), `vitals/MetricHistory.ets` (loader + labelled demo history), `components/MetricChart.ets` (line / range
+  capsules / bars over a usual-range band, readout that follows the finger, dose and symptom rows),
+  `components/MetricParts.ets`, `common/MetricUi.ets`, `pages/MetricPage.ets`, `pages/HeartPage.ets` rewritten,
+  `Routes.METRIC`. `HrChart.ets` removed. New read-only view `watch_vitals_daily` (migration written, **not
+  deployed**) and its client parser. DESIGN.md §6.10 and §10.1a 04 / 04a written first; the principle "Heart rate
+  only" became "Never QT, never an ECG".
+- **Validated:** 268 phone tests green (16 new in `Metrics.test.ets`), strict ArkTS HAP build, and on the emulator
+  with demo data: Health tab, resting heart rate page, heart rate Now / 14 / 30 days, stress page, dragging on the
+  plot.
+- **Not validated:** real watch rows (the view is not deployed; until then a real watch shows resting heart rate
+  only and "No readings" for the rest), dark mode, the screen reader, sleep / steps / HRV / oxygen / breathing pages
+  one by one, the "Ask the agent" button. The reference ranges are demo heuristics and need a clinician's check.
+- **Bugs found:** component members named `scale`, `key` and `direction` collide with built-in ArkUI attributes
+  (compile error). The first install landed in the middle of two other sessions' emulator runs; the fix was the
+  `scripts/emu.sh` lock and tapping only elements found by their text.
+
+
 ### 2026-10-04 (morning) — Kaloyan + Claude Code: real watch data on the phone, with a Watch / Simulated switch (branch `kaloyan/agent-home`)
 
 - **Goal:** the owner saw only simulated numbers on the phone and wanted the real watch data, already uploaded to

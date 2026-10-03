@@ -12,6 +12,7 @@ and the agent can use with one GET each (anon key, filter by `device_id`, demo d
 | `watch_daily_summary` | One row per day: doses, symptoms (+ kinds), alerts, falls, SOS, resting HR. Doctor report. |
 | `watch_insights` | Fixed-rule findings with a ready-made `message` and `severity` (see below). |
 | `watch_resting_daily` | Daily resting HR (input of the missed beta-blocker check). |
+| `watch_vitals_daily` | One row per day from the `vitals` snapshots: heart-rate average / lowest / highest, HRV, SpO2, breathing rate, sleep minutes, stress minutes, steps. The Health tab's metric cards and charts. HRV, SpO2 and breathing are simulated on the watch, so the phone always labels them SIMULATED. |
 
 ## `watch_insights` rules
 

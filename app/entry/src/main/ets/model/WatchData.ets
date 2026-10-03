@@ -58,3 +58,18 @@ export interface WatchInsight {
   message: string;
   simulated: boolean;
 }
+
+/** watch_vitals_daily: one row per day from the watch's 30 s `vitals` snapshots. 0 = no reading that day. */
+export interface WatchVitalsDay {
+  day: string;             // YYYY-MM-DD
+  avgBpm: number;
+  minBpm: number;
+  maxBpm: number;
+  hrvMs: number;           // simulated on the watch today
+  spo2: number;            // simulated on the watch today
+  breathingRate: number;   // simulated on the watch today
+  sleepMinutes: number;
+  stressMinutes: number;   // raised heart rate while still; 0 is a real value
+  steps: number;
+  simulated: boolean;
+}
