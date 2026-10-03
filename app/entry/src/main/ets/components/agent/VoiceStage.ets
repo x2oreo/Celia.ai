@@ -1,5 +1,5 @@
 // Voice stage: the orb and what it is doing (DESIGN.md §6.6a). Full size until something is said, then it steps back
-// above the conversation. The page owns the voice state and decides what a tap on the orb does.
+// above the conversation. While a session is live and nothing has been said it takes the whole height (`full`). The page owns the voice state and decides what a tap on the orb does.
 
 import { Config } from '../../common/Config';
 import { VoicePhase } from '../../voice/RealtimeSession';
@@ -18,6 +18,7 @@ export struct VoiceStage {
   @Param level: number = 0;
   @Param muted: boolean = false;
   @Param compact: boolean = false;     // a thread exists: the orb steps back
+  @Param full: boolean = false;        // live session, nothing said yet: the stage fills the screen
   @Param label: ResourceStr = '';
   @Event onOrbTap: () => void = () => {
   };
@@ -55,6 +56,8 @@ export struct VoiceStage {
       }
     }
     .width('100%')
+    .height(this.full ? '100%' : 'auto')
+    .justifyContent(FlexAlign.Center)
     .padding({ bottom: 12 })
   }
 }

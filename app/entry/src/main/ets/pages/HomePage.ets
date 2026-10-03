@@ -10,6 +10,8 @@ import { VitalsService } from '../vitals/VitalsService';
 import { medsInteractions, riskCounts, RiskCounts } from '../drugs/MedsReview';
 import { Routes, TabIndex } from '../common/Routes';
 import { TabRequest } from '../common/TabRequest';
+import { Motion } from '../common/Motion';
+import { common } from '@kit.AbilityKit';
 import { CoachTip, tipOfTheDay } from '../coach/Coach';
 import { TravelService, travelCountry } from '../emergency/TravelService';
 import { emergencyFor, systemCountry } from '../common/EmergencyNumbers';
@@ -34,6 +36,7 @@ export struct HomePage {
   private offs: (() => void)[] = [];
 
   aboutToAppear(): void {
+    Motion.start(this.getUIContext().getHostContext() as common.UIAbilityContext);
     this.offs.push(TravelService.onChange((c: string) => {
       this.here = c;
     }));

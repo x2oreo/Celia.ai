@@ -364,6 +364,11 @@ export struct AgentConversation {
     return this.liveTools.find((t: ToolStep) => !t.done);
   }
 
+  // Live session, nothing said yet: the orb is the whole screen (DESIGN.md §10.1a). The dock stays.
+  private immersive(): boolean {
+    return this.mode === 'VOICE' && this.voiceActive() && !this.hasThread();
+  }
+
   private hasThread(): boolean {
     return this.items.length > 0 || this.userLive !== '' || this.agentLive !== '' || this.liveTools.length > 0 ||
       this.busy;
@@ -511,6 +516,7 @@ export struct AgentConversation {
           level: this.level,
           muted: this.muted,
           compact: this.hasThread(),
+          full: this.immersive(),
           label: this.stageLabel(),
           onOrbTap: () => {
             if (this.phase === 'OFF' && !this.recording) {
@@ -518,13 +524,16 @@ export struct AgentConversation {
             }
           }
         })
+          .layoutWeight(this.immersive() ? 1 : 0)
       }
-      if (this.hasThread()) {
-        this.thread()
-      } else {
-        this.welcome()
+      if (!this.immersive()) {
+        if (this.hasThread()) {
+          this.thread()
+        } else {
+          this.welcome()
+        }
+        this.aboveDock()
       }
-      this.aboveDock()
       if (this.mode === 'VOICE') {
         VoiceDock({
           phase: this.phase,
