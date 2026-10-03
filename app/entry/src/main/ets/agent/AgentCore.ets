@@ -32,12 +32,14 @@ import { ToolRegistry } from './ToolRegistry';
 import { PendingAction, TurnState, action } from './ToolTypes';
 import { OfflineAgent } from './OfflineAgent';
 import { VerdictCardPayload } from '../model/AgentTypes';
-import { verdictText } from './VerdictText';
+import { verdictQuickReplies, verdictText } from './VerdictText';
 import { VitalsDigest } from './VitalsDigest';
 import { EMERGENCY_COUNTDOWN_SEC } from './tools/ActionTools';
 import { SosController } from '../emergency/SosController';
 import { ChatSummary, MAX_CHAT_MESSAGES, StoredChatMessage } from '../model/Chat';
 import { ChatCommands } from './ChatCommands';
+import { ReminderService } from '../reminders/ReminderService';
+import { DoseReminder, DoseStatus, doseStatus, timeLabel } from '../reminders/DoseSchedule';
 
 const log: Logger = new Logger('AgentCore');
 
@@ -215,7 +217,7 @@ export class AgentCore {
     return hadMessages;
   }
 
-  // Confirm-card tap (ADD_MED, SHARE_EMERGENCY_CARD). accepted=false means the user tapped Cancel.
+  // Confirm-card tap (ADD_MED, SHARE_EMERGENCY_CARD, LOG_DOSE). accepted=false means the user tapped Cancel.
   async resolveAction(actionId: string, accepted: boolean): Promise<AgentReply> {
     const p: PendingAction | undefined = this.pending.get(actionId);
     this.pending.delete(actionId);
@@ -229,7 +231,26 @@ export class AgentCore {
       const med: Medication = await LocalStore.get().addMed(p.name, p.ingredient, p.dose);
       return this.say(`Added ${med.name}${med.dose !== '' ? ' ' + med.dose : ''} to your medicines.`, [], false);
     }
+    if (p.kind === 'LOG_DOSE') {
+      return this.say(await this.logDose(p), [], false);
+    }
     return this.say('Choose where to share your emergency card.', [], false);
+  }
+
+  // The confirmed dose write. Checked again at tap time: the dose may have been marked on the reminders screen or
+  // from a notification since the card appeared.
+  private async logDose(p: PendingAction): Promise<string> {
+    const reminders: DoseReminder[] = await ReminderService.list();
+    const r: DoseReminder | undefined = reminders.find((x: DoseReminder) => x.id === p.reminderId);
+    if (r === undefined) {
+      return 'That reminder no longer exists, so I didn\'t log anything.';
+    }
+    const st: DoseStatus = doseStatus(r, await ReminderService.doseLog(), Date.now());
+    if (st !== 'DUE' && st !== 'MISSED') {
+      return `${r.medName} (${timeLabel(r)}) is already marked for today, so I didn't change anything.`;
+    }
+    await ReminderService.mark(r, 'TAKEN');
+    return `Logged ${r.medName} (${timeLabel(r)}) as taken.`;
   }
 
   // Called by the emergency screen when the user cancels the countdown.
@@ -379,12 +400,25 @@ export class AgentCore {
       // The reply opens the new chat; confirm cards from this turn belonged to the saved one.
       this.switchChat(turn.newChatTitle);
       return this.say(text, turn.actions.filter((a: UiAction) => a.type !== 'ADD_MED' &&
-        a.type !== 'SHARE_EMERGENCY_CARD'), fallback);
+        a.type !== 'SHARE_EMERGENCY_CARD' && a.type !== 'LOG_DOSE'), fallback);
     }
     for (const p of turn.pending) {
       this.pending.set(p.id, p);
     }
-    return this.say(text, turn.actions, fallback);
+    return this.say(text, this.withVerdictReplies(turn), fallback);
+  }
+
+  // Follow-up chips after a verdict, from the verdict payload only. Not added next to a confirm card, an emergency
+  // or chips that are already there: one decision at a time.
+  private withVerdictReplies(turn: TurnState): UiAction[] {
+    if (turn.verdicts.length === 0 || turn.pending.length > 0 || turn.emergencyStarted ||
+      turn.actions.some((a: UiAction) => a.type === 'QUICK_REPLIES')) {
+      return turn.actions;
+    }
+    const replies: QuickRepliesPayload = {
+      options: verdictQuickReplies(turn.verdicts[turn.verdicts.length - 1])
+    };
+    return turn.actions.concat([action('QUICK_REPLIES', replies)]);
   }
 
   // Deterministic reply that keeps whatever the tools already produced this turn (verdict cards, confirm cards).
@@ -399,7 +433,12 @@ export class AgentCore {
     }
     const prefix: string = reason === 'no_backend' ? 'I\'m working offline.'
       : 'I can\'t reach my assistant service right now.';
-    const offline: AgentReply = await OfflineAgent.answer(input, prefix);
+    const offTurn: TurnState = new TurnState();
+    const offline: AgentReply = await OfflineAgent.answer(input, prefix, offTurn);
+    // Confirm cards proposed offline (log_dose) are resolved the same way as the model's.
+    for (const p of offTurn.pending) {
+      this.pending.set(p.id, p);
+    }
     this.remember('assistant', offline.text, offline.actions);
     return offline;
   }

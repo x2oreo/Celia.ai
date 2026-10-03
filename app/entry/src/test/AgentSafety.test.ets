@@ -48,7 +48,7 @@ function kinds(r: ComboResult): string {
 const BACKEND_TOOLS: string[] = ['check_drug', 'get_my_meds', 'get_vitals_summary', 'explain_condition',
   'suggest_alternatives', 'scan_medicine', 'add_med', 'show_emergency_card', 'start_emergency',
   'share_emergency_card', 'start_new_chat', 'log_symptom', 'prepare_doctor_visit', 'get_dose_status',
-  'get_trends', 'open_symptom_log', 'open_reminders'];
+  'get_trends', 'open_symptom_log', 'open_reminders', 'log_dose'];
 
 export default function agentSafetyTest() {
   describe('ComboRules', () => {

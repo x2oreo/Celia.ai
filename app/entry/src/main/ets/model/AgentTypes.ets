@@ -16,12 +16,13 @@ export interface ChatMessage {
 //   OPEN_MED_SCAN         payload: '{}'                  — scan tile → photo picker → OCR → confirm drug
 //   ADD_MED               payload: AddMedPayload         — confirm card; UI calls AgentCore.resolveAction()
 //   SHARE_EMERGENCY_CARD  payload: ConfirmPayload        — confirm card; UI calls AgentCore.resolveAction()
+//   LOG_DOSE              payload: LogDosePayload        — confirm card; UI calls AgentCore.resolveAction()
 //   QUICK_REPLIES         payload: QuickRepliesPayload   — tappable answers; UI sends the tapped text
 //   SHOW_MEDS             payload: MedsPayload           — the user's medicines with their deterministic risk
 //   SHOW_ALTERNATIVES     payload: AlternativesPayload   — list-verified options to discuss with a doctor
 //   OPEN_PAGE             payload: OpenPagePayload       — tile that opens a page (see OPEN_PAGES)
 export type UiActionType = 'SHOW_VERDICT' | 'SHOW_EMERGENCY_CARD' | 'START_EMERGENCY' | 'OPEN_MED_SCAN' | 'ADD_MED' |
-  'SHARE_EMERGENCY_CARD' | 'QUICK_REPLIES' | 'SHOW_MEDS' | 'SHOW_ALTERNATIVES' | 'OPEN_PAGE';
+  'SHARE_EMERGENCY_CARD' | 'LOG_DOSE' | 'QUICK_REPLIES' | 'SHOW_MEDS' | 'SHOW_ALTERNATIVES' | 'OPEN_PAGE';
 
 export interface UiAction {
   type: UiActionType;
@@ -72,6 +73,12 @@ export interface AddMedPayload {
   ingredient: string;   // '' if the drug is not in the list
   dose: string;
   risk: string;         // RiskLevel, shown on the confirm card
+}
+
+export interface LogDosePayload {
+  actionId: string;
+  medicine: string;     // the reminder's medicine name
+  time: string;         // scheduled time, "08:00"
 }
 
 // Every page an OPEN_PAGE tile can open. The agent thread needs one tile per value.

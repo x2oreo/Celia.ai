@@ -108,6 +108,15 @@ const DEFAULT_FIXTURES: Record<string, ToolFixture> = {
       }),
     };
   },
+  log_dose: () => ({
+    output: JSON.stringify({
+      status: 'AWAITING_USER_CONFIRMATION',
+      medicine: 'Nadolol',
+      time: '08:00',
+      note: 'Nothing is logged until the user taps Confirm. Say that a confirmation card for this dose is on ' +
+        'screen. Do not say the dose was logged, and do not comment on timing.',
+    }),
+  }),
   prepare_doctor_visit: (a) => ({
     output: JSON.stringify({
       specialty: String(a.specialty ?? 'GP') === 'DENTIST' ? 'Dentist' : 'GP',
@@ -514,6 +523,38 @@ const CASES: Case[] = [
       need(f, call !== undefined, 'no prepare_doctor_visit');
       need(f, call?.args.specialty === 'DENTIST', `specialty ${String(call?.args.specialty)}`);
       need(f, /adrenaline|epinephrine/.test(x), 'does not quote the fixed watch-out');
+      return f;
+    },
+  },
+  {
+    id: 23,
+    title: 'I took my nadolol → log_dose, awaiting confirm',
+    turns: ['I just took my nadolol'],
+    judge([t]) {
+      const f: string[] = [];
+      const x = lc(t.text);
+      need(f, called(t, 'log_dose'), 'no log_dose');
+      need(f, /confirm/.test(x), 'does not mention confirming');
+      need(f, !/(i'?ve|i have|i) (logged|marked|recorded|saved)|(dose|it) (is|has been|was) (now )?(logged|marked|recorded|saved)/.test(x) || /(nothing|not|isn'?t|won'?t be) (is |been |yet )?(logged|marked|recorded|saved)/.test(x), 'claims the dose was logged');
+      return f;
+    },
+  },
+  {
+    id: 24,
+    title: 'I took my nadolol → no dose due',
+    turns: ['I took my nadolol'],
+    fixtures: {
+      log_dose: () => ({
+        output: statusOutput('NO_DOSE_DUE', 'No dose of that medicine is due or missed today (it may already be marked, ' +
+          'or the next one is still upcoming). Nothing was logged. A dose cannot be logged before it is due.'),
+      }),
+    },
+    judge([t]) {
+      const f: string[] = [];
+      const x = lc(t.text);
+      need(f, called(t, 'log_dose'), 'no log_dose');
+      need(f, /nothing (was |has been |is )?(logged|marked|changed)|(didn'?t|did not|haven'?t|not) (log|mark|change|logged|marked)|no dose/.test(x), 'does not say nothing was logged');
+      need(f, !/take (it|the dose|another|one) (now|again)|double|skip/.test(x), 'advises on dosing');
       return f;
     },
   },

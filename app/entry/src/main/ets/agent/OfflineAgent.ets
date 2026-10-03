@@ -6,12 +6,13 @@ import { checkDrugFull } from './DrugCheckFlow';
 import { verdictText } from './VerdictText';
 import { TurnState, action } from './ToolTypes';
 import { myMedsPayload } from './tools/DrugTools';
+import { LogDoseTool } from './tools/ActionTools';
 import {
   GetDoseStatusTool, GetTrendsTool, OpenRemindersTool, OpenSymptomLogTool, SymptomLine, SymptomLogOutput
 } from './tools/CareTools';
 
 export type OfflineIntent = 'CHECK_DRUG' | 'MY_MEDS' | 'EMERGENCY_CARD' | 'SCAN' | 'SYMPTOM_LOG' | 'DOSES' |
-  'REMINDERS' | 'TRENDS' | 'UNKNOWN';
+  'LOG_DOSE' | 'REMINDERS' | 'TRENDS' | 'UNKNOWN';
 
 export interface ParsedIntent {
   intent: OfflineIntent;
@@ -44,6 +45,14 @@ export function parseOfflineIntent(text: string): ParsedIntent {
   // Pages the agent opens. Checked before the medicine patterns: "check my reminders" is not a medicine.
   if (/\bsymptom (log|history|diary)\b|\b(my|past|previous|recent|logged) symptoms\b/.test(t)) {
     const r: ParsedIntent = { intent: 'SYMPTOM_LOG', drug: '' };
+    return r;
+  }
+  // "I took my nadolol" / "mark my dose as taken": the medicine (if named) rides in `drug`.
+  const took: RegExpExecArray | null =
+    /\b(?:i|i've|i’ve|i have) (?:just |already )?(?:took|taken|had) (?:my|the) ([a-z0-9][a-z0-9 -]*)/.exec(t) ??
+      /\b(?:mark|log) (?:my |the )?([a-z0-9][a-z0-9 -]*?) (?:dose )?as taken\b/.exec(t);
+  if (took !== null) {
+    const r: ParsedIntent = { intent: 'LOG_DOSE', drug: took[1].replace(/\b(today|now|just now|this morning|tonight)\b.*$/, '').trim() };
     return r;
   }
   if (/\b(did i|have i) (take|taken|had|have)\b|\bdoses? (due|today|left)\b|\bwhat(('|’)s| is) due\b|\bmissed (a |my )?dose\b/
@@ -142,6 +151,20 @@ export function remindersText(reminders: ReminderLineOut[]): string {
     'You can change them on the reminders screen.';
 }
 
+interface LogDoseStatus {
+  status: string;
+}
+
+export function logDoseText(status: string): string {
+  if (status === 'AWAITING_USER_CONFIRMATION') {
+    return 'Tap Confirm on the card to mark this dose as taken. Nothing is logged until you do.';
+  }
+  if (status === 'NO_REMINDERS') {
+    return 'No reminders are set, so there is no dose to mark. You can add one on the reminders screen.';
+  }
+  return 'No dose is due right now, so I didn\'t log anything.';
+}
+
 function reply(text: string, actions: UiAction[]): AgentReply {
   const r: AgentReply = { text: text, actions: actions, fallback: true };
   return r;
@@ -149,7 +172,8 @@ function reply(text: string, actions: UiAction[]): AgentReply {
 
 export class OfflineAgent {
   // prefix: why we are offline, e.g. "I can't reach my assistant service right now."
-  static async answer(text: string, prefix: string): Promise<AgentReply> {
+  // turn: receives confirm cards proposed here (log_dose) so AgentCore can resolve the tap.
+  static async answer(text: string, prefix: string, turn: TurnState = new TurnState()): Promise<AgentReply> {
     const parsed: ParsedIntent = parseOfflineIntent(text);
     switch (parsed.intent) {
       case 'CHECK_DRUG': {
@@ -171,23 +195,24 @@ export class OfflineAgent {
         const a: UiAction = { type: 'OPEN_MED_SCAN', payload: '{}' };
         return reply('Point the camera at the medicine box.', [a]);
       }
+      case 'LOG_DOSE': {
+        const args: Record<string, Object> = { 'medicine': parsed.drug };
+        const out: LogDoseStatus = JSON.parse(await new LogDoseTool().execute(args, turn)) as LogDoseStatus;
+        return reply(logDoseText(out.status), turn.actions);
+      }
       case 'SYMPTOM_LOG': {
-        const turn: TurnState = new TurnState();
         const out: string = await new OpenSymptomLogTool().execute({}, turn);
         return reply(symptomLogText(JSON.parse(out) as SymptomLogOutput), turn.actions);
       }
       case 'DOSES': {
-        const turn: TurnState = new TurnState();
         const out: string = await new GetDoseStatusTool().execute({}, turn);
         return reply(dosesText((JSON.parse(out) as DoseListOut).doses), turn.actions);
       }
       case 'REMINDERS': {
-        const turn: TurnState = new TurnState();
         const out: string = await new OpenRemindersTool().execute({}, turn);
         return reply(remindersText((JSON.parse(out) as ReminderListOut).reminders), turn.actions);
       }
       case 'TRENDS': {
-        const turn: TurnState = new TurnState();
         await new GetTrendsTool().execute({}, turn);
         return reply('Your resting heart rate, doses and symptoms by day are one tap away.', turn.actions);
       }

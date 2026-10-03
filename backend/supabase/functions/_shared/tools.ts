@@ -163,6 +163,15 @@ export const TOOLS: FunctionTool[] = [
     {},
   ),
   tool(
+    'log_dose',
+    'Propose marking a medicine dose as taken. The phone picks the dose: the one due now, or the earliest one missed ' +
+      'today; a dose can never be logged before it is due. The user must confirm on screen; nothing is written ' +
+      'until they do. Use when the user says they took their medicine.',
+    {
+      medicine: nullableString('Medicine name if the user named one, e.g. "nadolol", otherwise null.'),
+    },
+  ),
+  tool(
     'start_new_chat',
     'Save the current conversation and start a new, empty one. Use when the user asks for a new chat, to start ' +
       'over, or to save this chat. Every chat is already kept on the phone, so nothing is lost.',

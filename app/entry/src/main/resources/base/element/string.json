@@ -1997,6 +1997,18 @@
       "value": "Checked today's doses"
     },
     {
+      "name": "tool_log_dose",
+      "value": "Finding the dose that is due"
+    },
+    {
+      "name": "tool_log_dose_done",
+      "value": "Dose ready to confirm"
+    },
+    {
+      "name": "agent_log_dose_title",
+      "value": "Mark this dose as taken?"
+    },
+    {
       "name": "tool_open_reminders",
       "value": "Opening your reminders"
     },

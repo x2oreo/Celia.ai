@@ -4,7 +4,7 @@ import { Genotype } from '../model/Profile';
 import { UiAction, UiActionType, VerdictCardPayload } from '../model/AgentTypes';
 
 // Write actions proposed by the model and waiting for the user's tap (confirm cards).
-export type PendingKind = 'ADD_MED' | 'SHARE_EMERGENCY_CARD';
+export type PendingKind = 'ADD_MED' | 'SHARE_EMERGENCY_CARD' | 'LOG_DOSE';
 
 export interface PendingAction {
   id: string;
@@ -12,6 +12,7 @@ export interface PendingAction {
   name: string;
   ingredient: string;
   dose: string;
+  reminderId: number;   // LOG_DOSE: the DoseReminder to mark, otherwise -1
   createdAt: number;
 }
 

@@ -24,6 +24,20 @@ export function riskSentence(name: string, risk: string): string {
   }
 }
 
+// Follow-up chips under a verdict. Fixed by the verdict's risk level, never by model text. Each is sent as the
+// user's next message when tapped.
+export function verdictQuickReplies(v: VerdictCardPayload): string[] {
+  const name: string = displayName(v);
+  const worst: string = v.combinedRisk !== '' ? v.combinedRisk : v.risk;
+  if (v.risk === 'UNKNOWN_DRUG') {
+    return ['Scan the box instead', 'Show my emergency card'];
+  }
+  if (worst === 'KNOWN_RISK' || worst === 'POSSIBLE_RISK' || worst === 'CONDITIONAL_RISK') {
+    return [`What can I take instead of ${name}?`, 'Prepare me for a doctor visit', 'Show my medicines'];
+  }
+  return [`Add ${name} to my medicines`, 'Show my medicines'];
+}
+
 export function findingsSentence(findings: InteractionFinding[]): string {
   if (findings.length === 0) {
     return '';

@@ -1,4 +1,4 @@
-// scan_medicine, show_emergency_card, start_emergency, add_med, share_emergency_card, start_new_chat.
+// scan_medicine, show_emergency_card, start_emergency, add_med, share_emergency_card, log_dose, start_new_chat.
 // UI tools return an action for the chat UI. Write tools never write: they create a confirm card and report
 // AWAITING_USER_CONFIRMATION; the user's tap goes through AgentCore.resolveAction().
 
@@ -8,8 +8,10 @@ import { argString } from '../ResponseValidator';
 import { DrugChecker } from '../../drugs/DrugChecker';
 import { DrugVerdict } from '../../model/DrugVerdict';
 import {
-  AddMedPayload, ConfirmPayload, EmergencyCardPayload, EmergencyPayload, UiAction
+  AddMedPayload, ConfirmPayload, EmergencyCardPayload, EmergencyPayload, LogDosePayload, UiAction
 } from '../../model/AgentTypes';
+import { ReminderService } from '../../reminders/ReminderService';
+import { DoseLog, DoseReminder, nextDoseToTake, timeLabel } from '../../reminders/DoseSchedule';
 
 import { COUNTDOWN_S } from '../../emergency/SosController';
 
@@ -75,13 +77,15 @@ export class StartEmergencyTool implements AgentTool {
   }
 }
 
-function pending(kind: PendingKind, name: string, ingredient: string, dose: string): PendingAction {
+function pending(kind: PendingKind, name: string, ingredient: string, dose: string,
+  reminderId: number = -1): PendingAction {
   const p: PendingAction = {
     id: newActionId(),
     kind: kind,
     name: name,
     ingredient: ingredient,
     dose: dose,
+    reminderId: reminderId,
     createdAt: Date.now()
   };
   return p;
@@ -135,6 +139,63 @@ export class ShareEmergencyCardTool implements AgentTool {
     turn.actions.push(action('SHARE_EMERGENCY_CARD', payload));
     return status('AWAITING_USER_CONFIRMATION', 'The user chooses where to share it on screen.');
   }
+}
+
+// Words that mean "my medicine" without naming one.
+const GENERIC_MED: RegExp = /^(medicine|medicines|medication|medications|meds|pill|pills|tablet|tablets|dose|beta[ -]?blocker)$/;
+
+// The dose a "I took my nadolol" refers to: the one due now, else the earliest missed one today, among the
+// reminders for that medicine (all reminders when no medicine is named). Never an upcoming dose.
+export function doseToLog(reminders: DoseReminder[], logs: DoseLog[], now: number,
+  medicine: string): DoseReminder | undefined {
+  const m: string = medicine.trim().toLowerCase().replace(/^(my|the)\s+/, '');
+  const named: boolean = m.length > 0 && !GENERIC_MED.test(m);
+  const pool: DoseReminder[] = !named ? reminders : reminders.filter((r: DoseReminder) => {
+    const n: string = r.medName.trim().toLowerCase();
+    return n.length > 0 && (n.includes(m) || m.includes(n));
+  });
+  return nextDoseToTake(pool, logs, now);
+}
+
+// "I took my nadolol." The phone picks the dose (never the model) and nothing is written until the user confirms.
+export class LogDoseTool implements AgentTool {
+  name: string = 'log_dose';
+
+  async execute(args: Record<string, Object>, turn: TurnState): Promise<string> {
+    const medicine: string = argString(args, 'medicine', 80);
+    const reminders: DoseReminder[] = await ReminderService.list();
+    if (reminders.length === 0) {
+      return status('NO_REMINDERS', 'No reminders are set, so there is no dose to mark. Nothing was logged. ' +
+        'Reminders are added on the reminders screen (open_reminders).');
+    }
+    const r: DoseReminder | undefined = doseToLog(reminders, await ReminderService.doseLog(), Date.now(), medicine);
+    if (r === undefined) {
+      return status('NO_DOSE_DUE', 'No dose of that medicine is due or missed today (it may already be marked, ' +
+        'or the next one is still upcoming). Nothing was logged. A dose cannot be logged before it is due.');
+    }
+    if (turn.pending.some((x: PendingAction) => x.kind === 'LOG_DOSE' && x.reminderId === r.id)) {
+      return status('AWAITING_USER_CONFIRMATION', 'The confirmation card for this dose is already on screen.');
+    }
+    const p: PendingAction = pending('LOG_DOSE', r.medName, '', timeLabel(r), r.id);
+    turn.pending.push(p);
+    const payload: LogDosePayload = { actionId: p.id, medicine: r.medName, time: timeLabel(r) };
+    turn.actions.push(action('LOG_DOSE', payload));
+    const out: LogDoseOutput = {
+      status: 'AWAITING_USER_CONFIRMATION',
+      medicine: r.medName,
+      time: timeLabel(r),
+      note: 'Nothing is logged until the user taps Confirm. Say that a confirmation card for this dose is on ' +
+        'screen. Do not say the dose was logged, and do not comment on timing.'
+    };
+    return JSON.stringify(out);
+  }
+}
+
+interface LogDoseOutput {
+  status: string;
+  medicine: string;
+  time: string;
+  note: string;
 }
 
 // "Save this chat and start a new one." Nothing is lost: every chat is already saved on the phone. The optional
