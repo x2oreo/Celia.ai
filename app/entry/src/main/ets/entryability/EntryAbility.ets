@@ -1,6 +1,8 @@
 import { AbilityConstant, ConfigurationConstant, UIAbility, Want } from '@kit.AbilityKit';
 import { window } from '@kit.ArkUI';
 import { Logger } from '../common/Logger';
+import { LocalStore } from '../data/LocalStore';
+import { AppLock } from '../common/AppLock';
 
 const log: Logger = new Logger('EntryAbility');
 
@@ -12,6 +14,7 @@ export default class EntryAbility extends UIAbility {
     } catch (e) {
       log.warn(`setColorMode failed: ${JSON.stringify(e)}`);
     }
+    LocalStore.get().init(this.context).then(() => AppLock.init());
     log.info('onCreate');
   }
 
@@ -34,10 +37,12 @@ export default class EntryAbility extends UIAbility {
   }
 
   onForeground(): void {
+    AppLock.onForeground(Date.now());
     log.info('onForeground');
   }
 
   onBackground(): void {
+    AppLock.onBackground(Date.now());
     log.info('onBackground');
   }
 }

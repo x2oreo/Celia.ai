@@ -1,6 +1,7 @@
 // Event log entry stored on-device (LocalStore.logEvent / listEvents). Feeds the doctor report.
 
-export type AppEventKind = 'DRUG_CHECK' | 'VITALS_ALERT' | 'EMERGENCY' | 'AGENT_FALLBACK';
+export type AppEventKind = 'DRUG_CHECK' | 'VITALS_ALERT' | 'EMERGENCY' | 'AGENT_FALLBACK' | 'SOS' | 'SYMPTOM' |
+  'DOSE';
 
 export interface AppEvent {
   id: number;
