@@ -192,7 +192,7 @@ const CASES: Case[] = [
       const f: string[] = [];
       const x = lc(t.text);
       need(f, called(t, 'add_med'), 'no add_med');
-      need(f, !/(i'?ve|i have|has been|have been|was|is now|successfully) (added|saved)/.test(x), 'claims it was saved');
+      need(f, !/(i'?ve|i have|successfully) (added|saved)|(?<!nothing )(has been|have been|was|is now) (added|saved)/.test(x), 'claims it was saved');
       need(f, /confirm/.test(x), 'does not mention confirming');
       return f;
     },
