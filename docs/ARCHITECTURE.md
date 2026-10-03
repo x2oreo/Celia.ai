@@ -121,7 +121,7 @@ export interface VitalsAlert { ts: number; kind: AlertKind; hr: number; message:
 // model/AgentTypes.ets
 export interface ChatMessage { role: 'user' | 'assistant'; text: string; ts: number; }
 export type UiActionType = 'SHOW_VERDICT' | 'SHOW_EMERGENCY_CARD' | 'START_EMERGENCY' | 'OPEN_MED_SCAN' | 'ADD_MED'
-  | 'SHARE_EMERGENCY_CARD' | 'QUICK_REPLIES';
+  | 'SHARE_EMERGENCY_CARD' | 'QUICK_REPLIES' | 'SHOW_MEDS' | 'SHOW_ALTERNATIVES';
 export interface UiAction { type: UiActionType; payload: string; }   // payload = JSON string; payload interfaces
                                                                        // (VerdictCardPayload, AddMedPayload, …) in the file
 export interface AgentReply { text: string; actions: UiAction[]; fallback: boolean; }
@@ -182,7 +182,7 @@ key is an Edge Function secret. Timeouts: app 20 s per step → fallback.
 | On-device OCR of medicine boxes | `@kit.CoreVisionKit` (+ `/vision-extract` names-only fallback) | `drugs/OcrService.ets`, `agent/MedicineScanFlow.ets` | ⚠️ verify early |
 | System assistant entry | Intents Kit (`@kit.AbilityKit`) | `insightintents/` | ⚠️ verify early |
 | Agent-to-agent (stretch) | `@kit.AgentFrameworkKit` | `agentextability/` | ⚠️ ask mentors |
-| Home widget | Form Kit | `widget/` | ⏸ not built yet |
+| Home widgets | Form Kit | `widget/`, `entryformability/` | ✅ built — two cards: check (2×2) and alert (2×4) |
 | Online drug check (optional) | `@kit.NetworkKit` → Supabase `/drug-check` | `drugs/DrugCheckClient.ets`, `common/Net.ets`, `backend/supabase/` | ✅ offline-first; only for names the bundle does not know, logged in the privacy ledger |
 | Local DB | `@kit.ArkData` RDB (`encrypt: true`) | `data/LocalStore.ets` | ✅ verified |
 | Notifications / call | `@kit.NotificationKit`, `call.makeCall` (dialer) | `common/Notify.ets`, `common/Dialer.ets` | ✅ verified |

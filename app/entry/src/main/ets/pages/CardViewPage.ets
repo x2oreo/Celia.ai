@@ -117,7 +117,7 @@ export struct CardViewPage {
             }, (contact: string[]) => `${contact[0]}-${contact[1]}`)
             Text($r('app.string.cardview_note'))
               .fontSize($r('app.float.font_caption'))
-              .fontColor($r('sys.color.font_tertiary'))
+              .fontColor($r('app.color.ink_3'))
           }
         }
         .padding(16)
@@ -127,10 +127,10 @@ export struct CardViewPage {
       .height('100%')
       .align(Alignment.Top)
       .scrollBar(BarState.Off)
-      .backgroundColor($r('app.color.page_bg'))
+      .backgroundColor($r('app.color.bg'))
     }
     .title($r('app.string.cardview_title'))
-    .backgroundColor($r('app.color.page_bg'))
+    .backgroundColor($r('app.color.bg'))
     .onReady((ctx: NavDestinationContext) => {
       this.card = ctx.pathInfo.param as CardPayload;
     })

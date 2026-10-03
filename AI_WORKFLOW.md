@@ -252,6 +252,89 @@ connected and is working correctly with the AI"
 Realtime, and Celia intents. A parallel Claude Code session is redesigning the UI on the same branch; the two
 sessions coordinated file ownership by message.
 
+
+### 2026-10-03 (cont.) — UI redesign to the design system (Kaloyan, with Claude Code)
+
+**Goal.** The app was built before the design system existed. This session brought every phone screen in line
+with `docs/design/DESIGN.md` and the three design screenshots (B1–B6), and built the two home-screen cards.
+
+**How the model worked**
+- Plan mode first: two read-only sub-agents inventoried the UI layer and the product docs, the model read the
+  design screenshots itself, and a gap table and phased plan were approved before any edit.
+- Six phases, one or two commits each, ordered by demo value so the app stayed shippable after every phase:
+  tokens → shared components → navigation, home and chat → Medicines and scan → check-in, SOS, Heart and
+  Emergency → secondary screens and widgets → cleanup.
+- Every phase ran the terminal loop: `hvigorw assembleHap`, `hdc install` of the unsigned HAP, `uitest uiInput`
+  taps and `snapshot_display` screenshots, which the model compared with the design screenshots.
+- Form Kit was checked in Context7 (FormExtensionAbility, `form_config.json`, `postCardAction`, `updateForm`)
+  before the widget code was written.
+
+**What changed**
+- Tokens: warm palette, ink scale, risk tint/text/border, full type scale, light and dark. The old colour names
+  were remapped first so nothing broke mid-migration, then removed.
+- Components: ink / secondary / quiet / danger buttons, risk shape and badge (Unknown is a dashed circle with
+  "?"), orb avatar, heart-rate ring, chips, strips, typing dots, verdict card with the risk header band.
+- Structure: four tabs (Agent = home, Medicines, Heart, Emergency). The chat is a pushed page. A WARN heart alert
+  opens the agent's check-in as a bottom sheet.
+- Widgets: "Can I take this?" (2×2) and Medical alert (2×4), fed by a snapshot the app writes.
+
+**Safety decisions kept from before**
+- Verdict colour and word still come only from the deterministic verdict; the chat card is built from the tool
+  payload, not from model text.
+- A CRITICAL heart alert still goes straight to the SOS countdown. Only WARN alerts use the check-in sheet. The
+  design shows the sheet for a 165 bpm reading; changing that escalation path is a medical-safety decision and
+  was left to the team.
+
+**Verified on the emulator:** home, chat with an inline verdict, Medicines, check result, Heart, Emergency,
+Settings, Bystander, the check-in sheet, the SOS countdown, and a card tap opening the scanner. 104 unit tests pass.
+
+**Not verified:** how the two cards render on the home screen (they are registered, but adding one needs a manual
+long-press), dark mode on a device, and the largest font size.
+
+**Two sessions, one branch.** A second Claude Code session was rebuilding the voice chat at the same time. The
+sessions agreed file ownership by message and staged explicit paths only. One commit of this session still
+picked up the other session's new strings from the shared `string.json`; nothing was lost.
+
+### 2026-10-03 (cont.) — voice-first conversation with the agent (Kaloyan, with Claude Code)
+
+**Prompt (summary).** "Rework how the AI works in the UI. It should be a voice AI you talk to, with the chatbot as
+an option. Redesign the orb, show my message being written as I speak, and design all the tools beautifully in
+our design system."
+
+**What the model did**
+- Read `docs/design/DESIGN.md`, the chat page and the whole voice layer first, then extended the design system
+  before building (new 6.6a voice orb, 6.8 tool steps and agent cards, revised B2 in 10.1, two motion rows).
+- Voice engine (`voice/RealtimeSession.ets`): reports a conversation phase (connecting, listening, hearing,
+  thinking, speaking), the user's and the agent's words as they arrive, and the loudness of whoever is talking
+  (`pcmLevel` in `Wav.ets`, unit-tested). A reply now waits up to 1.5 s for the user's transcript so the thread
+  stays in order. Typed text and tapped chips go into the live session and are answered out loud, through the same
+  SafetyGate.
+- `AgentCore.runTool` announces every tool call, so both the text loop and live voice show what the agent is
+  doing ("Checking Klacid against the QT list" → "Checked …").
+- New UI: `components/VoiceOrb.ets` (halos follow the voice, neutral for the user and coral for the agent),
+  `components/AgentCards.ets` (tool step, confirm card, medicines card, options card, emergency notice, action
+  tile) and a rewritten `pages/AgentPage.ets` with a voice mode (orb, live thread, mic dock) and a chat mode.
+- Two new deterministic cards: `SHOW_MEDS` (from `get_my_meds`) and `SHOW_ALTERNATIVES` (from
+  `suggest_alternatives`, only options re-checked as Not listed on the device).
+
+**Decisions made by the human / kept from the rules**
+- Verdict colours and words still come only from the deterministic payloads. A finished tool step is neutral ink,
+  never a risk colour, so "done" cannot be read as "safe".
+- The microphone never opens by itself: one tap starts the conversation, and leaving the page ends it.
+
+**Verified on the emulator**
+- Offline: idle voice screen, starter → verdict card, "Check my current medicines" → medicines card, chat mode,
+  and the "can't use the microphone" strip (the emulator has no English on-device speech engine).
+- Live, against the local backend (one short Realtime session): connecting → listening → speaking, the agent's
+  words appearing while it speaks, the `check_drug` step and the verdict card.
+
+**Bug found by running it.** The offline parser read "Check my current medicines" as a medicine called "my
+current medicines". Fixed, with a test.
+
+**Not verified:** real speech into the microphone (nobody can talk to the emulator from the terminal), so the
+live user transcript, the voice-level halos while the user speaks, barge-in and mute are untested on a device.
+The tap-to-talk fallback is also untested end to end.
+
 ### 2026-10-03 — Mark + Claude Code: watch app
 - **Asked:** build the watch part. Our GT 6 Pro should send metrics via the iPhone to a server that the phone app
   (DevEco Previewer) reads.
@@ -312,6 +395,10 @@ sessions coordinated file ownership by message.
   - The viewer's main button is now the general number (112), with the direct ambulance line underneath.
   - Merge conflicts resolved by keeping both sides: `AgentCore.pushProactive` (used by `BetaBlockerWatch`) next
     to the AI layer, both start-up hooks in `EntryAbility`/`Index`, and all string resources.
+  - Second merge, after the ai-layer UI redesign: took the redesigned screens and re-applied our features on top.
+    Box info card, add-from-box and "teach this box" now live in the new `ScanPage` and `CheckResultPage`. Scanning
+    a Celia card QR opens `CardViewPage`. The card link and its open/copy buttons are back under the QR on the new
+    `EmergencyPage`.
 - **Validated:** `hvigorw assembleHap` after each change and merge; installed on the emulator; the card page
   opened from the local server in the emulator browser.
 - **Not yet validated:** a real phone on the same Wi-Fi; the public viewer (needs Pages enabled on `main`).

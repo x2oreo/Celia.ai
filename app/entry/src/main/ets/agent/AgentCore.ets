@@ -9,7 +9,9 @@
 //
 // Verdicts come from DrugChecker + ComboRules only. Writes need a confirm tap (resolveAction).
 
-import { AgentReply, ChatMessage, QuickRepliesPayload, UiAction, EmergencyPayload } from '../model/AgentTypes';
+import {
+  AgentReply, ChatMessage, QuickRepliesPayload, ToolActivity, UiAction, EmergencyPayload
+} from '../model/AgentTypes';
 import { Profile } from '../model/Profile';
 import { Medication } from '../model/Medication';
 import { VitalsAlert } from '../model/Vitals';
@@ -62,6 +64,8 @@ export class AgentCore {
 
   private proactive: Listeners<AgentReply> = new Listeners<AgentReply>();
   private emergencyClosed: Listeners<number> = new Listeners<number>();
+  private toolActivity: Listeners<ToolActivity> = new Listeners<ToolActivity>();
+  private toolSeq: number = 1;
   private client: AgentClient = new AgentClient();
   private registry: ToolRegistry = new ToolRegistry();
   private history: ChatMessage[] = [];
@@ -151,8 +155,21 @@ export class AgentCore {
     return await this.buildContext(new TurnState());
   }
 
-  runTool(name: string, argsJson: string, turn: TurnState): Promise<string> {
-    return this.registry.run(name, argsJson, turn);
+  // Every tool call (text loop and realtime voice) goes through here so the UI can show what the agent is doing.
+  async runTool(name: string, argsJson: string, turn: TurnState): Promise<string> {
+    const id: number = this.toolSeq++;
+    const started: ToolActivity = { id: id, name: name, args: argsJson, done: false };
+    this.toolActivity.emit(started);
+    try {
+      return await this.registry.run(name, argsJson, turn);
+    } finally {
+      const finished: ToolActivity = { id: id, name: name, args: argsJson, done: true };
+      this.toolActivity.emit(finished);
+    }
+  }
+
+  onToolActivity(cb: Listener<ToolActivity>): () => void {
+    return this.toolActivity.add(cb);
   }
 
   // A user utterance heard by the realtime session. EMERGENCY/UNWELL → caller must cancel the model response
@@ -219,7 +236,7 @@ export class AgentCore {
     while (res !== undefined && res.toolCalls.length > 0 && steps < MAX_STEPS) {
       const outputs: RelayToolOutput[] = [];
       for (const call of res.toolCalls) {
-        const output: string = await this.registry.run(call.name, call.arguments, turn);
+        const output: string = await this.runTool(call.name, call.arguments, turn);
         const o: RelayToolOutput = { callId: call.callId, output: output };
         outputs.push(o);
       }

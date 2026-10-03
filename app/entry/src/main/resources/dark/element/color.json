@@ -157,60 +157,8 @@
       "value": "#E5483C"
     },
     {
-      "name": "risk_known_soft",
-      "value": "#3A1A17"
-    },
-    {
-      "name": "risk_possible_soft",
-      "value": "#3A2A12"
-    },
-    {
-      "name": "risk_conditional_soft",
-      "value": "#36300F"
-    },
-    {
-      "name": "risk_not_listed_soft",
-      "value": "#132C1F"
-    },
-    {
-      "name": "risk_unknown_soft",
-      "value": "#272A2F"
-    },
-    {
-      "name": "page_bg",
-      "value": "#14100F"
-    },
-    {
-      "name": "card_bg",
-      "value": "#1F1A17"
-    },
-    {
-      "name": "card_bg_pressed",
-      "value": "#2A2421"
-    },
-    {
       "name": "divider",
       "value": "#2A2421"
-    },
-    {
-      "name": "field_bg",
-      "value": "#2A2421"
-    },
-    {
-      "name": "sim_badge",
-      "value": "#F5F0EC"
-    },
-    {
-      "name": "sim_badge_soft",
-      "value": "#1F1A17"
-    },
-    {
-      "name": "emergency_card_bg",
-      "value": "#FFFFFF"
-    },
-    {
-      "name": "emergency_header",
-      "value": "#B42318"
     },
     {
       "name": "card_fixed_bg",
@@ -271,6 +219,30 @@
     {
       "name": "widget_ink",
       "value": "#1F1A17"
+    },
+    {
+      "name": "scan_bg",
+      "value": "#14100F"
+    },
+    {
+      "name": "scan_frame",
+      "value": "#2A2421"
+    },
+    {
+      "name": "scan_text",
+      "value": "#D6CCC6"
+    },
+    {
+      "name": "orb_sheen",
+      "value": "#73FFFFFF"
+    },
+    {
+      "name": "orb_sheen_clear",
+      "value": "#00FFFFFF"
+    },
+    {
+      "name": "orb_glow",
+      "value": "#59F26B6F"
     }
   ]
 }

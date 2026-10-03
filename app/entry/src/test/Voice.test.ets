@@ -1,7 +1,7 @@
 // Voice helpers: the WAV wrapper must produce a header the transcription API accepts.
 
 import { describe, it, expect } from '@ohos/hypium';
-import { concatChunks, pcmDurationMs, pcmToWav } from '../main/ets/voice/Wav';
+import { concatChunks, pcmDurationMs, pcmLevel, pcmToWav } from '../main/ets/voice/Wav';
 
 function ascii(bytes: Uint8Array, start: number, len: number): string {
   let s: string = '';
@@ -40,6 +40,24 @@ export default function voiceTest() {
     it('computesDuration', 0, () => {
       expect(pcmDurationMs(32000, 16000)).assertEqual(1000);
       expect(pcmDurationMs(48000, 24000)).assertEqual(1000);
+    });
+
+    it('levelIsZeroForSilenceAndRisesWithLoudness', 0, () => {
+      const tone = (amplitude: number): Uint8Array => {
+        const pcm: Uint8Array = new Uint8Array(960);   // 20 ms at 24 kHz
+        const view: DataView = new DataView(pcm.buffer);
+        for (let i = 0; i < 480; i++) {
+          view.setInt16(i * 2, i % 2 === 0 ? amplitude : -amplitude, true);
+        }
+        return pcm;
+      };
+      expect(pcmLevel(new Uint8Array(0))).assertEqual(0);
+      expect(pcmLevel(new Uint8Array(960))).assertEqual(0);
+      const quiet: number = pcmLevel(tone(600));
+      const loud: number = pcmLevel(tone(12000));
+      expect(quiet > 0).assertTrue();
+      expect(loud > quiet).assertTrue();
+      expect(pcmLevel(tone(32767)) <= 1).assertTrue();
     });
   });
 }

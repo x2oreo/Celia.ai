@@ -134,7 +134,7 @@
     },
     {
       "name": "check_add_to_mine",
-      "value": "Add to my medicines"
+      "value": "Add to meds"
     },
     {
       "name": "check_another",
@@ -182,7 +182,7 @@
     },
     {
       "name": "check_hint",
-      "value": "Name on the box, e.g. Klacid"
+      "value": "Can I take…"
     },
     {
       "name": "check_button",
@@ -190,11 +190,11 @@
     },
     {
       "name": "meds_mine",
-      "value": "MY MEDICINES"
+      "value": "My medicines"
     },
     {
       "name": "meds_empty",
-      "value": "No medicines yet. Add what you take so we can warn you about interactions."
+      "value": "No medicines yet. Add one or scan a box."
     },
     {
       "name": "meds_swipe_hint",
@@ -278,11 +278,11 @@
     },
     {
       "name": "heart_no_alerts",
-      "value": "No alerts. We will tell you if your heart rate looks unusual for your genotype."
+      "value": "No alerts. Everything looks calm."
     },
     {
       "name": "heart_sim_controls",
-      "value": "Simulation controls (no watch on the emulator)"
+      "value": "Demo controls"
     },
     {
       "name": "emergency_subtitle",
@@ -778,7 +778,7 @@
     },
     {
       "name": "scan_unknown_box",
-      "value": "We don't know this box yet — type the name on the box."
+      "value": "Couldn't read that box. Type the name instead?"
     },
     {
       "name": "home_more",
@@ -870,7 +870,7 @@
     },
     {
       "name": "mic_reason",
-      "value": "Celia listens while you hold the microphone button, so you can ask about medicines by voice."
+      "value": "The agent listens while you talk to it, so you can ask about medicines by voice."
     },
     {
       "name": "agent_name",
@@ -886,7 +886,7 @@
     },
     {
       "name": "agent_welcome",
-      "value": "Hi, I'm Celia. Ask me about a medicine, scan a box, or tell me how you feel. Medicine verdicts always come from the QT-risk list, never from guesswork."
+      "value": "Ask me about a medicine, scan a box, or tell me how you feel. Medicine verdicts always come from the QT-risk list, never from guesswork."
     },
     {
       "name": "agent_starter_ibuprofen",
@@ -902,7 +902,7 @@
     },
     {
       "name": "agent_input_hint",
-      "value": "Ask about a medicine or how you feel"
+      "value": "Ask the agent"
     },
     {
       "name": "agent_thinking",
@@ -910,7 +910,7 @@
     },
     {
       "name": "agent_listening",
-      "value": "Listening… release to send"
+      "value": "Listening… tap to send"
     },
     {
       "name": "agent_live_on",
@@ -922,7 +922,7 @@
     },
     {
       "name": "agent_live_failed",
-      "value": "Live voice isn't available right now. Hold the mic to talk instead."
+      "value": "Live voice isn't available right now. Tap the mic, speak, then tap again to send."
     },
     {
       "name": "agent_mic_unavailable",
@@ -978,11 +978,11 @@
     },
     {
       "name": "agent_ask_celia",
-      "value": "Ask Celia"
+      "value": "Ask the agent"
     },
     {
       "name": "agent_ask_about",
-      "value": "Ask Celia about this"
+      "value": "Ask the agent about this"
     },
     {
       "name": "a11y_send",
@@ -990,7 +990,7 @@
     },
     {
       "name": "a11y_mic",
-      "value": "Hold to talk"
+      "value": "Talk to the agent"
     },
     {
       "name": "a11y_live",
@@ -1047,6 +1047,414 @@
     {
       "name": "verdict_ask_doctor_short",
       "value": "Ask doctor"
+    },
+    {
+      "name": "tab_sos",
+      "value": "SOS"
+    },
+    {
+      "name": "home_scan_box",
+      "value": "Scan a box"
+    },
+    {
+      "name": "home_ask",
+      "value": "Ask something"
+    },
+    {
+      "name": "home_meds_ok",
+      "value": "Medicines OK"
+    },
+    {
+      "name": "home_meds_none",
+      "value": "No medicines yet"
+    },
+    {
+      "name": "home_alarm_on",
+      "value": "Gentle alarm on"
+    },
+    {
+      "name": "home_bpm_resting",
+      "value": "bpm · resting"
+    },
+    {
+      "name": "home_bpm_active",
+      "value": "bpm · active"
+    },
+    {
+      "name": "home_bpm_asleep",
+      "value": "bpm · asleep"
+    },
+    {
+      "name": "home_bpm_waiting",
+      "value": "waiting for a reading"
+    },
+    {
+      "name": "a11y_back",
+      "value": "Back"
+    },
+    {
+      "name": "a11y_camera",
+      "value": "Scan a medicine box"
+    },
+    {
+      "name": "agent_welcome_title",
+      "value": "What's on your mind?"
+    },
+    {
+      "name": "meds_recent",
+      "value": "Recently checked"
+    },
+    {
+      "name": "meds_add_tile",
+      "value": "Add a medicine"
+    },
+    {
+      "name": "check_added",
+      "value": "In your medicines"
+    },
+    {
+      "name": "scan_title",
+      "value": "Scan a box"
+    },
+    {
+      "name": "scan_hint",
+      "value": "Point the camera at the barcode on the box."
+    },
+    {
+      "name": "scan_again",
+      "value": "Scan again"
+    },
+    {
+      "name": "scan_type_instead",
+      "value": "Type the name instead"
+    },
+    {
+      "name": "scan_found",
+      "value": "Found"
+    },
+    {
+      "name": "a11y_close",
+      "value": "Close"
+    },
+    {
+      "name": "check_failed",
+      "value": "Couldn't check that just now. Try again?"
+    },
+    {
+      "name": "check_retry",
+      "value": "Try again"
+    },
+    {
+      "name": "heart_trend",
+      "value": "Last minutes"
+    },
+    {
+      "name": "heart_only_hr",
+      "value": "Heart rate only. This app does not measure QT."
+    },
+    {
+      "name": "checkin_from_watch",
+      "value": "from your watch"
+    },
+    {
+      "name": "checkin_from_sim",
+      "value": "from simulated data"
+    },
+    {
+      "name": "checkin_fine",
+      "value": "I'm fine"
+    },
+    {
+      "name": "checkin_dizzy",
+      "value": "I feel dizzy"
+    },
+    {
+      "name": "checkin_help",
+      "value": "Call for help"
+    },
+    {
+      "name": "checkin_note",
+      "value": "If I don't hear back, I'll start the emergency countdown."
+    },
+    {
+      "name": "checkin_high",
+      "value": "High for resting"
+    },
+    {
+      "name": "checkin_low",
+      "value": "Low heart rate"
+    },
+    {
+      "name": "checkin_alert",
+      "value": "Heart-rate alert"
+    },
+    {
+      "name": "sos_label",
+      "value": "EMERGENCY"
+    },
+    {
+      "name": "em_alert_label",
+      "value": "MEDICAL ALERT"
+    },
+    {
+      "name": "em_avoid",
+      "value": "AVOID QT-prolonging drugs"
+    },
+    {
+      "name": "em_call",
+      "value": "Call"
+    },
+    {
+      "name": "em_sos_title",
+      "value": "Start SOS countdown"
+    },
+    {
+      "name": "em_sos_sub",
+      "value": "Alerts your contacts if you don't answer"
+    },
+    {
+      "name": "em_bystander_sub",
+      "value": "Step-by-step help for the person next to you"
+    },
+    {
+      "name": "em_full_card",
+      "value": "Full emergency card"
+    },
+    {
+      "name": "em_general",
+      "value": "General emergency"
+    },
+    {
+      "name": "agent_voice_idle",
+      "value": "Tap to talk"
+    },
+    {
+      "name": "agent_voice_idle_hint",
+      "value": "Ask about a medicine, or tell me how you feel."
+    },
+    {
+      "name": "agent_voice_connecting",
+      "value": "Connecting…"
+    },
+    {
+      "name": "agent_voice_listening",
+      "value": "I'm listening"
+    },
+    {
+      "name": "agent_voice_hearing",
+      "value": "Listening…"
+    },
+    {
+      "name": "agent_voice_speaking",
+      "value": "Speaking"
+    },
+    {
+      "name": "agent_voice_muted",
+      "value": "Muted. Tap the mic to unmute."
+    },
+    {
+      "name": "agent_voice_unavailable",
+      "value": "I can't use the microphone right now."
+    },
+    {
+      "name": "agent_type_instead",
+      "value": "Type instead"
+    },
+    {
+      "name": "a11y_mute",
+      "value": "Mute microphone"
+    },
+    {
+      "name": "a11y_unmute",
+      "value": "Unmute microphone"
+    },
+    {
+      "name": "a11y_end",
+      "value": "End conversation"
+    },
+    {
+      "name": "a11y_keyboard",
+      "value": "Type instead"
+    },
+    {
+      "name": "a11y_voice",
+      "value": "Switch to voice"
+    },
+    {
+      "name": "a11y_orb",
+      "value": "The agent. Tap to talk."
+    },
+    {
+      "name": "tool_check_drug",
+      "value": "Checking %s against the QT list"
+    },
+    {
+      "name": "tool_check_drug_done",
+      "value": "Checked %s against the QT list"
+    },
+    {
+      "name": "tool_get_my_meds",
+      "value": "Looking at your medicines"
+    },
+    {
+      "name": "tool_get_my_meds_done",
+      "value": "Looked at your medicines"
+    },
+    {
+      "name": "tool_suggest_alternatives",
+      "value": "Finding options for %s"
+    },
+    {
+      "name": "tool_suggest_alternatives_done",
+      "value": "Looked for options for %s"
+    },
+    {
+      "name": "tool_explain_condition",
+      "value": "Reading your condition notes"
+    },
+    {
+      "name": "tool_explain_condition_done",
+      "value": "Read your condition notes"
+    },
+    {
+      "name": "tool_get_vitals_summary",
+      "value": "Reading your heart rate"
+    },
+    {
+      "name": "tool_get_vitals_summary_done",
+      "value": "Read your heart rate"
+    },
+    {
+      "name": "tool_scan_medicine",
+      "value": "Opening the scanner"
+    },
+    {
+      "name": "tool_scan_medicine_done",
+      "value": "Scanner ready"
+    },
+    {
+      "name": "tool_add_med",
+      "value": "Preparing %s for your list"
+    },
+    {
+      "name": "tool_add_med_done",
+      "value": "Prepared %s. Waiting for your tap"
+    },
+    {
+      "name": "tool_show_emergency_card",
+      "value": "Getting your emergency card"
+    },
+    {
+      "name": "tool_show_emergency_card_done",
+      "value": "Emergency card ready"
+    },
+    {
+      "name": "tool_start_emergency",
+      "value": "Starting the SOS countdown"
+    },
+    {
+      "name": "tool_start_emergency_done",
+      "value": "SOS countdown started"
+    },
+    {
+      "name": "tool_share_emergency_card",
+      "value": "Preparing your emergency card"
+    },
+    {
+      "name": "tool_share_emergency_card_done",
+      "value": "Emergency card ready to share"
+    },
+    {
+      "name": "tool_generic",
+      "value": "Working on it"
+    },
+    {
+      "name": "tool_generic_done",
+      "value": "Done"
+    },
+    {
+      "name": "tool_this_medicine",
+      "value": "this medicine"
+    },
+    {
+      "name": "agent_meds_title",
+      "value": "My medicines · %d"
+    },
+    {
+      "name": "agent_meds_empty",
+      "value": "No medicines saved yet."
+    },
+    {
+      "name": "agent_meds_open",
+      "value": "Open medicines"
+    },
+    {
+      "name": "agent_alt_title",
+      "value": "Options to discuss"
+    },
+    {
+      "name": "agent_alt_for",
+      "value": "Instead of %s"
+    },
+    {
+      "name": "agent_alt_none",
+      "value": "No verified alternatives on the list. Your doctor needs to choose one with you."
+    },
+    {
+      "name": "agent_alt_caveat",
+      "value": "Not listed doesn't guarantee safety. Only a doctor can switch your medicine."
+    },
+    {
+      "name": "agent_confirm_done",
+      "value": "Confirmed"
+    },
+    {
+      "name": "agent_confirm_cancelled",
+      "value": "Cancelled"
+    },
+    {
+      "name": "agent_card_sub",
+      "value": "Show it to a bystander, paramedic or doctor"
+    },
+    {
+      "name": "agent_scan_sub",
+      "value": "I'll read the name and check it"
+    },
+    {
+      "name": "agent_share_card_sub",
+      "value": "You choose where it goes. Nothing is sent until you confirm."
+    },
+    {
+      "name": "agent_card_title",
+      "value": "Emergency card"
+    },
+    {
+      "name": "widget_check_name",
+      "value": "Can I take this?"
+    },
+    {
+      "name": "widget_check_desc",
+      "value": "Scan or type a medicine to check it against the QT list."
+    },
+    {
+      "name": "widget_alert_name",
+      "value": "Medical alert"
+    },
+    {
+      "name": "widget_alert_desc",
+      "value": "Your condition, medicines and emergency call, readable by anyone."
+    },
+    {
+      "name": "widget_brand",
+      "value": "Celia.ai"
+    },
+    {
+      "name": "widget_scan_or_type",
+      "value": "Scan or type"
+    },
+    {
+      "name": "widget_open_card",
+      "value": "Open emergency card"
     }
   ]
 }

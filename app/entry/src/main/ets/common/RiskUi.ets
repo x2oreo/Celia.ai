@@ -74,15 +74,15 @@ export class RiskUi {
   static soft(risk: RiskLevel): Resource {
     switch (risk) {
       case 'KNOWN_RISK':
-        return $r('app.color.risk_known_soft');
+        return $r('app.color.risk_known_tint');
       case 'POSSIBLE_RISK':
-        return $r('app.color.risk_possible_soft');
+        return $r('app.color.risk_possible_tint');
       case 'CONDITIONAL_RISK':
-        return $r('app.color.risk_conditional_soft');
+        return $r('app.color.risk_conditional_tint');
       case 'NOT_LISTED':
-        return $r('app.color.risk_not_listed_soft');
+        return $r('app.color.risk_not_listed_tint');
       default:
-        return $r('app.color.risk_unknown_soft');
+        return $r('app.color.risk_unknown_tint');
     }
   }
 

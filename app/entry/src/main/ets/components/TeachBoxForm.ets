@@ -44,23 +44,23 @@ export struct TeachBoxForm {
       Text($r('app.string.teach_title'))
         .fontSize($r('app.float.font_title'))
         .fontWeight(FontWeight.Bold)
-        .fontColor($r('sys.color.font_primary'))
+        .fontColor($r('app.color.ink'))
       Text(this.countryLine())
         .fontSize($r('app.float.font_caption'))
-        .fontColor($r('sys.color.font_secondary'))
+        .fontColor($r('app.color.ink_2'))
       Text($r('app.string.teach_body'))
         .fontSize($r('app.float.font_body'))
-        .fontColor($r('sys.color.font_secondary'))
+        .fontColor($r('app.color.ink_2'))
       TextInput({ text: this.name, placeholder: $r('app.string.teach_name_hint') })
         .height(48)
-        .backgroundColor($r('app.color.field_bg'))
+        .backgroundColor($r('app.color.surface_alt'))
         .onChange((v: string) => {
           this.name = v;
           this.resolved = v.trim().length >= 3 ? DrugChecker.get().resolve(v) : undefined;
         })
       TextInput({ text: this.strength, placeholder: $r('app.string.teach_strength_hint') })
         .height(48)
-        .backgroundColor($r('app.color.field_bg'))
+        .backgroundColor($r('app.color.surface_alt'))
         .onChange((v: string) => {
           this.strength = v;
         })
@@ -68,7 +68,7 @@ export struct TeachBoxForm {
         Row({ space: 8 }) {
           Text(this.resolved === undefined ? $r('app.string.teach_unrecognised') : this.resolved.ingredient)
             .fontSize($r('app.float.font_caption'))
-            .fontColor($r('sys.color.font_secondary'))
+            .fontColor($r('app.color.ink_2'))
             .layoutWeight(1)
           RiskBadge({ risk: this.resolved === undefined ? 'UNKNOWN_DRUG' : this.resolved.risk, compact: true })
         }
@@ -84,7 +84,7 @@ export struct TeachBoxForm {
       })
       Text($r('app.string.teach_privacy'))
         .fontSize($r('app.float.font_caption'))
-        .fontColor($r('sys.color.font_tertiary'))
+        .fontColor($r('app.color.ink_3'))
     }
     .padding(20)
     .width('100%')

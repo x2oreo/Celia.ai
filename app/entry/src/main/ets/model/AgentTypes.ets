@@ -16,8 +16,10 @@ export interface ChatMessage {
 //   ADD_MED               payload: AddMedPayload         — confirm card; UI calls AgentCore.resolveAction()
 //   SHARE_EMERGENCY_CARD  payload: ConfirmPayload        — confirm card; UI calls AgentCore.resolveAction()
 //   QUICK_REPLIES         payload: QuickRepliesPayload   — tappable answers; UI sends the tapped text
+//   SHOW_MEDS             payload: MedsPayload           — the user's medicines with their deterministic risk
+//   SHOW_ALTERNATIVES     payload: AlternativesPayload   — list-verified options to discuss with a doctor
 export type UiActionType = 'SHOW_VERDICT' | 'SHOW_EMERGENCY_CARD' | 'START_EMERGENCY' | 'OPEN_MED_SCAN' | 'ADD_MED' |
-  'SHARE_EMERGENCY_CARD' | 'QUICK_REPLIES';
+  'SHARE_EMERGENCY_CARD' | 'QUICK_REPLIES' | 'SHOW_MEDS' | 'SHOW_ALTERNATIVES';
 
 export interface UiAction {
   type: UiActionType;
@@ -72,4 +74,29 @@ export interface AddMedPayload {
 
 export interface QuickRepliesPayload {
   options: string[];
+}
+
+export interface MedLinePayload {
+  name: string;
+  ingredient: string;
+  dose: string;
+  risk: string;         // RiskLevel from DrugChecker
+}
+
+export interface MedsPayload {
+  medicines: MedLinePayload[];
+}
+
+export interface AlternativesPayload {
+  forDrug: string;
+  alternatives: string[];   // every entry re-checked as NOT_LISTED on the device
+  note: string;
+}
+
+// A tool the agent is running (or has just finished), shown as a step in the conversation.
+export interface ToolActivity {
+  id: number;
+  name: string;
+  args: string;         // JSON string from the model
+  done: boolean;
 }

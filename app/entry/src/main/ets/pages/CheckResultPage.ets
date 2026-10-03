@@ -8,7 +8,7 @@ import { BoxInfo } from '../model/BoxInfo';
 import { Genotype, Profile } from '../model/Profile';
 import { VerdictCard } from '../components/VerdictCard';
 import { MedicineInfoCard } from '../components/MedicineInfoCard';
-import { PrimaryButton, SecondaryButton } from '../components/Common';
+import { BackHeader, QuietButton, SecondaryButton, StatusStrip, TypingDots } from '../components/Common';
 import { Logger } from '../common/Logger';
 import { toast } from '../common/Toast';
 import { AgentPrompt } from '../agent/AgentPrompt';
@@ -54,7 +54,7 @@ export struct CheckResultPage {
     toast(this.getUIContext(), $r('app.string.meds_added'));
   }
 
-  // Hand the checked medicine to Celia: back to the tabs, Agent tab, question already sent.
+  // Hand the checked medicine to the agent: back to the tabs, chat opened, question already sent.
   private askCelia(): void {
     if (this.outcome === undefined) {
       return;
@@ -66,65 +66,84 @@ export struct CheckResultPage {
 
   build() {
     NavDestination() {
-      Scroll() {
-        Column({ space: 16 }) {
-          if (this.failed) {
-            Text($r('app.string.error_generic'))
-              .fontSize($r('app.float.font_body'))
-              .fontColor($r('sys.color.font_secondary'))
-              .padding(24)
-          } else if (this.outcome === undefined) {
-            LoadingProgress().width(40).height(40).margin({ top: 80 })
-          } else {
-            VerdictCard({ verdict: this.outcome.verdict, combo: this.outcome.combo, genotype: this.genotype })
-            if (this.outcome.box !== undefined) {
-              MedicineInfoCard({
-                box: this.outcome.box,
-                onForgotten: () => {
+      Column() {
+        BackHeader({
+          title: $r('app.string.check_title'),
+          onBack: () => {
+            this.navStack.pop();
+          }
+        })
+        Scroll() {
+          Column({ space: 12 }) {
+            if (this.failed) {
+              StatusStrip({
+                kind: 'ERROR',
+                label: $r('app.string.check_failed'),
+                action: $r('app.string.check_retry'),
+                onAction: () => {
+                  this.navStack.pop();
+                }
+              })
+            } else if (this.outcome === undefined) {
+              TypingDots({ label: $r('app.string.agent_thinking') })
+                .margin({ top: 80 })
+            } else {
+              Column() {
+                VerdictCard({
+                  verdict: this.outcome.verdict,
+                  combo: this.outcome.combo,
+                  genotype: this.genotype,
+                  variant: 'SHEET',
+                  actionLabel: (this.outcome.verdict.ingredient !== '' || this.outcome.box !== undefined) &&
+                    !this.alreadyMine ?
+                    $r('app.string.check_add_to_mine') : '',
+                  onAction: () => {
+                    this.addToMine();
+                  }
+                })
+              }
+              .padding(16)
+              .backgroundColor($r('app.color.surface'))
+              .border({ width: 1, color: $r('app.color.border') })
+              .borderRadius($r('app.float.radius_l'))
+
+              if (this.outcome.box !== undefined) {
+                MedicineInfoCard({
+                  box: this.outcome.box,
+                  onForgotten: () => {
+                    this.navStack.pop();
+                  }
+                })
+              }
+
+              QuietButton({
+                label: $r('app.string.agent_ask_about'),
+                onTap: () => {
+                  this.askCelia();
+                }
+              })
+              SecondaryButton({
+                label: $r('app.string.check_another'),
+                icon: $r('app.media.ic_search'),
+                onTap: () => {
                   this.navStack.pop();
                 }
               })
             }
-            if ((this.outcome.verdict.ingredient !== '' || this.outcome.box !== undefined) && !this.alreadyMine) {
-              SecondaryButton({
-                label: $r('app.string.check_add_to_mine'),
-                icon: $r('app.media.ic_plus'),
-                onTap: () => {
-                  this.addToMine();
-                }
-              })
-            }
-            SecondaryButton({
-              label: $r('app.string.agent_ask_about'),
-              icon: $r('app.media.ic_tab_agent'),
-              onTap: () => {
-                this.askCelia();
-              }
-            })
-            PrimaryButton({
-              label: $r('app.string.check_another'),
-              icon: $r('app.media.ic_search'),
-              onTap: () => {
-                this.navStack.pop();
-              }
-            })
-            Text($r('app.string.disclaimer'))
-              .fontSize($r('app.float.font_caption'))
-              .fontColor($r('sys.color.font_tertiary'))
-              .textAlign(TextAlign.Center)
-              .width('100%')
           }
+          .padding({ left: $r('app.float.space_screen'), right: $r('app.float.space_screen'), bottom: 24 })
+          .width('100%')
         }
-        .padding(16)
+        .layoutWeight(1)
         .width('100%')
+        .align(Alignment.Top)
+        .scrollBar(BarState.Off)
       }
       .width('100%')
       .height('100%')
-      .align(Alignment.Top)
-      .backgroundColor($r('app.color.page_bg'))
     }
-    .title($r('app.string.check_title'))
-    .backgroundColor($r('app.color.page_bg'))
+    .hideTitleBar(true)
+    .backgroundColor($r('app.color.bg'))
     .onReady((ctx: NavDestinationContext) => {
       const param: CheckParam = ctx.pathInfo.param as CheckParam;
       this.load(param);

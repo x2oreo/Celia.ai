@@ -30,11 +30,11 @@ export struct MedicineInfoCard {
     Row({ space: 12 }) {
       Text(r.label)
         .fontSize($r('app.float.font_small'))
-        .fontColor($r('sys.color.font_secondary'))
+        .fontColor($r('app.color.ink_2'))
         .width('38%')
       Text(r.value)
         .fontSize($r('app.float.font_small'))
-        .fontColor($r('sys.color.font_primary'))
+        .fontColor($r('app.color.ink'))
         .layoutWeight(1)
     }
     .alignItems(VerticalAlign.Top)
@@ -50,14 +50,14 @@ export struct MedicineInfoCard {
           Text($r('app.string.info_title'))
             .fontSize($r('app.float.font_subtitle'))
             .fontWeight(FontWeight.Medium)
-            .fontColor($r('sys.color.font_primary'))
+            .fontColor($r('app.color.ink'))
             .layoutWeight(1)
         }
         .width('100%')
 
         Text(describeBox(this.box))
           .fontSize($r('app.float.font_body'))
-          .fontColor($r('sys.color.font_primary'))
+          .fontColor($r('app.color.ink'))
           .lineHeight(22)
 
         Column() {
@@ -88,7 +88,7 @@ export struct MedicineInfoCard {
 
         Text(sourceLine(this.box))
           .fontSize($r('app.float.font_caption'))
-          .fontColor($r('sys.color.font_tertiary'))
+          .fontColor($r('app.color.ink_3'))
 
         if (this.box.source === 'LEARNED') {
           Text($r('app.string.info_forget'))
@@ -106,8 +106,9 @@ export struct MedicineInfoCard {
       .width('100%')
       .padding(16)
       .alignItems(HorizontalAlign.Start)
-      .backgroundColor($r('app.color.card_bg'))
-      .borderRadius($r('app.float.radius_m'))
+      .backgroundColor($r('app.color.surface'))
+      .border({ width: 1, color: $r('app.color.border') })
+      .borderRadius($r('app.float.radius_l'))
     }
   }
 }

@@ -39,16 +39,17 @@ export struct DoctorPrepPage {
         Column({ space: 12 }) {
           Text($r('app.string.dp_intro'))
             .fontSize($r('app.float.font_body'))
-            .fontColor($r('sys.color.font_secondary'))
+            .fontColor($r('app.color.ink_3'))
             .width('100%')
           Flex({ wrap: FlexWrap.Wrap }) {
             ForEach(SPECIALTIES, (s: Specialty) => {
               Text(specialtyName(s))
                 .fontSize($r('app.float.font_small'))
-                .fontColor(this.specialty === s ? $r('app.color.on_accent') : $r('sys.color.font_primary'))
+                .fontColor(this.specialty === s ? $r('app.color.chat_user_text') : $r('app.color.ink'))
                 .padding({ left: 14, right: 14, top: 8, bottom: 8 })
                 .margin({ right: 8, bottom: 8 })
-                .backgroundColor(this.specialty === s ? $r('app.color.brand_accent') : $r('app.color.card_bg'))
+                .backgroundColor(this.specialty === s ? $r('app.color.chat_user_bg') : $r('app.color.surface'))
+                .border({ width: this.specialty === s ? 0 : 1.5, color: $r('app.color.border_strong') })
                 .borderRadius(100)
                 .onClick(() => {
                   this.specialty = s;
@@ -61,20 +62,20 @@ export struct DoctorPrepPage {
           if (this.profile === undefined) {
             Text($r('app.string.emergency_no_profile'))
               .fontSize($r('app.float.font_body'))
-              .fontColor($r('sys.color.font_secondary'))
+              .fontColor($r('app.color.ink_3'))
           } else {
             ForEach(this.sections, (sec: BriefSection) => {
               Column({ space: 6 }) {
                 Text(sec.title)
                   .fontSize($r('app.float.font_small'))
                   .fontWeight(FontWeight.Bold)
-                  .fontColor($r('app.color.brand_accent'))
+                  .fontColor($r('app.color.brand_text'))
                 ForEach(sec.lines, (l: string) => {
                   Row({ space: 8 }) {
-                    Text('•').fontColor($r('sys.color.font_secondary'))
+                    Text('•').fontColor($r('app.color.ink_3'))
                     Text(l)
                       .fontSize($r('app.float.font_body'))
-                      .fontColor($r('sys.color.font_primary'))
+                      .fontColor($r('app.color.ink'))
                       .layoutWeight(1)
                   }
                   .alignItems(VerticalAlign.Top)
@@ -84,7 +85,8 @@ export struct DoctorPrepPage {
               .width('100%')
               .alignItems(HorizontalAlign.Start)
               .padding(16)
-              .backgroundColor($r('app.color.card_bg'))
+              .backgroundColor($r('app.color.surface'))
+              .border({ width: 1, color: $r('app.color.border') })
               .borderRadius($r('app.float.radius_m'))
             }, (sec: BriefSection) => `${this.specialty}-${sec.title}`)
 
@@ -105,7 +107,7 @@ export struct DoctorPrepPage {
             })
             Text($r('app.string.disclaimer'))
               .fontSize($r('app.float.font_caption'))
-              .fontColor($r('sys.color.font_tertiary'))
+              .fontColor($r('app.color.ink_4'))
               .width('100%')
               .textAlign(TextAlign.Center)
           }
@@ -119,6 +121,6 @@ export struct DoctorPrepPage {
       .scrollBar(BarState.Off)
     }
     .title($r('app.string.home_doctor'))
-    .backgroundColor($r('app.color.page_bg'))
+    .backgroundColor($r('app.color.bg'))
   }
 }

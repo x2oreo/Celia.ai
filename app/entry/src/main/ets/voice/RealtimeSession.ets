@@ -6,6 +6,9 @@
 //   input transcription ─► SafetyGate: emergency → cancel response, deterministic emergency flow
 //   output transcript (streaming) ─► reassurance about a medicine → cancel + say the deterministic verdict instead
 //
+// For the voice UI it also reports the conversation phase (listening / hearing / thinking / speaking), the words
+// as they are recognised and spoken, and the loudness of whoever is talking (drives the orb).
+//
 // The OpenAI key never reaches the phone: /realtime-session mints a 2-minute client secret.
 // Any failure → status 'FAILED'; the UI falls back to push-to-talk (VoiceSession).
 
@@ -25,12 +28,20 @@ import { GateResult } from '../safety/SafetyGate';
 import { AgentReply, VerdictCardPayload } from '../model/AgentTypes';
 import { VoiceOutput } from './VoiceOutput';
 import { PcmStreamPlayer } from './PcmStreamPlayer';
+import { pcmLevel } from './Wav';
 
 const log: Logger = new Logger('Realtime');
 
 const REALTIME_URL: string = 'wss://api.openai.com/v1/realtime';
 
 export type RealtimeStatus = 'IDLE' | 'CONNECTING' | 'LIVE' | 'CLOSED' | 'FAILED';
+
+// What the conversation is doing right now. LISTENING = waiting for the user, HEARING = the user is speaking.
+export type VoicePhase = 'OFF' | 'CONNECTING' | 'LISTENING' | 'HEARING' | 'THINKING' | 'SPEAKING';
+
+// The user's transcript arrives after the model may already have answered; wait this long to keep the order.
+const USER_TRANSCRIPT_WAIT_MS: number = 1500;
+const LEVEL_INTERVAL_MS: number = 70;
 
 interface SessionRequest {
   context: RelayContext;
@@ -68,6 +79,22 @@ interface SimpleEvent {
   type: string;
 }
 
+interface TextContent {
+  type: string;
+  text: string;
+}
+
+interface UserMessageItem {
+  type: string;
+  role: string;
+  content: TextContent[];
+}
+
+interface UserMessageEvent {
+  type: string;
+  item: UserMessageItem;
+}
+
 interface FunctionOutputItem {
   type: string;
   call_id: string;
@@ -95,7 +122,17 @@ export class RealtimeSession {
   private continueWhenToolsDone: boolean = false;
   private suppressed: boolean = false;   // current response was cancelled by a safety check
   private muted: boolean = false;
+  private phase: VoicePhase = 'OFF';
+  private responseActive: boolean = false;
+  private userPartial: string = '';
+  private userPending: boolean = false;                 // audio committed, transcript not here yet
+  private held: (() => void) | undefined = undefined;   // reply waiting for that transcript
+  private lastLevelAt: number = 0;
 
+  private phaseListeners: Listeners<VoicePhase> = new Listeners<VoicePhase>();
+  private levelListeners: Listeners<number> = new Listeners<number>();
+  private userPartialListeners: Listeners<string> = new Listeners<string>();
+  private agentPartialListeners: Listeners<string> = new Listeners<string>();
   private statusListeners: Listeners<RealtimeStatus> = new Listeners<RealtimeStatus>();
   private replyListeners: Listeners<AgentReply> = new Listeners<AgentReply>();
   private userListeners: Listeners<string> = new Listeners<string>();
@@ -121,12 +158,52 @@ export class RealtimeSession {
     return this.userListeners.add(cb);
   }
 
+  onPhase(cb: Listener<VoicePhase>): () => void {
+    return this.phaseListeners.add(cb);
+  }
+
+  // Loudness 0..1 of whoever is talking: the microphone while listening, the agent's voice while speaking.
+  onLevel(cb: Listener<number>): () => void {
+    return this.levelListeners.add(cb);
+  }
+
+  // The user's words so far in the current utterance ('' when it is final or dropped).
+  onUserPartial(cb: Listener<string>): () => void {
+    return this.userPartialListeners.add(cb);
+  }
+
+  // The agent's words so far in the current response ('' when it is final or cancelled).
+  onAgentPartial(cb: Listener<string>): () => void {
+    return this.agentPartialListeners.add(cb);
+  }
+
   getStatus(): RealtimeStatus {
     return this.status;
   }
 
+  getPhase(): VoicePhase {
+    return this.phase;
+  }
+
   setMuted(muted: boolean): void {
     this.muted = muted;
+  }
+
+  // Typed or tapped input while the voice session is live: same gate, and the model answers out loud.
+  sendText(text: string): void {
+    const t: string = text.trim();
+    if (t.length === 0 || this.status !== 'LIVE') {
+      return;
+    }
+    this.player.clear();
+    const item: UserMessageItem = { type: 'message', role: 'user', content: [{ type: 'input_text', text: t }] };
+    const create: UserMessageEvent = { type: 'conversation.item.create', item: item };
+    this.send(JSON.stringify(create));
+    if (!this.handleUserText(t)) {
+      const go: SimpleEvent = { type: 'response.create' };
+      this.send(JSON.stringify(go));
+      this.setPhase('THINKING');
+    }
   }
 
   // Microphone permission must already be granted (VoiceSession.init asks for it).
@@ -135,6 +212,7 @@ export class RealtimeSession {
       return true;
     }
     this.setStatus('CONNECTING');
+    this.setPhase('CONNECTING');
     const req: SessionRequest = { context: await AgentCore.get().contextForVoice() };
     const raw: string | undefined = await BackendClient.postJson('realtime-session', JSON.stringify(req), 15000);
     if (raw === undefined) {
@@ -172,9 +250,11 @@ export class RealtimeSession {
       if (!ok) {
         return this.fail('connect returned false');
       }
+      this.player.onLevel((level: number, playing: boolean) => this.onPlayback(level, playing));
       await this.player.open();
       await this.startMic();
       this.setStatus('LIVE');
+      this.setPhase('LISTENING');
       log.info(`realtime live (${session.model}, prompt ${session.promptVersion})`);
       return true;
     } catch (e) {
@@ -207,17 +287,39 @@ export class RealtimeSession {
     switch (ev.type) {
       case 'input_audio_buffer.speech_started':
         this.player.clear();        // barge-in: the server also interrupts the response
+        this.userPartial = '';
+        this.setPhase('HEARING');
+        break;
+      case 'input_audio_buffer.speech_stopped':
+        this.setPhase('THINKING');
+        break;
+      case 'input_audio_buffer.committed':
+        this.userPending = true;
+        break;
+      case 'conversation.item.input_audio_transcription.delta':
+        this.userPartial += ev.delta ?? '';
+        this.userPartialListeners.emit(this.userPartial);
         break;
       case 'conversation.item.input_audio_transcription.completed':
         this.onUserSaid(ev.transcript ?? '');
         break;
+      case 'conversation.item.input_audio_transcription.failed':
+        this.onUserSaid('');
+        break;
       case 'response.created':
         this.suppressed = false;
         this.transcript = '';
+        this.responseActive = true;
+        if (this.phase !== 'HEARING') {
+          this.setPhase('THINKING');
+        }
         break;
       case 'response.output_audio.delta':
         if (!this.suppressed && ev.delta !== undefined) {
           this.player.enqueue(this.base64.decodeSync(ev.delta));
+          if (this.phase !== 'HEARING') {
+            this.setPhase('SPEAKING');
+          }
         }
         break;
       case 'response.output_audio_transcript.delta':
@@ -238,19 +340,38 @@ export class RealtimeSession {
   }
 
   private onUserSaid(text: string): void {
+    this.userPending = false;
+    this.userPartial = '';
+    this.userPartialListeners.emit('');
     const t: string = text.trim();
-    if (t.length === 0) {
-      return;
+    if (t.length === 0 || !this.handleUserText(t)) {
+      this.flushHeld();
     }
+  }
+
+  // Shows the user's words and runs the safety gate. Returns true when the deterministic emergency flow took over.
+  private handleUserText(t: string): boolean {
     this.userListeners.emit(t);
     const gate: GateResult = AgentCore.get().noteUserUtterance(t);
-    if (gate === 'EMERGENCY' || gate === 'UNWELL') {
-      // Deterministic path wins: stop the model, show + say the emergency flow.
-      this.cancelResponse();
-      AgentCore.get().triggerEmergency(t).then((r: AgentReply) => {
-        this.replyListeners.emit(r);
-        VoiceOutput.get().speak(r.text);
-      });
+    if (gate !== 'EMERGENCY' && gate !== 'UNWELL') {
+      return false;
+    }
+    // Deterministic path wins: stop the model, drop what it said, show + say the emergency flow.
+    this.held = undefined;
+    this.cancelResponse();
+    this.resetTurn();
+    AgentCore.get().triggerEmergency(t).then((r: AgentReply) => {
+      this.replyListeners.emit(r);
+      VoiceOutput.get().speak(r.text);
+    });
+    return true;
+  }
+
+  private flushHeld(): void {
+    const h: (() => void) | undefined = this.held;
+    this.held = undefined;
+    if (h !== undefined) {
+      h();
     }
   }
 
@@ -261,6 +382,7 @@ export class RealtimeSession {
       return;
     }
     this.transcript += delta;
+    this.agentPartialListeners.emit(this.transcript);
     const turn: TurnState | undefined = this.turn;
     const aboutMedicine: boolean = (turn !== undefined && turn.verdicts.length > 0) ||
       mentionsMedicine(this.transcript);
@@ -274,6 +396,7 @@ export class RealtimeSession {
       const fallbackReply: AgentReply = { text: fix, actions: [], fallback: true };
       const reply: AgentReply = turn !== undefined ? AgentCore.get().finishExternalTurn(turn, fix) : fallbackReply;
       this.resetTurn();
+      this.held = undefined;
       this.replyListeners.emit(reply);
       VoiceOutput.get().speak(fix);
     }
@@ -316,12 +439,19 @@ export class RealtimeSession {
 
   private onResponseDone(): void {
     if (this.toolsThisResponse > 0) {
+      if (this.phase !== 'HEARING') {
+        this.setPhase('THINKING');
+      }
       if (this.toolsRunning > 0) {
         this.continueWhenToolsDone = true;
       } else {
         this.continueAfterTools();
       }
       return;
+    }
+    this.responseActive = false;
+    if (!this.player.isPlaying() && (this.phase === 'SPEAKING' || this.phase === 'THINKING')) {
+      this.setPhase('LISTENING');
     }
     if (this.suppressed) {
       return;
@@ -332,7 +462,37 @@ export class RealtimeSession {
     }
     const turn: TurnState = this.turn !== undefined ? this.turn : new TurnState();
     this.resetTurn();
-    this.replyListeners.emit(AgentCore.get().finishExternalTurn(turn, spoken));
+    const emit = (): void => {
+      this.agentPartialListeners.emit('');
+      this.replyListeners.emit(AgentCore.get().finishExternalTurn(turn, spoken));
+    };
+    if (this.userPending) {
+      // Keep the thread in order: the user's line first, then this reply.
+      this.held = emit;
+      setTimeout(() => this.flushHeld(), USER_TRANSCRIPT_WAIT_MS);
+    } else {
+      emit();
+    }
+  }
+
+  // Once per playback buffer. The agent is "speaking" until its queued audio has actually been played.
+  private onPlayback(level: number, playing: boolean): void {
+    if (this.phase !== 'SPEAKING') {
+      return;
+    }
+    if (!playing && !this.responseActive) {
+      this.setPhase('LISTENING');
+      return;
+    }
+    this.emitLevel(level);
+  }
+
+  private emitLevel(level: number): void {
+    const now: number = Date.now();
+    if (now - this.lastLevelAt >= LEVEL_INTERVAL_MS) {
+      this.lastLevelAt = now;
+      this.levelListeners.emit(level);
+    }
   }
 
   private resetTurn(): void {
@@ -343,6 +503,7 @@ export class RealtimeSession {
   private cancelResponse(): void {
     this.suppressed = true;
     this.player.clear();
+    this.agentPartialListeners.emit('');
     const ev: SimpleEvent = { type: 'response.cancel' };
     this.send(JSON.stringify(ev));
   }
@@ -364,9 +525,12 @@ export class RealtimeSession {
     try {
       capturer.on('readData', (buffer: ArrayBuffer) => {
         if (!this.muted && this.status === 'LIVE') {
-          const ev: AppendEvent = { type: 'input_audio_buffer.append',
-            audio: this.base64.encodeToStringSync(new Uint8Array(buffer)) };
+          const bytes: Uint8Array = new Uint8Array(buffer);
+          const ev: AppendEvent = { type: 'input_audio_buffer.append', audio: this.base64.encodeToStringSync(bytes) };
           this.send(JSON.stringify(ev));
+          if (this.phase === 'LISTENING' || this.phase === 'HEARING') {
+            this.emitLevel(pcmLevel(bytes));
+          }
         }
       });
     } catch (e) {
@@ -410,7 +574,22 @@ export class RealtimeSession {
     this.toolsThisResponse = 0;
     this.toolsRunning = 0;
     this.continueWhenToolsDone = false;
+    this.responseActive = false;
+    this.userPending = false;
+    this.userPartial = '';
+    this.held = undefined;
+    this.muted = false;
+    this.userPartialListeners.emit('');
+    this.agentPartialListeners.emit('');
+    this.setPhase('OFF');
     this.setStatus(status);
+  }
+
+  private setPhase(p: VoicePhase): void {
+    if (this.phase !== p) {
+      this.phase = p;
+      this.phaseListeners.emit(p);
+    }
   }
 
   private setStatus(s: RealtimeStatus): void {

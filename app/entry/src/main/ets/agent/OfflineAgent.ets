@@ -1,12 +1,11 @@
 // Deterministic agent used when the model is unreachable, times out or returns something invalid.
 // Covers the core jobs with simple patterns so the app stays useful offline (airplane-mode demo).
 
-import { AgentReply, UiAction, VerdictCardPayload } from '../model/AgentTypes';
+import { AgentReply, MedLinePayload, MedsPayload, UiAction, VerdictCardPayload } from '../model/AgentTypes';
 import { checkDrugFull } from './DrugCheckFlow';
 import { verdictText } from './VerdictText';
 import { action } from './ToolTypes';
-import { LocalStore } from '../data/LocalStore';
-import { Medication } from '../model/Medication';
+import { myMedsPayload } from './tools/DrugTools';
 
 export type OfflineIntent = 'CHECK_DRUG' | 'MY_MEDS' | 'EMERGENCY_CARD' | 'SCAN' | 'UNKNOWN';
 
@@ -42,7 +41,7 @@ export function parseOfflineIntent(text: string): ParsedIntent {
     const r: ParsedIntent = { intent: 'SCAN', drug: '' };
     return r;
   }
-  if (/\bmy (meds|medicines|medications|pills)\b/.test(t)) {
+  if (/\bmy (current |own |daily )?(meds|medicines|medications|pills)\b/.test(t)) {
     const r: ParsedIntent = { intent: 'MY_MEDS', drug: '' };
     return r;
   }
@@ -86,10 +85,11 @@ export class OfflineAgent {
         return reply(verdictText(card), [action('SHOW_VERDICT', card)]);
       }
       case 'MY_MEDS': {
-        const meds: Medication[] = await LocalStore.get().listMeds();
-        const list: string = meds.length === 0 ? 'You have no medicines saved yet.'
-          : `Your medicines: ${meds.map((m: Medication) => m.dose !== '' ? `${m.name} ${m.dose}` : m.name).join(', ')}.`;
-        return reply(list, []);
+        const meds: MedsPayload = await myMedsPayload();
+        const list: string = meds.medicines.length === 0 ? 'You have no medicines saved yet.'
+          : `Your medicines: ${meds.medicines.map((m: MedLinePayload) =>
+            m.dose !== '' ? `${m.name} ${m.dose}` : m.name).join(', ')}.`;
+        return reply(list, [action('SHOW_MEDS', meds)]);
       }
       case 'EMERGENCY_CARD': {
         const a: UiAction = { type: 'SHOW_EMERGENCY_CARD', payload: '{"language":""}' };

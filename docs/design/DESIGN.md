@@ -24,6 +24,7 @@ Units: lengths in `vp`, font sizes in `fp` (ArkUI). The design file uses px/dp, 
 | **Never colour alone** | Every risk = colour + shape + word. Users may be colour-blind and stressed. |
 | **Unknown is never safe** | Grey, dashed, worded "Couldn't identify". "Not listed" still carries a caveat. |
 | **The agent is a companion** | A breathing avatar and a caring voice, not a chatbot widget. Called "the agent" for now. |
+| **Voice first** | You talk to the agent and it talks back. Both sides are written out as they speak. Typing is the second mode of the same conversation. |
 | **Heart rate only** | Never imply the app measures or diagnoses QT. The watch shows heart rate and nothing more. |
 
 ---
@@ -249,7 +250,34 @@ Four tabs: **Agent · Medicines · Heart · Emergency**.
 - **Orb (locked)**: radial gradient `#FFC2BE` → `#E5484D` (68%) → `#C7353A`, highlight at 35% / 30%.
 - Sizes: **28 / 40 / 96** vp.
 - Idle: breathing ~4 s.
+- A soft sheen (`orb_sheen` → `orb_sheen_clear`, a second radial gradient at 30% / 24%) sits on top of the body.
 - Pulse-line avatar is rejected for now because it reads as an ECG.
+
+### 6.6a Voice orb (hero of the conversation)
+
+The orb is the agent's face while you talk. `components/VoiceOrb.ets`. Size **168** before anything is said
+(`avatar_hero`), **84** once the conversation has content. Plain shapes and gradients only.
+
+Layers, back to front:
+
+1. **Halos**: two circles the size of the core, at 8% and 14% opacity, resting at scale 1.2 and 1.08. They swell
+   with the loudness of whoever is talking (up to +0.42 and +0.2).
+2. **Core**: the locked orb gradient, the sheen turning slowly (14 s), breathing as in 6.6. A soft coral glow
+   underneath (`orb_glow`, radius 0.28 × size, offset 0.08 × size) is the one shadow allowed outside sheets.
+3. **Orbit arc**: a 3 vp coral arc circling at 1.16 × size, 1.6 s per turn.
+
+| State | Halo colour | Motion | Label under the orb |
+|---|---|---|---|
+| Off | coral, half strength | breathing only | "Tap to talk" (`title-3` when the screen is empty) |
+| Connecting | coral | orbit arc | "Connecting…" |
+| Listening (waiting for you) | `ink-4` | halos follow the room at half gain | "I'm listening" |
+| Hearing (you are speaking) | `ink-4` | halos follow your voice | "Listening…" |
+| Thinking | coral | orbit arc | "Thinking…" or the running tool step |
+| Speaking | coral | halos and core follow the agent's voice | "Speaking" |
+| Muted | — | core at 50% opacity, halos still | "Muted. Tap the mic to unmute." |
+
+Neutral halos mean "your voice", coral means "the agent". The label always says the state in words, so it never
+depends on colour or motion alone.
 
 ### 6.7 States
 
@@ -258,6 +286,30 @@ Four tabs: **Agent · Medicines · Heart · Emergency**.
 | **Offline** | Neutral grey strip: `#EFEAE6` bg, 8 vp `ink-4` dot, 13 fp / 600 `#4A423D`, radius 12. Not an error. | "I'm offline, but medicine checks still work." |
 | **Error** | Amber strip: `#FEF0C7` bg, `#93370D` text, radius 12, always with a fallback action. **Never red.** | "Couldn't read that box. Type the name instead?" |
 | **Empty** | Dashed card: 2 vp dashed `border-strong`, radius 16, centred 13 fp `ink-3`, plus one primary button. | "No medicines yet. Add one or scan a box." |
+
+### 6.8 Tool steps and agent cards
+
+What the agent does is always visible. `components/AgentCards.ets`. All of it is built from deterministic tool
+results, never from model text.
+
+- **Tool step**: pill, height 36, `surface` + 1 vp `border`. Icon well 28 (`surface-alt`, radius 8, 14 vp icon in
+  `ink-2`), label 13 fp / 500, then three typing dots while it runs or a 16 vp check when done. Running copy is
+  present tense in `ink` ("Checking Klacid against the QT list"), finished copy is past tense in `ink-3`
+  ("Checked Klacid against the QT list"). **Neutral ink only**: a finished step is not a verdict, so it never
+  uses a risk colour or risk shape. Steps stay above the reply they belong to.
+- **Card shell**: `surface`, 1 vp `border`, radius 20, padding 14, gap 12, with the verdict-reveal motion.
+- **Confirm card** (add a medicine, share the emergency card): icon well 40 + `headline` title + `body-sm` detail,
+  the compact risk badge of the medicine when there is one, then `Confirm` (ink) + `Cancel` (secondary). After the
+  tap the buttons become one quiet line: "Confirmed" with a check, or "Cancelled". Never coral.
+- **Medicines card**: caps label "MY MEDICINES · N", one row per medicine (name 15 fp / 700, dose in `ink-3`,
+  compact risk badge at the end), `divider` between rows, secondary `Open medicines`.
+- **Options card** (alternatives): caps label, "Instead of X" in `headline`, chips with the Not-listed shape and
+  the name, the note, and always the caption "Not listed doesn't guarantee safety. Only a doctor can switch your
+  medicine." With no verified option it says so and shows no chips.
+- **Emergency notice**: risk-known tint, 1 vp `risk_known_border`, radius 16, phone icon + bold line + outlined
+  danger chip `Open SOS`. After the countdown is cancelled it turns neutral (`surface-alt`, `ink-3`) with no chip.
+- **Action tile** (open the scanner, open the emergency card): icon well 40, title 15 fp / 700, subtitle in
+  `ink-3`, chevron.
 
 ---
 
@@ -278,7 +330,9 @@ Four tabs: **Agent · Medicines · Heart · Emergency**.
 | Pattern | Spec |
 |---|---|
 | **Heartbeat pulse** | Live HR icon scales 1 → 1.25 → 1 → 1.15 → 1 over ~1.1 s (keyframes at 0 / 15 / 30 / 45 / 100%). Home ring pulses opacity in time. Stops when the source disconnects. |
-| **Agent breathing** | Avatar scale 0.92 ↔ 1.04 (opacity 0.92 ↔ 1) over 4 s ease-in-out, infinite. Ring avatar adds a 7 s orbiting arc while listening. |
+| **Agent breathing** | Avatar scale 0.92 ↔ 1.04 (opacity 0.92 ↔ 1) over 4 s ease-in-out, infinite. |
+| **Voice orb** | Halos and core follow the voice level with a 160 ms ease-out. Sheen turns once in 14 s, the thinking arc once in 1.6 s, both linear. The orb eases between 168 and 84 in 320 ms when the conversation starts. |
+| **Live words** | The user's bubble sits at 60% opacity while the words are still being recognised (three dots before the first word), then becomes solid. The agent's text grows word by word. No cursor, no typewriter effect. |
 | **Typing** | Three 7 vp dots, 1.2 s loop, staggered 150 ms. Pair with a label like "Reading the box…" when the wait is known. |
 | **Verdict reveal** | Card slides up 12 vp and fades in over 240 ms. Badge settles 100 ms later. No bounce or shake, even for Known risk. |
 | **Sheets** | Bottom sheets rise over 280 ms with a 45% scrim. SOS countdown ring drains linearly over 10 s. |
@@ -317,9 +371,19 @@ In ArkUI, use `animateTo` / `.animation()` with `Curve.EaseInOut` and `iteration
 - **Home** (B1) = the Agent tab: date, "Hi {name}", genotype chip, settings gear. Heart-rate ring (track `border`,
   arc `brand`, `display` bpm, "bpm · resting", source badge), status chips, then the **agent card** (orb 28, name,
   time, `body` message, `Scan a box` primary + `Ask something` quiet).
-- **Chat** (B2) is a pushed page, not a tab: back, orb 40, "The agent", `ON-DEVICE` badge. Agent text is plain, with no
-  bubble. User bubble is `ink`. Verdicts appear as inline verdict cards. Input bar: 48 camera circle, pill input,
-  48 coral mic (send when there is text).
+- **Conversation** (B2, revised: voice first) is a pushed page, not a tab. Header: back, "The agent", `ON-DEVICE`
+  badge when there is no backend. It has two modes over the same thread.
+  - **Voice (default)**: the voice orb (6.6a) with its state label, then the thread, then the dock: 52 camera
+    circle, **72 coral mic**, and a 52 circle that is the keyboard (switch to typing) while idle and ✕ (end) while
+    a conversation is running. Before anything is said the orb is 168 with the label in `title-3`, a one-line hint
+    and three starter chips. One tap on the mic or the orb starts the conversation; the microphone never opens by
+    itself. While live, the mic button mutes (outlined, struck mic). When live voice is unavailable the same
+    button records one question: tap, speak, tap again (ink button with the send icon).
+  - **Chat**: orb 40 in the header, thread, input bar: 48 camera circle, pill input, 48 coral button that sends
+    when there is text and otherwise goes back to voice (wave icon).
+  - **Thread** (both modes): user bubble is `ink`, agent text is plain with no bubble, tool steps above the reply
+    (6.8), then one card per tool result (verdict card 6.4, agent cards 6.8). Words appear live while they are
+    spoken (see Motion).
 - **Avatar**: orb (6.6), sizes 24 / 28 / 40 / 96.
 - **Tabs**: Agent · Medicines · Heart · Emergency (6.5).
 - **Check-in** (B3): bottom sheet over home when the heart rate is out of range. Agent header "from your watch",
@@ -353,5 +417,6 @@ In ArkUI, use `animateTo` / `.animation()` with `Curve.EaseInOut` and `iteration
 ### 10.4 Extra resource names
 
 `radius_btn` 14, `button_height_sheet` 52, `chip_height` 44, `font_button` 15, `font_badge` 13, `font_mono` 9,
-`avatar_*`, `risk_<level>_border`, `danger`, `scrim`, `shadow_sheet`, `orb_light/mid/dark`, and `card_fixed_*`
+`avatar_*` (incl. `avatar_hero` 168), `dock_side` 52, `dock_main` 72, `risk_<level>_border`, `danger`, `scrim`,
+`shadow_sheet`, `orb_light/mid/dark`, `orb_sheen`, `orb_sheen_clear`, `orb_glow`, and `card_fixed_*`
 (always-light emergency card, the same in dark mode).
