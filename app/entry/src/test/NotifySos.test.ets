@@ -1,7 +1,7 @@
 import { describe, it, expect } from '@ohos/hypium';
 import {
   buttonsFor, doseNotifyId, kindForId, NOTIFY_ALERT, NOTIFY_RISKY_CHECK, NOTIFY_SOS, NOTIFY_WATCH_SOS, NotifyButton,
-  NotifyTap, parseNotifyTap, requestCodeFor, slotFor, targetFor
+  NotifyTap, needsPushUpload, parseNotifyTap, parsePushTap, PushSosTap, requestCodeFor, slotFor, targetFor
 } from '../main/ets/common/NotifyAction';
 import { SosController } from '../main/ets/emergency/SosController';
 import { DoseLog, DoseReminder, takeableFromNotification } from '../main/ets/reminders/DoseSchedule';
@@ -168,6 +168,46 @@ export default function notifySosTest() {
         id: 8, type: 'rhythm_alert', payload: p, recorded_at: '2026-10-03T12:00:00.000Z', source: 'watch'
       };
       expect(WatchCloudSource.toAlert(r)?.watchSos).assertUndefined();
+    });
+  });
+
+  describe('PushSos', () => {
+    it('parsesTheWatchSosPush', 0, () => {
+      const p: Record<string, Object> = {};
+      p['route'] = 'sos';
+      p['source'] = 'watch';
+      p['loc'] = '1';
+      p['at'] = '2026-10-04T08:00:00.000Z';
+      const now: number = Date.parse('2026-10-04T08:00:30.000Z');
+      const t: PushSosTap | undefined = parsePushTap(p, now);
+      expect(t?.at).assertEqual(Date.parse('2026-10-04T08:00:00.000Z'));
+      expect(t?.withLocation).assertTrue();
+    });
+
+    it('futureOrMissingTimeBecomesNow', 0, () => {
+      const p: Record<string, Object> = {};
+      p['route'] = 'sos';
+      p['source'] = 'watch';
+      p['at'] = '2099-01-01T00:00:00.000Z';
+      expect(parsePushTap(p, 5000)?.at).assertEqual(5000);
+      expect(parsePushTap(p, 5000)?.withLocation).assertFalse();
+    });
+
+    it('ignoresOtherWants', 0, () => {
+      const p: Record<string, Object> = {};
+      p['route'] = 'scan';
+      expect(parsePushTap(p, 0)).assertUndefined();
+      expect(parsePushTap(undefined, 0)).assertUndefined();
+      expect(parsePushTap(params('OPEN', 'EMERGENCY', 1001, -1), 0)).assertUndefined();
+    });
+
+    it('uploadsTokenOncePerUserAndToken', 0, () => {
+      expect(needsPushUpload(false, 'u1', 'tok', '')).assertFalse();
+      expect(needsPushUpload(true, '', 'tok', '')).assertFalse();
+      expect(needsPushUpload(true, 'u1', 'tok', '')).assertTrue();
+      expect(needsPushUpload(true, 'u1', 'tok', 'u1:tok')).assertFalse();
+      expect(needsPushUpload(true, 'u1', 'tok2', 'u1:tok')).assertTrue();
+      expect(needsPushUpload(true, 'u2', 'tok', 'u1:tok')).assertTrue();
     });
   });
 }

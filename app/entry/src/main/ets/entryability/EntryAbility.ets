@@ -14,7 +14,8 @@ import { Profile } from '../model/Profile';
 import { emergencyFor, systemCountry } from '../common/EmergencyNumbers';
 import { dial } from '../common/Dialer';
 import { cancelNotify, initNotify, NOTIFY_ALERT, NOTIFY_SOS } from '../common/Notify';
-import { NotifyTap, NotifyTarget, parseNotifyTap, targetFor } from '../common/NotifyAction';
+import { NotifyTap, NotifyTarget, parseNotifyTap, parsePushTap, PushSosTap, targetFor } from '../common/NotifyAction';
+import { PushToken } from '../account/PushToken';
 import { SosController } from '../emergency/SosController';
 import { ReminderService } from '../reminders/ReminderService';
 import { HeartOkRequest } from '../common/HeartOkRequest';
@@ -32,6 +33,7 @@ export default class EntryAbility extends UIAbility {
     LocalStore.get().init(this.context).then(() => {
       AppLock.init();
       WidgetSync.start(this.context);
+      PushToken.start();
     });
     initNotify(this.context);
     GtinCatalog.get().init(this.context);
@@ -40,12 +42,26 @@ export default class EntryAbility extends UIAbility {
     AgentCore.get().start();
     this.handleCardTap(want);
     this.handleNotifyTap(want);
+    this.handlePushTap(want);
     log.info('onCreate');
   }
 
   onNewWant(want: Want, launchParam: AbilityConstant.LaunchParam): void {
     this.handleCardTap(want);
     this.handleNotifyTap(want);
+    this.handlePushTap(want);
+  }
+
+  // A tap on the server push "SOS from your watch" (B12). The watch already counted down and sent it, so the SOS page
+  // opens in its sent state (B8), also on a cold start when polling has not seen the row yet.
+  private handlePushTap(want: Want): void {
+    const tap: PushSosTap | undefined = parsePushTap(want.parameters, Date.now());
+    if (tap === undefined) {
+      return;
+    }
+    log.info('push tap: watch SOS');
+    SosController.get().watchSent(tap.at, tap.withLocation);
+    RouteRequest.open(Routes.SOS);
   }
 
   // A tap on one of our notifications or its buttons (common/NotifyAction.ets). The app is already opening; act on

@@ -129,3 +129,35 @@ export function targetFor(tap: NotifyTap): NotifyTarget {
   }
   return 'history';
 }
+
+// A tap on the server-sent "SOS from your watch" push (B12, backend/supabase/functions/sos/huaweiPush.ts). Push Kit
+// hands `clickAction.data` to the app as want parameters: route 'sos', source 'watch', loc '1' | '0', at (ISO time).
+export class PushSosTap {
+  at: number;
+  withLocation: boolean;
+
+  constructor(at: number, withLocation: boolean) {
+    this.at = at;
+    this.withLocation = withLocation;
+  }
+}
+
+export function parsePushTap(params: Record<string, Object> | undefined, now: number): PushSosTap | undefined {
+  if (params === undefined || params['route'] !== 'sos' || params['source'] !== 'watch') {
+    return undefined;
+  }
+  const at: Object | undefined = params['at'];
+  const ts: number = typeof at === 'string' ? Date.parse(at) : NaN;
+  // A missing or future time is replaced by "now"; never trust it to move the cooldown forward.
+  return new PushSosTap(Number.isNaN(ts) || ts > now ? now : ts, params['loc'] === '1');
+}
+
+// Upload the push token only when signed in and not already uploaded for this user and token.
+export function pushUploadKey(userId: string, token: string): string {
+  return userId === '' || token === '' ? '' : `${userId}:${token}`;
+}
+
+export function needsPushUpload(signedIn: boolean, userId: string, token: string, uploaded: string): boolean {
+  const key: string = pushUploadKey(userId, token);
+  return signedIn && key !== '' && key !== uploaded;
+}
