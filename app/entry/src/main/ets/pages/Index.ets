@@ -34,6 +34,7 @@ import { PairWatchPage } from './PairWatchPage';
 import { AgentCore, QUICK_REPLY_OK, QUICK_REPLY_UNWELL } from '../agent/AgentCore';
 import { CheckInSheet } from '../components/CheckInSheet';
 import { clock } from '../common/Format';
+import { toast } from '../common/Toast';
 import { AgentPrompt } from '../agent/AgentPrompt';
 import { RouteRequest } from '../common/RouteRequest';
 import { AgentReply, EmergencyPayload, UiAction } from '../model/AgentTypes';
@@ -61,6 +62,7 @@ struct Index {
     });
     WearNotifier.start();
     VitalsService.get().onAlert((a: VitalsAlert) => this.onAlert(a));
+    VitalsService.get().onWatchAnswer((kind: string) => this.onWatchAnswer(kind));
     AgentCore.get().onProactive((r: AgentReply) => this.onAgentProactive(r));
     AgentPrompt.onOpenChat(() => this.openChat());
     RouteRequest.onOpen((route: string) => this.openRoute(route));
@@ -114,6 +116,21 @@ struct Index {
       a.kind.toLowerCase().replace(/_/g, ' ');
     this.checkIn = false;
     this.navStack.pushPathByName(Routes.SOS, new SosParam(false, reason, true));
+  }
+
+  // An answer on the watch's "How do you feel?" counts as the same answer on the phone: it closes the check-in and
+  // does exactly what the matching phone button does, so one heart-rate event never needs two answers.
+  private onWatchAnswer(kind: string): void {
+    if (!this.checkIn && !AgentCore.get().isCheckInPending()) {
+      return;
+    }
+    this.checkIn = false;
+    if (kind === 'fine') {
+      AgentCore.get().send(QUICK_REPLY_OK);
+      toast(this.getUIContext(), $r('app.string.checkin_answered_watch_ok'));
+    } else {
+      AgentPrompt.ask(QUICK_REPLY_UNWELL);
+    }
   }
 
   // Unanswered heart-rate check-in → the agent starts an emergency; hand it to the SOS screen.

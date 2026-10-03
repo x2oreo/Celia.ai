@@ -337,6 +337,11 @@ export class AgentCore {
     this.proactive.emit(reply);
   }
 
+  /** True while a heart-rate check-in waits for "I'm OK" / "I feel unwell" (and its emergency timer runs). */
+  isCheckInPending(): boolean {
+    return this.checkInPending;
+  }
+
   private cancelCheckIn(): void {
     this.checkInPending = false;
     if (this.checkInTimer !== -1) {

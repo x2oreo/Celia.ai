@@ -1543,6 +1543,10 @@
     {
       "name": "pair_err_backend",
       "value": "Pairing needs the online service, which isn't set up in this build."
+    },
+    {
+      "name": "checkin_answered_watch_ok",
+      "value": "You answered on your watch: I'm OK"
     }
   ]
 }

@@ -1,7 +1,7 @@
 // Watch → phone link through Supabase. The Celia watch app (watch/) uploads small metrics to `watch_metrics`; this
-// source polls new rows every 2 s and turns them into phone VitalsSamples, so the phone's own AlarmRules, chart and
-// SOS flow run on real watch data. Only events the phone cannot derive from samples (SOS, fall, slow recovery,
-// low SpO2) are forwarded as alerts. Nothing personal is sent: the request carries only the watch's device id.
+// source polls new rows every 2 s and turns them into phone VitalsSamples for the chart and SOS flow. Alerts are the
+// watch's own decisions (hr_alert, rhythm_alert, vitals_alert, SOS, fall, slow recovery) forwarded as is; the phone
+// does not re-run its AlarmRules on watch data. Nothing personal is sent: the request carries only the device id.
 
 import { AlertSeverity, VitalsAlert, VitalsSample, VitalsSourceKind } from '../model/Vitals';
 import { Config } from '../common/Config';
@@ -31,7 +31,11 @@ interface IdRow {
 export interface WatchCloudCallbacks {
   onSample: (s: VitalsSample) => void;
   onAlert: (a: VitalsAlert) => void;
+  /** A "How do you feel?" answer given on the watch: 'fine', 'dizziness', 'palpitations', 'fainting' or 'other'. */
+  onAnswer: (kind: string) => void;
 }
+
+const ANSWER_KINDS: string[] = ['fine', 'dizziness', 'palpitations', 'fainting', 'other'];
 
 function num(p: Record<string, Object>, key: string): number | undefined {
   const v: Object | undefined = p[key];
@@ -105,6 +109,36 @@ export class WatchCloudSource {
     return s;
   }
 
+  // The watch is the one place that decides a heart rate is out of range (its limits know the activity, genotype
+  // and risky drug, and it waits ALERT_SUSTAIN_SEC). The phone shows that decision instead of re-deciding it.
+  static hrAlert(ts: number, hr: number, p: Record<string, Object>): VitalsAlert | undefined {
+    const limit: number = num(p, 'limitBpm') ?? 0;
+    const secs: number = num(p, 'sustainedSec') ?? 0;
+    const activity: string = str(p, 'activity');
+    const when: string = activity === 'ASLEEP' ? 'while asleep' : activity === 'ACTIVE' ? 'while active' :
+      activity === 'REST' ? 'while resting' : '';
+    const lasted: string = secs > 0 ? ` for ${secs} s` : '';
+    if (str(p, 'direction') === 'low') {
+      return alertOf(ts, hr, hr > 0 && hr <= 40 ? 'CRITICAL' : 'WARN',
+        `Heart rate ${hr} ${when}${lasted}, below your watch limit of ${limit}. Are you OK?`.replace('  ', ' '));
+    }
+    if (str(p, 'direction') === 'high') {
+      return alertOf(ts, hr, hr >= 150 || (limit > 0 && hr >= limit + 30) ? 'CRITICAL' : 'WARN',
+        `Heart rate ${hr} ${when}${lasted}, above your watch limit of ${limit}. Sit or lie down. Are you OK?`
+          .replace('  ', ' '));
+    }
+    return undefined;
+  }
+
+  /** The watch's check-in answer in a `symptom` row, or undefined for any other row. */
+  static answerOf(r: MetricRow): string | undefined {
+    if (r.type !== 'symptom') {
+      return undefined;
+    }
+    const kind: string = str(r.payload, 'kind');
+    return ANSWER_KINDS.includes(kind) ? kind : undefined;
+  }
+
   static toAlert(r: MetricRow): VitalsAlert | undefined {
     const ts: number = Date.parse(r.recorded_at);
     const p: Record<string, Object> = r.payload;
@@ -129,9 +163,17 @@ export class WatchCloudSource {
             `Slow heart-rate recovery after exercise: only −${drop} bpm in 1 minute. Rest; mention it to your doctor.`);
         }
         return undefined;
+      case 'hr_alert':
+        return WatchCloudSource.hrAlert(ts, hr, p);
+      case 'rhythm_alert':
+        return alertOf(ts, hr, hr >= 150 || (hr > 0 && hr <= 40) ? 'CRITICAL' : 'WARN',
+          `Irregular rhythm flagged by the watch at ${hr} bpm (simulated signal). Sit down. Are you OK?`);
       case 'vitals_alert':
         if (str(p, 'signal') === 'spo2') {
           return alertOf(ts, 0, 'WARN', `Oxygen saturation low on the watch: ${num(p, 'value') ?? 0}% (simulated signal).`);
+        }
+        if (str(p, 'signal') === 'hrv') {
+          return alertOf(ts, 0, 'INFO', `Heart-rate variability low on the watch: ${num(p, 'value') ?? 0} ms (simulated signal).`);
         }
         return undefined;
       default:
@@ -218,6 +260,10 @@ export class WatchCloudSource {
       const a: VitalsAlert | undefined = WatchCloudSource.toAlert(r);
       if (a !== undefined) {
         this.cb.onAlert(a);
+      }
+      const answer: string | undefined = WatchCloudSource.answerOf(r);
+      if (answer !== undefined) {
+        this.cb.onAnswer(answer);
       }
     }
   }

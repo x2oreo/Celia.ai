@@ -56,9 +56,32 @@ export default function watchCloudSourceTest() {
       expect(WatchCloudSource.toAlert(row('hr_recovery', ok, 'watch')) === undefined).assertTrue();
     });
 
-    it('heart-rate alerts are left to the phone rules (no duplicates)', 0, () => {
-      const hr: Record<string, Object> = { 'bpm': 165, 'limitBpm': 110, 'direction': 'high' };
-      expect(WatchCloudSource.toAlert(row('hr_alert', hr, 'watch')) === undefined).assertTrue();
+    it('watch check-in answers are recognised', 0, () => {
+      const fine: Record<string, Object> = { 'kind': 'fine', 'bpm': 120 };
+      expect(WatchCloudSource.answerOf(row('symptom', fine, 'watch'))).assertEqual('fine');
+      const dizzy: Record<string, Object> = { 'kind': 'dizziness', 'bpm': 118 };
+      expect(WatchCloudSource.answerOf(row('symptom', dizzy, 'watch'))).assertEqual('dizziness');
+      const bogus: Record<string, Object> = { 'kind': 'whatever' };
+      expect(WatchCloudSource.answerOf(row('symptom', bogus, 'watch')) === undefined).assertTrue();
+      expect(WatchCloudSource.answerOf(row('hr_alert', fine, 'watch')) === undefined).assertTrue();
+    });
+
+    it('heart-rate alerts come from the watch (one decision for one heart rate)', 0, () => {
+      const high: Record<string, Object> = { 'bpm': 125, 'limitBpm': 120, 'direction': 'high', 'sustainedSec': 5,
+        'activity': 'REST' };
+      const a: VitalsAlert | undefined = WatchCloudSource.toAlert(row('hr_alert', high, 'watch'));
+      expect(a?.severity).assertEqual('WARN');
+      expect(a?.hr).assertEqual(125);
+      expect(a?.message.includes('above your watch limit of 120')).assertTrue();
+      expect(a?.message.includes('while resting for 5 s')).assertTrue();
+      const veryHigh: Record<string, Object> = { 'bpm': 165, 'limitBpm': 110, 'direction': 'high' };
+      expect(WatchCloudSource.toAlert(row('hr_alert', veryHigh, 'watch'))?.severity).assertEqual('CRITICAL');
+      const low: Record<string, Object> = { 'bpm': 38, 'limitBpm': 40, 'direction': 'low', 'activity': 'ASLEEP' };
+      const l: VitalsAlert | undefined = WatchCloudSource.toAlert(row('hr_alert', low, 'watch'));
+      expect(l?.severity).assertEqual('CRITICAL');
+      expect(l?.message.includes('below your watch limit of 40')).assertTrue();
+      const odd: Record<string, Object> = { 'bpm': 100, 'limitBpm': 90, 'direction': 'sideways' };
+      expect(WatchCloudSource.toAlert(row('hr_alert', odd, 'watch')) === undefined).assertTrue();
     });
   });
 }

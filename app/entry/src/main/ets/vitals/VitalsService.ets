@@ -23,6 +23,7 @@ export class VitalsService {
 
   private samples: Listeners<VitalsSample> = new Listeners<VitalsSample>();
   private alerts: Listeners<VitalsAlert> = new Listeners<VitalsAlert>();
+  private answers: Listeners<string> = new Listeners<string>();
   private source: VitalsSourceKind | undefined = undefined;
   private rules: AlarmRules = new AlarmRules('UNKNOWN');
   private timer: number = -1;
@@ -61,7 +62,8 @@ export class VitalsService {
       const w: WatchCloudSource = new WatchCloudSource();
       w.start({
         onSample: (s: VitalsSample) => this.ingest(s),
-        onAlert: (a: VitalsAlert) => this.fire(a)
+        onAlert: (a: VitalsAlert) => this.fire(a),
+        onAnswer: (kind: string) => this.answers.emit(kind)
       });
       this.watch = w;
       // Same silence check as the simulated source: no watch data for a while → WATCH_DISCONNECTED.
@@ -97,6 +99,11 @@ export class VitalsService {
   // Returns an unsubscribe function.
   onSample(cb: Listener<VitalsSample>): () => void {
     return this.samples.add(cb);
+  }
+
+  // "How do you feel?" answers given on the watch. Returns an unsubscribe function.
+  onWatchAnswer(cb: Listener<string>): () => void {
+    return this.answers.add(cb);
   }
 
   onAlert(cb: Listener<VitalsAlert>): () => void {
@@ -160,6 +167,11 @@ export class VitalsService {
       this.recent.shift();
     }
     this.samples.emit(s);
+    // With a real watch, its own hr_alert / rhythm_alert / vitals_alert rows are the alerts (WatchCloudSource.toAlert).
+    // Running the phone's rules on the same numbers too gave two answers for one heart rate (e.g. 120 at rest).
+    if (this.source === 'WATCH') {
+      return;
+    }
     const a: VitalsAlert | undefined = this.rules.evaluate(s);
     if (a !== undefined) {
       this.fire(a);
