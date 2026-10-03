@@ -20,13 +20,28 @@
     clipped to 300, e-mails / links / phones scrubbed again, `<` `>` removed, quoted to the model inside
     `<patient_words>` as data only. Reply checks unchanged.
 - Validated: phone unit tests 227/227 (16 new: Redact, Visit, VisitBrief, Diary, DailyCounts), backend Deno 71/71
-  (3 new), `deno check` of the function, phone build. Emulator: see screenshots below.
-- Not validated: the AI summary with visit answers needs the function deployed (coordinator); until then the
-  summary button on the emulator shows the existing failure line and the deterministic brief. The home-screen
-  widget was built but not placed on the emulator home screen.
+  (3 new), `deno check` of the function, phone build. Emulator (phone `127.0.0.1:5555`, 2026-10-04 05:51-05:55):
+  Heart → Doctor visit prep shows the "My visits" row (`doctor-prep.jpeg`); empty list (`doctor-visits-empty`);
+  add form with Dentist, date changed with the system picker to 7 Oct, reason and worries
+  (`doctor-datepicker`, `doctor-visit-form`); Save opens "Dentist · 7 Oct 2026" with "This visit" and "What
+  worries me" (`doctor-visit-brief`); "Summarise for the doctor" returned a summary that passed the checks and
+  was saved with the visit (`doctor-visit-summary`); the list shows it under UPCOMING with "AI summary saved"
+  (`doctor-visits-list`), reopening shows the saved summary (`doctor-visit-reopen`), delete asks first and empties
+  the list (`doctor-visit-delete`). Privacy ledger shows the request with field names only, including `reason`,
+  `worries` (`doctor-ledger`). Feeling page opened through the widget's want (`params {"target":"feeling"}`),
+  Low shows "Log a symptom", saved entry listed under RECENT (`doctor-feeling-low`, `doctor-feeling-saved`).
+  All in `docs/screenshots/b/`.
+- Not validated: the summary came from the currently deployed `/doctor-summary`, which predates this branch and
+  ignores `reason` / `worries`; using them in the text needs the deploy (coordinator). The widget itself was not
+  placed on the emulator home screen (its tap target was exercised through the same want). Redaction is
+  unit-tested; the emulator run shows field names in the ledger, not values.
+- Note for the coordinator: with the watch emulator also attached (`127.0.0.1:5557`), `app/scripts/run.sh` and
+  `ui.sh` call `hdc` without `-t` and fail; I used `hdc -t 127.0.0.1:5555`. The worktree also has no signing
+  config, so the unsigned HAP is refused over another stream's signed install (9568332); I built once with the
+  main checkout's local `build-profile.json5` and restored the file afterwards (not committed).
 
 ## README "How to verify" rows
-| Doctor visits (B6) | Heart → Doctor report → My visits → Add a visit → pick Dentist, a date, a reason and a worry → Save. The brief opens with "This visit" and "What worries me". Back → the visit is listed under UPCOMING; tap it to reopen, bin icon → Delete. AI summary: needs the deployed `/doctor-summary` (built, unverified until deployed). |
+| Doctor visits (B6) | Heart → Doctor visit prep → My visits → Add a visit → pick Dentist, a date, a reason and a worry → Save. The brief opens with "This visit" and "What worries me". Back → the visit is listed under UPCOMING; tap it to reopen, bin icon → Delete. AI summary works with the deployed function; using reason/worries in it needs this branch's function deployed. |
 | Redaction before the AI summary | Unit tests `Redact` / `summarySendsRedactedAnswersOnly`: names of the patient, contacts, cardiologist, hospital, phone numbers, e-mails and links become `[removed]`; Privacy ledger shows `reason`, `worries` field names only. |
 | Feeling diary (B15) | Route `feeling` (agent home tile from Workstream A, or the "How are you feeling?" widget): pick a mood, optional note, Save → listed under RECENT. Low / Unwell offers "Log a symptom". |
 
