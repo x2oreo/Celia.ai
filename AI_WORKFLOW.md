@@ -58,3 +58,35 @@ the app that works with the tools (medicine check, emergency card…), then plan
   tests were added.
 - JavaScript `\b` doesn't work next to Polish letters, so the Polish patterns now use substrings.
 - The reassurance check would have replaced "your heart rate is fine". It is now scoped to medicine context.
+
+### 2026-10-03 (cont.) — voice, photo, Realtime, Intents (Kaloyan)
+
+**Prompt (summary):** continue the approved plan.
+
+**What was built**
+- `/transcribe`, `/speak`, `/vision-extract` and `/realtime-session` Edge Functions.
+- VoiceInput/VoiceOutput, with Core Speech first and a cloud fallback.
+- MedicineScanFlow: on-device OCR first, names-only vision fallback.
+- RealtimeSession: WebSocket transport on the same tools.
+- `CheckDrugSafety` and `ShowEmergencyCard` intents.
+
+**Docs checked through Context7**
+- OpenAI audio, vision, structured-output and Realtime client-secret and event APIs.
+- HarmonyOS AudioCapturer/AudioRenderer, Core Vision `textRecognition`, ImageKit packing and `@InsightIntentEntry`.
+
+**Validation**
+- The build has no warnings and all 43 unit tests pass.
+- Every Edge Function passes `deno check`.
+
+**Issues caught**
+- **hvigor skips unreferenced files.** New modules compiled "successfully" until they were imported. A temporary
+  import from EntryAbility then surfaced real errors, including a wrong `PermissionRequestResult` import path.
+- **Realtime race.** `response.done` can arrive while an on-device tool is still running, which would have ended the
+  turn early. It is now fixed with pending-tool counting.
+- **Intent decorator.** The decorator only accepts plain string literals; `'a' + 'b'` fails with
+  InsightIntent compiler error 10110004.
+
+**Not yet verified**
+- Nothing has been tested on the emulator or a device yet: Core Speech English, Core Vision on the emulator, and
+  Celia intent routing.
+- No call has been made with a real OpenAI key yet; the backend needs to be deployed first.

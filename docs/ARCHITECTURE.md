@@ -175,13 +175,14 @@ key is an Edge Function secret. Timeouts: app 20 s per step → fallback.
 | Capability | Kit | Where | Runs on emulator? |
 |---|---|---|---|
 | Watch HR / alarms / notifications | `@kit.WearEngine` | `vitals/WearEngineSource.ets` | ❌ real phone + watch (SimulatedSource on emulator) |
-| On-device OCR of medicine boxes | `@kit.CoreVisionKit` | `drugs/OcrService.ets` | ⚠️ verify early |
+| On-device OCR of medicine boxes | `@kit.CoreVisionKit` (+ `/vision-extract` names-only fallback) | `drugs/OcrService.ets`, `agent/MedicineScanFlow.ets` | ⚠️ verify early |
 | System assistant entry | Intents Kit (`@kit.AbilityKit`) | `insightintents/` | ⚠️ verify early |
 | Agent-to-agent (stretch) | `@kit.AgentFrameworkKit` | `agentextability/` | ⚠️ ask mentors |
 | Home widget | Form Kit | `widget/` | ✅ |
 | Local DB | `@kit.ArkData` RDB | `data/` | ✅ |
 | Notifications / call | `@kit.NotificationKit`, `call` | emergency | ✅ / partial |
-| Voice (stretch) | `@kit.CoreSpeechKit` | agent | ⚠️ check English support |
+| Voice (push-to-talk) | `@kit.CoreSpeechKit` + `@kit.AudioKit` (cloud STT/TTS fallback) | `voice/` | ⚠️ Core Speech en-US unverified; cloud path works anywhere with network |
+| Voice (hands-free) | OpenAI Realtime over `@kit.NetworkKit` WebSocket + AudioKit | `voice/RealtimeSession.ets` | ✅ needs network + mic |
 
 ## Conventions
 

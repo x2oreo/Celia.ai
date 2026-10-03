@@ -11,8 +11,10 @@ The app's main design rule is that **verdicts come from deterministic data and t
 | Emergency detection | **none** | `SafetyGate` regex (EN/PL) runs before any model call |
 | Proactive heart-rate check-in | **none** | Vitals alert → fixed message → 60 s without answer → emergency countdown |
 | Offline / failure mode | **none** | `OfflineAgent` pattern intents + templated verdict text |
-| Medicine photo *(in progress)* | On-device OCR (Core Vision); cloud vision only extracts names | Name → `DrugChecker`; user confirms the drug before any verdict |
-| Voice *(in progress)* | Speech-to-text / text-to-speech; OpenAI Realtime later | Same tools, same validation |
+| Medicine photo | On-device OCR (Core Vision); fallback `/vision-extract` reads **names only** (strict JSON schema, low-confidence dropped) | Every name → `DrugChecker`; user confirms the drug before any verdict |
+| Push-to-talk voice | Core Speech ASR/TTS on device (en-US) or `/transcribe` + `/speak` (OpenAI) | Transcript goes through the same `SafetyGate` → agent → validator path as text |
+| Hands-free voice | OpenAI Realtime (speech-to-speech) via a 2-minute client secret from `/realtime-session` | Same on-device tools; input transcripts pass `SafetyGate`; a streaming check of the model's words cancels any reassurance about a medicine and speaks the deterministic verdict instead |
+| Celia system assistant | none | Intents `CheckDrugSafety` / `ShowEmergencyCard` call the deterministic paths directly |
 
 ## 2. Model and inference flow
 
@@ -32,6 +34,10 @@ user ─► SafetyGate ──(red flag)─────────────�
                      confirm cards for writes                                   │
 any network error / timeout (20 s) / malformed response ─────────────────────► OfflineAgent fallback
 ```
+
+**Voice and vision data:** with on-device Core Speech and Core Vision, audio and photos stay on the phone. In the
+cloud fallbacks, audio (push-to-talk or a Realtime session) and a downscaled box photo go to OpenAI through our Edge
+Functions or the Realtime WebSocket. They are not stored by us, and our logs record only sizes and timings.
 
 ## 3. Data that leaves the device
 
@@ -79,3 +85,7 @@ gate, the validator, offline intents, tool-schema parity with the backend, and t
 - Wrist heart rate is not an ECG. The app never interprets QT or rhythm.
 - The emergency keyword gate is broad on purpose, so false alarms are possible; they cost one tap on Cancel.
 - The model's explanations can still be imperfect. The validator catches contradictions, not every inaccuracy.
+- In Realtime voice the model speaks before a full-text check is possible. The streaming check usually cuts a bad
+  sentence before it plays, but a few words may already have been heard before the correction.
+- Core Speech English support and Celia's routing of third-party intents are unverified on the emulator and outside
+  China. Both have fallbacks: cloud speech, and the in-app agent.
