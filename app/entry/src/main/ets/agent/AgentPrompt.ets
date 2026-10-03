@@ -2,11 +2,12 @@
 // The queue survives until the chat screen is built for the first time (tabs are built lazily).
 
 import { Listener, Listeners } from '../common/Listeners';
+import { TabIndex } from '../common/Routes';
+import { TabRequest } from '../common/TabRequest';
 
 export class AgentPrompt {
   private static pending: string[] = [];
   private static listeners: Listeners<string> = new Listeners<string>();
-  private static openers: Listeners<string> = new Listeners<string>();
 
   static ask(text: string): void {
     const t: string = text.trim();
@@ -18,12 +19,7 @@ export class AgentPrompt {
     } else {
       AgentPrompt.pending.push(t);
     }
-    AgentPrompt.openers.emit(t);
-  }
-
-  // MainTabs switches to the Agent tab when a question is asked from a pushed page (outside the tabs' scope).
-  static onOpenRequest(cb: Listener<string>): () => void {
-    return AgentPrompt.openers.add(cb);
+    TabRequest.open(TabIndex.AGENT);
   }
 
   // Returns queued questions (oldest first) and clears the queue.

@@ -7,7 +7,7 @@ import { MedicinesPage } from '../pages/MedicinesPage';
 import { HeartPage } from '../pages/HeartPage';
 import { EmergencyPage } from '../pages/EmergencyPage';
 import { TabIndex } from '../common/Routes';
-import { AgentPrompt } from '../agent/AgentPrompt';
+import { TabRequest } from '../common/TabRequest';
 
 class TabSpec {
   index: number;
@@ -37,8 +37,12 @@ export struct MainTabs {
   };
 
   aboutToAppear(): void {
-    this.offOpen = AgentPrompt.onOpenRequest(() => {
-      this.currentIndex = TabIndex.AGENT;
+    const pending: number = TabRequest.take();
+    if (pending >= 0) {
+      this.currentIndex = pending;
+    }
+    this.offOpen = TabRequest.onOpen((tab: number) => {
+      this.currentIndex = tab;
     });
   }
 

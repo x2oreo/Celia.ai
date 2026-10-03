@@ -1,10 +1,10 @@
 // Celia → "Show my emergency card": opens the app on the Emergency tab. No LLM involved.
-// The UI watches AppStorage key OPEN_TAB_KEY (see insightintents/README.md).
+// Tab switch goes through TabRequest (kept until MainTabs appears on a cold start).
 
 import { InsightIntentEntryExecutor, insightIntent, InsightIntentEntry } from '@kit.AbilityKit';
 import { LocalStore } from '../data/LocalStore';
-
-export const OPEN_TAB_KEY: string = 'celia.openTab';
+import { TabIndex } from '../common/Routes';
+import { TabRequest } from '../common/TabRequest';
 
 class ShowCardResult {
   public message?: string = '';
@@ -28,7 +28,7 @@ class ShowCardResult {
 })
 export default class ShowEmergencyCardIntent extends InsightIntentEntryExecutor<ShowCardResult> {
   async onExecute(): Promise<insightIntent.IntentResult<ShowCardResult>> {
-    AppStorage.setOrCreate<string>(OPEN_TAB_KEY, 'emergency');
+    TabRequest.open(TabIndex.EMERGENCY);
     await LocalStore.get().logEvent('EMERGENCY', '{"source":"celia_intent","action":"show_card"}');
     const r: insightIntent.IntentResult<ShowCardResult> = { code: 0, result: { message: 'Here is your emergency card.' } };
     return r;

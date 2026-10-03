@@ -6,6 +6,8 @@ import { AgentReply, UiAction, VerdictCardPayload } from '../main/ets/model/Agen
 import { LocalStore } from '../main/ets/data/LocalStore';
 import { Medication } from '../main/ets/model/Medication';
 import { AgentPrompt } from '../main/ets/agent/AgentPrompt';
+import { TabRequest } from '../main/ets/common/TabRequest';
+import { TabIndex } from '../main/ets/common/Routes';
 
 function find(reply: AgentReply, type: string): UiAction | undefined {
   return reply.actions.find((a: UiAction) => a.type === type);
@@ -68,8 +70,8 @@ export default function agentCoreTest() {
       const offAsk: () => void = AgentPrompt.onAsk((q: string) => {
         heard.push(q);
       });
-      const offOpen: () => void = AgentPrompt.onOpenRequest(() => {
-        opened++;
+      const offOpen: () => void = TabRequest.onOpen((tab: number) => {
+        opened = tab === TabIndex.AGENT ? opened + 1 : opened;
       });
       AgentPrompt.ask('Is ondansetron OK?');
       offAsk();

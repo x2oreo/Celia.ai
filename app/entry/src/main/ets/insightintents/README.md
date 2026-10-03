@@ -6,7 +6,7 @@ Intents Kit entry points so Celia (Huawei's system assistant) can call the app. 
 | Intent | Mode | What it does |
 |---|---|---|
 | `CheckDrugSafety(drugName)` | background | `checkDrugFull()` (DrugChecker + ComboRules) → `{verdict, ingredient, message}`; Celia reads `message` aloud. |
-| `ShowEmergencyCard()` | foreground | Opens the app and sets `AppStorage['celia.openTab'] = 'emergency'`. |
+| `ShowEmergencyCard()` | foreground | Opens the app on the Emergency tab via `common/TabRequest` (kept until the tabs appear on a cold start). |
 
 **UI contract (Georgi):** the tab container should watch `celia.openTab`
 (`@StorageLink('celia.openTab') openTab: string = ''`), switch to the tab it names, then reset it to `''`.
