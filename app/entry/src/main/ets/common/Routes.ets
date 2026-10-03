@@ -63,10 +63,15 @@ export class SosParam {
   reason: string;   // e.g. "heart rate 165 at rest" — shown on screen and in the message
   auto: boolean;    // started by a vitals alert (true) or by the user (false)
 
-  constructor(test: boolean, reason: string, auto: boolean = false) {
+  // 'WATCH': the watch already sent the SOS (SosController.watchSent), so the page opens in its sent state with no
+  // countdown. 'PHONE': the phone's own countdown.
+  sentBy: string;
+
+  constructor(test: boolean, reason: string, auto: boolean = false, sentBy: string = 'PHONE') {
     this.test = test;
     this.reason = reason;
     this.auto = auto;
+    this.sentBy = sentBy;
   }
 }
 

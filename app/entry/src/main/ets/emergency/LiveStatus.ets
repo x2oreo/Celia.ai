@@ -1,10 +1,10 @@
 // Live status outside the app (F-35): the SOS countdown on the lock screen / status bar.
 // Uses Live View Kit when the system allows it for this app (needs a Live View scenario approved in AppGallery
 // Connect); otherwise — e.g. on the emulator — an ongoing notification with the same text. Both open the app on
-// tap, where "I'm OK" is one button.
+// tap, where "I'm OK" is one button; the notification also carries "I'm OK" and "Open" buttons (common/NotifyAction).
 
 import { liveViewManager } from '@kit.LiveViewKit';
-import { cancelNotify, notify, NOTIFY_SOS } from '../common/Notify';
+import { cancelNotify, notify, notifyText, NOTIFY_SOS, NOTIFY_WATCH_SOS } from '../common/Notify';
 import { Logger } from '../common/Logger';
 
 const log: Logger = new Logger('LiveStatus');
@@ -78,5 +78,10 @@ export class LiveStatus {
       log.warn(`stop failed: ${JSON.stringify(e)}`);
     }
     await cancelNotify(NOTIFY_SOS);
+  }
+
+  // The watch already sent its SOS (B8): no countdown, one loud notification that opens the SOS page.
+  static async watchSos(): Promise<void> {
+    await notify(NOTIFY_WATCH_SOS, notifyText('ntf_watch_sos_title'), notifyText('ntf_watch_sos_text'), false);
   }
 }

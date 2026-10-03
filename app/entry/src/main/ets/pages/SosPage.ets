@@ -1,10 +1,13 @@
 // SOS (F-27, F-28): countdown with a big "I'm OK" → if nobody answers, SOS is "sent": call the ambulance,
 // share the prepared message with contacts (SMS / messengers via the share sheet), call each contact.
 // Opened by the SOS button, Settings → Test SOS, or automatically by a CRITICAL heart alert.
+// A watch SOS (SosParam.sentBy 'WATCH') opens straight in the sent state: the watch already counted down and sent it,
+// so there is no second countdown (B8). The sent state says what was sent, to whom, and what still needs a tap.
 
 import { common } from '@kit.AbilityKit';
-import { SosParam } from '../common/Routes';
-import { COUNTDOWN_S, SosController, SosState, TEST_COUNTDOWN_S } from '../emergency/SosController';
+import { Routes, SosParam } from '../common/Routes';
+import { COUNTDOWN_S, SosController, SosSender, SosState, TEST_COUNTDOWN_S } from '../emergency/SosController';
+import { clock } from '../common/Format';
 import { SosService } from '../emergency/SosService';
 import { GeoPoint, SosEvent, sosMessage } from '../emergency/SosMessage';
 import { LocalStore } from '../data/LocalStore';
@@ -30,6 +33,9 @@ export struct SosPage {
   @Local locating: boolean = true;
   @Local profile: Profile | undefined = undefined;
   @Local meds: Medication[] = [];
+  @Local sentBy: SosSender = 'PHONE';
+  @Local sentAt: number = -1;
+  @Local watchLocation: boolean = false;
   private timer: number = -1;
   private lastSecond: number = -1;
   private trigger: string = 'BUTTON';
@@ -42,16 +48,22 @@ export struct SosPage {
   private begin(param: SosParam | undefined): void {
     this.test = param?.test ?? false;
     this.reason = param?.reason ?? '';
-    this.trigger = this.test ? 'TEST' : ((param?.auto ?? false) ? 'VITALS' : 'BUTTON');
     const c: SosController = SosController.get();
-    if (c.state !== 'COUNTDOWN') {
+    const byWatch: boolean = (param?.sentBy ?? 'PHONE') === 'WATCH' || (c.state === 'SENT' && c.sentBy === 'WATCH');
+    this.trigger = byWatch ? 'WATCH' : this.test ? 'TEST' : ((param?.auto ?? false) ? 'VITALS' : 'BUTTON');
+    if (!byWatch && c.state !== 'COUNTDOWN') {
       c.start(Date.now(), this.test ? TEST_COUNTDOWN_S : COUNTDOWN_S, this.test);
     }
+    this.syncSent(c);
     this.state = c.state;
     this.remaining = c.remainingSeconds(Date.now());
     this.timer = setInterval(() => this.tick(), 250);
     keepScreenOn(this.ctx(), true);
-    LiveStatus.startSos(this.remaining, this.reason);
+    if (this.state === 'COUNTDOWN') {
+      LiveStatus.startSos(this.remaining, this.reason);
+    } else {
+      this.record('SENT');
+    }
     this.load();
   }
 
@@ -62,11 +74,23 @@ export struct SosPage {
     this.locating = false;
   }
 
+  private syncSent(c: SosController): void {
+    this.sentBy = c.sentBy;
+    this.sentAt = c.sentAt;
+    this.watchLocation = c.watchLocation;
+  }
+
   private tick(): void {
     const c: SosController = SosController.get();
     const now: number = Date.now();
-    const before: SosState = c.state;
+    const before: SosState = this.state;
     this.state = c.tick(now);
+    this.syncSent(c);
+    if (before === 'COUNTDOWN' && this.state === 'ACKED') {
+      // "I'm OK" on the notification (EntryAbility) acked the controller.
+      this.closeAcked();
+      return;
+    }
     this.remaining = c.remainingSeconds(now);
     if (this.state === 'COUNTDOWN' && this.remaining !== this.lastSecond) {
       this.lastSecond = this.remaining;
@@ -74,6 +98,10 @@ export struct SosPage {
       LiveStatus.updateSos(this.remaining);
     }
     if (before === 'COUNTDOWN' && this.state === 'SENT') {
+      // Timeout, or the watch sent its own SOS meanwhile (SosController.watchSent).
+      if (this.sentBy === 'WATCH') {
+        this.trigger = 'WATCH';
+      }
       this.onSent();
     }
   }
@@ -103,6 +131,10 @@ export struct SosPage {
   private imOk(): void {
     SosController.get().ack();
     AgentCore.get().emergencyCancelled();
+    this.closeAcked();
+  }
+
+  private closeAcked(): void {
     this.state = 'ACKED';
     stopPulse();
     LiveStatus.end();
@@ -224,19 +256,66 @@ export struct SosPage {
   }
 
   @Builder
+  statusRow(label: Resource, text: ResourceStr, extra: ResourceStr) {
+    Column({ space: 4 }) {
+      Text(label)
+        .fontSize($r('app.float.font_caption'))
+        .fontWeight(FontWeight.Bold)
+        .letterSpacing(0.5)
+        .fontColor($r('app.color.ink_3'))
+      Text(text)
+        .fontSize($r('app.float.font_small'))
+        .fontColor($r('app.color.ink_2'))
+      if (extra !== '') {
+        Text(extra)
+          .fontSize($r('app.float.font_small'))
+          .fontColor($r('app.color.ink_2'))
+      }
+    }
+    .alignItems(HorizontalAlign.Start)
+    .width('100%')
+  }
+
+  // What happened, in plain words (B8). Built from the controller state only — no model text.
+  @Builder
+  status() {
+    Column({ space: 12 }) {
+      if (this.sentBy === 'WATCH') {
+        this.statusRow($r('app.string.ntf_sos_label_what'),
+          $r('app.string.ntf_sos_watch_what', clock(this.sentAt)),
+          this.watchLocation ? $r('app.string.ntf_sos_watch_loc') : $r('app.string.ntf_sos_watch_no_loc'))
+        Divider().color($r('app.color.divider'))
+        this.statusRow($r('app.string.ntf_sos_label_whom'), $r('app.string.ntf_sos_watch_whom'), '')
+      } else {
+        this.statusRow($r('app.string.ntf_sos_label_what'), $r('app.string.ntf_sos_phone_what'), '')
+        Divider().color($r('app.color.divider'))
+        this.statusRow($r('app.string.ntf_sos_label_whom'), $r('app.string.ntf_sos_phone_whom'), '')
+      }
+      Divider().color($r('app.color.divider'))
+      this.statusRow($r('app.string.ntf_sos_label_todo'), $r('app.string.ntf_sos_todo'), '')
+    }
+    .width('100%')
+    .padding($r('app.float.space_m'))
+    .backgroundColor($r('app.color.surface'))
+    .border({ width: 1, color: $r('app.color.border') })
+    .borderRadius($r('app.float.radius_m'))
+  }
+
+  @Builder
   sent() {
     Scroll() {
       Column({ space: 14 }) {
         if (this.test) {
           this.testBanner()
         }
-        Text($r('app.string.sos_sent_title'))
+        Text(this.sentBy === 'WATCH' ? $r('app.string.ntf_sos_watch_title') : $r('app.string.sos_sent_title'))
           .fontSize($r('app.float.font_title_1'))
           .fontWeight(FontWeight.Bold)
           .fontColor($r('app.color.ink'))
         Text($r('app.string.sos_sent_subtitle'))
           .fontSize($r('app.float.font_body'))
           .fontColor($r('app.color.ink_3'))
+        this.status()
         PrimaryButton({
           label: `${this.info().ambulance} · Call ambulance`,
           icon: $r('app.media.ic_phone'),
@@ -262,6 +341,14 @@ export struct SosPage {
             }
           })
         }, (c: Contact) => `${c.name}-${c.phone}`)
+        // B5: what to give and what not to give, for whoever arrives (S2's page).
+        SecondaryButton({
+          label: $r('app.string.ntf_sos_responder'),
+          icon: $r('app.media.ic_doctor'),
+          onTap: () => {
+            this.navStack.pushPathByName(Routes.RESPONDER, null);
+          }
+        })
         Row({ space: 8 }) {
           Image($r('app.media.ic_location')).width(18).height(18).fillColor($r('app.color.ink_3'))
           Text(this.locating ? $r('app.string.sos_locating') : (this.where === undefined ?
