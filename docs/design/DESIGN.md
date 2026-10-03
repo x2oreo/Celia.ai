@@ -8,8 +8,8 @@ Heart-safety companion for people with Long QT syndrome (LQTS). Targets:
 - **Watch**: round AMOLED, 466 × 466 px
 
 Everything is built natively in ArkUI, so we use only stacks, lists, cards, tabs and sheets. No blur stacks, shaders
-or web-only effects. Visual source of truth is the design file *Celia Directions*. Directions **1a** and **1b**
-share everything in this document. They differ only in home layout and agent avatar (see [Open decisions](#10-open-decisions)).
+or web-only effects. Visual source of truth is the design file *Celia Directions*, exported as the three screenshots in
+`docs/design/` (B1–B6 phone + widgets, W1–W7 watch). That is the **locked direction** (see [Locked layout](#10-locked-layout-and-screen-specs)).
 
 Units: lengths in `vp`, font sizes in `fp` (ArkUI). The design file uses px/dp, and they map 1:1.
 
@@ -210,8 +210,7 @@ non-risk UI.
 
 - **User bubble**: `ink` fill, white text 15 fp, padding 10 × 14, radius 20 / 20 / 6 / 20 (tail bottom-right),
   aligned end.
-- **Agent bubble**: white with 1 vp `border`, radius 6 / 20 / 20 / 20 (tail top-left), aligned start (direction 1a).
-  In direction 1b, agent text is plain with no bubble.
+- **Agent text**: plain `body` text in `ink`, aligned start, no bubble (locked direction).
 - **Quick-reply chips**: height 44, pill, padding 0 16, gap 8, 15 fp / 600.
   - Default: white, 1.5 vp `border-strong`.
   - Selected / emphasised: `ink` fill, white text.
@@ -247,10 +246,9 @@ Four tabs: **Agent · Medicines · Heart · Emergency**.
 ### 6.6 Agent avatar
 
 - Name: "the agent" (persona name not final).
-- **Orb (1a)**: radial gradient `#FFC2BE` → `#E5484D` (68%) → `#C7353A`, highlight at 35% / 30%.
-- **Concentric ring (1b)**: 5 vp `brand-tint` ring with a 14 vp `brand` core dot.
+- **Orb (locked)**: radial gradient `#FFC2BE` → `#E5484D` (68%) → `#C7353A`, highlight at 35% / 30%.
 - Sizes: **28 / 40 / 96** vp.
-- Idle: breathing ~4 s. Ring variant adds a slow orbiting arc while listening.
+- Idle: breathing ~4 s.
 - Pulse-line avatar is rejected for now because it reads as an ECG.
 
 ### 6.7 States
@@ -312,11 +310,48 @@ In ArkUI, use `animateTo` / `.animation()` with `Curve.EaseInOut` and `iteration
 
 ---
 
-## 10. Open decisions
+## 10. Locked layout and screen specs
 
-- **Direction**: 1a Companion thread vs 1b Status ring + agent (or a mix) is not chosen yet.
-- **Agent avatar**: orb vs concentric ring. Pulse line is on hold.
-- **Persona name** for the agent is not final.
-- **Not yet designed**: Heart, Emergency (calm + active), Onboarding, Doctor report, dark-mode screens, the remaining
-  verdict variants (Possible, Conditional, Unknown), Medicines empty state.
-- **Demo flow**: a clickable 3-minute demo comes after the direction is picked.
+### 10.1 Direction (locked)
+
+- **Home** (B1) = the Agent tab: date, "Hi {name}", genotype chip, settings gear. Heart-rate ring (track `border`,
+  arc `brand`, `display` bpm, "bpm · resting", source badge), status chips, then the **agent card** (orb 28, name,
+  time, `body` message, `Scan a box` primary + `Ask something` quiet).
+- **Chat** (B2) is a pushed page, not a tab: back, orb 40, "The agent", `ON-DEVICE` badge. Agent text is plain, with no
+  bubble. User bubble is `ink`. Verdicts appear as inline verdict cards. Input bar: 48 camera circle, pill input,
+  48 coral mic (send when there is text).
+- **Avatar**: orb (6.6), sizes 24 / 28 / 40 / 96.
+- **Tabs**: Agent · Medicines · Heart · Emergency (6.5).
+- **Check-in** (B3): bottom sheet over home when the heart rate is out of range. Agent header "from your watch",
+  out-of-range HR chip, question (`title-3`), `I'm fine` (secondary), `I feel dizzy` (ink), `Call for help`
+  (danger), caption "If I don't hear back, I'll check again in 2 minutes." No answer → SOS countdown.
+- **Medicines** (B4): `title-1`, a 56 vp outlined "Can I take…" search field + 56 coral camera button, "RECENTLY
+  CHECKED" chips (risk shape + name), "MY MEDICINES · N" 2-column grid (small badge, `headline` name, dose in
+  `ink-3`), dashed "Add a medicine" tile.
+- **Scan** (B5): dark camera surface, close button, green "Found: X" pill, verdict sheet (sheet-size verdict card).
+- **Widgets** (B6): "Can I take this?" 2 × 2 (ink card, orb corner, coral `Scan or type`) and Medical alert 2 × 4
+  (coral-ringed "Call 112" circle, `MEDICAL ALERT` label, condition, ICD + meds, AVOID line, quiet ICE button).
+
+### 10.2 Screens without a drawing (derived)
+
+- **Heart**: `title-1`, ring hero shared with Home, stats row (resting HR, HRV, rhythm) as three quiet cells, recent
+  alerts as rows with an out-of-range HR chip, links to Symptom log and Doctor report, then "Demo controls" collapsed.
+  The chart is a trend line in `brand` on `surface`, with dashed `border_strong` guides at 60 and 120. Never ECG-like.
+- **Emergency (calm)**: `title-1`, the Medical alert card (as the widget), a danger "Call 112" button, then rows for
+  Bystander guide, Pharmacy card, Offline QR and Test SOS. The full emergency card stays always light (`card_fixed_*`).
+- **Emergency (active / SOS)**: `bg` surface, `EMERGENCY` label, "Are you OK?" (`title-1`), a 200 vp ring in
+  `risk_known` draining linearly, big seconds number, white secondary `I'm OK` (52) and danger `Send now`.
+- **Onboarding**: progress segments in `brand`, orb 96 on step 1, `title-1` per step, primary `Continue`.
+- **Doctor report**: specialty chips (6.3), sections as `surface` cards with bullets, primary `Share`, secondary `Copy`.
+- **Medicines empty**: dashed empty card "No medicines yet. Add one or scan a box." + primary `Add a medicine`.
+
+### 10.3 Still open
+
+- Persona name for the agent (UI says "the agent").
+- Dark-mode screens are derived from 2.2 and not drawn.
+
+### 10.4 Extra resource names
+
+`radius_btn` 14, `button_height_sheet` 52, `chip_height` 44, `font_button` 15, `font_badge` 13, `font_mono` 9,
+`avatar_*`, `risk_<level>_border`, `danger`, `scrim`, `shadow_sheet`, `orb_light/mid/dark`, and `card_fixed_*`
+(always-light emergency card, the same in dark mode).
