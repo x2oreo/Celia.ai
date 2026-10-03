@@ -271,6 +271,18 @@
     {
       "name": "widget_ink",
       "value": "#1F1A17"
+    },
+    {
+      "name": "scan_bg",
+      "value": "#14100F"
+    },
+    {
+      "name": "scan_frame",
+      "value": "#2A2421"
+    },
+    {
+      "name": "scan_text",
+      "value": "#D6CCC6"
     }
   ]
 }

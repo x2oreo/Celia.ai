@@ -134,7 +134,7 @@
     },
     {
       "name": "check_add_to_mine",
-      "value": "Add to my medicines"
+      "value": "Add to meds"
     },
     {
       "name": "check_another",
@@ -182,7 +182,7 @@
     },
     {
       "name": "check_hint",
-      "value": "Name on the box, e.g. Klacid"
+      "value": "Can I take…"
     },
     {
       "name": "check_button",
@@ -190,11 +190,11 @@
     },
     {
       "name": "meds_mine",
-      "value": "MY MEDICINES"
+      "value": "My medicines"
     },
     {
       "name": "meds_empty",
-      "value": "No medicines yet. Add what you take so we can warn you about interactions."
+      "value": "No medicines yet. Add one or scan a box."
     },
     {
       "name": "meds_swipe_hint",
@@ -766,7 +766,7 @@
     },
     {
       "name": "scan_unknown_box",
-      "value": "We don't know this box yet — type the name on the box."
+      "value": "Couldn't read that box. Type the name instead?"
     },
     {
       "name": "home_more",
@@ -1035,6 +1035,50 @@
     {
       "name": "agent_welcome_title",
       "value": "What's on your mind?"
+    },
+    {
+      "name": "meds_recent",
+      "value": "Recently checked"
+    },
+    {
+      "name": "meds_add_tile",
+      "value": "Add a medicine"
+    },
+    {
+      "name": "check_added",
+      "value": "In your medicines"
+    },
+    {
+      "name": "scan_title",
+      "value": "Scan a box"
+    },
+    {
+      "name": "scan_hint",
+      "value": "Point the camera at the barcode on the box."
+    },
+    {
+      "name": "scan_again",
+      "value": "Scan again"
+    },
+    {
+      "name": "scan_type_instead",
+      "value": "Type the name instead"
+    },
+    {
+      "name": "scan_found",
+      "value": "Found"
+    },
+    {
+      "name": "a11y_close",
+      "value": "Close"
+    },
+    {
+      "name": "check_failed",
+      "value": "Couldn't check that just now. Try again?"
+    },
+    {
+      "name": "check_retry",
+      "value": "Try again"
     }
   ]
 }

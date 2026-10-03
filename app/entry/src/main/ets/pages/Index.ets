@@ -15,6 +15,7 @@ import { PrivacyPage } from './PrivacyPage';
 import { SymptomLogPage } from './SymptomLogPage';
 import { RemindersPage } from './RemindersPage';
 import { AgentPage } from './AgentPage';
+import { ScanPage } from './ScanPage';
 import { LockScreen } from '../components/LockScreen';
 import { Routes, SosParam } from '../common/Routes';
 import { LocalStore } from '../data/LocalStore';
@@ -117,6 +118,8 @@ struct Index {
       RemindersPage()
     } else if (name === Routes.AGENT_CHAT) {
       AgentPage()
+    } else if (name === Routes.SCAN) {
+      ScanPage()
     }
   }
 
