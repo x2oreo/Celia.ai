@@ -140,7 +140,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
   }
 
   const symptomSince = new Date(Date.now() - SYMPTOM_WINDOW_MS).toISOString();
-  const [contactsRes, contextRes, doseRes, symptomRes] = await Promise.all([
+  const [contactsRes, contextRes, doseRes, symptomRes, profileRes] = await Promise.all([
     db.from('emergency_contacts').select('name, phone').eq('device_id', record.device_id)
       .order('priority', { ascending: true }).limit(MAX_CONTACTS),
     db.from('watch_context').select('patient_name, genotype, risky_drug, risky_drug_at')
@@ -151,6 +151,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
     db.from('watch_symptoms').select('kind, bpm, recorded_at').eq('device_id', record.device_id)
       .neq('kind', 'fine').gte('recorded_at', symptomSince)
       .order('recorded_at', { ascending: false }).limit(1).maybeSingle(),
+    // The patient's first name, sent by the owner's phone with consent (migration 20261004100100). Service role only.
+    db.from('sos_profile').select('patient_name').eq('device_id', record.device_id).maybeSingle(),
   ]);
   if (contactsRes.error) {
     console.error(`[sos] contacts query failed: ${contactsRes.error.message}`);
@@ -178,7 +180,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
   const ctx: PatientContext = {
     lastDose: dose,
     recentSymptom: symptom,
-    name: c?.patient_name ?? null,
+    name: profileRes.data?.patient_name ?? c?.patient_name ?? null,
     genotype: (['LQT1', 'LQT2', 'LQT3'].includes(c?.genotype) ? c?.genotype : 'UNKNOWN') as Genotype,
     riskyDrug: drugFresh ? (c?.risky_drug ?? null) : null,
   };
