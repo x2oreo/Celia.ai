@@ -33,7 +33,8 @@ function writeConfigFromEnv(): void {
   const config = {
     supabaseUrl: str('SUPABASE_URL', ''),
     supabaseAnonKey: str('SUPABASE_ANON_KEY', ''),
-    deviceId: str('WATCH_DEVICE_ID', 'demo-watch-1'),
+    // Empty or missing = the watch generates its own id and pairs with a phone.
+    deviceId: env.get('WATCH_DEVICE_ID') ?? '',
     defaultSource: str('DEFAULT_SOURCE', 'SENSOR'),
     medicationName: str('MEDICATION_NAME', 'nadolol'),
     highBpm: num('HIGH_BPM', 140),

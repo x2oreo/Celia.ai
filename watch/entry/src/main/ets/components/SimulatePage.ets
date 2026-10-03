@@ -75,6 +75,9 @@ export struct SimulatePage {
               }
             });
           } })
+        SimButton({ label: 'Dose nudge now', onTap: () => {
+          this.ctrl.showDoseNudgeNow();
+        } })
         SimButton({ label: 'Med reminder in 10 s', onTap: () => {
           this.ctrl.testMedicationReminder().then((ok: boolean) => {
             try {

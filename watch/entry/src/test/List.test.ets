@@ -1,5 +1,7 @@
 import alarmRulesTest from './AlarmRules.test';
+import doseNudgeTest from './DoseNudge.test';
 import limitsTest from './Limits.test';
+import pairingTest from './Pairing.test';
 import metricOutboxTest from './MetricOutbox.test';
 import motionAnalyzerTest from './MotionAnalyzer.test';
 import scenariosTest from './Scenarios.test';
@@ -14,4 +16,6 @@ export default function testsuite() {
   motionAnalyzerTest();
   limitsTest();
   trackersTest();
+  doseNudgeTest();
+  pairingTest();
 }

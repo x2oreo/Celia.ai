@@ -24,12 +24,44 @@ struct SettingRow {
 export struct SettingsPage {
   @Param @Require ctrl: WatchController;
 
+  pairLabel(): string {
+    switch (this.ctrl.pairState) {
+      case 'PAIRED':
+        return 'Paired with phone';
+      case 'NOT_PAIRED':
+        return 'Not paired';
+      case 'ERROR':
+        return 'Pairing unavailable';
+      default:
+        return 'Checking…';
+    }
+  }
+
   sourceName(): string {
     return this.ctrl.sourceKind === 'SENSOR' ? 'Watch sensor' : 'Demo data';
   }
 
   build() {
     Column({ space: 6 }) {
+      SettingRow({
+        label: this.ctrl.deviceIdOverridden ? `Watch ${this.ctrl.deviceId.slice(0, 8)} (from .env)` :
+          `Watch ${this.ctrl.deviceId.slice(0, 8)}`,
+        value: this.ctrl.pairState === 'PAIRED' ? 'Paired with phone ✓' : 'Pair with phone',
+        onTap: () => {
+          this.ctrl.startPairing().then((err: string) => {
+            if (err.length > 0) {
+              try {
+                this.getUIContext().getPromptAction().showToast({ message: err, duration: 2000 });
+              } catch (e) {
+                // Toast is cosmetic.
+              }
+            }
+          });
+        }
+      })
+      if (this.ctrl.pairState !== 'PAIRED') {
+        Text(this.pairLabel()).fontSize(10).fontColor(this.ctrl.pairState === 'ERROR' ? Theme.WARN : Theme.MUTED)
+      }
       if (!this.ctrl.demoMode) {
         SettingRow({ label: 'Heart rate', value: 'Watch sensor' })
       } else {

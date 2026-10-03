@@ -12,7 +12,7 @@ export interface AppConfigData {
   supabaseUrl: string;
   /** Supabase anon key. Public by design; RLS limits it to inserting/reading watch_metrics. */
   supabaseAnonKey: string;
-  /** Identifies this watch in watch_metrics.device_id. The phone app filters by it. */
+  /** Override for the watch id (watch/.env WATCH_DEVICE_ID). Empty = generated per-watch id + pairing. */
   deviceId: string;
   defaultSource: HrSourceKind;
   medicationName: string;
@@ -42,7 +42,7 @@ export class AppConfig {
     const cfg: AppConfigData = {
       supabaseUrl: '',
       supabaseAnonKey: '',
-      deviceId: 'demo-watch-1',
+      deviceId: '',
       defaultSource: 'SENSOR',
       medicationName: 'nadolol',
       highBpm: 140,
@@ -86,7 +86,8 @@ export class AppConfig {
     if (typeof src.supabaseAnonKey === 'string') {
       target.supabaseAnonKey = src.supabaseAnonKey;
     }
-    if (typeof src.deviceId === 'string' && src.deviceId.length >= 3) {
+    // Empty = use this watch's generated id (DeviceIdStore) and pair with a phone.
+    if (typeof src.deviceId === 'string' && (src.deviceId.length === 0 || src.deviceId.length >= 3)) {
       target.deviceId = src.deviceId;
     }
     if (src.defaultSource === 'SENSOR' || src.defaultSource === 'SIMULATED') {
