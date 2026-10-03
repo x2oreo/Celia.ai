@@ -1,0 +1,29 @@
+# HarmonyOS / DevEco build output
+/node_modules
+/oh_modules
+**/oh_modules
+/local.properties
+/.idea
+**/build
+/.hvigor
+**/.hvigor
+.cxx
+/.clangd
+/.clang-format
+/.clang-tidy
+**/.test
+.appanalyzer
+
+# Signing material and secrets
+*.p12
+*.cer
+*.p7b
+*.csr
+.env*
+!.env.example
+
+# OS
+.DS_Store
+
+# Claude local settings
+.claude/settings.local.json
