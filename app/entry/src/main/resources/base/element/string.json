@@ -29,6 +29,18 @@
       "value": "Emergency"
     },
     {
+      "name": "tab_today",
+      "value": "Today"
+    },
+    {
+      "name": "tab_health",
+      "value": "Health"
+    },
+    {
+      "name": "tab_talk",
+      "value": "Talk"
+    },
+    {
       "name": "a11y_tab_agent",
       "value": "Agent tab"
     },
@@ -43,6 +55,22 @@
     {
       "name": "a11y_tab_emergency",
       "value": "Emergency tab, SOS"
+    },
+    {
+      "name": "a11y_tab_today",
+      "value": "Today tab"
+    },
+    {
+      "name": "a11y_tab_health",
+      "value": "Health tab"
+    },
+    {
+      "name": "a11y_tab_talk",
+      "value": "The agent. Opens the conversation."
+    },
+    {
+      "name": "a11y_tab_talk_nudge",
+      "value": "The agent has something to tell you. Opens the conversation."
     },
     {
       "name": "agent_title",
@@ -63,6 +91,46 @@
     {
       "name": "heart_title",
       "value": "Heart"
+    },
+    {
+      "name": "health_title",
+      "value": "Health"
+    },
+    {
+      "name": "health_bpm_now",
+      "value": "bpm now"
+    },
+    {
+      "name": "health_today",
+      "value": "Today"
+    },
+    {
+      "name": "health_in_range",
+      "value": "In your usual range"
+    },
+    {
+      "name": "health_above_range",
+      "value": "Above your usual range at rest"
+    },
+    {
+      "name": "health_below_range",
+      "value": "Below your usual range"
+    },
+    {
+      "name": "health_not_ecg",
+      "value": "Heart rate only. This is not an ECG."
+    },
+    {
+      "name": "health_resting_avg",
+      "value": "Resting avg"
+    },
+    {
+      "name": "health_vs_before",
+      "value": "Last 7 days vs before"
+    },
+    {
+      "name": "health_days_dosed",
+      "value": "Days dosed"
     },
     {
       "name": "heart_placeholder",
@@ -227,6 +295,26 @@
     {
       "name": "meds_link_history",
       "value": "History"
+    },
+    {
+      "name": "meds_today_doses",
+      "value": "Today's doses"
+    },
+    {
+      "name": "meds_all",
+      "value": "All ›"
+    },
+    {
+      "name": "meds_no_doses",
+      "value": "No reminders yet. Set one so a dose is one tap to log."
+    },
+    {
+      "name": "dose_due_at",
+      "value": "%s · Due"
+    },
+    {
+      "name": "dose_taken_at",
+      "value": "Taken %s"
     },
     {
       "name": "meds_swipe_hint",
@@ -769,6 +857,18 @@
       "value": "Copy text"
     },
     {
+      "name": "dp_share_doctor",
+      "value": "Share with doctor"
+    },
+    {
+      "name": "dp_copy_short",
+      "value": "Copy"
+    },
+    {
+      "name": "dp_ai_label",
+      "value": "AI SUMMARY · CHECK BEFORE SHARING"
+    },
+    {
       "name": "dp_copied",
       "value": "Brief copied"
     },
@@ -1041,6 +1141,10 @@
       "value": "Check my current medicines"
     },
     {
+      "name": "agent_starter_week",
+      "value": "How was my heart this week?"
+    },
+    {
       "name": "agent_input_hint",
       "value": "Ask the agent"
     },
@@ -1219,6 +1323,58 @@
     {
       "name": "home_meds_review",
       "value": "%d to review"
+    },
+    {
+      "name": "home_meds_checked",
+      "value": "All %d medicines checked"
+    },
+    {
+      "name": "today_next_dose",
+      "value": "Next dose"
+    },
+    {
+      "name": "today_all_reminders",
+      "value": "All reminders ›"
+    },
+    {
+      "name": "today_set_reminder",
+      "value": "Set a reminder ›"
+    },
+    {
+      "name": "today_resting_week",
+      "value": "Resting · 7 days"
+    },
+    {
+      "name": "today_week_empty",
+      "value": "No resting data this week yet"
+    },
+    {
+      "name": "today_week_avg",
+      "value": "%d avg"
+    },
+    {
+      "name": "today_week_lower",
+      "value": "%1$d avg · %2$d lower than last week"
+    },
+    {
+      "name": "today_week_higher",
+      "value": "%1$d avg · %2$d higher than last week"
+    },
+    {
+      "name": "today_tip",
+      "value": "Tip"
+    },
+    {
+      "name": "a11y_today_agent",
+      "value": "Opens the conversation with the agent"
+    },
+    {
+      "name": "a11y_today_heart",
+      "value": "Heart rate %d beats per minute, and resting heart rate over seven days. Opens Health."
+    },
+    {
+      "name": "doctor_visit",
+      "value": "Doctor visit"
     },
     {
       "name": "home_alarm_on",
@@ -1441,6 +1597,54 @@
       "value": "Defibrillator (AED)"
     },
     {
+      "name": "em_nearby_aed_short",
+      "value": "AED"
+    },
+    {
+      "name": "em_start_sos",
+      "value": "Start SOS"
+    },
+    {
+      "name": "em_start_sos_sub",
+      "value": "10 s countdown, you can cancel"
+    },
+    {
+      "name": "em_responder_label",
+      "value": "FOR THE PERSON HELPING ME"
+    },
+    {
+      "name": "em_responder_title",
+      "value": "Show responder view"
+    },
+    {
+      "name": "em_responder_sub",
+      "value": "Big text, what to do, what to avoid"
+    },
+    {
+      "name": "em_card_label",
+      "value": "Medical card"
+    },
+    {
+      "name": "em_card_open",
+      "value": "Open ›"
+    },
+    {
+      "name": "em_card_close",
+      "value": "Close"
+    },
+    {
+      "name": "em_card_facts",
+      "value": "%s · Avoid QT drugs"
+    },
+    {
+      "name": "em_card_inside",
+      "value": "Inside: languages, read aloud, QR, share"
+    },
+    {
+      "name": "em_test_sos",
+      "value": "Test SOS (nothing is sent)"
+    },
+    {
       "name": "share_remove_title",
       "value": "Remove this card link?"
     },
@@ -1483,6 +1687,50 @@
     {
       "name": "agent_voice_muted",
       "value": "Muted. Tap the mic to unmute."
+    },
+    {
+      "name": "agent_voice_clock",
+      "value": "VOICE · %s"
+    },
+    {
+      "name": "agent_end",
+      "value": "End"
+    },
+    {
+      "name": "agent_mute",
+      "value": "Mute"
+    },
+    {
+      "name": "agent_unmute",
+      "value": "Unmute"
+    },
+    {
+      "name": "agent_type",
+      "value": "Aa"
+    },
+    {
+      "name": "agent_you_said",
+      "value": "You: %s"
+    },
+    {
+      "name": "agent_you_blank",
+      "value": "You: …"
+    },
+    {
+      "name": "agent_ask_me",
+      "value": "Ask me"
+    },
+    {
+      "name": "agent_go_to",
+      "value": "Or go straight to"
+    },
+    {
+      "name": "agent_show_thread",
+      "value": "Show conversation"
+    },
+    {
+      "name": "agent_hide_thread",
+      "value": "Hide conversation"
     },
     {
       "name": "agent_voice_unavailable",
@@ -2303,6 +2551,206 @@
     {
       "name": "tool_get_trends_done",
       "value": "Read your trends"
+    },
+    {
+      "name": "verdict_sub_with_meds",
+      "value": "Higher with your medicines"
+    },
+    {
+      "name": "meds_add_interaction",
+      "value": "With your medicines"
+    },
+    {
+      "name": "dv_title",
+      "value": "Doctor visits"
+    },
+    {
+      "name": "dv_intro",
+      "value": "One page per doctor. Each shows what they should know before they prescribe."
+    },
+    {
+      "name": "dv_new",
+      "value": "New visit"
+    },
+    {
+      "name": "dv_latest",
+      "value": "Latest"
+    },
+    {
+      "name": "dv_earlier",
+      "value": "Earlier · %d"
+    },
+    {
+      "name": "dv_empty_title",
+      "value": "Prepare your first visit"
+    },
+    {
+      "name": "dv_empty_body",
+      "value": "Pick the doctor, say why you're going, and get one page to show or send them."
+    },
+    {
+      "name": "dv_privacy",
+      "value": "Visits stay on this phone until you share one."
+    },
+    {
+      "name": "dv_avoid_count",
+      "value": "%d to avoid"
+    },
+    {
+      "name": "dv_no_reason",
+      "value": "No reason written"
+    },
+    {
+      "name": "dv_shared",
+      "value": "Shared"
+    },
+    {
+      "name": "dv_delete",
+      "value": "Delete visit"
+    },
+    {
+      "name": "dv_delete_title",
+      "value": "Delete this visit?"
+    },
+    {
+      "name": "dv_delete_body",
+      "value": "The page is removed from this phone. A link you already sent keeps working until it expires."
+    },
+    {
+      "name": "dv_new_title",
+      "value": "New visit"
+    },
+    {
+      "name": "dv_who",
+      "value": "Who are you seeing?"
+    },
+    {
+      "name": "dv_doctor_name",
+      "value": "Doctor's name (optional)"
+    },
+    {
+      "name": "dv_doctor_hint",
+      "value": "e.g. Dr Nowak"
+    },
+    {
+      "name": "dv_why",
+      "value": "Why are you going?"
+    },
+    {
+      "name": "dv_why_hint",
+      "value": "e.g. Sore throat and fever for three days"
+    },
+    {
+      "name": "dv_guess",
+      "value": "Looks like"
+    },
+    {
+      "name": "dv_guess_usual",
+      "value": "Usual for this doctor"
+    },
+    {
+      "name": "dv_guess_yours",
+      "value": "From your words"
+    },
+    {
+      "name": "dv_guess_caption",
+      "value": "Matched by fixed rules on this phone. You can change it by editing the reason."
+    },
+    {
+      "name": "dv_guess_avoid",
+      "value": "%d known-risk medicines will be flagged for the doctor"
+    },
+    {
+      "name": "dv_create",
+      "value": "Create visit page"
+    },
+    {
+      "name": "dv_share",
+      "value": "Share"
+    },
+    {
+      "name": "dv_share_busy",
+      "value": "Preparing…"
+    },
+    {
+      "name": "dv_share_a11y",
+      "value": "Share this page with the doctor"
+    },
+    {
+      "name": "dv_patient",
+      "value": "Patient"
+    },
+    {
+      "name": "dv_condition",
+      "value": "Long QT syndrome"
+    },
+    {
+      "name": "dv_genotype_unknown",
+      "value": "genotype unknown"
+    },
+    {
+      "name": "dv_icd_yes",
+      "value": "ICD: yes"
+    },
+    {
+      "name": "dv_icd_no",
+      "value": "ICD: no"
+    },
+    {
+      "name": "dv_here_for",
+      "value": "Here for"
+    },
+    {
+      "name": "dv_takes",
+      "value": "Takes now"
+    },
+    {
+      "name": "dv_no_meds",
+      "value": "No medicines recorded."
+    },
+    {
+      "name": "dv_more",
+      "value": "+%d more in the full list below"
+    },
+    {
+      "name": "dv_avoid_title",
+      "value": "Please don't prescribe"
+    },
+    {
+      "name": "dv_avoid_sub",
+      "value": "On the known-risk QT list"
+    },
+    {
+      "name": "dv_avoid_none",
+      "value": "No known-risk medicine is listed for this kind of visit. Please still check each new medicine."
+    },
+    {
+      "name": "dv_check_first",
+      "value": "Check first · %d"
+    },
+    {
+      "name": "dv_check_sub",
+      "value": "Possible or conditional QT risk"
+    },
+    {
+      "name": "dv_options",
+      "value": "Not on the QT lists"
+    },
+    {
+      "name": "dv_options_caption",
+      "value": "Not listed doesn't guarantee safety. The choice is the doctor's."
+    },
+    {
+      "name": "dv_depth",
+      "value": "In depth"
+    },
+    {
+      "name": "dv_ai_label",
+      "value": "AI SUMMARY · CHECK BEFORE SHARING"
+    },
+    {
+      "name": "dv_not_found",
+      "value": "This visit is no longer on this phone."
     }
   ]
 }

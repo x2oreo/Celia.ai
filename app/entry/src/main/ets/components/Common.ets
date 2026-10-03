@@ -367,15 +367,45 @@ export struct BackHeader {
   }
 }
 
-// The one header for every screen: back (pushed pages), title, settings. Tab pages pass `back: false` and get the
-// large title. `onDark` is for the scan surface. It navigates by itself through the root NavPathStack.
-// The look lives here only, so a reskin touches one place.
+// Round icon button on surface (settings, history, close): 44 vp circle, 1 vp border (DESIGN.md §10.1a).
+@ComponentV2
+export struct RoundIconButton {
+  @Param icon: Resource = $r('app.media.ic_settings');
+  @Param label: ResourceStr = '';
+  @Param angle: number = 0;       // rotates the glyph (the chevron doubles as "down")
+  @Event onTap: () => void = () => {
+  };
+
+  build() {
+    Row() {
+      Image(this.icon).width(20).height(20).fillColor($r('app.color.ink_2')).rotate({ angle: this.angle })
+    }
+    .width($r('app.float.chip_height'))
+    .height($r('app.float.chip_height'))
+    .justifyContent(FlexAlign.Center)
+    .borderRadius(22)
+    .backgroundColor($r('app.color.surface'))
+    .border({ width: 1, color: $r('app.color.border') })
+    .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.92 })
+    .accessibilityGroup(true)
+    .accessibilityText(strText(this.getUIContext(), this.label))
+    .onClick(() => this.onTap())
+  }
+}
+
+// The one header for every screen: back (pushed pages), title, an optional extra button, settings. Tab pages pass
+// `back: false` and get the large title. `onDark` is for the scan surface. It navigates by itself through the root
+// NavPathStack. The look lives here only, so a reskin touches one place.
 @ComponentV2
 export struct ScreenHeader {
   @Param title: ResourceStr = '';
   @Param back: boolean = true;
   @Param settings: boolean = true;
   @Param onDark: boolean = false;
+  @Param extraIcon: Resource | undefined = undefined;   // a second round button left of settings (e.g. History)
+  @Param extraLabel: ResourceStr = '';
+  @Event onExtra: () => void = () => {
+  };
   @Consumer('navStack') navStack: NavPathStack = new NavPathStack();
 
   @Builder
@@ -392,7 +422,7 @@ export struct ScreenHeader {
   }
 
   build() {
-    Row({ space: 4 }) {
+    Row({ space: this.back ? 4 : 8 }) {
       if (this.back) {
         this.iconButton($r('app.media.ic_chevron_left'), 24,
           this.onDark ? $r('app.color.on_accent') : $r('app.color.ink'), $r('app.string.a11y_back'), () => {
@@ -406,16 +436,49 @@ export struct ScreenHeader {
         .maxLines(1)
         .textOverflow({ overflow: TextOverflow.Ellipsis })
         .layoutWeight(1)
-      if (this.settings) {
-        this.iconButton($r('app.media.ic_settings'), 22,
-          this.onDark ? $r('app.color.on_accent') : $r('app.color.ink_3'), $r('app.string.a11y_settings'), () => {
+      if (this.extraIcon !== undefined) {
+        RoundIconButton({
+          icon: this.extraIcon,
+          label: this.extraLabel,
+          onTap: () => {
+            this.onExtra();
+          }
+        })
+      }
+      if (this.settings && this.onDark) {
+        this.iconButton($r('app.media.ic_settings'), 22, $r('app.color.on_accent'), $r('app.string.a11y_settings'),
+          () => {
             this.navStack.pushPathByName(Routes.SETTINGS, null);
           })
+      } else if (this.settings) {
+        RoundIconButton({
+          icon: $r('app.media.ic_settings'),
+          label: $r('app.string.a11y_settings'),
+          onTap: () => {
+            this.navStack.pushPathByName(Routes.SETTINGS, null);
+          }
+        })
       }
     }
     .width('100%')
     .constraintSize({ minHeight: 56 })
-    .padding(this.back ? { left: 4, right: 4 } : { top: 16, bottom: 8 })
+    .padding(this.back ? { left: 4, right: 12 } : { top: 12, bottom: 4 })
+  }
+}
+
+// Caps label above a group: 12 fp / 700, +0.06em, ink-3.
+@ComponentV2
+export struct CapsLabel {
+  @Param text: ResourceStr = '';
+  @Param color: ResourceColor = $r('app.color.ink_3');
+
+  build() {
+    Text(this.text)
+      .fontSize($r('app.float.font_caption'))
+      .fontWeight(FontWeight.Bold)
+      .letterSpacing(0.7)
+      .fontColor(this.color)
+      .textCase(TextCase.UpperCase)
   }
 }
 
