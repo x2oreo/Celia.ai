@@ -1,9 +1,12 @@
 // Bottom tab bar hosted inside the root Navigation (pages/Index.ets).
+// Any descendant can switch tabs through @Consumer('tabIndex') — see TabIndex in common/Routes.ets.
 
+import { HomePage } from '../pages/HomePage';
 import { AgentPage } from '../pages/AgentPage';
 import { MedicinesPage } from '../pages/MedicinesPage';
 import { HeartPage } from '../pages/HeartPage';
 import { EmergencyPage } from '../pages/EmergencyPage';
+import { TabIndex } from '../common/Routes';
 
 class TabSpec {
   index: number;
@@ -19,13 +22,14 @@ class TabSpec {
 
 @ComponentV2
 export struct MainTabs {
-  @Local currentIndex: number = 0;
+  @Provider('tabIndex') currentIndex: number = TabIndex.HOME;
 
   private tabs: TabSpec[] = [
-    new TabSpec(0, $r('app.string.tab_agent'), $r('app.media.ic_tab_agent')),
-    new TabSpec(1, $r('app.string.tab_medicines'), $r('app.media.ic_tab_medicines')),
-    new TabSpec(2, $r('app.string.tab_heart'), $r('app.media.ic_tab_heart')),
-    new TabSpec(3, $r('app.string.tab_emergency'), $r('app.media.ic_tab_emergency'))
+    new TabSpec(TabIndex.HOME, $r('app.string.tab_home'), $r('app.media.ic_tab_home')),
+    new TabSpec(TabIndex.MEDICINES, $r('app.string.tab_medicines'), $r('app.media.ic_tab_medicines')),
+    new TabSpec(TabIndex.HEART, $r('app.string.tab_heart'), $r('app.media.ic_tab_heart')),
+    new TabSpec(TabIndex.EMERGENCY, $r('app.string.tab_emergency'), $r('app.media.ic_tab_emergency')),
+    new TabSpec(TabIndex.AGENT, $r('app.string.tab_agent'), $r('app.media.ic_tab_agent'))
   ];
 
   @Builder
@@ -38,6 +42,7 @@ export struct MainTabs {
       Text(spec.label)
         .fontSize($r('app.float.font_caption'))
         .fontColor(this.currentIndex === spec.index ? $r('app.color.brand_accent') : $r('sys.color.font_secondary'))
+        .maxLines(1)
     }
     .width('100%')
     .height('100%')
@@ -46,13 +51,16 @@ export struct MainTabs {
 
   build() {
     Tabs({ barPosition: BarPosition.End, index: this.currentIndex }) {
-      TabContent() { AgentPage() }.tabBar(this.tabBar(this.tabs[0]))
+      TabContent() { HomePage() }.tabBar(this.tabBar(this.tabs[0]))
       TabContent() { MedicinesPage() }.tabBar(this.tabBar(this.tabs[1]))
       TabContent() { HeartPage() }.tabBar(this.tabBar(this.tabs[2]))
       TabContent() { EmergencyPage() }.tabBar(this.tabBar(this.tabs[3]))
+      TabContent() { AgentPage() }.tabBar(this.tabBar(this.tabs[4]))
     }
     .scrollable(false)
+    .animationDuration(0)
     .barHeight(64)
+    .barBackgroundColor($r('app.color.card_bg'))
     .onChange((index: number) => {
       this.currentIndex = index;
     })
