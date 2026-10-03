@@ -10,7 +10,13 @@ import { EmergencyNumbers } from '../main/ets/safety/EmergencyNumbers';
 import {
   checkFinalText, hasReassurance, parseArgs, parseRelay, RelayResponse, TextCheck
 } from '../main/ets/agent/ResponseValidator';
-import { parseOfflineIntent, ParsedIntent } from '../main/ets/agent/OfflineAgent';
+import {
+  dosesText, OfflineAgent, parseOfflineIntent, ParsedIntent, remindersText, symptomLogText
+} from '../main/ets/agent/OfflineAgent';
+import {
+  OpenRemindersTool, OpenSymptomLogTool, symptomLogOutput, SymptomLogOutput
+} from '../main/ets/agent/tools/CareTools';
+import { AgentReply, OPEN_PAGES, OpenPagePayload } from '../main/ets/model/AgentTypes';
 import { ToolRegistry } from '../main/ets/agent/ToolRegistry';
 import { TurnState } from '../main/ets/agent/ToolTypes';
 import { ExplainConditionTool } from '../main/ets/agent/tools/InfoTools';
@@ -42,7 +48,7 @@ function kinds(r: ComboResult): string {
 const BACKEND_TOOLS: string[] = ['check_drug', 'get_my_meds', 'get_vitals_summary', 'explain_condition',
   'suggest_alternatives', 'scan_medicine', 'add_med', 'show_emergency_card', 'start_emergency',
   'share_emergency_card', 'start_new_chat', 'log_symptom', 'prepare_doctor_visit', 'get_dose_status',
-  'get_trends'];
+  'get_trends', 'open_symptom_log', 'open_reminders'];
 
 export default function agentSafetyTest() {
   describe('ComboRules', () => {
@@ -275,6 +281,111 @@ export default function agentSafetyTest() {
       expect(parseOfflineIntent('what are my meds').intent).assertEqual('MY_MEDS');
       expect(parseOfflineIntent('Check my current medicines').intent).assertEqual('MY_MEDS');
       expect(parseOfflineIntent('hello').intent).assertEqual('UNKNOWN');
+    });
+
+    it('routesPageIntentsBeforeMedicinePatterns', 0, () => {
+      expect(parseOfflineIntent('Show me my symptom log').intent).assertEqual('SYMPTOM_LOG');
+      expect(parseOfflineIntent('look at my past symptoms').intent).assertEqual('SYMPTOM_LOG');
+      expect(parseOfflineIntent('check my reminders').intent).assertEqual('REMINDERS');
+      expect(parseOfflineIntent('Remind me to take nadolol').intent).assertEqual('REMINDERS');
+      expect(parseOfflineIntent('Did I take my nadolol today?').intent).assertEqual('DOSES');
+      expect(parseOfflineIntent("what's due today").intent).assertEqual('DOSES');
+      expect(parseOfflineIntent('How have I been the last two weeks?').intent).assertEqual('TRENDS');
+      // A medicine question stays a medicine question.
+      expect(parseOfflineIntent('Can I take ibuprofen today?').intent).assertEqual('CHECK_DRUG');
+    });
+
+    it('pageIntentsAnswerWithATileAndNoModel', 0, async () => {
+      const log: AgentReply = await OfflineAgent.answer('open my symptom log', 'offline');
+      expect(log.fallback).assertTrue();
+      expect(log.actions.length).assertEqual(1);
+      expect((JSON.parse(log.actions[0].payload) as OpenPagePayload).page).assertEqual('SYMPTOM_LOG');
+      const rem: AgentReply = await OfflineAgent.answer('open my reminders', 'offline');
+      expect((JSON.parse(rem.actions[0].payload) as OpenPagePayload).page).assertEqual('REMINDERS');
+      const doses: AgentReply = await OfflineAgent.answer('did I take my nadolol?', 'offline');
+      expect((JSON.parse(doses.actions[0].payload) as OpenPagePayload).page).assertEqual('REMINDERS');
+    });
+
+    it('pageTextsAreFixedSentences', 0, () => {
+      const empty: SymptomLogOutput = { entriesLast30Days: 0, recent: [], note: '' };
+      expect(symptomLogText(empty).includes('no symptoms logged')).assertTrue();
+      const one: SymptomLogOutput = {
+        entriesLast30Days: 1, recent: [{ symptom: 'Chest pain', severity: 4, activity: 'resting', daysAgo: 1 }], note: ''
+      };
+      expect(symptomLogText(one).includes('1 symptom in')).assertTrue();
+      expect(symptomLogText(one).includes('chest pain, yesterday')).assertTrue();
+      expect(remindersText([]).includes('No reminders')).assertTrue();
+      expect(remindersText([{ medicine: 'Nadolol', time: '08:00' }]).includes('Nadolol at 08:00')).assertTrue();
+      expect(dosesText([{ medicine: 'Nadolol', time: '08:00', status: 'MISSED' }]).includes('Nadolol 08:00 missed'))
+        .assertTrue();
+      expect(dosesText([]).includes('No reminders')).assertTrue();
+    });
+  });
+
+  describe('PageTools', () => {
+    it('symptomLogKeepsLast30DaysNewestFirst', 0, () => {
+      const day: number = 24 * 60 * 60 * 1000;
+      const now: number = 100 * day;
+      const entry = (s: string, sev: number): string => {
+        const e: SymptomEntry = {
+          symptom: parseSymptom(s) ?? 'OTHER', severity: sev, activity: 'resting', note: 'private words', hrMin: 60,
+          hrMax: 80
+        };
+        return JSON.stringify(e);
+      };
+      const events: AppEvent[] = [
+        { id: 1, ts: now - 40 * day, kind: 'SYMPTOM', detail: entry('FAINTING', 5) },
+        { id: 2, ts: now - 3 * day, kind: 'SYMPTOM', detail: entry('DIZZINESS', 2) },
+        { id: 3, ts: now - 2 * day, kind: 'DOSE', detail: '{}' },
+        { id: 4, ts: now - day - 1000, kind: 'SYMPTOM', detail: 'not json' },
+        { id: 5, ts: now - 1000, kind: 'SYMPTOM', detail: entry('PALPITATIONS', 3) }
+      ];
+      const out: SymptomLogOutput = symptomLogOutput(events, now);
+      expect(out.entriesLast30Days).assertEqual(2);
+      expect(out.recent[0].symptom).assertEqual('Palpitations');
+      expect(out.recent[0].daysAgo).assertEqual(0);
+      expect(out.recent[1].symptom).assertEqual('Dizziness');
+      expect(out.recent[1].daysAgo).assertEqual(3);
+      // The free-text note and the heart rate stay on the phone: the model gets neither.
+      expect(JSON.stringify(out).includes('private words')).assertFalse();
+      expect(JSON.stringify(out).includes('hrMin')).assertFalse();
+      expect(symptomLogOutput([], now).note.startsWith('No symptoms')).assertTrue();
+    });
+
+    it('openSymptomLogPushesOneTileAndWritesNothing', 0, async () => {
+      const before: number = (await LocalStore.get().listEvents()).length;
+      const turn: TurnState = new TurnState();
+      const out: string = await new OpenSymptomLogTool().execute({}, turn);
+      expect(out.includes('entriesLast30Days')).assertTrue();
+      expect(turn.actions.length).assertEqual(1);
+      expect(turn.actions[0].type).assertEqual('OPEN_PAGE');
+      expect((JSON.parse(turn.actions[0].payload) as OpenPagePayload).page).assertEqual('SYMPTOM_LOG');
+      expect(turn.pending.length).assertEqual(0);
+      expect((await LocalStore.get().listEvents()).length).assertEqual(before);
+    });
+
+    it('openRemindersPushesOneTileAndSaysItCannotEdit', 0, async () => {
+      const turn: TurnState = new TurnState();
+      const out: string = await new OpenRemindersTool().execute({}, turn);
+      expect(out.includes('You cannot add, change or delete')).assertTrue();
+      expect(turn.actions.length).assertEqual(1);
+      expect((JSON.parse(turn.actions[0].payload) as OpenPagePayload).page).assertEqual('REMINDERS');
+      expect(turn.pending.length).assertEqual(0);
+    });
+
+    it('everyPageAToolOpensIsListed', 0, async () => {
+      const reg: ToolRegistry = new ToolRegistry();
+      const calls: string[][] = [
+        ['prepare_doctor_visit', '{"specialty":"DENTIST"}'], ['get_dose_status', '{}'], ['get_trends', '{"days":14}'],
+        ['open_symptom_log', '{}'], ['open_reminders', '{}']
+      ];
+      for (const c of calls) {
+        const turn: TurnState = new TurnState();
+        await reg.run(c[0], c[1], turn);
+        expect(turn.actions.length).assertEqual(1);
+        const page: string = (JSON.parse(turn.actions[0].payload) as OpenPagePayload).page;
+        expect(OPEN_PAGES.includes(page)).assertTrue();
+      }
     });
   });
 
