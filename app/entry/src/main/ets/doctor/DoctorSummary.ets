@@ -2,10 +2,13 @@
 // deterministic and complete without it. Only non-personal lines of the brief go out (medicines with their risk
 // words, interactions, flagged checks, counts) — never the Patient section (name, notes) or symptom notes. The
 // reply is checked again here (same rules as doctor-summary/logic.ts) and dropped when it fails.
+// For a saved visit (B6) the reason and worries go too, after doctor/Redact.ets has removed names, phone numbers,
+// e-mails and links; the field names `reason` / `worries` pass the ledger's FORBIDDEN_FIELDS guard by design.
 
 import { Config } from '../common/Config';
 import { NetResult, postJson } from '../common/Net';
-import { BriefSection, Specialty, specialtyName } from './DoctorPrep';
+import { BriefSection, Specialty, specialtyName, VisitAnswers } from './DoctorPrep';
+import { redactPersonal } from './Redact';
 
 const SUMMARY_MAX: number = 420;
 const BANNED: RegExp =
@@ -33,7 +36,8 @@ function linesOf(sections: BriefSection[], titleStart: string): string[] {
 }
 
 // Pure: what is sent. Exported for tests (they check that nothing personal is included).
-export function summaryFields(sections: BriefSection[], specialty: Specialty, genotype: string): Record<string, string> {
+export function summaryFields(sections: BriefSection[], specialty: Specialty, genotype: string,
+  visit?: VisitAnswers, personal: string[] = []): Record<string, string> {
   const fields: Record<string, string> = {
     'specialty': specialtyName(specialty),
     'genotype': genotype,
@@ -43,6 +47,10 @@ export function summaryFields(sections: BriefSection[], specialty: Specialty, ge
     'heartAlerts': `${linesOf(sections, 'Heart alerts').length}`,
     'symptoms': `${linesOf(sections, 'Symptoms I logged').length}`
   };
+  if (visit !== undefined) {
+    fields['reason'] = redactPersonal(visit.reason, personal);
+    fields['worries'] = redactPersonal(visit.worries, personal);
+  }
   return fields;
 }
 
@@ -66,12 +74,13 @@ export class DoctorSummary {
     return Config.hasBackend();
   }
 
-  static async fetch(sections: BriefSection[], specialty: Specialty, genotype: string): Promise<SummaryOutcome> {
+  static async fetch(sections: BriefSection[], specialty: Specialty, genotype: string, visit?: VisitAnswers,
+    personal: string[] = []): Promise<SummaryOutcome> {
     if (!Config.hasBackend()) {
       return new SummaryOutcome('OFFLINE', '');
     }
-    const res: NetResult = await postJson('/functions/v1/doctor-summary', summaryFields(sections, specialty, genotype),
-      22000);
+    const res: NetResult = await postJson('/functions/v1/doctor-summary',
+      summaryFields(sections, specialty, genotype, visit, personal), 22000);
     if (!res.ok) {
       return new SummaryOutcome(res.status === 0 ? 'OFFLINE' : 'FAILED', '');
     }

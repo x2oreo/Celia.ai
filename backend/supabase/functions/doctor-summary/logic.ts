@@ -3,6 +3,7 @@
 export const MAX_SUMMARY = 420;
 export const MAX_LINES = 30;
 export const MAX_LINE = 160;
+export const MAX_TEXT = 300;   // reason / worries, same limit as the app (doctor/Visit.ets VISIT_TEXT_MAX)
 
 export interface SummaryInput {
   specialty: string;
@@ -12,6 +13,8 @@ export interface SummaryInput {
   flagged: string[];
   heartAlerts: number;
   symptoms: number;
+  reason: string;           // the patient's own words for a saved visit, names already removed by the app
+  worries: string;
 }
 
 // The summary must never reassure about a medicine, give doses or tell anyone to start/stop something: the
@@ -26,6 +29,27 @@ function lines(v: unknown): string[] {
     .map((x) => (x as string).trim().slice(0, MAX_LINE));
 }
 
+// Second line of defence after the app's doctor/Redact.ets: e-mails, links and phone numbers (7+ digits, not a
+// date) never reach the model even if the app missed them.
+export const REDACTED = '[removed]';
+const EMAIL = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g;
+const URL = /\b(https?:\/\/|www\.)\S+/gi;
+const PHONE_LIKE = /\+?\d[\d\s().\/-]{4,}\d/g;
+const DATE_LIKE = /^(\d{4}[-.\/]\d{1,2}[-.\/]\d{1,2}|\d{1,2}[-.\/]\d{1,2}[-.\/]\d{2,4})$/;
+
+export function scrub(t: string): string {
+  return t.replace(EMAIL, REDACTED).replace(URL, REDACTED).replace(PHONE_LIKE, (m) =>
+    (m.match(/\d/g) ?? []).length >= 7 && !DATE_LIKE.test(m.trim()) ? REDACTED : m);
+}
+
+// Free text: missing → '', a string → scrubbed and clipped, anything else → invalid request. Angle brackets go so
+// the words cannot close the <patient_words> tag they are quoted in.
+function text(v: unknown): string | undefined {
+  if (v === undefined || v === null) return '';
+  if (typeof v !== 'string') return undefined;
+  return scrub(v.replace(/[<>]/g, ' ').trim().replace(/\s+/g, ' ')).slice(0, MAX_TEXT);
+}
+
 function count(v: unknown): number {
   const n = typeof v === 'string' ? Number(v) : v;
   return typeof n === 'number' && Number.isFinite(n) && n >= 0 ? Math.min(Math.floor(n), 999) : 0;
@@ -34,6 +58,9 @@ function count(v: unknown): number {
 export function parseInput(b: Record<string, unknown>): SummaryInput | undefined {
   if (typeof b.specialty !== 'string' || b.specialty.length === 0 || b.specialty.length > 40) return undefined;
   const genotype = typeof b.genotype === 'string' && /^(LQT[123]|UNKNOWN)$/.test(b.genotype) ? b.genotype : 'UNKNOWN';
+  const reason = text(b.reason);
+  const worries = text(b.worries);
+  if (reason === undefined || worries === undefined) return undefined;
   return {
     specialty: b.specialty,
     genotype,
@@ -42,6 +69,8 @@ export function parseInput(b: Record<string, unknown>): SummaryInput | undefined
     flagged: lines(b.flagged),
     heartAlerts: count(b.heartAlerts),
     symptoms: count(b.symptoms),
+    reason,
+    worries,
   };
 }
 
