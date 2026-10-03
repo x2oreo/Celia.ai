@@ -1,14 +1,14 @@
 import { common } from '@kit.AbilityKit';
 import { WatchController } from '../controller/WatchController';
-import { AlertOverlay } from '../components/AlertOverlay';
-import { EmergencyOverlay } from '../components/EmergencyOverlay';
-import { FallOverlay } from '../components/FallOverlay';
+import { AlertScreen } from '../components/AlertScreen';
+import { CheckIn } from '../components/CheckIn';
 import { HeartPage } from '../components/HeartPage';
-import { LogPage } from '../components/LogPage';
 import { SettingsPage } from '../components/SettingsPage';
 import { SimulatePage } from '../components/SimulatePage';
-import { VitalsPage } from '../components/VitalsPage';
+import { SosScreen } from '../components/SosScreen';
 import { Theme } from '../components/Theme';
+import { VerdictGlance } from '../components/VerdictGlance';
+import { VitalsPage } from '../components/VitalsPage';
 
 @Entry
 @ComponentV2
@@ -36,28 +36,31 @@ struct Index {
       Swiper() {
         HeartPage({ ctrl: this.ctrl })
         VitalsPage({ ctrl: this.ctrl })
-        LogPage({ ctrl: this.ctrl })
+        CheckIn({ ctrl: this.ctrl, asPage: true })
         SettingsPage({ ctrl: this.ctrl })
         SimulatePage({ ctrl: this.ctrl })
       }
       .loop(false)
       .indicator(new DotIndicator()
-        .itemWidth(6)
-        .itemHeight(6)
-        .selectedItemWidth(6)
-        .selectedItemHeight(6)
-        .color(Theme.MUTED)
+        .itemWidth(5)
+        .itemHeight(5)
+        .selectedItemWidth(5)
+        .selectedItemHeight(5)
+        .color(Theme.DASH)
         .selectedColor(Theme.TEXT)
-        .bottom(8))
+        .bottom(6))
       .width('100%')
       .height('100%')
 
-      if (this.ctrl.emergencyText.length > 0) {
-        EmergencyOverlay({ ctrl: this.ctrl })
-      } else if (this.ctrl.fallCountdown > 0) {
-        FallOverlay({ ctrl: this.ctrl })
-      } else if (this.ctrl.alertText.length > 0) {
-        AlertOverlay({ ctrl: this.ctrl })
+      // Most urgent screen wins: SOS > fall/alert > check-in > drug verdict.
+      if (this.ctrl.sosCountdown > 0 || this.ctrl.sosSent) {
+        SosScreen({ ctrl: this.ctrl })
+      } else if (this.ctrl.fallCountdown > 0 || this.ctrl.alertKind !== 'NONE') {
+        AlertScreen({ ctrl: this.ctrl })
+      } else if (this.ctrl.checkInOpen) {
+        CheckIn({ ctrl: this.ctrl })
+      } else if (this.ctrl.verdictDrug.length > 0) {
+        VerdictGlance({ ctrl: this.ctrl })
       }
     }
     .width('100%')

@@ -1,125 +1,148 @@
 import { WatchController } from '../controller/WatchController';
+import { Ring } from './Ring';
 import { Theme } from './Theme';
 
+/** W7: shown instead of Home while the watch is off the wrist. */
+@ComponentV2
+struct NotWorn {
+  build() {
+    Stack() {
+      Circle()
+        .width('94%')
+        .height('94%')
+        .fill(Theme.TRACK)
+        .stroke(Theme.DASH)
+        .strokeWidth(4)
+        .strokeDashArray([14, 10])
+      Column({ space: 6 }) {
+        Text('– –').fontSize(28).fontWeight(FontWeight.Bold).fontColor(Theme.DASH)
+        Text('Not on wrist').fontSize(16).fontWeight(FontWeight.Bold).fontColor(Theme.TEXT)
+        Text('Put your watch back on to keep watching your heart.')
+          .fontSize(11)
+          .fontColor(Theme.MUTED)
+          .textAlign(TextAlign.Center)
+          .width(150)
+      }
+    }
+    .width('100%')
+    .height('100%')
+  }
+}
+
+/** W1 Home: status, big bpm, genotype + phone link, ring = bpm relative to the current max. */
 @ComponentV2
 export struct HeartPage {
   @Param @Require ctrl: WatchController;
 
-  sourceLabel(): string {
-    if (this.ctrl.sourceKind === 'SENSOR') {
-      return 'WATCH SENSOR';
+  /** Ring fill: where the current bpm sits between your min (empty) and max (full) limit. */
+  ratio(): number {
+    const span = this.ctrl.limitHigh - this.ctrl.limitLow;
+    if (span <= 0 || this.ctrl.bpm <= 0) {
+      return 0;
     }
-    return `DEMO · ${this.ctrl.scenarioLabel}`;
+    return Math.max(0.03, Math.min(1, (this.ctrl.bpm - this.ctrl.limitLow) / span));
   }
 
-  sourceColor(): string {
-    if (this.ctrl.sourceKind === 'SENSOR') {
-      return Theme.OK;
+  status(): string {
+    if (this.ctrl.bpm <= 0) {
+      return this.ctrl.statusText.length > 0 ? this.ctrl.statusText : 'Starting…';
     }
-    return Theme.WARN;
-  }
-
-  /** "bpm · LQT2 · rest · max 110": the limit that applies right now and why. */
-  contextLabel(): string {
-    if (!this.ctrl.onWrist) {
-      return 'bpm';
+    if (this.ctrl.bpm > this.ctrl.limitHigh) {
+      return 'Above your max';
     }
-    return `bpm · ${this.ctrl.limitReason} · max ${this.ctrl.limitHigh}`;
+    if (this.ctrl.bpm < this.ctrl.limitLow) {
+      return 'Below your min';
+    }
+    if (this.ctrl.bpm >= this.ctrl.limitHigh * 0.9 || this.ctrl.stress) {
+      return 'Elevated';
+    }
+    return 'All good';
   }
 
-  elapsed(): string {
-    const t = this.ctrl.monitoringSec;
-    const h = Math.floor(t / 3600);
-    const m = Math.floor((t % 3600) / 60);
-    const s = t % 60;
-    const mm = h > 0 && m < 10 ? `0${m}` : `${m}`;
-    return `${h > 0 ? `${h}:` : ''}${mm}:${s < 10 ? '0' : ''}${s}`;
+  statusColor(): string {
+    if (this.ctrl.bpm <= 0) {
+      return Theme.MUTED;
+    }
+    if (this.ctrl.bpm > this.ctrl.limitHigh) {
+      return Theme.DANGER;
+    }
+    if (this.ctrl.bpm < this.ctrl.limitLow) {
+      return Theme.LOW;
+    }
+    if (this.ctrl.bpm >= this.ctrl.limitHigh * 0.9 || this.ctrl.stress) {
+      return Theme.WARN;
+    }
+    return Theme.OK;
   }
 
-  syncLabel(): string {
+  phoneMark(): string {
     switch (this.ctrl.syncState) {
       case 'OK':
-        return 'synced';
+        return 'Phone ✓';
       case 'PENDING':
-        return `${this.ctrl.pending} to send`;
+        return 'Phone ↑';
       case 'ERROR':
-        return `offline · ${this.ctrl.pending} queued`;
+        return 'Phone ✕';
       default:
-        return `no server · ${this.ctrl.pending} saved`;
+        return 'Offline';
     }
   }
 
-  syncColor(): string {
-    switch (this.ctrl.syncState) {
-      case 'OK':
-        return Theme.OK;
-      case 'PENDING':
-        return Theme.INFO;
-      case 'ERROR':
-        return Theme.DANGER;
+  pillText(): string {
+    const g = this.ctrl.genotype === 'UNKNOWN' ? '' : `${this.ctrl.genotype} · `;
+    return `${g}${this.phoneMark()}`;
+  }
+
+  stateWord(): string {
+    switch (this.ctrl.activity) {
+      case 'REST':
+        return 'at rest';
+      case 'ACTIVE':
+        return 'active';
+      case 'ASLEEP':
+        return 'asleep';
       default:
-        return Theme.MUTED;
+        return '';
     }
   }
 
   build() {
-    Column({ space: 4 }) {
-      Text(this.sourceLabel())
-        .fontSize(11)
-        .fontColor(this.sourceColor())
-        .fontWeight(FontWeight.Medium)
-        .maxLines(1)
+    if (!this.ctrl.onWrist) {
+      NotWorn()
+    } else {
+      Stack() {
+        Ring({ percent: this.ratio() * 100, color: this.statusColor() })
+        Column({ space: 2 }) {
+          Row({ space: 4 }) {
+            Circle().width(7).height(7).fill(this.statusColor())
+            Text(this.status()).fontSize(11).fontWeight(FontWeight.Bold).fontColor(this.statusColor()).maxLines(1)
+          }
 
-      Row({ space: 6 }) {
-        Text('♥').fontSize(22).fontColor(Theme.HEART)
-        Text(this.ctrl.bpm > 0 ? `${this.ctrl.bpm}` : '--')
-          .fontSize(48)
-          .fontWeight(FontWeight.Bold)
-          .fontColor(Theme.TEXT)
+          Text(this.ctrl.bpm > 0 ? `${this.ctrl.bpm}` : '--')
+            .fontSize(64)
+            .fontWeight(FontWeight.Bolder)
+            .fontColor(Theme.TEXT)
+
+          Text(this.stateWord().length > 0 ? `bpm · ${this.stateWord()} · max ${this.ctrl.limitHigh}` : 'bpm')
+            .fontSize(11)
+            .fontColor(Theme.MUTED)
+
+          Text(this.pillText())
+            .fontSize(10)
+            .fontWeight(FontWeight.Medium)
+            .fontColor(Theme.TEXT)
+            .padding({ left: 8, right: 8, top: 3, bottom: 3 })
+            .borderRadius(10)
+            .backgroundColor(Theme.CARD)
+            .margin({ top: 6 })
+
+          if (this.ctrl.sourceKind === 'SIMULATED') {
+            Text(`DEMO · ${this.ctrl.scenarioLabel}`).fontSize(9).fontColor(Theme.WARN).margin({ top: 2 })
+          }
+        }
       }
-      .alignItems(VerticalAlign.Center)
-
-      Text(this.contextLabel())
-        .fontSize(12)
-        .fontColor(Theme.MUTED)
-
-      if (this.ctrl.riskyDrug.length > 0) {
-        Text(`⚠ ${this.ctrl.riskyDrug}: QT risk`)
-          .fontSize(10)
-          .fontColor(Theme.WARN)
-          .maxLines(1)
-      }
-
-      if (this.ctrl.statusText.length > 0) {
-        Text(this.ctrl.statusText)
-          .fontSize(10)
-          .fontColor(Theme.WARN)
-          .maxLines(2)
-          .textAlign(TextAlign.Center)
-          .width(150)
-      }
-
-      Row({ space: 6 }) {
-        Circle().width(8).height(8).fill(this.ctrl.running ? Theme.HEART : Theme.MUTED)
-        Text(this.ctrl.running ? `Monitoring · ${this.elapsed()}` : 'Paused')
-          .fontSize(13)
-          .fontColor(Theme.TEXT)
-      }
-      .height(32)
-      .padding({ left: 14, right: 14 })
-      .margin({ top: 6 })
-      .borderRadius(16)
-      .backgroundColor(Theme.CARD)
-
-      Row({ space: 6 }) {
-        Circle().width(6).height(6).fill(this.syncColor())
-        Text(this.syncLabel()).fontSize(10).fontColor(Theme.MUTED)
-      }
-      .margin({ top: 2 })
+      .width('100%')
+      .height('100%')
     }
-    .width('100%')
-    .height('100%')
-    .padding({ bottom: 14 })
-    .justifyContent(FlexAlign.Center)
   }
 }
