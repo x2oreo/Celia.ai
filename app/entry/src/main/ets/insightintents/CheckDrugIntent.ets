@@ -51,7 +51,7 @@ export default class CheckDrugIntent extends InsightIntentEntryExecutor<CheckDru
       return bad;
     }
     try {
-      const card: VerdictCardPayload = await checkDrugFull(name);
+      const card: VerdictCardPayload = await checkDrugFull(name, 'INTENT');
       const ok: insightIntent.IntentResult<CheckDrugResult> = {
         code: 0,
         result: { verdict: card.combinedRisk, ingredient: card.ingredient, message: verdictText(card) }

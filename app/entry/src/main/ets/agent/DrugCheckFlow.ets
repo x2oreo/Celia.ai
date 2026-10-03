@@ -1,23 +1,15 @@
-// The one path for checking a medicine: DrugChecker (Mark) + ComboRules against the user's current medicines.
-// Shared by the check_drug tool, the offline agent, the photo flow and the Celia intent — one verdict everywhere.
+// The one path for an agent-side medicine check: CheckService (main's UI path — barcode, offline dataset, online
+// fallback, history log, watch buzz) plus ComboRules against the user's current medicines. Shared by the
+// check_drug tool, the offline agent and the Celia intent, so the chat and the check screen never disagree.
 
 import { DrugChecker } from '../drugs/DrugChecker';
+import { CheckOutcome, CheckService } from '../drugs/CheckService';
 import { LocalStore } from '../data/LocalStore';
-import { DrugVerdict } from '../model/DrugVerdict';
+import { ComboVerdict, DrugVerdict } from '../model/DrugVerdict';
 import { Medication } from '../model/Medication';
-import { VerdictCardPayload } from '../model/AgentTypes';
-import { ComboResult, evaluateCombo } from '../safety/ComboRules';
-import { Logger } from '../common/Logger';
-
-const log: Logger = new Logger('DrugCheckFlow');
-
-interface DrugCheckEvent {
-  query: string;
-  ingredient: string;
-  risk: string;
-  combinedRisk: string;
-  findings: number;
-}
+import { ScanVia } from '../model/ScanRecord';
+import { InteractionFinding, VerdictCardPayload } from '../model/AgentTypes';
+import { ComboResult, escalate, evaluateCombo } from '../safety/ComboRules';
 
 export async function currentMedVerdicts(): Promise<DrugVerdict[]> {
   const meds: Medication[] = await LocalStore.get().listMeds();
@@ -28,29 +20,34 @@ export async function currentMedVerdicts(): Promise<DrugVerdict[]> {
   return out;
 }
 
-export async function checkDrugFull(query: string): Promise<VerdictCardPayload> {
-  const verdict: DrugVerdict = await DrugChecker.get().check(query);
+// DrugChecker.checkCombo's finding, unless ComboRules already reported the same pair.
+function mergeCheckerCombo(findings: InteractionFinding[], combo: ComboVerdict): void {
+  if (combo.kind === 'NONE' || combo.drugs.length < 2) {
+    return;
+  }
+  const other: string = combo.drugs[1];
+  const kind: string = combo.kind === 'CYP_INTERACTION' ? 'CYP_INHIBITION' : 'ADDITIVE_QT';
+  if (findings.some((f: InteractionFinding) => f.withDrug === other && f.kind === kind)) {
+    return;
+  }
+  const f: InteractionFinding = { kind: kind, withDrug: other, detail: combo.reason };
+  findings.push(f);
+}
+
+export async function checkDrugFull(query: string, via: ScanVia = 'CHAT'): Promise<VerdictCardPayload> {
+  const outcome: CheckOutcome = await CheckService.run(query, via);
+  const verdict: DrugVerdict = outcome.verdict;
   const combo: ComboResult = evaluateCombo(verdict, await currentMedVerdicts());
+  const findings: InteractionFinding[] = combo.findings;
+  mergeCheckerCombo(findings, outcome.combo);
   const card: VerdictCardPayload = {
     query: verdict.query,
     ingredient: verdict.ingredient,
     risk: verdict.risk,
-    combinedRisk: combo.combinedRisk,
+    combinedRisk: findings.length > 0 ? escalate(verdict.risk) : verdict.risk,
     reason: verdict.reason,
     source: verdict.source,
-    findings: combo.findings
+    findings: findings
   };
-  const event: DrugCheckEvent = {
-    query: query,
-    ingredient: card.ingredient,
-    risk: card.risk,
-    combinedRisk: card.combinedRisk,
-    findings: card.findings.length
-  };
-  try {
-    await LocalStore.get().logEvent('DRUG_CHECK', JSON.stringify(event));
-  } catch (e) {
-    log.warn(`logEvent failed: ${String(e)}`);
-  }
   return card;
 }
