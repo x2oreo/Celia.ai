@@ -5,14 +5,16 @@ set -euo pipefail
 
 fail=0
 
-# DevEco auto-signing writes cert paths + encrypted passwords into app/build-profile.json5.
-if git diff --cached --name-only | grep -qx 'app/build-profile.json5'; then
-  if git show :app/build-profile.json5 | grep -qE '"(storePassword|keyPassword|certpath|storeFile|profile)"'; then
-    echo "pre-commit: app/build-profile.json5 contains signing material — keep it out of git." >&2
-    echo "  Unstage it:  git restore --staged app/build-profile.json5   (README → Signing)" >&2
-    fail=1
+# DevEco auto-signing writes cert paths + encrypted passwords into <project>/build-profile.json5.
+for profile in app/build-profile.json5 watch/build-profile.json5; do
+  if git diff --cached --name-only | grep -qx "$profile"; then
+    if git show ":$profile" | grep -qE '"(storePassword|keyPassword|certpath|storeFile|profile)"'; then
+      echo "pre-commit: $profile contains signing material — keep it out of git." >&2
+      echo "  Unstage it:  git restore --staged $profile   (README → Signing)" >&2
+      fail=1
+    fi
   fi
-fi
+done
 
 # Never commit signing files, local config or env files even if .gitignore is bypassed (git add -f).
 if git diff --cached --name-only --diff-filter=AM | grep -E '\.(p12|cer|p7b|csr|jks|keystore|pem|key)$|(^|/)LocalConfig\.ets$|(^|/)\.env($|\.)|(^|/)local\.properties$' | grep -v '\.env\.example$'; then
