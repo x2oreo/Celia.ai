@@ -15,6 +15,15 @@ export function resText(ui: UIContext, r: Resource): string {
   }
 }
 
+// A resource string with %s / %d arguments filled in.
+export function fmtText(ui: UIContext, r: Resource, ...args: Array<string | number>): string {
+  try {
+    return ui.getHostContext()?.resourceManager.getStringSync(r.id, ...args) ?? '';
+  } catch (e) {
+    return '';
+  }
+}
+
 export function strText(ui: UIContext, v: ResourceStr): string {
   return typeof v === 'string' ? v : resText(ui, v as Resource);
 }
