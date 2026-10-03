@@ -154,3 +154,27 @@ the app that works with the tools (medicine check, emergency card…), then plan
    functions also log up to 500 characters of the upstream error body.
 
 **Not tested:** device and emulator (`hdc list targets` was empty), Core Speech, and Celia intents on a device.
+
+### 2026-10-03 (cont.) — fixing what the live eval found (Kaloyan, with Claude Code)
+
+**Prompt:** "plan out how to fix all and fix them"
+
+**Fixes** (one commit each, with unit tests, and the eval port in `backend/eval/lib.ts` kept in sync)
+1. **Typographic apostrophes.** The new `common/Text.ets` `normalizeText()` runs before every safety regex in
+   `SafetyGate`, `ResponseValidator` and the Realtime streaming check. "I can’t breathe" now triggers the emergency
+   flow, and "It’s safe for you" is caught.
+2. **Validator false positive.** Reassurance inside a denial ("does not mean … is safe", "nie oznacza, że …") is
+   ignored up to the end of the sentence.
+3. **Polish.** Added Polish reassurance patterns plus Polish risk, ask-a-doctor and medicine words. Without the
+   latter, a correct Polish KNOWN_RISK answer would have been replaced; this was found while planning the fix.
+4. **CONDITIONAL_RISK** answers must now mention the risk.
+5. **Off-topic rule.** Prompt rule 8, `PROMPT_VERSION 2026-10-03.2`. The first wording's example ("is OK for your
+   heart") tripped our own validator, which the eval caught, so the wording was changed.
+6. **Backend errors.** Every upstream error returns 502, and logs keep only the status and OpenAI's error code.
+
+**Verification**
+- Unit tests: 49/49 (6 new).
+- HAP build: 0 ArkTS warnings.
+- Validation 25/25 and robustness 7/7.
+- Agent eval on the new prompt: 17/17, with no validator false positives. Realtime smoke: pass.
+- Total eval spend for the day: about $1.98 of the $3 cap.

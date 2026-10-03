@@ -71,9 +71,13 @@ Personal data (profile, medicines, contacts, events) stays in on-device storage.
 2. **Tools:** unknown tool names are dropped twice, on the server and on the device. Arguments must be a JSON
    object. Executor errors go back to the model as `{error}` and never crash the turn.
 3. **Verdict consistency:** after a verdict, the final text is replaced with deterministic wording when it:
-   - reassures about a medicine ("is safe", "fine to take", "no risk"), whether or not a verdict was produced;
-   - leaves out the risk for a KNOWN or POSSIBLE verdict;
+   - reassures about a medicine ("is safe", "fine to take", "no risk", "jest bezpieczny"), whether or not a verdict
+     was produced. Negations ("is not safe") and denials ("that does not mean it is safe") don't count;
+   - leaves out the risk for a KNOWN, POSSIBLE or CONDITIONAL verdict;
    - fails to send the user to a pharmacist for an unknown drug.
+
+   Text is normalised before matching (lower case, typographic apostrophes → `'`), because the model and phone
+   keyboards write "it’s" and "can’t". The same normalisation runs in `SafetyGate`. The checks cover English and Polish.
 4. **The verdict card is the source of truth.** Every `check_drug` call attaches a `SHOW_VERDICT` card that is built
    from the deterministic result, whatever the text says.
 5. **Writes need a tap.** `add_med` and `share_emergency_card` only create confirm cards, and nothing is saved without
