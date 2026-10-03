@@ -34,6 +34,13 @@ import { BetaBlockerWatch } from '../vitals/BetaBlockerWatch';
 import { WatchPairing } from '../data/WatchPairing';
 import { TrendsPage } from './TrendsPage';
 import { PairWatchPage } from './PairWatchPage';
+import { WelcomePage } from './WelcomePage';
+import { AuthPage } from './AuthPage';
+import { AccountPage } from './AccountPage';
+import { EmergencyProfilePage } from './EmergencyProfilePage';
+import { ResponderPage } from './ResponderPage';
+import { VisitsPage } from './VisitsPage';
+import { FeelingPage } from './FeelingPage';
 import { AgentCore, QUICK_REPLY_OK, QUICK_REPLY_UNWELL } from '../agent/AgentCore';
 import { CheckInSheet } from '../components/CheckInSheet';
 import { clock } from '../common/Format';
@@ -231,6 +238,20 @@ struct Index {
       PairWatchPage()
     } else if (name === Routes.TRENDS) {
       TrendsPage()
+    } else if (name === Routes.WELCOME) {
+      WelcomePage()
+    } else if (name === Routes.AUTH) {
+      AuthPage()
+    } else if (name === Routes.ACCOUNT) {
+      AccountPage()
+    } else if (name === Routes.EMERGENCY_PROFILE) {
+      EmergencyProfilePage()
+    } else if (name === Routes.RESPONDER) {
+      ResponderPage()
+    } else if (name === Routes.VISITS) {
+      VisitsPage()
+    } else if (name === Routes.FEELING) {
+      FeelingPage()
     }
   }
 

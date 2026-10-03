@@ -20,6 +20,24 @@ export class Routes {
   static readonly SCAN: string = 'scan';
   static readonly PAIR_WATCH: string = 'pairWatch';
   static readonly TRENDS: string = 'trends';
+  // Workstream B (docs/handoff/B_PLAN.md). Pages exist as stubs until their stream fills them in.
+  static readonly WELCOME: string = 'welcome';                    // first launch, signed out
+  static readonly AUTH: string = 'auth';                          // param: AuthParam
+  static readonly ACCOUNT: string = 'account';                    // Settings → Account
+  static readonly EMERGENCY_PROFILE: string = 'emergencyProfile'; // edit the emergency details (B4)
+  static readonly RESPONDER: string = 'responder';                // first-responder view (B5)
+  static readonly VISITS: string = 'visits';                      // saved doctor visits (B6)
+  static readonly FEELING: string = 'feeling';                    // "How are you feeling?" diary entry (B15)
+}
+
+export type AuthMode = 'SIGN_UP' | 'LOG_IN';
+
+export class AuthParam {
+  mode: AuthMode;
+
+  constructor(mode: AuthMode) {
+    this.mode = mode;
+  }
 }
 
 // Tab indexes of components/MainTabs.ets. The first tab is the agent's home; the chat itself is a pushed page
