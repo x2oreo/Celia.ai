@@ -71,10 +71,11 @@ export struct SymptomLogPage {
   symptomChip(sym: Symptom) {
     Text(label(sym))
       .fontSize($r('app.float.font_small'))
-      .fontColor(this.symptom === sym ? $r('app.color.on_accent') : $r('sys.color.font_primary'))
+      .fontColor(this.symptom === sym ? $r('app.color.chat_user_text') : $r('app.color.ink'))
       .padding({ left: 14, right: 14, top: 8, bottom: 8 })
       .margin({ right: 8, bottom: 8 })
-      .backgroundColor(this.symptom === sym ? $r('app.color.brand_accent') : $r('app.color.card_bg'))
+      .backgroundColor(this.symptom === sym ? $r('app.color.chat_user_bg') : $r('app.color.surface'))
+      .border({ width: this.symptom === sym ? 0 : 1.5, color: $r('app.color.border_strong') })
       .borderRadius(100)
       .onClick(() => {
         this.symptom = sym;
@@ -85,10 +86,11 @@ export struct SymptomLogPage {
   activityChip(a: string) {
     Text(a)
       .fontSize($r('app.float.font_small'))
-      .fontColor(this.activity === a ? $r('app.color.on_accent') : $r('sys.color.font_primary'))
+      .fontColor(this.activity === a ? $r('app.color.chat_user_text') : $r('app.color.ink'))
       .padding({ left: 14, right: 14, top: 8, bottom: 8 })
       .margin({ right: 8, bottom: 8 })
-      .backgroundColor(this.activity === a ? $r('app.color.brand_accent') : $r('app.color.card_bg'))
+      .backgroundColor(this.activity === a ? $r('app.color.chat_user_bg') : $r('app.color.surface'))
+      .border({ width: this.activity === a ? 0 : 1.5, color: $r('app.color.border_strong') })
       .borderRadius(100)
       .onClick(() => {
         this.activity = a;
@@ -138,11 +140,12 @@ export struct SymptomLogPage {
               })
             Text(`${this.severity} / 5`)
               .fontSize($r('app.float.font_small'))
-              .fontColor($r('sys.color.font_secondary'))
+              .fontColor($r('app.color.ink_3'))
           }
           .width('100%')
           .padding(12)
-          .backgroundColor($r('app.color.card_bg'))
+          .backgroundColor($r('app.color.surface'))
+          .border({ width: 1, color: $r('app.color.border') })
           .borderRadius($r('app.float.radius_m'))
 
           SectionHeader({ title: $r('app.string.sym_doing') })
@@ -155,7 +158,7 @@ export struct SymptomLogPage {
 
           TextArea({ text: this.note, placeholder: $r('app.string.sym_note_hint') })
             .height(80)
-            .backgroundColor($r('app.color.field_bg'))
+            .backgroundColor($r('app.color.surface_alt'))
             .onChange((v: string) => {
               this.note = v;
             })
@@ -168,10 +171,11 @@ export struct SymptomLogPage {
             ForEach(this.recent, (e: AppEvent) => {
               Text(`${dateTime(e.ts, Date.now())} · ${this.describe(e)}`)
                 .fontSize($r('app.float.font_small'))
-                .fontColor($r('sys.color.font_primary'))
+                .fontColor($r('app.color.ink'))
                 .width('100%')
                 .padding(12)
-                .backgroundColor($r('app.color.card_bg'))
+                .backgroundColor($r('app.color.surface'))
+                .border({ width: 1, color: $r('app.color.border') })
                 .borderRadius($r('app.float.radius_s'))
             }, (e: AppEvent) => `${e.id}`)
           }
@@ -185,7 +189,7 @@ export struct SymptomLogPage {
       .scrollBar(BarState.Off)
     }
     .title($r('app.string.sym_title'))
-    .backgroundColor($r('app.color.page_bg'))
+    .backgroundColor($r('app.color.bg'))
   }
 
   private describe(e: AppEvent): string {

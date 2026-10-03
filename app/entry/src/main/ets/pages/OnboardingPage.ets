@@ -1,6 +1,7 @@
 // Onboarding (F-01): shown first when no profile exists. 4 short steps → LocalStore.saveProfile.
 //   1. you: name, genotype, ICD   2. medicines   3. emergency contacts   4. country + notes
 
+import { AgentAvatar } from '../components/AgentAvatar';
 import { LocalStore } from '../data/LocalStore';
 import { Contact, Genotype, Profile } from '../model/Profile';
 import { Medication } from '../model/Medication';
@@ -90,10 +91,10 @@ export struct OnboardingPage {
       Text(title)
         .fontSize($r('app.float.font_title'))
         .fontWeight(FontWeight.Bold)
-        .fontColor($r('sys.color.font_primary'))
+        .fontColor($r('app.color.ink'))
       Text(subtitle)
         .fontSize($r('app.float.font_small'))
-        .fontColor($r('sys.color.font_secondary'))
+        .fontColor($r('app.color.ink_3'))
     }
     .alignItems(HorizontalAlign.Start)
     .width('100%')
@@ -104,30 +105,31 @@ export struct OnboardingPage {
     TextInput({ text: value, placeholder: hint })
       .type(type)
       .height(48)
-      .backgroundColor($r('app.color.field_bg'))
+      .backgroundColor($r('app.color.surface_alt'))
       .onChange(onChange)
   }
 
   @Builder
   stepYou() {
     Column({ space: 16 }) {
-      Image($r('app.media.ic_tab_heart')).width(56).height(56).fillColor($r('app.color.brand_accent'))
+      AgentAvatar({ dim: 96 })
       this.heading($r('app.string.onboarding_title'), $r('app.string.onboarding_subtitle'))
       this.field(this.name, $r('app.string.onb_name_hint'), InputType.Normal, (v: string) => {
         this.name = v;
       })
       Text($r('app.string.onb_genotype'))
         .fontSize($r('app.float.font_small'))
-        .fontColor($r('sys.color.font_secondary'))
+        .fontColor($r('app.color.ink_3'))
       Row({ space: 8 }) {
         ForEach(GENOTYPES, (g: Genotype) => {
           Text(g === 'UNKNOWN' ? 'Not sure' : g)
             .fontSize($r('app.float.font_body'))
-            .fontColor(this.genotype === g ? $r('app.color.on_accent') : $r('sys.color.font_primary'))
+            .fontColor(this.genotype === g ? $r('app.color.chat_user_text') : $r('app.color.ink'))
             .textAlign(TextAlign.Center)
             .layoutWeight(1)
             .height(44)
-            .backgroundColor(this.genotype === g ? $r('app.color.brand_accent') : $r('app.color.card_bg'))
+            .backgroundColor(this.genotype === g ? $r('app.color.chat_user_bg') : $r('app.color.surface'))
+            .border({ width: this.genotype === g ? 0 : 1.5, color: $r('app.color.border_strong') })
             .borderRadius($r('app.float.radius_s'))
             .onClick(() => {
               this.genotype = g;
@@ -139,10 +141,10 @@ export struct OnboardingPage {
         Column({ space: 2 }) {
           Text($r('app.string.onb_icd'))
             .fontSize($r('app.float.font_body'))
-            .fontColor($r('sys.color.font_primary'))
+            .fontColor($r('app.color.ink'))
           Text($r('app.string.onb_icd_hint'))
             .fontSize($r('app.float.font_caption'))
-            .fontColor($r('sys.color.font_secondary'))
+            .fontColor($r('app.color.ink_3'))
         }
         .alignItems(HorizontalAlign.Start)
         .layoutWeight(1)
@@ -154,7 +156,8 @@ export struct OnboardingPage {
       }
       .width('100%')
       .padding(16)
-      .backgroundColor($r('app.color.card_bg'))
+      .backgroundColor($r('app.color.surface'))
+      .border({ width: 1, color: $r('app.color.border') })
       .borderRadius($r('app.float.radius_m'))
     }
     .alignItems(HorizontalAlign.Start)
@@ -173,13 +176,14 @@ export struct OnboardingPage {
         Row({ space: 8 }) {
           Text(m.dose === '' ? m.name : `${m.name} · ${m.dose}`)
             .fontSize($r('app.float.font_body'))
-            .fontColor($r('sys.color.font_primary'))
+            .fontColor($r('app.color.ink'))
             .layoutWeight(1)
           RiskBadge({ risk: medRisk(m), compact: true })
         }
         .width('100%')
         .padding(12)
-        .backgroundColor($r('app.color.card_bg'))
+        .backgroundColor($r('app.color.surface'))
+        .border({ width: 1, color: $r('app.color.border') })
         .borderRadius($r('app.float.radius_s'))
       }, (m: Medication) => `${m.id}`)
     }
@@ -210,12 +214,12 @@ export struct OnboardingPage {
           Image($r('app.media.ic_phone')).width(18).height(18).fillColor($r('app.color.brand_accent'))
           Text(`${c.name}${c.relation === '' ? '' : ` (${c.relation})`} · ${c.phone}`)
             .fontSize($r('app.float.font_body'))
-            .fontColor($r('sys.color.font_primary'))
+            .fontColor($r('app.color.ink'))
             .layoutWeight(1)
           Image($r('app.media.ic_close'))
             .width(18)
             .height(18)
-            .fillColor($r('sys.color.icon_secondary'))
+            .fillColor($r('app.color.ink_4'))
             .accessibilityText($r('app.string.a11y_remove'))
             .onClick(() => {
               this.contacts = this.contacts.filter((x: Contact) => x !== c);
@@ -223,7 +227,8 @@ export struct OnboardingPage {
         }
         .width('100%')
         .padding(12)
-        .backgroundColor($r('app.color.card_bg'))
+        .backgroundColor($r('app.color.surface'))
+        .border({ width: 1, color: $r('app.color.border') })
         .borderRadius($r('app.float.radius_s'))
       }, (c: Contact) => `${c.name}-${c.phone}`)
     }
@@ -236,7 +241,7 @@ export struct OnboardingPage {
       this.heading($r('app.string.onb_finish_title'), $r('app.string.onb_finish_subtitle'))
       Text($r('app.string.onb_country'))
         .fontSize($r('app.float.font_small'))
-        .fontColor($r('sys.color.font_secondary'))
+        .fontColor($r('app.color.ink_3'))
       Select(EMERGENCY_NUMBERS.map((e: EmergencyInfo) => {
         const opt: SelectOption = { value: `${e.name} (${e.ambulance})` };
         return opt;
@@ -249,13 +254,13 @@ export struct OnboardingPage {
         })
       TextArea({ text: this.notes, placeholder: $r('app.string.onb_notes_hint') })
         .height(120)
-        .backgroundColor($r('app.color.field_bg'))
+        .backgroundColor($r('app.color.surface_alt'))
         .onChange((v: string) => {
           this.notes = v;
         })
       Text($r('app.string.onb_privacy'))
         .fontSize($r('app.float.font_caption'))
-        .fontColor($r('sys.color.font_secondary'))
+        .fontColor($r('app.color.ink_3'))
     }
     .alignItems(HorizontalAlign.Start)
   }
@@ -270,7 +275,7 @@ export struct OnboardingPage {
               .height(4)
               .layoutWeight(1)
               .borderRadius(2)
-              .backgroundColor(i <= this.step ? $r('app.color.brand_accent') : $r('app.color.divider'))
+              .backgroundColor(i <= this.step ? $r('app.color.brand_accent') : $r('app.color.border_strong'))
           }, (i: number) => `${i}`)
         }
         .width('100%')
@@ -304,7 +309,7 @@ export struct OnboardingPage {
             if (this.step > 0) {
               Text($r('app.string.onb_back'))
                 .fontSize($r('app.float.font_body'))
-                .fontColor($r('sys.color.font_secondary'))
+                .fontColor($r('app.color.ink_3'))
                 .padding(8)
                 .onClick(() => {
                   this.step--;
@@ -314,7 +319,7 @@ export struct OnboardingPage {
             if (this.step === 1 || this.step === 2) {
               Text($r('app.string.onb_skip'))
                 .fontSize($r('app.float.font_body'))
-                .fontColor($r('sys.color.font_secondary'))
+                .fontColor($r('app.color.ink_3'))
                 .padding(8)
                 .onClick(() => this.next())
             }
@@ -322,7 +327,7 @@ export struct OnboardingPage {
           .width('100%')
           Text($r('app.string.disclaimer'))
             .fontSize($r('app.float.font_caption'))
-            .fontColor($r('sys.color.font_tertiary'))
+            .fontColor($r('app.color.ink_4'))
             .textAlign(TextAlign.Center)
         }
         .padding({ bottom: 8 })
@@ -332,7 +337,7 @@ export struct OnboardingPage {
       .padding({ left: 20, right: 20 })
     }
     .hideTitleBar(true)
-    .backgroundColor($r('app.color.page_bg'))
+    .backgroundColor($r('app.color.bg'))
     .onBackPressed(() => {
       if (this.step > 0) {
         this.step--;

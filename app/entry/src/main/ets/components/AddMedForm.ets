@@ -54,7 +54,7 @@ export struct AddMedForm {
     Column({ space: 12 }) {
       TextInput({ text: this.name, placeholder: $r('app.string.meds_name_hint') })
         .height(48)
-        .backgroundColor($r('app.color.field_bg'))
+        .backgroundColor($r('app.color.surface_alt'))
         .onChange((v: string) => this.onNameChange(v))
       if (this.suggestions.length > 0) {
         Column() {
@@ -62,7 +62,7 @@ export struct AddMedForm {
             Row({ space: 8 }) {
               Text(e.ingredient)
                 .fontSize($r('app.float.font_body'))
-                .fontColor($r('sys.color.font_primary'))
+                .fontColor($r('app.color.ink'))
                 .layoutWeight(1)
               RiskBadge({ risk: e.risk, compact: true })
             }
@@ -72,7 +72,8 @@ export struct AddMedForm {
           }, (e: DrugEntry) => e.ingredient)
         }
         .width('100%')
-        .backgroundColor($r('app.color.card_bg'))
+        .backgroundColor($r('app.color.surface'))
+        .border({ width: 1, color: $r('app.color.border') })
         .borderRadius($r('app.float.radius_s'))
         .border({ width: 1, color: $r('app.color.divider') })
       }
@@ -80,7 +81,7 @@ export struct AddMedForm {
         Row({ space: 8 }) {
           Text(this.resolved === undefined ? $r('app.string.meds_not_recognised') : this.resolved.ingredient)
             .fontSize($r('app.float.font_small'))
-            .fontColor($r('sys.color.font_secondary'))
+            .fontColor($r('app.color.ink_3'))
             .layoutWeight(1)
           RiskBadge({ risk: this.riskOf(this.resolved), compact: true })
         }
@@ -88,7 +89,7 @@ export struct AddMedForm {
       }
       TextInput({ text: this.dose, placeholder: $r('app.string.meds_dose_hint') })
         .height(48)
-        .backgroundColor($r('app.color.field_bg'))
+        .backgroundColor($r('app.color.surface_alt'))
         .onChange((v: string) => {
           this.dose = v;
         })

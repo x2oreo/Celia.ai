@@ -36,10 +36,10 @@ export struct PharmacyCardPage {
       Text(t.headline)
         .fontSize(big ? 28 : 18)
         .fontWeight(FontWeight.Bold)
-        .fontColor('#B42318')
+        .fontColor($r('app.color.card_fixed_alert'))
       Text(t.body)
         .fontSize(big ? 20 : 15)
-        .fontColor('#101828')
+        .fontColor($r('app.color.card_fixed_ink'))
     }
     .alignItems(HorizontalAlign.Start)
     .width('100%')
@@ -50,14 +50,14 @@ export struct PharmacyCardPage {
       Scroll() {
         Column({ space: 20 }) {
           this.message(pharmacyText('en'), true)
-          Divider().color('#E4E7EC')
+          Divider().color($r('app.color.card_fixed_border'))
           Text(this.meds.length === 0 ? '—' : this.meds.map((m: Medication) => medLine(m)).join('\n'))
-            .fontSize(18)
-            .fontColor('#101828')
+            .fontSize($r('app.float.font_subtitle'))
+            .fontColor($r('app.color.card_fixed_ink'))
             .width('100%')
           Text(emergencyFor(this.profile?.country ?? systemCountry()).name)
-            .fontSize(12)
-            .fontColor('#667085')
+            .fontSize($r('app.float.font_caption'))
+            .fontColor($r('app.color.card_fixed_ink_3'))
         }
         .padding(24)
         .width('100%')
@@ -66,9 +66,9 @@ export struct PharmacyCardPage {
       .width('100%')
       .height('100%')
       .align(Alignment.Top)
-      .backgroundColor('#FFFFFF')
+      .backgroundColor($r('app.color.card_fixed_bg'))
     }
     .title($r('app.string.ph_title'))
-    .backgroundColor('#FFFFFF')
+    .backgroundColor($r('app.color.card_fixed_bg'))
   }
 }

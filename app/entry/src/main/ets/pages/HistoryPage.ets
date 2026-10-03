@@ -73,9 +73,10 @@ export struct HistoryPage {
   chip(f: FilterSpec) {
     Text(f.label)
       .fontSize($r('app.float.font_small'))
-      .fontColor(this.filter === f.key ? $r('app.color.on_accent') : $r('sys.color.font_primary'))
+      .fontColor(this.filter === f.key ? $r('app.color.chat_user_text') : $r('app.color.ink'))
       .padding({ left: 14, right: 14, top: 8, bottom: 8 })
-      .backgroundColor(this.filter === f.key ? $r('app.color.brand_accent') : $r('app.color.card_bg'))
+      .backgroundColor(this.filter === f.key ? $r('app.color.chat_user_bg') : $r('app.color.surface'))
+      .border({ width: this.filter === f.key ? 0 : 1.5, color: $r('app.color.border_strong') })
       .borderRadius(100)
       .onClick(() => {
         this.filter = f.key;
@@ -89,12 +90,12 @@ export struct HistoryPage {
         Text(s.ingredient === '' ? s.query : s.ingredient)
           .fontSize($r('app.float.font_body'))
           .fontWeight(FontWeight.Medium)
-          .fontColor($r('sys.color.font_primary'))
+          .fontColor($r('app.color.ink'))
           .maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
         Text(s.combo !== 'NONE' ? `${dateTime(s.ts, Date.now())} · interaction` : dateTime(s.ts, Date.now()))
           .fontSize($r('app.float.font_caption'))
-          .fontColor(s.combo !== 'NONE' ? $r('app.color.risk_known') : $r('sys.color.font_secondary'))
+          .fontColor(s.combo !== 'NONE' ? $r('app.color.risk_known') : $r('app.color.ink_3'))
       }
       .alignItems(HorizontalAlign.Start)
       .layoutWeight(1)
@@ -102,7 +103,8 @@ export struct HistoryPage {
     }
     .width('100%')
     .padding(16)
-    .backgroundColor($r('app.color.card_bg'))
+    .backgroundColor($r('app.color.surface'))
+    .border({ width: 1, color: $r('app.color.border') })
     .borderRadius($r('app.float.radius_m'))
     .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.98 })
     .onClick(() => {
@@ -126,10 +128,10 @@ export struct HistoryPage {
 
         if (this.loaded && this.visible().length === 0) {
           Column({ space: 8 }) {
-            Image($r('app.media.ic_history')).width(48).height(48).fillColor($r('sys.color.icon_secondary'))
+            Image($r('app.media.ic_history')).width(48).height(48).fillColor($r('app.color.ink_4'))
             Text(this.scans.length === 0 ? $r('app.string.history_empty') : $r('app.string.history_empty_filter'))
               .fontSize($r('app.float.font_body'))
-              .fontColor($r('sys.color.font_secondary'))
+              .fontColor($r('app.color.ink_3'))
               .textAlign(TextAlign.Center)
           }
           .width('100%')
@@ -151,6 +153,6 @@ export struct HistoryPage {
       .height('100%')
     }
     .title($r('app.string.history_title'))
-    .backgroundColor($r('app.color.page_bg'))
+    .backgroundColor($r('app.color.bg'))
   }
 }

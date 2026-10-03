@@ -48,7 +48,7 @@ export struct RemindersPage {
       case 'DUE':
         return $r('app.color.risk_possible');
       default:
-        return $r('sys.color.font_secondary');
+        return $r('app.color.ink_3');
     }
   }
 
@@ -60,10 +60,11 @@ export struct RemindersPage {
           if (this.reminders.length === 0) {
             Text($r('app.string.rem_empty'))
               .fontSize($r('app.float.font_body'))
-              .fontColor($r('sys.color.font_secondary'))
+              .fontColor($r('app.color.ink_3'))
               .width('100%')
               .padding(16)
-              .backgroundColor($r('app.color.card_bg'))
+              .backgroundColor($r('app.color.surface'))
+              .border({ width: 1, color: $r('app.color.border') })
               .borderRadius($r('app.float.radius_m'))
           }
           ForEach(this.reminders, (r: DoseReminder) => {
@@ -71,12 +72,12 @@ export struct RemindersPage {
               Text(timeLabel(r))
                 .fontSize($r('app.float.font_subtitle'))
                 .fontWeight(FontWeight.Bold)
-                .fontColor($r('sys.color.font_primary'))
+                .fontColor($r('app.color.ink'))
                 .fontFeature('"tnum" on')
               Column({ space: 2 }) {
                 Text(r.medName)
                   .fontSize($r('app.float.font_body'))
-                  .fontColor($r('sys.color.font_primary'))
+                  .fontColor($r('app.color.ink'))
                 Text(doseStatus(r, this.logs, this.now).toLowerCase())
                   .fontSize($r('app.float.font_caption'))
                   .fontColor(this.statusColor(doseStatus(r, this.logs, this.now)))
@@ -98,7 +99,7 @@ export struct RemindersPage {
               Image($r('app.media.ic_delete'))
                 .width(20)
                 .height(20)
-                .fillColor($r('sys.color.icon_secondary'))
+                .fillColor($r('app.color.ink_4'))
                 .accessibilityText($r('app.string.a11y_delete'))
                 .onClick(async () => {
                   await ReminderService.remove(r.id);
@@ -107,7 +108,8 @@ export struct RemindersPage {
             }
             .width('100%')
             .padding(14)
-            .backgroundColor($r('app.color.card_bg'))
+            .backgroundColor($r('app.color.surface'))
+            .border({ width: 1, color: $r('app.color.border') })
             .borderRadius($r('app.float.radius_m'))
           }, (r: DoseReminder) => `${r.id}`)
 
@@ -115,7 +117,7 @@ export struct RemindersPage {
           if (this.meds.length === 0) {
             Text($r('app.string.rem_need_meds'))
               .fontSize($r('app.float.font_body'))
-              .fontColor($r('sys.color.font_secondary'))
+              .fontColor($r('app.color.ink_3'))
           } else {
             Column({ space: 12 }) {
               Select(this.meds.map((m: Medication) => {
@@ -140,7 +142,8 @@ export struct RemindersPage {
             }
             .width('100%')
             .padding(16)
-            .backgroundColor($r('app.color.card_bg'))
+            .backgroundColor($r('app.color.surface'))
+            .border({ width: 1, color: $r('app.color.border') })
             .borderRadius($r('app.float.radius_m'))
           }
         }
@@ -153,6 +156,6 @@ export struct RemindersPage {
       .scrollBar(BarState.Off)
     }
     .title($r('app.string.rem_title'))
-    .backgroundColor($r('app.color.page_bg'))
+    .backgroundColor($r('app.color.bg'))
   }
 }

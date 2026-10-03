@@ -16,10 +16,10 @@ export struct LockScreen {
       Text($r('app.string.lock_title'))
         .fontSize($r('app.float.font_title'))
         .fontWeight(FontWeight.Bold)
-        .fontColor($r('sys.color.font_primary'))
+        .fontColor($r('app.color.ink'))
       Text($r('app.string.lock_subtitle'))
         .fontSize($r('app.float.font_small'))
-        .fontColor($r('sys.color.font_secondary'))
+        .fontColor($r('app.color.ink_3'))
         .textAlign(TextAlign.Center)
       Blank()
       PrimaryButton({
@@ -42,7 +42,7 @@ export struct LockScreen {
     .width('100%')
     .height('100%')
     .padding(24)
-    .backgroundColor($r('app.color.page_bg'))
+    .backgroundColor($r('app.color.bg'))
     .onClick(() => {
       // swallow taps so nothing underneath is reachable
     })

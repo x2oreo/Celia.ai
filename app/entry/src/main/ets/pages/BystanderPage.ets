@@ -66,22 +66,22 @@ export struct BystanderPage {
   step(n: string, title: Resource, body: Resource) {
     Row({ space: 14 }) {
       Text(n)
-        .fontSize(22)
+        .fontSize($r('app.float.font_title'))
         .fontWeight(FontWeight.Bold)
-        .fontColor('#FFFFFF')
+        .fontColor($r('app.color.on_accent'))
         .textAlign(TextAlign.Center)
         .width(40)
         .height(40)
-        .backgroundColor('#B42318')
+        .backgroundColor($r('app.color.card_fixed_alert'))
         .borderRadius(20)
       Column({ space: 4 }) {
         Text(title)
-          .fontSize(20)
+          .fontSize($r('app.float.font_title_3'))
           .fontWeight(FontWeight.Bold)
-          .fontColor($r('sys.color.font_primary'))
+          .fontColor($r('app.color.ink'))
         Text(body)
           .fontSize($r('app.float.font_body'))
-          .fontColor($r('sys.color.font_secondary'))
+          .fontColor($r('app.color.ink_3'))
       }
       .alignItems(HorizontalAlign.Start)
       .layoutWeight(1)
@@ -89,7 +89,8 @@ export struct BystanderPage {
     .alignItems(VerticalAlign.Top)
     .width('100%')
     .padding(16)
-    .backgroundColor($r('app.color.card_bg'))
+    .backgroundColor($r('app.color.surface'))
+    .border({ width: 1, color: $r('app.color.border') })
     .borderRadius($r('app.float.radius_m'))
   }
 
@@ -100,11 +101,11 @@ export struct BystanderPage {
           Text($r('app.string.by_title'))
             .fontSize($r('app.float.font_title_1'))
             .fontWeight(FontWeight.Bold)
-            .fontColor($r('sys.color.font_primary'))
+            .fontColor($r('app.color.ink'))
             .width('100%')
           Text(this.profile === undefined ? $r('app.string.by_subtitle_generic') : $r('app.string.by_subtitle'))
             .fontSize($r('app.float.font_body'))
-            .fontColor($r('sys.color.font_secondary'))
+            .fontColor($r('app.color.ink_3'))
             .width('100%')
 
           PrimaryButton({
@@ -124,23 +125,24 @@ export struct BystanderPage {
               Circle()
                 .width(this.beat ? 150 : 128)
                 .height(this.beat ? 150 : 128)
-                .fill(this.running ? '#B42318' : $r('app.color.risk_known_soft'))
+                .fill(this.running ? $r('app.color.card_fixed_alert') : $r('app.color.risk_known_soft'))
                 .animation({ duration: 120, curve: Curve.EaseOut })
               Text(this.running ? `${this.count}` : 'CPR')
-                .fontSize(36)
+                .fontSize($r('app.float.font_title_1'))
                 .fontWeight(FontWeight.Bold)
-                .fontColor(this.running ? '#FFFFFF' : '#B42318')
+                .fontColor(this.running ? $r('app.color.on_accent') : $r('app.color.card_fixed_alert'))
             }
             .width(160)
             .height(160)
             Text(this.running ? $r('app.string.by_cpr_running') : $r('app.string.by_cpr_start'))
               .fontSize($r('app.float.font_body'))
-              .fontColor($r('sys.color.font_primary'))
+              .fontColor($r('app.color.ink'))
               .textAlign(TextAlign.Center)
           }
           .width('100%')
           .padding(16)
-          .backgroundColor($r('app.color.card_bg'))
+          .backgroundColor($r('app.color.surface'))
+          .border({ width: 1, color: $r('app.color.border') })
           .borderRadius($r('app.float.radius_m'))
           .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.98 })
           .onClick(() => this.toggle())
@@ -152,21 +154,21 @@ export struct BystanderPage {
               Text($r('app.string.by_facts'))
                 .fontSize($r('app.float.font_small'))
                 .fontWeight(FontWeight.Bold)
-                .fontColor('#B42318')
+                .fontColor($r('app.color.card_fixed_alert'))
               Text(`Long QT syndrome${this.profile.genotype === 'UNKNOWN' ? '' : ` (${this.profile.genotype})`}. ` +
                 'Tell paramedics: avoid QT-prolonging drugs; torsades → IV magnesium.')
                 .fontSize($r('app.float.font_body'))
-                .fontColor($r('sys.color.font_primary'))
+                .fontColor($r('app.color.ink'))
               if (this.profile.hasIcd) {
                 Text($r('app.string.by_icd'))
                   .fontSize($r('app.float.font_body'))
                   .fontWeight(FontWeight.Medium)
-                  .fontColor($r('sys.color.font_primary'))
+                  .fontColor($r('app.color.ink'))
               }
               ForEach(this.profile.contacts, (c: Contact) => {
                 Text(`Call ${c.name}${c.relation === '' ? '' : ` (${c.relation})`}: ${c.phone}`)
                   .fontSize($r('app.float.font_body'))
-                  .fontColor($r('app.color.brand_accent'))
+                  .fontColor($r('app.color.brand_text'))
                   .onClick(() => {
                     dial(c.phone);
                   })
@@ -188,6 +190,6 @@ export struct BystanderPage {
       .scrollBar(BarState.Off)
     }
     .title($r('app.string.by_nav_title'))
-    .backgroundColor($r('app.color.page_bg'))
+    .backgroundColor($r('app.color.bg'))
   }
 }

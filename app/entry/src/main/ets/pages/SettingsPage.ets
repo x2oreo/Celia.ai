@@ -105,7 +105,7 @@ export struct SettingsPage {
     TextInput({ text: value, placeholder: hint })
       .type(type)
       .height(46)
-      .backgroundColor($r('app.color.field_bg'))
+      .backgroundColor($r('app.color.surface_alt'))
       .onChange(onChange)
   }
 
@@ -122,8 +122,9 @@ export struct SettingsPage {
             .textAlign(TextAlign.Center)
             .layoutWeight(1)
             .height(40)
-            .fontColor((this.profile?.genotype ?? 'UNKNOWN') === g ? $r('app.color.on_accent') : $r('sys.color.font_primary'))
-            .backgroundColor((this.profile?.genotype ?? 'UNKNOWN') === g ? $r('app.color.brand_accent') : $r('app.color.field_bg'))
+            .fontColor((this.profile?.genotype ?? 'UNKNOWN') === g ? $r('app.color.chat_user_text') : $r('app.color.ink'))
+            .backgroundColor((this.profile?.genotype ?? 'UNKNOWN') === g ? $r('app.color.chat_user_bg') : $r('app.color.surface'))
+            .border({ width: (this.profile?.genotype ?? 'UNKNOWN') === g ? 0 : 1.5, color: $r('app.color.border_strong') })
             .borderRadius($r('app.float.radius_s'))
             .onClick(() => {
               this.save((x: Profile) => {
@@ -136,7 +137,7 @@ export struct SettingsPage {
       Row() {
         Text($r('app.string.onb_icd'))
           .fontSize($r('app.float.font_body'))
-          .fontColor($r('sys.color.font_primary'))
+          .fontColor($r('app.color.ink'))
           .layoutWeight(1)
         Toggle({ type: ToggleType.Switch, isOn: this.profile?.hasIcd ?? false })
           .selectedColor($r('app.color.brand_accent'))
@@ -149,7 +150,7 @@ export struct SettingsPage {
       .width('100%')
       TextArea({ text: this.notes, placeholder: $r('app.string.onb_notes_hint') })
         .height(96)
-        .backgroundColor($r('app.color.field_bg'))
+        .backgroundColor($r('app.color.surface_alt'))
         .onChange((v: string) => {
           this.notes = v;
         })
@@ -167,7 +168,8 @@ export struct SettingsPage {
     .width('100%')
     .alignItems(HorizontalAlign.Start)
     .padding(16)
-    .backgroundColor($r('app.color.card_bg'))
+    .backgroundColor($r('app.color.surface'))
+    .border({ width: 1, color: $r('app.color.border') })
     .borderRadius($r('app.float.radius_m'))
   }
 
@@ -179,17 +181,17 @@ export struct SettingsPage {
           Column({ space: 2 }) {
             Text(`${c.name}${c.relation === '' ? '' : ` (${c.relation})`}`)
               .fontSize($r('app.float.font_body'))
-              .fontColor($r('sys.color.font_primary'))
+              .fontColor($r('app.color.ink'))
             Text(c.email !== undefined && c.email.length > 0 ? `${c.phone} · ${c.email}` : c.phone)
               .fontSize($r('app.float.font_caption'))
-              .fontColor($r('sys.color.font_secondary'))
+              .fontColor($r('app.color.ink_3'))
           }
           .alignItems(HorizontalAlign.Start)
           .layoutWeight(1)
           Image($r('app.media.ic_delete'))
             .width(20)
             .height(20)
-            .fillColor($r('sys.color.icon_secondary'))
+            .fillColor($r('app.color.ink_4'))
             .accessibilityText($r('app.string.a11y_delete'))
             .onClick(() => {
               this.save((x: Profile) => {
@@ -216,7 +218,7 @@ export struct SettingsPage {
       } else {
         Text($r('app.string.onb_contact_add'))
           .fontSize($r('app.float.font_body'))
-          .fontColor($r('app.color.brand_accent'))
+          .fontColor($r('app.color.brand_text'))
           .onClick(() => {
             this.showAddContact = true;
           })
@@ -225,7 +227,8 @@ export struct SettingsPage {
     .width('100%')
     .alignItems(HorizontalAlign.Start)
     .padding(16)
-    .backgroundColor($r('app.color.card_bg'))
+    .backgroundColor($r('app.color.surface'))
+    .border({ width: 1, color: $r('app.color.border') })
     .borderRadius($r('app.float.radius_m'))
   }
 
@@ -256,7 +259,8 @@ export struct SettingsPage {
             }
             .width('100%')
             .padding(16)
-            .backgroundColor($r('app.color.card_bg'))
+            .backgroundColor($r('app.color.surface'))
+            .border({ width: 1, color: $r('app.color.border') })
             .borderRadius($r('app.float.radius_m'))
 
             SectionHeader({ title: $r('app.string.settings_safety') })
@@ -282,7 +286,8 @@ export struct SettingsPage {
               .width('100%')
               .textAlign(TextAlign.Center)
               .padding(16)
-              .backgroundColor($r('app.color.card_bg'))
+              .backgroundColor($r('app.color.surface'))
+              .border({ width: 1, color: $r('app.color.border') })
               .borderRadius($r('app.float.radius_m'))
               .onClick(() => this.confirmClear())
           }
@@ -296,6 +301,6 @@ export struct SettingsPage {
       .scrollBar(BarState.Off)
     }
     .title($r('app.string.settings_title'))
-    .backgroundColor($r('app.color.page_bg'))
+    .backgroundColor($r('app.color.bg'))
   }
 }

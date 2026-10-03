@@ -30,22 +30,23 @@ export struct PrivacyPage {
             Image($r('app.media.ic_lock')).width(32).height(32).fillColor($r('app.color.brand_accent'))
             Text($r('app.string.privacy_promise'))
               .fontSize($r('app.float.font_body'))
-              .fontColor($r('sys.color.font_primary'))
+              .fontColor($r('app.color.ink'))
           }
           .width('100%')
           .alignItems(HorizontalAlign.Start)
           .padding(16)
-          .backgroundColor($r('app.color.card_bg'))
+          .backgroundColor($r('app.color.surface'))
+          .border({ width: 1, color: $r('app.color.border') })
           .borderRadius($r('app.float.radius_m'))
 
           Row() {
             Column({ space: 2 }) {
               Text($r('app.string.privacy_lock'))
                 .fontSize($r('app.float.font_body'))
-                .fontColor($r('sys.color.font_primary'))
+                .fontColor($r('app.color.ink'))
               Text($r('app.string.privacy_lock_hint'))
                 .fontSize($r('app.float.font_caption'))
-                .fontColor($r('sys.color.font_secondary'))
+                .fontColor($r('app.color.ink_3'))
             }
             .alignItems(HorizontalAlign.Start)
             .layoutWeight(1)
@@ -61,7 +62,8 @@ export struct PrivacyPage {
           }
           .width('100%')
           .padding(16)
-          .backgroundColor($r('app.color.card_bg'))
+          .backgroundColor($r('app.color.surface'))
+          .border({ width: 1, color: $r('app.color.border') })
           .borderRadius($r('app.float.radius_m'))
 
           SectionHeader({
@@ -75,10 +77,11 @@ export struct PrivacyPage {
           if (this.loaded && this.entries.length === 0) {
             Text($r('app.string.privacy_empty'))
               .fontSize($r('app.float.font_body'))
-              .fontColor($r('sys.color.font_secondary'))
+              .fontColor($r('app.color.ink_3'))
               .width('100%')
               .padding(16)
-              .backgroundColor($r('app.color.card_bg'))
+              .backgroundColor($r('app.color.surface'))
+              .border({ width: 1, color: $r('app.color.border') })
               .borderRadius($r('app.float.radius_m'))
           }
           ForEach(this.entries, (e: LedgerEntry) => {
@@ -87,21 +90,22 @@ export struct PrivacyPage {
                 Text(e.endpoint)
                   .fontSize($r('app.float.font_body'))
                   .fontWeight(FontWeight.Medium)
-                  .fontColor($r('sys.color.font_primary'))
+                  .fontColor($r('app.color.ink'))
                   .layoutWeight(1)
                 Text(e.outcome)
                   .fontSize($r('app.float.font_caption'))
-                  .fontColor(e.outcome === 'BLOCKED' ? $r('app.color.risk_known') : $r('sys.color.font_secondary'))
+                  .fontColor(e.outcome === 'BLOCKED' ? $r('app.color.risk_known') : $r('app.color.ink_3'))
               }
               .width('100%')
               Text(`${dateTime(e.ts, Date.now())} · sent: ${e.fields.join(', ')} · ${e.bytes} B`)
                 .fontSize($r('app.float.font_caption'))
-                .fontColor($r('sys.color.font_secondary'))
+                .fontColor($r('app.color.ink_3'))
             }
             .width('100%')
             .alignItems(HorizontalAlign.Start)
             .padding(14)
-            .backgroundColor($r('app.color.card_bg'))
+            .backgroundColor($r('app.color.surface'))
+            .border({ width: 1, color: $r('app.color.border') })
             .borderRadius($r('app.float.radius_m'))
           }, (e: LedgerEntry) => `${e.ts}-${e.endpoint}`)
         }
@@ -114,6 +118,6 @@ export struct PrivacyPage {
       .scrollBar(BarState.Off)
     }
     .title($r('app.string.privacy_nav'))
-    .backgroundColor($r('app.color.page_bg'))
+    .backgroundColor($r('app.color.bg'))
   }
 }
