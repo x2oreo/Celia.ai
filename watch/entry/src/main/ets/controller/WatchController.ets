@@ -47,6 +47,7 @@ import { OUTBOX_CAPACITY, SyncEngine, SyncState } from './SyncEngine';
 import { AlertKind, HeartRules, Reading, RulesHost } from './HeartRules';
 import { SensorHub } from './SensorHub';
 import { SupabaseUploader } from '../sync/SupabaseUploader';
+import { RestClient } from '../sync/RestClient';
 
 /** Simulate-page override for the wearer's state. AUTO = motion sensor / scenario / sleep detector. */
 export type ActivityOverride = 'AUTO' | 'REST' | 'ACTIVE' | 'ASLEEP';
@@ -174,16 +175,17 @@ export class WatchController implements RulesHost {
     }
     this.doseStore = new DoseStore(ctx);
     this.dose = this.doseStore.load();
-    const canUpload = AppConfig.canUpload(this.cfg);
-    this.sync.configure(outbox,
-      canUpload ? new SupabaseUploader(this.cfg.supabaseUrl, this.cfg.supabaseAnonKey) : undefined);
-    if (canUpload) {
-      this.contextClient = new PatientContextClient(this.cfg.supabaseUrl, this.cfg.supabaseAnonKey,
-        this.cfg.deviceId);
-      this.demoRpc = new DemoRpcClient(this.cfg.supabaseUrl, this.cfg.supabaseAnonKey);
-      this.pairing.configure(new PairingClient(this.cfg.supabaseUrl, this.cfg.supabaseAnonKey), () => {
+    if (AppConfig.canUpload(this.cfg)) {
+      // One HTTP session for every Supabase call (energy: shared connections, fewer TLS handshakes).
+      const client = new RestClient(this.cfg.supabaseUrl, this.cfg.supabaseAnonKey);
+      this.sync.configure(outbox, new SupabaseUploader(client));
+      this.contextClient = new PatientContextClient(client, this.cfg.deviceId);
+      this.demoRpc = new DemoRpcClient(client);
+      this.pairing.configure(new PairingClient(client), () => {
         this.vibrate(400);
       });
+    } else {
+      this.sync.configure(outbox, undefined);
     }
     this.monitoringSinceMs = Date.now();
     // Ask for permissions once, up front, so the dialog doesn't interrupt a running monitor.

@@ -1,6 +1,5 @@
-import { http } from '@kit.NetworkKit';
-import { BusinessError } from '@kit.BasicServicesKit';
 import { Logger } from '../common/Logger';
+import { RestClient } from './RestClient';
 
 export type PairStatus = 'PENDING' | 'PAIRED' | 'EXPIRED' | 'NONE';
 
@@ -48,12 +47,10 @@ export interface PairingApi {
 
 /** Watch ↔ phone pairing via Supabase RPCs (migration 20261003260000_watch_pairing.sql). */
 export class PairingClient implements PairingApi {
-  private baseUrl: string;
-  private anonKey: string;
+  private client: RestClient;
 
-  constructor(supabaseUrl: string, anonKey: string) {
-    this.baseUrl = `${supabaseUrl}/rest/v1/rpc`;
-    this.anonKey = anonKey;
+  constructor(client: RestClient) {
+    this.client = client;
   }
 
   /** Creates a fresh 6-digit code for this watch. */
@@ -92,33 +89,17 @@ export class PairingClient implements PairingApi {
   }
 
   private async call(fn: string, deviceId: string): Promise<RpcResult<string>> {
-    const req = http.createHttp();
     const body: DeviceArgs = { p_device_id: deviceId };
-    try {
-      const resp = await req.request(`${this.baseUrl}/${fn}`, {
-        method: http.RequestMethod.POST,
-        header: {
-          'apikey': this.anonKey,
-          'Authorization': `Bearer ${this.anonKey}`,
-          'Content-Type': 'application/json'
-        },
-        extraData: JSON.stringify(body),
-        connectTimeout: 5000,
-        readTimeout: 5000,
-        expectDataType: http.HttpDataType.STRING
-      });
-      if (resp.responseCode >= 200 && resp.responseCode < 300) {
-        return ok<string>(String(resp.result));
-      }
-      Logger.warn(`${fn} HTTP ${resp.responseCode}: ${String(resp.result).slice(0, 160)}`);
-      return fail<string>(resp.responseCode === 404 ? 'Pairing not set up on the server yet' :
-        `Server error ${resp.responseCode}`);
-    } catch (e) {
-      Logger.warn(`${fn} failed: ${(e as BusinessError).code}`);
+    const resp = await this.client.post(`/rest/v1/rpc/${fn}`, JSON.stringify(body), '');
+    if (resp.status === 0) {
+      Logger.warn(`${fn} failed: ${resp.body}`);
       return fail<string>('No connection');
-    } finally {
-      req.destroy();
     }
+    if (resp.status >= 200 && resp.status < 300) {
+      return ok<string>(resp.body);
+    }
+    Logger.warn(`${fn} HTTP ${resp.status}: ${resp.body.slice(0, 160)}`);
+    return fail<string>(resp.status === 404 ? 'Pairing not set up on the server yet' : `Server error ${resp.status}`);
   }
 }
 
