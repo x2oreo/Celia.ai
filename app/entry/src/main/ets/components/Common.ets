@@ -150,6 +150,8 @@ export struct PrimaryButton {
     .borderRadius($r('app.float.radius_btn'))
     .opacity(this.active ? 1 : 0.4)
     .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.97 })
+    .accessibilityGroup(true)
+    .accessibilityDescription(this.active ? '' : 'Not available yet')
     .onClick(() => {
       if (this.active) {
         this.onTap();
@@ -179,6 +181,7 @@ export struct InkButton {
     .backgroundColor($r('app.color.chat_user_bg'))
     .borderRadius($r('app.float.radius_btn'))
     .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.97 })
+    .accessibilityGroup(true)
     .onClick(() => this.onTap())
   }
 }
@@ -205,6 +208,7 @@ export struct SecondaryButton {
     .border({ width: 1.5, color: $r('app.color.border_strong') })
     .borderRadius($r('app.float.radius_btn'))
     .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.97 })
+    .accessibilityGroup(true)
     .onClick(() => this.onTap())
   }
 }
@@ -229,6 +233,7 @@ export struct QuietButton {
     .backgroundColor($r('app.color.surface_alt'))
     .borderRadius($r('app.float.radius_btn'))
     .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.97 })
+    .accessibilityGroup(true)
     .onClick(() => this.onTap())
   }
 }
@@ -274,6 +279,7 @@ export struct NavRow {
     .border({ width: 1, color: $r('app.color.border') })
     .borderRadius($r('app.float.radius_m'))
     .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.98 })
+    .accessibilityGroup(true)
     .onClick(() => this.onTap())
   }
 }
@@ -317,6 +323,7 @@ export struct BackHeader {
       .width(48)
       .height(48)
       .justifyContent(FlexAlign.Center)
+      .accessibilityText('Back')
       .onClick(() => this.onBack())
       Text(this.title)
         .fontSize($r('app.float.font_headline'))
@@ -374,6 +381,7 @@ export struct StatusChip {
     .backgroundColor($r('app.color.surface'))
     .border({ width: 1, color: $r('app.color.border') })
     .borderRadius(20)
+    .accessibilityGroup(true)
     .onClick(() => this.onTap())
   }
 }
@@ -416,6 +424,7 @@ export struct QuickReplyChip {
     })
     .borderRadius(22)
     .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.97 })
+    .accessibilityGroup(true)
     .onClick(() => this.onTap())
   }
 }

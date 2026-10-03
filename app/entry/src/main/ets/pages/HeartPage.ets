@@ -232,6 +232,8 @@ export struct HeartPage {
           }
           .width('100%')
           .height($r('app.float.chip_height'))
+          .accessibilityGroup(true)
+          .accessibilityDescription(this.showSim ? 'Expanded' : 'Collapsed')
           .onClick(() => {
             this.showSim = !this.showSim;
           })
