@@ -6,6 +6,8 @@
     { "name": "ntf_sos_countdown_text", "value": "Tap I'm OK if you are fine. Otherwise Celia helps you call for help." },
     { "name": "ntf_live_title", "value": "SOS in ${placeholder.timer}. Tap if you are OK" },
     { "name": "ntf_live_zero", "value": "Time is up. Open Celia to call for help" },
+    { "name": "ntf_live_layout", "value": "Open Celia to say you are OK" },
+    { "name": "ntf_live_layout_end", "value": "Tap to open the SOS page" },
     { "name": "ntf_live_end_ok", "value": "SOS cancelled. Glad you are OK" },
     { "name": "ntf_live_end_sent", "value": "Open Celia to call the ambulance and your contacts" },
     { "name": "ntf_live_end_closed", "value": "SOS closed" },

@@ -15,7 +15,8 @@ import { argbHex, endTitleKey, liveContent, notificationTitle, SosEnd } from './
 
 const log: Logger = new Logger('LiveStatus');
 const LIVE_ID: number = 7001;
-const END_KEEP_S: number = 60;   // how long the ended card stays on the lock screen
+const END_KEEP_S: number = 60;
+const LIVE_ICON: string = 'sos_live.png';   // resources/rawfile   // how long the ended card stays on the lock screen
 
 export class LiveStatus {
   private static useLiveView: boolean = false;
@@ -26,12 +27,18 @@ export class LiveStatus {
     return liveContent(LiveStatus.reason, notifyText('ntf_sos_countdown_text'));
   }
 
-  private static async view(seconds: number, title: string, keep: number): Promise<liveViewManager.LiveView> {
+  private static async view(seconds: number, title: string, line: string, keep: number):
+    Promise<liveViewManager.LiveView> {
     const tap: WantAgent | undefined = await tapAgent(NOTIFY_SOS);
     const colour: number = notifyColor('danger');
-    const layout: liveViewManager.ProgressLayout = {
-      layoutType: liveViewManager.LayoutType.LAYOUT_TYPE_PROGRESS,
-      progress: 0
+    // Pickup layout: a title, one line and a picture (resources/rawfile). The kit checks the payload before the
+    // permission and rejects missing pictures with 401 (seen on the emulator: progress needs nodeIcons, pickup
+    // needs descPic).
+    const layout: liveViewManager.PickupLayout = {
+      layoutType: liveViewManager.LayoutType.LAYOUT_TYPE_PICKUP,
+      title: 'SOS',
+      content: line,
+      descPic: LIVE_ICON
     };
     const primary: liveViewManager.PrimaryData = {
       title: title,
@@ -43,6 +50,7 @@ export class LiveStatus {
     const capsule: liveViewManager.TimerCapsule = {
       type: liveViewManager.CapsuleType.CAPSULE_TYPE_TIMER,
       status: 1,
+      icon: LIVE_ICON,
       content: 'SOS',
       time: seconds * 1000,
       isCountdown: true,
@@ -73,7 +81,9 @@ export class LiveStatus {
     try {
       LiveStatus.useLiveView = await liveViewManager.isLiveViewEnabled();
       if (LiveStatus.useLiveView) {
-        await liveViewManager.startLiveView(await LiveStatus.view(seconds, notifyText('ntf_live_title'), END_KEEP_S));
+        const view: liveViewManager.LiveView = await LiveStatus.view(seconds, notifyText('ntf_live_title'),
+          notifyText('ntf_live_layout'), END_KEEP_S);
+        await liveViewManager.startLiveView(view);
         log.info('Live View started');
         return;
       }
@@ -106,7 +116,8 @@ export class LiveStatus {
     LiveStatus.active = false;
     try {
       if (LiveStatus.useLiveView) {
-        await liveViewManager.stopLiveView(await LiveStatus.view(0, notifyText(endTitleKey(how)), END_KEEP_S));
+        await liveViewManager.stopLiveView(await LiveStatus.view(0, notifyText(endTitleKey(how)),
+          notifyText('ntf_live_layout_end'), END_KEEP_S));
       }
     } catch (e) {
       const err: BusinessError = e as BusinessError;
