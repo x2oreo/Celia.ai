@@ -13,10 +13,10 @@ Skills to load before coding: `celia-agent`, `harmonyos-kits`, `arkts-language`,
 2. **Decide the name** (see naming risk in `IDEA.md`) — 5 minutes, don't bikeshed.
 3. **`/agent` Edge Function skeleton** in `backend/supabase/functions/agent/` (Mark creates the Supabase project;
    you own this function):
-   - Claude API (`claude-sonnet-5-5` for quality, or `claude-haiku-4-5-20251001` if latency hurts the demo),
-     key in Supabase secrets.
-   - Accepts the request contract in `ARCHITECTURE.md`, runs a tool loop with `check_drug` (calls Mark's DB
-     lookup) and `explain_condition`, and returns `{ text, actions[] }`.
+   - **OpenAI** Responses API (model via `OPENAI_MODEL` secret), key in Supabase secrets. Voice later via the
+     OpenAI Realtime API with the same tools.
+   - Stateless relay: one model step per call. The tool loop runs in the app (`AgentCore`), tools execute
+     on-device, so personal data never leaves the phone. Contract: `backend/supabase/functions/README.md`.
    - Return "hello" first, deploy, and give Georgie the URL.
 4. **System prompt v1** (`backend/supabase/functions/agent/prompt.ts`): role, LQTS facts by genotype, the rules
    (never give a verdict yourself, always use `check_drug`, always end medical advice with "ask your doctor or
