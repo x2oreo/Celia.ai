@@ -115,6 +115,50 @@ export class AgentCore {
     this.remember('assistant', 'Emergency call cancelled by the user.');
   }
 
+  // ---- hooks for the realtime voice session (same tools, gate, validator and memory) ----------------------------
+
+  async beginExternalTurn(): Promise<TurnState> {
+    const turn: TurnState = new TurnState();
+    await this.buildContext(turn);
+    return turn;
+  }
+
+  async contextForVoice(): Promise<RelayContext> {
+    return await this.buildContext(new TurnState());
+  }
+
+  runTool(name: string, argsJson: string, turn: TurnState): Promise<string> {
+    return this.registry.run(name, argsJson, turn);
+  }
+
+  // A user utterance heard by the realtime session. EMERGENCY/UNWELL → caller must cancel the model response
+  // and show triggerEmergency()'s reply. OK → check-in answered.
+  noteUserUtterance(text: string): GateResult {
+    const input: string = text.trim().slice(0, 2000);
+    if (input.length === 0) {
+      return 'NONE';
+    }
+    this.remember('user', input);
+    const gate: GateResult = SafetyGate.classify(input, this.checkInPending);
+    if (gate === 'OK') {
+      this.cancelCheckIn();
+    }
+    return gate;
+  }
+
+  triggerEmergency(reason: string): Promise<AgentReply> {
+    return this.emergency(reason);
+  }
+
+  // The model finished speaking. Validates what it said against this turn's verdicts and registers confirm cards.
+  finishExternalTurn(turn: TurnState, transcript: string): AgentReply {
+    const check: TextCheck = checkFinalText(transcript, turn.verdicts);
+    if (check.issue !== 'NONE') {
+      this.logFallback(`realtime_${check.issue}`, turn);
+    }
+    return this.finish(turn, check.text, check.issue !== 'NONE');
+  }
+
   // ---------------------------------------------------------------------------------------------------------------
 
   private async handle(text: string): Promise<AgentReply> {

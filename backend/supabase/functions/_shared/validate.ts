@@ -33,10 +33,7 @@ function str(v: unknown, field: string, max: number): string {
   return v;
 }
 
-export function parseAgentRequest(raw: unknown): AgentRequest {
-  if (!isObj(raw)) throw new Error('body must be an object');
-
-  const c = raw.context;
+export function parseContext(c: unknown): AgentContext {
   if (!isObj(c)) throw new Error('context must be an object');
   const genotype = str(c.genotype, 'context.genotype', 16);
   if (!GENOTYPES.includes(genotype)) throw new Error('context.genotype invalid');
@@ -49,6 +46,12 @@ export function parseAgentRequest(raw: unknown): AgentRequest {
     emergencyNumber: str(c.emergencyNumber, 'context.emergencyNumber', 8),
     locale: str(c.locale, 'context.locale', 16),
   };
+  return context;
+}
+
+export function parseAgentRequest(raw: unknown): AgentRequest {
+  if (!isObj(raw)) throw new Error('body must be an object');
+  const context = parseContext(raw.context);
 
   if (!Array.isArray(raw.messages) || raw.messages.length > MAX_MESSAGES) {
     throw new Error(`messages must be an array (<=${MAX_MESSAGES})`);
