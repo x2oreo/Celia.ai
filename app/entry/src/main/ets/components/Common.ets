@@ -144,17 +144,29 @@ export struct RiskBadge {
   }
 }
 
-@Builder
-function buttonContent(label: ResourceStr, icon: Resource | undefined, color: ResourceColor, weight: number) {
-  if (icon !== undefined) {
-    Image(icon).width(20).height(20).fillColor(color)
+// Icon + label of every button. A component, not a @Builder: builder arguments are passed by value, so a label that
+// changes later (e.g. "Continue" → "Finish") would never re-render.
+@ComponentV2
+struct ButtonContent {
+  @Param label: ResourceStr = '';
+  @Param icon: Resource | undefined = undefined;
+  @Param color: ResourceColor = Color.Black;
+  @Param weight: number = 700;
+
+  build() {
+    Row({ space: 8 }) {
+      if (this.icon !== undefined) {
+        Image(this.icon).width(20).height(20).fillColor(this.color)
+      }
+      Text(this.label)
+        .fontSize($r('app.float.font_button'))
+        .fontWeight(this.weight)
+        .fontColor(this.color)
+        .maxLines(1)
+        .textOverflow({ overflow: TextOverflow.Ellipsis })
+    }
+    .flexShrink(1)
   }
-  Text(label)
-    .fontSize($r('app.float.font_button'))
-    .fontWeight(weight)
-    .fontColor(color)
-    .maxLines(1)
-    .textOverflow({ overflow: TextOverflow.Ellipsis })
 }
 
 // Coral primary (Scan, mic, send). `danger` turns it into the emergency-only red button.
@@ -170,7 +182,9 @@ export struct PrimaryButton {
 
   build() {
     Row({ space: 8 }) {
-      buttonContent(this.label, this.icon, $r('app.color.on_accent'), this.danger ? 800 : 700)
+      ButtonContent({
+        label: this.label, icon: this.icon, color: $r('app.color.on_accent'), weight: this.danger ? 800 : 700
+      })
     }
     .width('100%')
     .height(this.large ? $r('app.float.button_height_sheet') : $r('app.float.button_height'))
@@ -202,7 +216,7 @@ export struct InkButton {
 
   build() {
     Row({ space: 8 }) {
-      buttonContent(this.label, this.icon, $r('app.color.chat_user_text'), 700)
+      ButtonContent({ label: this.label, icon: this.icon, color: $r('app.color.chat_user_text'), weight: 700 })
     }
     .width(this.fill ? '100%' : undefined)
     .height(this.large ? $r('app.float.button_height_sheet') : $r('app.float.button_height'))
@@ -223,12 +237,13 @@ export struct SecondaryButton {
   @Param icon: Resource | undefined = undefined;
   @Param large: boolean = false;
   @Param fill: boolean = true;
+  @Param active: boolean = true;
   @Event onTap: () => void = () => {
   };
 
   build() {
     Row({ space: 8 }) {
-      buttonContent(this.label, this.icon, $r('app.color.ink'), 600)
+      ButtonContent({ label: this.label, icon: this.icon, color: $r('app.color.ink'), weight: 600 })
     }
     .width(this.fill ? '100%' : undefined)
     .height(this.large ? $r('app.float.button_height_sheet') : $r('app.float.button_height'))
@@ -237,9 +252,15 @@ export struct SecondaryButton {
     .backgroundColor($r('app.color.surface'))
     .border({ width: 1.5, color: $r('app.color.border_strong') })
     .borderRadius($r('app.float.radius_btn'))
+    .opacity(this.active ? 1 : 0.4)
     .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.97 })
     .accessibilityGroup(true)
-    .onClick(() => this.onTap())
+    .accessibilityDescription(this.active ? '' : resText(this.getUIContext(), $r('app.string.a11y_unavailable')))
+    .onClick(() => {
+      if (this.active) {
+        this.onTap();
+      }
+    })
   }
 }
 
@@ -254,7 +275,7 @@ export struct QuietButton {
 
   build() {
     Row({ space: 8 }) {
-      buttonContent(this.label, this.icon, $r('app.color.ink'), 600)
+      ButtonContent({ label: this.label, icon: this.icon, color: $r('app.color.ink'), weight: 600 })
     }
     .width(this.fill ? '100%' : undefined)
     .height($r('app.float.button_height'))
