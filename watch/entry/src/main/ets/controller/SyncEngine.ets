@@ -12,6 +12,7 @@ export const OUTBOX_CAPACITY = 500;
 /**
  * Outbox → uploader. Rows are queued as they are recorded and sent in batches of 50; a batch the server rejects
  * (HTTP 400) is retried one row at a time so a single bad row is dropped instead of blocking the queue.
+ * The outbox is written to storage once per sync call (also when offline or unconfigured), not once per row.
  */
 @ObservedV2
 export class SyncEngine {
@@ -54,6 +55,7 @@ export class SyncEngine {
   /** Sends one batch. True when rows were uploaded (not when nothing was sent or the upload failed). */
   async syncNow(): Promise<boolean> {
     if (this.uploader === undefined || this.syncing || this.outbox.size === 0) {
+      this.outbox.flush();
       return false;
     }
     this.syncing = true;
@@ -78,6 +80,7 @@ export class SyncEngine {
       Logger.warn(`sync failed: ${res.message}`);
     }
     this.pending = this.outbox.size;
+    this.outbox.flush();
     this.syncing = false;
     return res.ok;
   }

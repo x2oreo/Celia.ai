@@ -88,6 +88,22 @@ export default function syncEngineTest() {
       expect(up.sentTypes.join(',')).assertEqual('symptom');
     });
 
+    it('persists the queue once per sync, online or not', 0, async () => {
+      const store = new MemoryOutboxStore();
+      const e = new SyncEngine();
+      e.configure(new MetricOutbox(store, 500), undefined);
+      e.record(row('symptom'));
+      e.record(row('sos'));
+      expect(new MetricOutbox(store, 500).size).assertEqual(0);
+      await e.syncNow();
+      expect(new MetricOutbox(store, 500).size).assertEqual(2);
+      const up = new FakeUploader();
+      const online = new SyncEngine();
+      online.configure(new MetricOutbox(store, 500), up);
+      await online.syncNow();
+      expect(new MetricOutbox(store, 500).size).assertEqual(0);
+    });
+
     it('a network error keeps the rows and says ERROR', 0, async () => {
       const up = new FakeUploader();
       const e = engine(up);
