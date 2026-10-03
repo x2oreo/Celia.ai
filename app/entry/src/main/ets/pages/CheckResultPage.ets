@@ -52,10 +52,8 @@ export struct CheckResultPage {
       return;
     }
     const v: DrugVerdict = this.outcome.verdict;
-    const name: string = v.ingredient !== '' && v.ingredient !== v.query.toLowerCase() ? `${v.query} (${v.ingredient})` :
-      v.query;
     this.navStack.clear();
-    AgentPrompt.ask(`I was offered ${name}. Is it safe for me, and what should I ask my doctor?`);
+    AgentPrompt.ask(`I was offered ${v.query}. Is it safe for me, and what should I ask my doctor?`);
   }
 
   build() {

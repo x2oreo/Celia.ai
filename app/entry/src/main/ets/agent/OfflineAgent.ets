@@ -16,11 +16,15 @@ export interface ParsedIntent {
 }
 
 const DRUG_PATTERNS: RegExp[] = [
+  /\b(offered|prescribed|given|told to take)\s+([^.?!,]+)/,
   /\bcan i (take|use|have)\s+(.+)/,
   /\bis\s+(.+?)\s+(safe|ok|okay|risky|dangerous)\b/,
   /\b(check|what about|how about|tell me about)\s+(.+)/,
   /\bczy mogę (wziąć|brać|przyjąć)\s+(.+)/
 ];
+
+// "Is it safe?" — a pronoun is never a medicine name; keep looking (or fall through to UNKNOWN).
+const PRONOUNS: string[] = ['it', 'this', 'that', 'they', 'them', 'these', 'those', 'he', 'she'];
 
 const TRAILING: RegExp = /\b(for me|please|now|today|with my (meds|medicines|medication))\b.*$/;
 
@@ -42,6 +46,7 @@ export function parseOfflineIntent(text: string): ParsedIntent {
     const r: ParsedIntent = { intent: 'MY_MEDS', drug: '' };
     return r;
   }
+  let pronoun: boolean = false;
   for (const p of DRUG_PATTERNS) {
     const m: RegExpExecArray | null = p.exec(t);
     if (m !== null) {
@@ -49,15 +54,16 @@ export function parseOfflineIntent(text: string): ParsedIntent {
       const raw: string = m.length > 2 && m[2] !== undefined && !/^(safe|ok|okay|risky|dangerous)$/.test(m[2])
         ? m[2] : m[1];
       const drug: string = cleanDrug(raw);
-      if (drug.length > 0) {
+      if (drug.length > 0 && !PRONOUNS.includes(drug)) {
         const r: ParsedIntent = { intent: 'CHECK_DRUG', drug: drug };
         return r;
       }
+      pronoun = pronoun || PRONOUNS.includes(drug);
     }
   }
   // A short message is often just a medicine name ("Klacid", "ibuprofen 400").
   const smallTalk: boolean = /^(hi|hello|hey|thanks|thank you|ok|okay|yes|no|cześć|dzięki)\b/.test(t);
-  if (!smallTalk && t.split(/\s+/).length <= 3 && t.length > 2) {
+  if (!smallTalk && !pronoun && t.split(/\s+/).length <= 3 && t.length > 2) {
     const r: ParsedIntent = { intent: 'CHECK_DRUG', drug: cleanDrug(t) };
     return r;
   }

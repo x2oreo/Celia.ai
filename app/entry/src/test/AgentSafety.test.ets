@@ -244,13 +244,21 @@ export default function agentSafetyTest() {
         ['is ibuprofen safe for me?', 'ibuprofen'],
         ['what about ondansetron', 'ondansetron'],
         ['Czy mogę wziąć apap?', 'apap'],
-        ['Nurofen', 'nurofen']
+        ['Nurofen', 'nurofen'],
+        // "Ask Celia about this" from the check screen (found on the emulator: the drug came out as "it")
+        ['I was offered Zofran (ondansetron). Is it safe for me, and what should I ask my doctor?', 'zofran (ondansetron)'],
+        ['My doctor prescribed sotalol, is that ok?', 'sotalol']
       ];
       for (const c of cases) {
         const p: ParsedIntent = parseOfflineIntent(c[0]);
         expect(p.intent).assertEqual('CHECK_DRUG');
         expect(p.drug).assertEqual(c[1]);
       }
+    });
+
+    it('neverTakesAPronounAsTheDrug', 0, () => {
+      expect(parseOfflineIntent('is it safe?').intent).assertEqual('UNKNOWN');
+      expect(parseOfflineIntent('Is this OK for my heart?').drug === 'this').assertFalse();
     });
 
     it('routesOtherIntents', 0, () => {
