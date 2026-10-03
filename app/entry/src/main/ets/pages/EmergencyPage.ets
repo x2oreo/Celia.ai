@@ -439,6 +439,16 @@ export struct EmergencyPage {
       Column({ space: 12 }) {
         PageTitle({ title: $r('app.string.emergency_title') })
 
+        // First-responder view (B5): the top of the tab, for whoever arrives to help.
+        NavRow({
+          icon: $r('app.media.ic_doctor'),
+          title: $r('app.string.em_resp_title'),
+          subtitle: $r('app.string.em_resp_open_sub'),
+          onTap: () => {
+            this.navStack.pushPathByName(Routes.RESPONDER, null);
+          }
+        })
+
         this.alertCard()
 
         // Contacts: one tap to call

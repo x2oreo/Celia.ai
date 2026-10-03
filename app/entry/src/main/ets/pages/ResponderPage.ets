@@ -18,6 +18,7 @@ import { RiskBadge } from '../components/Common';
 import { dateTime } from '../common/Format';
 import { dial } from '../common/Dialer';
 import { toast } from '../common/Toast';
+import { AppLock } from '../common/AppLock';
 
 // Same setting DrugIntake writes the last risky intake to (drugs/DrugIntake.ets KEY_LAST).
 const RISKY_INTAKE_KEY: string = 'riskyIntakeLast';
@@ -43,6 +44,11 @@ export struct ResponderPage {
 
   aboutToAppear(): void {
     this.load();
+  }
+
+  // Opened from the lock screen: lock again when the responder view closes (same as the bystander guide).
+  aboutToDisappear(): void {
+    AppLock.endEmergency();
   }
 
   private async load(): Promise<void> {
