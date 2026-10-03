@@ -59,7 +59,7 @@ watch shows "Waiting for heart rate…".
 
 Simulated values are plausible for the current state and heart rate (`MockedVitals`), tagged **sim** on the watch
 (Home shows HRV next to bpm). **Tap a sim tile** on the Vitals page (HRV, SpO2, Rhythm) to push that signal abnormal
-for 20 s and see its alert. Heart-rate alerts need the limit crossed for `ALERT_SUSTAIN_SEC` (default 5 s),
+and see its alert ~3 s later. Heart-rate alerts need the limit crossed for `ALERT_SUSTAIN_SEC` (default 5 s),
 and listed in `payload.mocked` in the data. They show what the product does once Huawei opens these signals to
 watch apps.
 
@@ -97,8 +97,9 @@ is the trigger: the phone app / agent alerts emergency contacts and offers the 1
 | Fall | impact > 2.5 g, then still 1–4 s later → 30 s "Are you OK?" | `vitals/MotionAnalyzer.ets` |
 | SOS | *Need help* or unanswered fall → 10 s countdown → `sos` row | `WatchController.startSos()` |
 
-The sim-tile demo (Vitals page) drifts the signal over 8 s, holds 15 s and recovers over 6 s
-(`anomalyProgress()`), so the alert appears through the same sustain rule as a real signal would.
+The sim-tile demo (Vitals page) drifts the signal over 2.5 s (refreshed every 250 ms), holds 10 s and recovers over
+4 s (`anomalyProgress()`). A tapped anomaly uses a 1 s sustain (`ANOMALY_SUSTAIN_MS`) instead of 5 s, so the alert
+lands under 4 s after the tap (measured: HRV 3.0 s, SpO2 2.8 s, rhythm 1.5 s).
 
 ## Context: activity, falls, wear (beyond heart rate)
 

@@ -32,6 +32,8 @@ import { ContextSensors } from '../vitals/ContextSensors';
 import { HeartRateSource } from '../vitals/HeartRateSource';
 import { BaseLimits, HrLimits, isStressed, limitsFor } from '../vitals/Limits';
 import {
+  ANOMALY_RAMP_MS,
+  ANOMALY_SUSTAIN_MS,
   ANOMALY_TOTAL_MS,
   Anomaly,
   MOCKED_FIELDS,
@@ -66,6 +68,8 @@ const LIVE_EVERY_MS = 5000;
 const VITALS_EVERY_MS = 30000;
 const MOCK_EVERY_MS = 1000;
 const VITAL_ALERT_COOLDOWN_MS = 60000;
+/** Refresh rate of simulated vitals while a tapped anomaly ramps, so the drift looks smooth. */
+const ANOMALY_FRAME_MS = 250;
 const SYNC_EVERY_MS = 3000;
 const CONTEXT_EVERY_MS = 60000;
 /** Monitoring is continuous, so summaries are sent per window instead of per start/stop. */
@@ -167,6 +171,7 @@ export class WatchController {
   private lastVitalAlertMs: number = 0;
   /** When HRV/SpO2 first went past its threshold; -1 = not past it. Same sustain rule as heart rate. */
   private vitalLowSinceMs: number = -1;
+  private anomalyTimer: number = -1;
   private lastContextMs: number = 0;
   private lastSampleMs: number = 0;
   private monitoringSinceMs: number = 0;
@@ -268,8 +273,8 @@ export class WatchController {
   }
 
   /**
-   * Vitals page: tap a simulated tile to make that signal drift abnormal (8 s), hold, and recover. The alert fires
-   * through the normal rule once the value has been past its threshold for the sustain time.
+   * Vitals page: tap a simulated tile to make that signal drift abnormal (2.5 s, refreshed every 250 ms), hold, and
+   * recover. The alert fires through the threshold rule with a 1 s demo sustain, ~3 s after the tap.
    */
   triggerAnomaly(kind: Anomaly): void {
     this.anomaly = kind;
@@ -277,6 +282,19 @@ export class WatchController {
     this.lastVitalAlertMs = 0;
     this.vitalLowSinceMs = -1;
     Logger.info(`anomaly: ${kind}`);
+    if (this.anomalyTimer >= 0) {
+      clearInterval(this.anomalyTimer);
+    }
+    this.anomalyTimer = setInterval(() => {
+      if (this.running && this.onWrist && this.bpm > 0) {
+        this.updateMockedVitals();
+      }
+      // Frames only during the ramp (+ sustain); the 1 s tick takes over afterwards.
+      if (Date.now() - this.anomalyStartMs > ANOMALY_RAMP_MS + ANOMALY_SUSTAIN_MS + 1000) {
+        clearInterval(this.anomalyTimer);
+        this.anomalyTimer = -1;
+      }
+    }, ANOMALY_FRAME_MS);
   }
 
   cycleDemoSpeed(): void {
@@ -654,7 +672,8 @@ export class WatchController {
     if (this.vitalLowSinceMs < 0) {
       this.vitalLowSinceMs = now;
     }
-    const sustained = now - this.vitalLowSinceMs >= this.cfg.alertSustainSec * 1000;
+    const sustainMs = this.anomaly !== 'none' ? ANOMALY_SUSTAIN_MS : this.cfg.alertSustainSec * 1000;
+    const sustained = now - this.vitalLowSinceMs >= sustainMs;
     if (sustained && now - this.lastVitalAlertMs >= VITAL_ALERT_COOLDOWN_MS) {
       this.lastVitalAlertMs = now;
       this.raiseVitalAlert(signal, signal === 'hrv' ? m.hrvMs : m.spo2, now);

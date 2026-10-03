@@ -57,9 +57,11 @@ export function mockVitals(bpm: number, activity: Activity, rand: () => number):
 }
 
 /** A tapped anomaly drifts in, holds, then drifts back, so the demo looks like a real deterioration. */
-export const ANOMALY_RAMP_MS = 8000;
-export const ANOMALY_HOLD_MS = 15000;
-export const ANOMALY_RECOVER_MS = 6000;
+export const ANOMALY_RAMP_MS = 2500;
+export const ANOMALY_HOLD_MS = 10000;
+export const ANOMALY_RECOVER_MS = 4000;
+/** A tapped (demo) anomaly only has to stay past the threshold this long, so the alert lands ~3 s after the tap. */
+export const ANOMALY_SUSTAIN_MS = 1000;
 export const ANOMALY_TOTAL_MS = ANOMALY_RAMP_MS + ANOMALY_HOLD_MS + ANOMALY_RECOVER_MS;
 
 /** 0 = normal, 1 = fully abnormal, `elapsedMs` after the tap. */
