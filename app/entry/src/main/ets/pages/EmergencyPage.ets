@@ -1,6 +1,7 @@
-// Emergency tab (F-08, F-26, F-29, F-30): call the right number for the country, SOS, bystander help, and an
-// emergency card a stranger can read — high contrast, in the chosen card language (13), read aloud on request,
-// and a QR link to the card viewer.
+// Emergency tab (F-08, F-26, F-29, F-30; DESIGN.md §10.1a, screen 06). SOS and the call first, then the responder
+// view as one big tile, the medical card as a summary that unfolds the full card (13 languages, read aloud, QR
+// link), contacts, pharmacy card, nearby help, and Test SOS last and small. Layout only: every action keeps its
+// logic.
 
 import { LocalStore, StoreTopic } from '../data/LocalStore';
 import { Contact, Profile } from '../model/Profile';
@@ -15,8 +16,8 @@ import { medLine } from '../emergency/CardContent';
 import { buildPayload, cardLink } from '../emergency/CardLink';
 import { ShareRecord, ShareService } from '../share/ShareService';
 import { dial } from '../common/Dialer';
-import { Routes } from '../common/Routes';
-import { NavRow, PageTitle, QuietButton, SecondaryButton, SectionHeader } from '../components/Common';
+import { Routes, SosParam } from '../common/Routes';
+import { CapsLabel, QuietButton, ScreenHeader, SecondaryButton } from '../components/Common';
 import { toast } from '../common/Toast';
 import { copyText } from '../common/Clipboard';
 import { Logger } from '../common/Logger';
@@ -35,6 +36,7 @@ export struct EmergencyPage {
   private unsubSpeaking: () => void = () => {
   };
   @Local showQr: boolean = false;
+  @Local showCard: boolean = false;    // the medical card summary is unfolded
   @Local shareUrl: string = '';        // short encrypted link (Supabase share); '' → the long in-link fallback
   @Local sharing: boolean = false;
   private shareDirty: boolean = false;
@@ -242,16 +244,17 @@ export struct EmergencyPage {
   @Builder
   nearbyButton(kind: NearbyKind, label: Resource) {
     Text(label)
-      .fontSize($r('app.float.font_small'))
-      .fontWeight(FontWeight.Medium)
+      .fontSize($r('app.float.font_button'))
+      .fontWeight(FontWeight.Bold)
       .fontColor($r('app.color.ink'))
       .textAlign(TextAlign.Center)
       .maxLines(2)
       .layoutWeight(1)
-      .constraintSize({ minHeight: $r('app.float.chip_height') })
-      .padding({ left: 8, right: 8, top: 6, bottom: 6 })
-      .backgroundColor($r('app.color.surface_alt'))
-      .borderRadius($r('app.float.radius_btn'))
+      .height(52)
+      .padding({ left: 6, right: 6 })
+      .backgroundColor($r('app.color.surface'))
+      .border({ width: 1, color: $r('app.color.border') })
+      .borderRadius($r('app.float.radius_m'))
       .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.97 })
       .accessibilityDescription('Opens a map search near you')
       .onClick(() => {
@@ -262,26 +265,17 @@ export struct EmergencyPage {
   @Builder
   nearbyRow() {
     Column({ space: 8 }) {
-      Row({ space: 8 }) {
-        Image($r('app.media.ic_location')).width(18).height(18).fillColor($r('app.color.ink_2'))
-        Text($r('app.string.em_nearby'))
-          .fontSize($r('app.float.font_body'))
-          .fontWeight(FontWeight.Medium)
-          .fontColor($r('app.color.ink'))
-      }
+      CapsLabel({ text: $r('app.string.em_nearby') })
       Row({ space: 8 }) {
         this.nearbyButton('HOSPITAL', $r('app.string.em_nearby_hospital'))
         this.nearbyButton('PHARMACY', $r('app.string.em_nearby_pharmacy'))
-        this.nearbyButton('AED', $r('app.string.em_nearby_aed'))
+        this.nearbyButton('AED', $r('app.string.em_nearby_aed_short'))
       }
       .width('100%')
     }
     .width('100%')
     .alignItems(HorizontalAlign.Start)
-    .padding(16)
-    .backgroundColor($r('app.color.surface'))
-    .border({ width: 1, color: $r('app.color.border') })
-    .borderRadius($r('app.float.radius_m'))
+    .margin({ top: 4 })
   }
 
   @Builder
@@ -373,116 +367,172 @@ export struct EmergencyPage {
     return this.meds.length === 0 ? icd : `${icd} · ${this.meds.slice(0, 2).map((m: Medication) => medLine(m)).join(', ')}`;
   }
 
-  // Medical alert card (same layout as the home-screen widget, design B6). Always light.
+  // Start SOS (danger fill) next to Call (outlined). The two things that matter first.
   @Builder
-  alertCard() {
-    Row({ space: 14 }) {
-      Column() {
-        Text($r('app.string.em_call'))
-          .fontSize($r('app.float.font_badge'))
-          .fontWeight(FontWeight.Bold)
+  sosRow() {
+    Row({ space: 10 }) {
+      Column({ space: 4 }) {
+        Text($r('app.string.tab_sos'))
+          .fontSize($r('app.float.font_micro'))
+          .fontWeight(800)
+          .letterSpacing(1)
           .fontColor($r('app.color.on_accent'))
-        Text(this.info().ambulance)
-          .fontSize($r('app.float.font_title_1'))
+          .opacity(0.9)
+        Blank()
+        Text($r('app.string.em_start_sos'))
+          .fontSize($r('app.float.font_title'))
           .fontWeight(800)
           .fontColor($r('app.color.on_accent'))
+        Text($r('app.string.em_start_sos_sub'))
+          .fontSize($r('app.float.font_caption'))
+          .fontWeight(FontWeight.Medium)
+          .fontColor($r('app.color.on_accent'))
       }
-      .width(104)
-      .height(104)
-      .justifyContent(FlexAlign.Center)
-      .borderRadius(52)
+      .layoutWeight(3)
+      .height(132)
+      .alignItems(HorizontalAlign.Start)
+      .padding(16)
       .backgroundColor($r('app.color.danger'))
-      .border({ width: 5, color: $r('app.color.risk_known_border') })
-      .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.96 })
+      .borderRadius($r('app.float.radius_ml'))
+      .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.97 })
+      .accessibilityGroup(true)
+      .onClick(() => {
+        this.navStack.pushPathByName(Routes.SOS, null);
+      })
+
+      Column() {
+        Text($r('app.string.em_call'))
+          .fontSize($r('app.float.font_small'))
+          .fontWeight(FontWeight.Bold)
+          .fontColor($r('app.color.risk_known_text'))
+        Text(this.info().ambulance)
+          .fontSize(34)   // between title-1 (28) and display (60); the number is the button
+          .fontWeight(800)
+          .fontColor($r('app.color.risk_known_text'))
+      }
+      .layoutWeight(2)
+      .height(132)
+      .justifyContent(FlexAlign.Center)
+      .backgroundColor($r('app.color.surface'))
+      .border({ width: 1.5, color: $r('app.color.danger') })
+      .borderRadius($r('app.float.radius_ml'))
+      .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.97 })
+      .accessibilityGroup(true)
       .accessibilityText(`Call ${this.info().ambulance}`)
       .onClick(() => {
         this.call(this.info().ambulance);
       })
+    }
+    .width('100%')
+  }
 
-      Column({ space: 3 }) {
-        Text($r('app.string.em_alert_label'))
-          .fontSize($r('app.float.font_caption'))
+  // For the person helping: one big ink tile into the bystander guide.
+  @Builder
+  responderTile() {
+    Row({ space: 12 }) {
+      Column({ space: 4 }) {
+        Text($r('app.string.em_responder_label'))
+          .fontSize($r('app.float.font_micro'))
+          .fontWeight(FontWeight.Bold)
+          .letterSpacing(0.8)
+          .fontColor($r('app.color.chat_user_text'))
+          .opacity(0.8)
+        Text($r('app.string.em_responder_title'))
+          .fontSize($r('app.float.font_title_3'))
           .fontWeight(800)
-          .letterSpacing(0.6)
-          .fontColor($r('app.color.card_fixed_alert'))
-        Text(this.conditionLine())
-          .fontSize($r('app.float.font_headline'))
-          .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.card_fixed_ink'))
-        Text(this.factsLine())
+          .fontColor($r('app.color.chat_user_text'))
+        Text($r('app.string.em_responder_sub'))
           .fontSize($r('app.float.font_small'))
-          .fontColor($r('app.color.card_fixed_ink_2'))
-          .maxLines(2)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
-        Text($r('app.string.em_avoid'))
-          .fontSize($r('app.float.font_small'))
-          .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.card_fixed_alert'))
+          .fontColor($r('app.color.chat_user_text'))
+          .opacity(0.85)
       }
       .alignItems(HorizontalAlign.Start)
       .layoutWeight(1)
+      Image($r('app.media.ic_chevron_right')).width(18).height(18).fillColor($r('app.color.chat_user_text'))
     }
     .width('100%')
     .padding(16)
-    .backgroundColor($r('app.color.card_fixed_bg'))
-    .border({ width: 1, color: $r('app.color.card_fixed_border') })
-    .borderRadius($r('app.float.radius_l'))
+    .backgroundColor($r('app.color.chat_user_bg'))
+    .borderRadius($r('app.float.radius_ml'))
+    .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.98 })
+    .accessibilityGroup(true)
+    .onClick(() => {
+      this.navStack.pushPathByName(Routes.BYSTANDER, null);
+    })
+  }
+
+  // Medical card summary. "Open" unfolds the full card with its languages, read aloud and QR.
+  @Builder
+  cardSummary() {
+    Column({ space: 4 }) {
+      Row() {
+        CapsLabel({ text: $r('app.string.em_card_label'), color: $r('app.color.risk_known_text') })
+        Blank()
+        Text(this.showCard ? $r('app.string.em_card_close') : $r('app.string.em_card_open'))
+          .fontSize($r('app.float.font_badge'))
+          .fontWeight(FontWeight.Bold)
+          .fontColor($r('app.color.brand_text'))
+      }
+      .width('100%')
+      Text(this.conditionLine())
+        .fontSize($r('app.float.font_headline'))
+        .fontWeight(FontWeight.Bold)
+        .fontColor($r('app.color.ink'))
+        .margin({ top: 4 })
+      Text($r('app.string.em_card_facts', this.factsLine()))
+        .fontSize($r('app.float.font_small'))
+        .fontColor($r('app.color.ink_2'))
+        .maxLines(2)
+        .textOverflow({ overflow: TextOverflow.Ellipsis })
+      Text($r('app.string.em_card_inside'))
+        .fontSize($r('app.float.font_caption'))
+        .fontWeight(FontWeight.Medium)
+        .fontColor($r('app.color.ink_3'))
+    }
+    .width('100%')
+    .alignItems(HorizontalAlign.Start)
+    .padding(16)
+    .backgroundColor($r('app.color.surface'))
+    .border({ width: 1, color: $r('app.color.border') })
+    .borderRadius($r('app.float.radius_ml'))
+    .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.98 })
+    .accessibilityGroup(true)
+    .accessibilityDescription(this.showCard ? $r('app.string.a11y_expanded') : $r('app.string.a11y_collapsed'))
+    .onClick(() => {
+      this.showCard = !this.showCard;
+    })
+  }
+
+  @Builder
+  pharmacyRow() {
+    Row() {
+      Text($r('app.string.ph_title'))
+        .fontSize($r('app.float.font_body'))
+        .fontWeight(FontWeight.Bold)
+        .fontColor($r('app.color.ink'))
+        .layoutWeight(1)
+      Image($r('app.media.ic_chevron_right')).width(16).height(16).fillColor($r('app.color.ink_3'))
+    }
+    .width('100%')
+    .height(56)
+    .padding({ left: 16, right: 16 })
+    .backgroundColor($r('app.color.surface'))
+    .border({ width: 1, color: $r('app.color.border') })
+    .borderRadius($r('app.float.radius_ml'))
+    .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.98 })
+    .accessibilityGroup(true)
+    .onClick(() => {
+      this.navStack.pushPathByName(Routes.PHARMACY_CARD, null);
+    })
   }
 
   build() {
     Scroll() {
       Column({ space: 12 }) {
-        PageTitle({ title: $r('app.string.emergency_title') })
+        ScreenHeader({ title: $r('app.string.emergency_title'), back: false })
 
-        this.alertCard()
-
-        // Contacts: one tap to call
-        ForEach(this.profile?.contacts ?? [], (c: Contact) => {
-          QuietButton({
-            label: `Call ${c.name} (${c.relation === '' ? 'ICE' : c.relation})`,
-            icon: $r('app.media.ic_phone'),
-            onTap: () => {
-              this.call(c.phone);
-            }
-          })
-        }, (c: Contact) => `${c.name}-${c.phone}`)
-        if (this.info().general !== this.info().ambulance) {
-          SecondaryButton({
-            label: `${this.info().general} · General emergency`,
-            icon: $r('app.media.ic_phone'),
-            onTap: () => {
-              this.call(this.info().general);
-            }
-          })
-        }
-
-        NavRow({
-          icon: $r('app.media.ic_bell'),
-          title: $r('app.string.em_sos_title'),
-          subtitle: $r('app.string.em_sos_sub'),
-          onTap: () => {
-            this.navStack.pushPathByName(Routes.SOS, null);
-          }
-        })
-          .margin({ top: 8 })
-        NavRow({
-          icon: $r('app.media.ic_hand'),
-          title: $r('app.string.emergency_bystander'),
-          subtitle: $r('app.string.em_bystander_sub'),
-          onTap: () => {
-            this.navStack.pushPathByName(Routes.BYSTANDER, null);
-          }
-        })
-        NavRow({
-          icon: $r('app.media.ic_pill'),
-          title: $r('app.string.ph_title'),
-          subtitle: $r('app.string.ph_subtitle'),
-          onTap: () => {
-            this.navStack.pushPathByName(Routes.PHARMACY_CARD, null);
-          }
-        })
-
-        this.nearbyRow()
+        this.sosRow()
+        this.responderTile()
 
         if (this.profile === undefined) {
           Text($r('app.string.emergency_no_profile'))
@@ -490,7 +540,9 @@ export struct EmergencyPage {
             .fontColor($r('app.color.ink_3'))
             .padding(20)
         } else {
-          SectionHeader({ title: $r('app.string.em_full_card') })
+          this.cardSummary()
+        }
+        if (this.profile !== undefined && this.showCard) {
           this.languageRow()
           if (this.canSpeak) {
             SecondaryButton({
@@ -589,8 +641,41 @@ export struct EmergencyPage {
           .borderRadius($r('app.float.radius_m'))
           .alignItems(HorizontalAlign.Center)
         }
+
+        // Contacts: one tap to call
+        ForEach(this.profile?.contacts ?? [], (c: Contact) => {
+          QuietButton({
+            label: `Call ${c.name} (${c.relation === '' ? 'ICE' : c.relation})`,
+            icon: $r('app.media.ic_phone'),
+            onTap: () => {
+              this.call(c.phone);
+            }
+          })
+        }, (c: Contact) => `${c.name}-${c.phone}`)
+        if (this.info().general !== this.info().ambulance) {
+          SecondaryButton({
+            label: `${this.info().general} · General emergency`,
+            icon: $r('app.media.ic_phone'),
+            onTap: () => {
+              this.call(this.info().general);
+            }
+          })
+        }
+
+        this.pharmacyRow()
+        this.nearbyRow()
+
+        Text($r('app.string.em_test_sos'))
+          .fontSize($r('app.float.font_small'))
+          .fontWeight(FontWeight.Medium)
+          .fontColor($r('app.color.ink_2'))
+          .decoration({ type: TextDecorationType.Underline })
+          .height($r('app.float.touch_min'))
+          .onClick(() => {
+            this.navStack.pushPathByName(Routes.SOS, new SosParam(true, ''));
+          })
       }
-      .padding({ left: $r('app.float.space_screen'), right: $r('app.float.space_screen'), bottom: 24 })
+      .padding({ left: $r('app.float.space_m'), right: $r('app.float.space_m'), bottom: 48 })
       .width('100%')
     }
     .width('100%')
