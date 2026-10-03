@@ -213,3 +213,38 @@ connected and is working correctly with the AI"
 - **Not verified:** the emulator, because no `hdc` target was connected; `LocalConfig.ets` has no backend URL, so the
   app runs in offline mode; and the Edge Functions are not yet redeployed with prompt `2026-10-03.2`.
 
+### 2026-10-03 (cont.) — testing on the emulator, driven by Claude Code (Kaloyan)
+
+**Prompt:** "i started emulator in deveco studio — think how you can come to use it yourself and test things out"
+
+**How the agent drove the emulator**
+- UI: `hdc install` of the unsigned HAP, which the emulator accepts, then `uitest uiInput` (tap, type, swipe),
+  `uitest dumpLayout` to find elements by text, and `snapshot_display` screenshots that the model reads. This is
+  now `app/scripts/ui.sh`.
+- Live AI without deploying: the Edge Functions run locally under deno behind a small router
+  (`backend/eval/dev-backend.ts`), `hdc rport tcp:8000 tcp:8000` forwards the port into the emulator, and the
+  gitignored `LocalConfig.ets` points at `127.0.0.1:8000`.
+
+**Verified on the emulator (API 24 image)**
+- Onboarding, and Home with the Ask Celia tile.
+- Offline chat: verdict card plus interaction findings, and the check appears in the scan history.
+- Emergency phrase, including a curly apostrophe: SOS countdown, with the right number (911 for a US profile) and
+  the 30 s length quoted.
+- "I'm OK" on SOS confirms in the chat.
+- Check result → "Ask Celia about this".
+- **Live model:** `check_drug` runs on the device and returns a deterministic card with a validated explanation.
+  `add_med` shows a confirm card and saves only after Confirm.
+- Simulated heart alerts trigger a check-in with quick replies.
+
+**Bugs found only by running it** (all fixed, with tests where the logic is pure)
+1. Celia said "tap Cancel", but the SOS button reads "I'm OK". The Open SOS chip also stayed after cancelling.
+2. The offline parser took "it" from "I was offered Zofran. Is it safe…" as the drug name, so a known-risk
+   medicine came back as "not recognised". The failure was safe, but wrong.
+3. Check-in text repeated the heart rate and "Are you OK?", because main's alarm rules already write both.
+4. INFO-level alerts (e.g. HRV drop) started a check-in that would escalate to SOS after 60 s. They now only post
+   a message.
+
+**Not verified:** voice (no mic input on the emulator), box scan from a photo (no test image in the gallery),
+Realtime, and Celia intents. A parallel Claude Code session is redesigning the UI on the same branch; the two
+sessions coordinated file ownership by message.
+
