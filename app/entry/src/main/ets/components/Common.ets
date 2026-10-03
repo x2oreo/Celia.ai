@@ -180,7 +180,7 @@ export struct PageTitle {
   build() {
     Column({ space: 4 }) {
       Text(this.title)
-        .fontSize($r('app.float.font_headline'))
+        .fontSize($r('app.float.font_title_1'))
         .fontWeight(FontWeight.Bold)
         .fontColor($r('sys.color.font_primary'))
       if (this.subtitle !== '') {

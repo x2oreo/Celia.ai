@@ -29,8 +29,19 @@ import { VerdictCardPayload } from '../model/AgentTypes';
 import { verdictText } from './VerdictText';
 import { VitalsDigest } from './VitalsDigest';
 import { EMERGENCY_COUNTDOWN_SEC } from './tools/ActionTools';
+import { SosController } from '../emergency/SosController';
 
 const log: Logger = new Logger('AgentCore');
+
+// The alarm rules already write a full sentence (often with the heart rate). Only add the rate when it's missing.
+export function alertText(alert: VitalsAlert): string {
+  const hr: string = `${Math.round(alert.hr)}`;
+  const msg: string = alert.message.trim();
+  if (msg.length === 0) {
+    return `Your heart rate is ${hr} bpm.`;
+  }
+  return alert.hr > 0 && !msg.includes(hr) ? `Your heart rate is ${hr} bpm. ${msg}` : msg;
+}
 
 const MAX_STEPS: number = 5;            // model calls per user turn
 const HISTORY_FOR_MODEL: number = 12;   // recent text messages sent as conversation memory
@@ -277,17 +288,22 @@ export class AgentCore {
       this.proactive.emit(this.say('Your watch disconnected, so I can\'t see your heart rate right now.', [], true));
       return;
     }
-    if (alert.severity === 'CRITICAL') {
-      // Index already opened the SOS countdown for this alert; don't start a second emergency path.
+    const text: string = alertText(alert);
+    if (alert.severity === 'INFO') {
+      // Worth knowing, not worth an emergency timer.
+      this.proactive.emit(this.say(text, [], true));
+      return;
+    }
+    if (alert.severity === 'CRITICAL' && SosController.get().canAutoStart(Date.now())) {
+      // Index opens the SOS countdown for this alert; don't start a second emergency path.
       this.cancelCheckIn();
-      this.proactive.emit(this.say(`Your heart rate is ${Math.round(alert.hr)} bpm. I've started the SOS countdown — ` +
-        'tap "I\'m OK" on that screen if you are fine.', [], true));
+      this.proactive.emit(this.say(`${text} I've started the SOS countdown — tap "I'm OK" on that screen if you ` +
+        'are fine.', [], true));
       return;
     }
     const replies: QuickRepliesPayload = { options: [QUICK_REPLY_OK, QUICK_REPLY_UNWELL] };
-    const detail: string = alert.message !== '' ? ` ${alert.message}` : '';
-    const reply: AgentReply = this.say(
-      `Your heart rate is ${Math.round(alert.hr)} bpm.${detail} Are you OK?`, [action('QUICK_REPLIES', replies)], true);
+    const ask: string = /are you ok\?/i.test(text) ? text : `${text} Are you OK?`;
+    const reply: AgentReply = this.say(ask, [action('QUICK_REPLIES', replies)], true);
     this.cancelCheckIn();
     this.checkInPending = true;
     this.checkInTimer = setTimeout(() => {

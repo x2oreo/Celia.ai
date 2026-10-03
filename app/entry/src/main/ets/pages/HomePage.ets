@@ -120,7 +120,7 @@ export struct HomePage {
         Row() {
           Column({ space: 4 }) {
             Text(this.greeting())
-              .fontSize($r('app.float.font_headline'))
+              .fontSize($r('app.float.font_title_1'))
               .fontWeight(FontWeight.Bold)
               .fontColor($r('sys.color.font_primary'))
             Text(this.profile === undefined ? '' : `Long QT · ${this.profile.genotype === 'UNKNOWN' ? 'genotype unknown' :

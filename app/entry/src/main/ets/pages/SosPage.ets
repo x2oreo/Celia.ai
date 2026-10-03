@@ -226,7 +226,7 @@ export struct SosPage {
             .borderRadius(100)
         }
         Text($r('app.string.sos_sent_title'))
-          .fontSize($r('app.float.font_headline'))
+          .fontSize($r('app.float.font_title_1'))
           .fontWeight(FontWeight.Bold)
           .fontColor($r('sys.color.font_primary'))
         Text($r('app.string.sos_sent_subtitle'))
