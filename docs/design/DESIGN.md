@@ -363,6 +363,13 @@ The `Taken` pill is 44 vp tall (`chip_height`, radius 22) so a dose is logged wi
   an amber pill under the HRV line: `!` + "Clarithromycin · 2d left" (10 px, `elevated` text on a dark amber fill).
   Amber because the watch is watching more closely, not alarming. A high-HR alert then reads "Limit 110 · lowered
   for Clarithromycin". It disappears when the window ends.
+- **Medical ID** (second swipe page, right after Home): for a bystander. "MEDICAL ID" caps in `alert`, "Long QT
+  syndrome" bold, "Type LQT2" when known, "Avoid QT-prolonging drugs", the drug taken in the last 72 h in `elevated`,
+  a red "Call 112" pill (an instruction: the watch never dials), and "Emergency contacts: on my phone". No names or
+  numbers on the watch.
+- **Drug warning glance**: a symptom answered within 24 h of a logged QT-risk drug. Red octagon with "!", "Dizzy after
+  Clarithromycin", "Don't take the next dose. Call your doctor today.", "If you faint, call 112." in `alert`, then
+  OK + Need help (starts the SOS countdown). The phone shows the same text from the same rule.
 - The watch shows **heart rate only. Never QT.**
 
 ---

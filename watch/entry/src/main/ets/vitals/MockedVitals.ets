@@ -15,7 +15,7 @@ export interface MockVitals {
 export const MOCKED_FIELDS: string[] = ['hrvMs', 'spo2', 'breathingRate', 'irregularRhythm'];
 
 /** Simulate page / Vitals tiles can force one signal abnormal for a while. */
-export type Anomaly = 'none' | 'hrv' | 'spo2' | 'rhythm';
+export type Anomaly = 'none' | 'hrv' | 'spo2' | 'rhythm' | 'hr';
 
 /** Low HRV while not exercising suggests strong sympathetic (stress) drive, a known LQT1/LQT2 trigger context. */
 export const HRV_LOW_MS = 20;
@@ -98,6 +98,21 @@ export function applyAnomaly(v: MockVitals, anomaly: Anomaly, progress: number, 
     v.irregularRhythm = v.irregularRhythm || progress >= 0.6;
   }
   return v;
+}
+
+/** A tapped heart-rate anomaly ends this far above the current high limit, so it crosses it in any state. */
+export const HR_ANOMALY_ABOVE_LIMIT = 15;
+
+/**
+ * Demo heart rate while the Heart tile's anomaly runs: drifts from the sensor reading to the current high limit +
+ * HR_ANOMALY_ABOVE_LIMIT and back (same curve as the other tiles). The normal alarm rule then decides the alert.
+ */
+export function hrAnomalyBpm(sensorBpm: number, limitHigh: number, progress: number): number {
+  if (progress <= 0) {
+    return sensorBpm;
+  }
+  const target = Math.max(sensorBpm, limitHigh + HR_ANOMALY_ABOVE_LIMIT);
+  return Math.round(lerp(sensorBpm, target, Math.min(1, progress)));
 }
 
 /** Deterministic rule on the (simulated) inputs: which vital, if any, needs an alert. */

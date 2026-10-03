@@ -90,6 +90,9 @@ export struct HeartPage {
   }
 
   pillText(): string {
+    if (Date.now() < this.ctrl.phoneAckUntil) {
+      return 'Answered on phone ✓';
+    }
     const g = this.ctrl.genotype === 'UNKNOWN' ? '' : `${this.ctrl.genotype} · `;
     return `${g}${this.phoneMark()}`;
   }

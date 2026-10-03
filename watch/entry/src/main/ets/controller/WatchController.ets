@@ -40,6 +40,7 @@ import {
   MOCKED_FIELDS,
   anomalyProgress,
   applyAnomaly,
+  hrAnomalyBpm,
   mockVitals,
   vitalAlertFor
 } from '../vitals/MockedVitals';
@@ -69,7 +70,7 @@ import {
 } from '../vitals/DoseNudge';
 import { Fix, currentFix } from '../sync/SosLocation';
 import { SupabaseUploader } from '../sync/SupabaseUploader';
-import { shortDrugName } from '../vitals/DrugBadge';
+import { shortDrugName, symptomAfterDrugTitle } from '../vitals/DrugBadge';
 
 export type SyncState = 'OFF' | 'OK' | 'PENDING' | 'ERROR';
 
@@ -91,6 +92,9 @@ const MOCK_EVERY_MS = 1000;
 const VITAL_ALERT_COOLDOWN_MS = 60000;
 /** Refresh rate of simulated vitals while a tapped anomaly ramps, so the drift looks smooth. */
 const ANOMALY_FRAME_MS = 250;
+/** While an alert / check-in is open, check this often whether the phone answered "I'm fine". */
+const PHONE_ACK_POLL_MS = 3000;
+const PHONE_ACK_SKEW_MS = 5000;
 const SYNC_EVERY_MS = 3000;
 const CONTEXT_EVERY_MS = 60000;
 /** Monitoring is continuous, so summaries are sent per window instead of per start/stop. */
@@ -157,6 +161,10 @@ export class WatchController {
   @Trace riskyDrugRisk: string = '';
   /** When the risky drug was taken (epoch ms); 0 if none or unknown. Drives the home badge's time left. */
   @Trace riskyDrugAt: number = 0;
+  /** "Dizzy after Clarithromycin": a symptom within 24 h of a logged risky drug; '' when not shown. */
+  @Trace drugWarning: string = '';
+  /** Until when Home shows "Answered on phone ✓" (epoch ms). */
+  @Trace phoneAckUntil: number = 0;
   /** Seconds left to answer "Are you OK?"; 0 = no fall in progress. */
   @Trace fallCountdown: number = 0;
   @Trace statusText: string = '';
@@ -214,6 +222,11 @@ export class WatchController {
   private lastVitalsMs: number = 0;
   private lastMockMs: number = 0;
   private anomalyStartMs: number = 0;
+  /** Last reading from the heart-rate source; `bpm` is this unless the Heart tile's demo anomaly is running. */
+  private sensorBpm: number = 0;
+  /** When the current heart-rate alert / check-in opened (0 = none open); a phone "I'm fine" after it closes it. */
+  private popupSinceMs: number = 0;
+  private lastAckPollMs: number = 0;
   private lastVitalAlertMs: number = 0;
   /** When HRV/SpO2 first went past its threshold; -1 = not past it. Same sustain rule as heart rate. */
   private vitalLowSinceMs: number = -1;
@@ -354,6 +367,9 @@ export class WatchController {
     }
     this.anomalyTimer = setInterval(() => {
       if (this.running && this.onWrist && this.bpm > 0) {
+        if (this.anomaly === 'hr') {
+          this.bpm = this.withHrAnomaly(this.sensorBpm, Date.now());
+        }
         this.updateMockedVitals();
       }
       // Frames only during the ramp (+ sustain); the 1 s tick takes over afterwards.
@@ -455,6 +471,17 @@ export class WatchController {
   checkIn(kind: SymptomKind): void {
     this.logSymptom(kind);
     this.checkInOpen = false;
+    // Same rule the phone and watch_insights use: a symptom within 24 h of a QT-risk drug the user took.
+    const warning = symptomAfterDrugTitle(kind, this.riskyDrug, this.riskyDrugAt, Date.now());
+    if (warning.length > 0) {
+      this.drugWarning = warning;
+      this.vibrate(800);
+      Logger.info(`drug warning: ${warning}`);
+    }
+  }
+
+  dismissDrugWarning(): void {
+    this.drugWarning = '';
   }
 
   closeCheckIn(): void {
@@ -719,7 +746,8 @@ export class WatchController {
 
   /** Sources only update the current reading; all processing runs once per second in onTick(). */
   private onSample(bpm: number, tsMs: number): void {
-    this.bpm = bpm;
+    this.sensorBpm = bpm;
+    this.bpm = this.withHrAnomaly(bpm, Date.now());
     this.lastSampleMs = tsMs;
     if (this.statusText === WAITING) {
       this.statusText = '';
@@ -791,11 +819,15 @@ export class WatchController {
     }
     this.tickFall(now);
     this.tickSos(now);
+    this.tickPhoneAck(now);
     this.tickDoseNudge(now);
     this.tickScenarioFall();
     if (!this.onWrist) {
       this.bpm = 0;
       return;
+    }
+    if (this.anomaly === 'hr' && this.sensorBpm > 0) {
+      this.bpm = this.withHrAnomaly(this.sensorBpm, now);
     }
     if (this.bpm <= 0 || now - this.lastSampleMs > READING_VALID_MS) {
       if (this.sourceKind === 'SENSOR' && now - this.lastSampleMs > 8000) {
@@ -805,6 +837,51 @@ export class WatchController {
       return;
     }
     this.processReading(now);
+  }
+
+  /**
+   * "I'm fine" answered on the phone closes a heart-rate alert or the check-in here too. Polls every 3 s only while
+   * one is open. Falls and the SOS countdown are never closed from the phone: those must be answered on the wrist.
+   */
+  private tickPhoneAck(now: number): void {
+    const open = (this.alertKind !== 'NONE' && this.fallCountdown <= 0 && this.sosCountdown <= 0) || this.checkInOpen;
+    if (!open) {
+      this.popupSinceMs = 0;
+      return;
+    }
+    if (this.popupSinceMs === 0) {
+      this.popupSinceMs = now;
+    }
+    if (this.contextClient === undefined || now - this.lastAckPollMs < PHONE_ACK_POLL_MS) {
+      return;
+    }
+    this.lastAckPollMs = now;
+    const since = this.popupSinceMs;
+    this.contextClient.fetchAlertAck().then((ackAt: number | undefined) => {
+      // Small allowance for clock skew; an answer to an older alert never closes a newer one.
+      if (ackAt === undefined || ackAt < since - PHONE_ACK_SKEW_MS || this.popupSinceMs !== since) {
+        return;
+      }
+      this.alertKind = 'NONE';
+      this.checkInOpen = false;
+      this.popupSinceMs = 0;
+      this.phoneAckUntil = Date.now() + 5000;
+      this.vibrate(200);
+      Logger.info('alert answered on the phone');
+    });
+  }
+
+  /** Heart tile demo: the sensor reading, or the drifting demo value while the 'hr' anomaly runs. */
+  private withHrAnomaly(sensor: number, now: number): number {
+    if (this.anomaly !== 'hr' || sensor <= 0) {
+      return sensor;
+    }
+    const elapsed = now - this.anomalyStartMs;
+    if (elapsed >= ANOMALY_TOTAL_MS) {
+      this.anomaly = 'none';
+      return sensor;
+    }
+    return hrAnomalyBpm(sensor, this.limitHigh, anomalyProgress(elapsed));
   }
 
   /** Clock for timing rules: scenario time in demo mode (fast-forwarded), wall clock otherwise. */
@@ -1175,7 +1252,9 @@ export class WatchController {
   }
 
   private record(type: MetricType, payload: MetricPayload, tsMs: number): void {
-    this.outbox.enqueue(makeRow(this.cfg.deviceId, type, payload, tsMs, sourceForKind(this.sourceKind)));
+    // A demo heart-rate drift must never be stored as a real reading.
+    const source = this.anomaly === 'hr' ? 'simulated' : sourceForKind(this.sourceKind);
+    this.outbox.enqueue(makeRow(this.cfg.deviceId, type, payload, tsMs, source));
     this.pending = this.outbox.size;
     if (this.uploader !== undefined) {
       this.syncState = 'PENDING';

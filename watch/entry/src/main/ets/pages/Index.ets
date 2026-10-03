@@ -11,6 +11,11 @@ import { SosScreen } from '../components/SosScreen';
 import { Theme } from '../components/Theme';
 import { VerdictGlance } from '../components/VerdictGlance';
 import { VitalsPage } from '../components/VitalsPage';
+import { DrugWarningGlance } from '../components/DrugWarningGlance';
+import { MedicalIdPage } from '../components/MedicalIdPage';
+
+// Swiper order: Home, Medical ID, Vitals, Check-in, Settings, (Simulate in demo builds).
+const SETTINGS_PAGE = 4;
 
 @Entry
 @ComponentV2
@@ -37,6 +42,8 @@ struct Index {
     Stack() {
       Swiper() {
         HeartPage({ ctrl: this.ctrl })
+        // One swipe from Home, so a bystander finds it without knowing the app.
+        MedicalIdPage({ ctrl: this.ctrl })
         VitalsPage({ ctrl: this.ctrl })
         CheckIn({ ctrl: this.ctrl, asPage: true })
         SettingsPage({ ctrl: this.ctrl })
@@ -48,7 +55,7 @@ struct Index {
       .loop(false)
       .onChange((index: number) => {
         // Settings page: show the current pairing state when it opens.
-        if (index === 3) {
+        if (index === SETTINGS_PAGE) {
           this.ctrl.refreshPairState();
         }
       })
@@ -63,13 +70,15 @@ struct Index {
       .width('100%')
       .height('100%')
 
-      // Most urgent screen wins: SOS > fall/alert > check-in > dose nudge > drug verdict > pairing.
+      // Most urgent screen wins: SOS > fall/alert > check-in > drug warning > dose nudge > drug verdict > pairing.
       if (this.ctrl.sosCountdown > 0 || this.ctrl.sosSent) {
         SosScreen({ ctrl: this.ctrl })
       } else if (this.ctrl.fallCountdown > 0 || this.ctrl.alertKind !== 'NONE') {
         AlertScreen({ ctrl: this.ctrl })
       } else if (this.ctrl.checkInOpen) {
         CheckIn({ ctrl: this.ctrl })
+      } else if (this.ctrl.drugWarning.length > 0) {
+        DrugWarningGlance({ ctrl: this.ctrl })
       } else if (this.ctrl.doseNudgeOpen) {
         DoseNudgeGlance({ ctrl: this.ctrl })
       } else if (this.ctrl.verdictDrug.length > 0) {

@@ -8,6 +8,8 @@ struct Tile {
   @Param @Require value: string;
   @Param simulated: boolean = false;
   @Param warn: boolean = false;
+  /** Tappable demo tile whose value is real (Heart): outlined like the sim tiles, tagged only while simulating. */
+  @Param tappable: boolean = false;
   /** Simulated tiles are tappable: they force that signal abnormal (demo). */
   @Event onTap: () => void = () => {};
 
@@ -30,7 +32,7 @@ struct Tile {
     .justifyContent(FlexAlign.Center)
     .borderRadius(10)
     .backgroundColor(Theme.CARD)
-    .border({ width: this.simulated ? 1 : 0, color: Theme.WARN_DARK })
+    .border({ width: this.simulated || this.tappable ? 1 : 0, color: Theme.WARN_DARK })
     .onClick(() => this.onTap())
   }
 }
@@ -86,8 +88,13 @@ export struct VitalsPage {
             this.ctrl.triggerAnomaly('rhythm');
           } })
         Tile({ label: 'Genotype', value: this.ctrl.genotype === 'UNKNOWN' ? '—' : this.ctrl.genotype })
+        Tile({ label: 'Heart', value: this.ctrl.bpm > 0 ? `${this.ctrl.bpm}` : '—', tappable: true,
+          simulated: this.ctrl.anomaly === 'hr', warn: this.ctrl.bpm > this.ctrl.limitHigh, onTap: () => {
+            this.ctrl.triggerAnomaly('hr');
+          } })
       }
-      Text(this.ctrl.anomaly === 'none' ? 'Tap a sim tile to simulate' : `Simulating ${this.ctrl.anomaly} anomaly`)
+      Text(this.ctrl.anomaly === 'none' ? 'Tap a sim tile to simulate' :
+        this.ctrl.anomaly === 'hr' ? 'Simulating high heart rate' : `Simulating ${this.ctrl.anomaly} anomaly`)
         .fontSize(8)
         .fontColor(Theme.WARN)
     }
