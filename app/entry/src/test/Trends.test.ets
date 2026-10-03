@@ -1,7 +1,7 @@
 import { describe, it, expect } from '@ohos/hypium';
 import { dayKey } from '../main/ets/reminders/DoseSchedule';
 import {
-  fillDays, TrendDay, TrendPoint, trendPoints, trendScale, TrendScale, trendStats, TrendStats
+  fillDays, TrendDay, TrendPoint, trendPoints, trendScale, TrendScale, trendsRoute, trendStats, TrendStats
 } from '../main/ets/vitals/Trends';
 
 const NOW: number = new Date(2026, 9, 3, 12, 0, 0).getTime();
@@ -62,6 +62,21 @@ export default function trendsTest() {
       for (const p of pts) {
         expect(p.x > 0 && p.x < 200 && p.y >= 0 && p.y <= 100).assertTrue();
       }
+    });
+
+    it('reads the app backend when it is the Supabase project', 0, () => {
+      expect(trendsRoute(true, true, 'https://p.supabase.co', 'k', 'k')).assertEqual('BACKEND');
+    });
+
+    it('reads the deployed project when the AI backend is local and the project key is set', 0, () => {
+      expect(trendsRoute(false, true, 'https://p.supabase.co', 'project-key', 'local-dev')).assertEqual('SHARE');
+    });
+
+    it('stays on labelled demo data without a backend or without a project key', 0, () => {
+      expect(trendsRoute(false, false, 'https://p.supabase.co', 'project-key', '')).assertEqual('DEMO');
+      expect(trendsRoute(false, true, 'https://p.supabase.co', 'local-dev', 'local-dev')).assertEqual('DEMO');
+      expect(trendsRoute(false, true, 'https://p.supabase.co', '', 'local-dev')).assertEqual('DEMO');
+      expect(trendsRoute(false, true, '', 'project-key', 'local-dev')).assertEqual('DEMO');
     });
   });
 }

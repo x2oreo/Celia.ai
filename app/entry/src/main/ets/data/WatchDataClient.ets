@@ -4,7 +4,7 @@
 // The parse* functions are pure and unit-tested; they drop rows that don't match the expected shape.
 
 import { Config } from '../common/Config';
-import { getJson, NetResult } from '../common/Net';
+import { getJson, NetResult, NetTarget } from '../common/Net';
 import { Logger } from '../common/Logger';
 import {
   WatchDaySummary, WatchDose, WatchInsight, WatchInsightKind, WatchInsightSeverity, WatchStatus, WatchSymptom,
@@ -208,7 +208,13 @@ export class WatchDataClient {
     return encodeURIComponent(Config.WATCH_DEVICE_ID);
   }
 
-  private static async get(path: string, ledger: boolean): Promise<string | undefined> {
+  // `target` set: read from that project (Trends reads the deployed project while the AI backend is a local dev
+  // server). Not set: the app backend, and only when it is the Supabase project.
+  private static async get(path: string, ledger: boolean, target?: NetTarget): Promise<string | undefined> {
+    if (target !== undefined) {
+      const direct: NetResult = await getJson(path, Config.DRUG_CHECK_TIMEOUT_MS, ledger, target);
+      return direct.ok ? direct.body : undefined;
+    }
     if (!Config.hasWatchCloud()) {
       return undefined;   // watch data lives in the Supabase database, not on a local dev backend
     }
@@ -245,19 +251,21 @@ export class WatchDataClient {
   }
 
   /** The last `days` days that have any watch data, newest first (doctor report, agent). */
-  static async dailySummary(days: number, ledger: boolean = true): Promise<WatchDaySummary[] | undefined> {
+  static async dailySummary(days: number, ledger: boolean = true,
+    target?: NetTarget): Promise<WatchDaySummary[] | undefined> {
     const n: number = Math.max(1, Math.min(90, Math.round(days)));
     const body: string | undefined = await WatchDataClient.get(
       `/rest/v1/watch_daily_summary?device_id=eq.${WatchDataClient.dev()}` +
         '&select=day,doses_taken,first_dose_at,symptoms,symptom_kinds,fine_check_ins,alerts,falls,sos,resting_bpm,' +
-        `simulated&order=day.desc&limit=${n}`, ledger);
+        `simulated&order=day.desc&limit=${n}`, ledger, target);
     return body === undefined ? undefined : parseDailySummary(body);
   }
 
   /** Current fixed-rule insights, CRITICAL first. */
-  static async insights(ledger: boolean = true): Promise<WatchInsight[] | undefined> {
+  static async insights(ledger: boolean = true, target?: NetTarget): Promise<WatchInsight[] | undefined> {
     const body: string | undefined = await WatchDataClient.get(
-      `/rest/v1/watch_insights?device_id=eq.${WatchDataClient.dev()}&select=kind,severity,ts,message,simulated`, ledger);
+      `/rest/v1/watch_insights?device_id=eq.${WatchDataClient.dev()}&select=kind,severity,ts,message,simulated`, ledger,
+      target);
     return body === undefined ? undefined : parseInsights(body);
   }
 }
