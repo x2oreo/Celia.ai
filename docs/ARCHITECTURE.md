@@ -181,6 +181,6 @@ drug tables); the LLM key is an Edge Function secret. Timeouts: app 20 s → fal
 - Min/target **API 20** in `build-profile.json5` (task requirement).
 - Branches: `kaloyan/*`, `georgie/*`, `mark/*` → merge to `main` often (≥ every 2–3 h). `main` must always build.
 - Commits small and frequent (judges read history), Conventional Commits: `feat(agent): …`, `fix(vitals): …`.
-- No secrets in repo: `.env` in `.gitignore`, Supabase keys via `app/.../common/Config.ets` generated from
-  `config.example` — the anon key is public by design, LLM key never leaves Supabase secrets.
+- No secrets in repo: `.env` in `.gitignore`, backend URL + Supabase anon key in the gitignored `app/entry/src/main/ets/common/LocalConfig.ets`, created from
+  `LocalConfig.example.ets` on first build — the anon key is public by design, LLM key never leaves Supabase secrets.
 - Every AI-tool session: append prompt + outcome to `AI_WORKFLOW.md` (one line is fine).

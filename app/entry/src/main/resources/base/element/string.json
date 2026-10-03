@@ -1,0 +1,27 @@
+{
+  "string": [
+    { "name": "module_desc", "value": "Celia.ai main module" },
+    { "name": "EntryAbility_desc", "value": "Heart-safety companion for Long QT syndrome" },
+    { "name": "EntryAbility_label", "value": "Celia.ai" },
+
+    { "name": "tab_agent", "value": "Agent" },
+    { "name": "tab_medicines", "value": "Medicines" },
+    { "name": "tab_heart", "value": "Heart" },
+    { "name": "tab_emergency", "value": "Emergency" },
+
+    { "name": "agent_title", "value": "Your heart-safety agent" },
+    { "name": "agent_placeholder", "value": "Chat with the agent about your condition, medicines and symptoms. Coming soon." },
+    { "name": "medicines_title", "value": "Medicines" },
+    { "name": "medicines_placeholder", "value": "Your medicines and QT-risk checks will appear here." },
+    { "name": "heart_title", "value": "Heart" },
+    { "name": "heart_placeholder", "value": "Live heart rate from your watch or a simulated source will appear here." },
+    { "name": "emergency_title", "value": "Emergency" },
+    { "name": "emergency_placeholder", "value": "Your emergency card and SOS actions will appear here." },
+
+    { "name": "onboarding_title", "value": "Welcome to Celia.ai" },
+    { "name": "onboarding_subtitle", "value": "Set up your heart profile so the agent can keep you safe. Your data stays on this device." },
+    { "name": "onboarding_continue", "value": "Continue" },
+
+    { "name": "disclaimer", "value": "Not a medical device. Always ask your doctor or pharmacist." }
+  ]
+}

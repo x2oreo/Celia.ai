@@ -1,0 +1,15 @@
+{
+  "color": [
+    { "name": "start_window_background", "value": "#000000" },
+
+    { "name": "brand_accent", "value": "#FF6369" },
+    { "name": "brand_accent_soft", "value": "#3B1416" },
+    { "name": "on_accent", "value": "#FFFFFF" },
+
+    { "name": "risk_known", "value": "#F97066" },
+    { "name": "risk_possible", "value": "#FDB022" },
+    { "name": "risk_conditional", "value": "#FAC515" },
+    { "name": "risk_not_listed", "value": "#32D583" },
+    { "name": "risk_unknown", "value": "#98A2B3" }
+  ]
+}

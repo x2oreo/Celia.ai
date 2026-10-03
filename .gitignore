@@ -1,29 +1,45 @@
 # HarmonyOS / DevEco build output
-/node_modules
-/oh_modules
+**/node_modules
 **/oh_modules
-/local.properties
-/.idea
+**/local.properties
+**/.idea
 **/build
-/.hvigor
 **/.hvigor
 .cxx
-/.clangd
-/.clang-format
-/.clang-tidy
+**/.clangd
+**/.clang-format
+**/.clang-tidy
 **/.test
 .appanalyzer
 
 # Signing material and secrets
+# Local backend config (copied from LocalConfig.example.ets by entry/hvigorfile.ts on first build)
+**/common/LocalConfig.ets
 *.p12
 *.cer
 *.p7b
 *.csr
+*.jks
+*.keystore
+*.pem
+*.key
 .env*
 !.env.example
 
-# OS
+# Packaged artifacts copied outside build/ (submit via release, not git)
+*.hap
+*.hsp
+*.app
+
+# Logs / dumps
+*.log
+hilog*.txt
+
+# Editors / OS
+.vscode/
+*.swp
 .DS_Store
+Thumbs.db
 
 # Claude local settings
 .claude/settings.local.json

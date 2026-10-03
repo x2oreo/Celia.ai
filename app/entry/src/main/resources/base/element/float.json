@@ -1,0 +1,13 @@
+{
+  "float": [
+    { "name": "space_xs", "value": "4vp" },
+    { "name": "space_s", "value": "8vp" },
+    { "name": "space_m", "value": "16vp" },
+    { "name": "space_l", "value": "24vp" },
+    { "name": "space_xl", "value": "32vp" },
+    { "name": "radius_m", "value": "16vp" },
+    { "name": "font_title", "value": "24fp" },
+    { "name": "font_body", "value": "16fp" },
+    { "name": "font_caption", "value": "12fp" }
+  ]
+}
