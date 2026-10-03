@@ -27,7 +27,7 @@ Units: lengths in `vp`, font sizes in `fp` (ArkUI). The design file uses px/dp, 
 | **Unknown is never safe** | Grey, dashed, worded "Couldn't identify". "Not listed" still carries a caveat. |
 | **The agent is a companion** | A breathing avatar and a caring voice, not a chatbot widget. Called "the agent" for now. |
 | **Voice first** | You talk to the agent and it talks back. Both sides are written out as they speak. Typing is the second mode of the same conversation. |
-| **Heart rate only** | Never imply the app measures or diagnoses QT. The watch shows heart rate and nothing more. |
+| **Never QT, never an ECG** | The app shows what the watch reports: heart rate and the signals around it (resting rate, HRV, oxygen, breathing, sleep, steps, stress). It never measures or diagnoses QT and never draws an ECG trace. The watch face itself still shows heart rate only. |
 
 ---
 
@@ -277,13 +277,13 @@ Four tabs and the agent in the middle: **Today · Medicines · (orb) · Health �
   circles of a sphere whose axis slowly tumbles, front half only; four per group at tab size), then a radial alpha
   mask (`destination-in`) for the soft edge, and the glow and halo painted behind (`destination-over`). No shader,
   no blur.
-- Sizes: **168** stage, **84** stage with a thread, **56** tab bar (animated, four bands per group).
+- Sizes: **104** in the stage dock, **56** tab bar (animated, four bands per group).
   **28 / 40** inline (`components/AgentAvatar.ets`): a still Dawn gradient with the sheen, no bands.
 - Idle: one slow breath (4 s). Never a double beat that could read as a pulse; nothing that looks like an ECG.
 
 ### 6.6a Voice orb (hero of the conversation)
 
-The orb is the agent's face while you talk. `components/VoiceOrb.ets` → `components/SilkOrb.ets`.
+The orb is the agent's face while you talk. `components/SilkOrb.ets`, placed by `components/agent/OrbDock.ets`.
 
 | State | The orb | Label under the orb |
 |---|---|---|
@@ -297,7 +297,38 @@ The orb is the agent's face while you talk. `components/VoiceOrb.ets` → `compo
 
 Neutral halo means "your voice", warm means "the agent". The label always says the state in words, so it never
 depends on colour or motion alone. While live the label carries a 8 vp dot in the same colour family
-(`brand` for the agent, `ink-4` for you).
+(`brand` for the agent, `ink-4` for you). On the stage the orb sits in the dock at the bottom (10.1a, screens 02
+and 03) with the ambient light and rings behind it.
+
+### 6.6b Icons: Lucide
+
+One icon set everywhere: **Lucide** (lucide.dev, ISC licence), 24 × 24, 2 px stroke, round caps and joins. Chosen
+from the *Celia Icons* comparison (Phosphor, Tabler, Lucide).
+
+- Files: `app/entry/src/main/resources/base/media/ic_*.svg`, from `lucide-static` 1.51.0. Each file names its
+  Lucide source in a comment.
+- **Strokes are outlined to fills.** ArkUI `Image.fillColor` tints fills only: a stroke icon keeps a black stroke
+  and gets its inside flooded. So every icon is converted once (stroke → filled outline, `fill-rule="evenodd"`) and
+  then tints like any other glyph. To add one: download the Lucide SVG, run `npx oslllo-svg-fixer -s in -d out`,
+  wrap the resulting path as `<path fill="#000000" fill-rule="evenodd" d="…"/>`, save as `ic_<name>.svg`.
+- Colour comes from `fillColor` with a token, never from the file. Sizes: 24 in the tab bar and dock, 20–22 in
+  buttons and tiles, 16–18 for chevrons and inline marks.
+- Selected state is colour, not a second glyph: an active tab tints its outline icon `brand`. The one solid glyph
+  is `ic_heart_fill` (live heart rate).
+- The **risk shapes** (`ic_risk_*`) are not from the set and never will be: they are the fixed verdict language
+  of §3.
+
+| Job | Lucide | File |
+|---|---|---|
+| Today · Medicines · Health · Emergency | `house` · `pill` · `heart` · `siren` | `ic_tab_home` · `ic_tab_medicines` (`ic_pill`) · `ic_tab_heart` · `ic_tab_emergency` |
+| Settings · History · Chats | `settings` · `history` · `message-circle` | `ic_settings` · `ic_history` · `ic_chat` |
+| Scan a box · Camera · Search · Add | `scan-barcode` · `camera` · `search` · `plus` | `ic_scan` · `ic_camera` · `ic_search` · `ic_plus` |
+| Reminder · Alarm · Dose taken · Check | `bell` · `alarm-clock` · `circle-check` · `check` | `ic_bell` · `ic_alarm` · `ic_circle_check` · `ic_check` |
+| Trends · Log how I feel · Doctor visit · Watch | `chart-column` · `smile` · `stethoscope` · `watch` | `ic_chart` · `ic_smile` · `ic_doctor` · `ic_watch` |
+| Talk · Muted · Type · Voice · Read aloud · Send | `mic` · `mic-off` · `keyboard` · `audio-lines` · `volume-2` · `send` | `ic_mic` · `ic_mic_off` · `ic_keyboard` · `ic_wave` · `ic_volume` · `ic_send` |
+| Call · Responder · Medical card · QR · Language | `phone` · `hand-heart` · `id-card` · `qr-code` · `languages` | `ic_phone` · `ic_hand` · `ic_id_card` · `ic_qr` · `ic_languages` |
+| Hospital · Pharmacy · AED · First aid · Place · Travel | `hospital` · `store` · `zap` · `briefcase-medical` · `map-pin` · `plane` | `ic_hospital` · `ic_store` · `ic_zap` · `ic_first_aid` · `ic_location` · `ic_plane` |
+| Back · Forward · Expand · Close · Share · Copy · Delete · Lock · Notes · Box | `chevron-left` · `chevron-right` · `chevron-down` · `x` · `share-2` · `copy` · `trash-2` · `lock` · `notebook-pen` · `package` | `ic_chevron_left` · `ic_chevron_right` · `ic_chevron_down` · `ic_close` · `ic_share` · `ic_copy` · `ic_delete` · `ic_lock` · `ic_notes` · `ic_box` |
 
 ### 6.7 States
 
@@ -371,6 +402,60 @@ labelled and separate.
 
 The `Taken` pill is 44 vp tall (`chip_height`, radius 22) so a dose is logged with one thumb.
 
+
+### 6.10 Health charts and the status box
+
+One chart system for every watch metric (`components/MetricChart.ets`, maths in `vitals/Metrics.ets`). Built from
+ArkUI shapes so every colour is a resource and dark mode follows.
+
+**Form follows the number**
+
+| Form | Metrics | Marks |
+|---|---|---|
+| Line | Resting heart rate, HRV, blood oxygen, breathing, live heart rate | 2 vp `brand` line, smoothed without overshoot, `brand` area at 8% under it. A day with no reading breaks the line; it is never bridged. A lone day is a 6 vp dot. |
+| Range | Heart rate per day | 6 vp capsule from the day's lowest to highest reading (`brand` at 30%), 6 vp `brand` dot at the average. |
+| Bars | Sleep, steps, stress time | Bars from zero, 4 vp rounded top, 2 vp gap minimum, `brand` at 35%; the selected bar solid `brand`. |
+
+**Anatomy, top to bottom**
+
+1. **Readout**: the selected day's value in `headline` / 700 with the unit and the date in `body-sm` `ink-3`. It
+   starts on the latest reading. Touching or dragging across the plot moves it: a 1 vp `border-strong` crosshair and
+   a 10 vp `brand` dot with a 2 vp `surface` ring. The readout is the tooltip, so nothing floats over the data.
+2. **Plot** (160 on a detail page): the **usual range** as a `surface-alt` band behind the marks, three or four 1 vp
+   `border` grid lines with their values in `micro` `ink-4` on the left. One y axis, never two.
+3. **Dates**: first, middle, last in `micro` `ink-3`.
+4. **Legend line**: a `surface-alt` swatch + "Your usual range: 53–63 bpm" (own baseline) or "Usual range: 95–100 %"
+   (fixed reference).
+5. Resting heart rate only: the dose and symptom rows of 10.2 Trends, aligned to the same days, ink marks.
+
+Series colour is always `brand`; values and labels stay ink. Mini charts on cards (36 high) keep the same form with
+no axes and one emphasised last mark.
+
+**Metric card** (Health grid): `surface`, 1 vp `border`, `radius_ml`, padding 14. Caps label + `SIMULATED` badge
+when the signal is simulated, value in `title-2` / 800 with the unit in `caption`, the mini chart, then the status
+pill and the change ("↑ 3"). Whole card is the touch target.
+
+**Status** is a fixed rule on the user's own numbers, never model output and never a diagnosis. Word + shape + tint,
+never colour alone:
+
+| Level | Word | Shape | Tint / text |
+|---|---|---|---|
+| Good | `Good` | Circle + ✓ | `risk_not_listed_tint` / `risk_not_listed_text` |
+| Okay | `Okay` | Ring with a bar | `surface-alt` / `ink-2` |
+| Attention | `Worth a look` | Triangle + ! | `risk_possible_tint` / `risk_possible_text` |
+| No data | `No data` | Dashed ring | `surface-alt` / `ink-3` |
+
+Never red: red stays with alerts and verdicts. Pill height 28 (24 on cards), radius 14, shape 16.
+
+Rules (`metricBand`, `levelFor`): inside the usual range = Good, a little outside = Okay, well outside = Worth a
+look. Resting and daily heart rate and HRV use the user's own baseline (median of the days before the last two,
+at least five days); oxygen, breathing, sleep and stress time use fixed reference values; steps are never judged
+past Okay. Change is the last 7 days against the days before ("Up 3 bpm from the week before").
+
+**What this means box**: card with the status pill and the change chip on one row, one or two fixed sentences
+(`body` `ink`), a `divider`, caps "ABOUT THIS NUMBER" and one plain-English paragraph (`body-sm` `ink-2`), then
+the caption "Fixed rules on your own numbers. Not a diagnosis. Always ask your doctor." Signals the watch can only
+simulate today (HRV, oxygen, breathing) always carry the `SIMULATED` badge and the line "Simulated signal".
 
 ---
 
@@ -487,7 +572,7 @@ A size or radius that changes with the orb must not sit under a looping `.animat
 ### 10.1a v2 layout (current direction)
 
 Source: `docs/design/v2/` (01 Today, 02 agent stage empty, 03 agent stage live, 04 Health, 05 Medicines,
-06 Emergency, 07 Doctor visit). The feeling, the order and the positions are the spec; the content is ours (more
+06 Emergency, 07 Doctor visit; the doctor pages were redesigned after the drawing, see 07 below). The feeling, the order and the positions are the spec; the content is ours (more
 than one health metric, the travel banner, interactions, the extra tools).
 
 **Shared rules**
@@ -517,41 +602,53 @@ than one health metric, the travel banner, interactions, the extra tools).
    shape). Interactions between the user's medicines follow as Possible-tint rows.
 8. **Tip** (collapsed): `surface-alt` row, caps "TIP" + the title + chevron; open shows the body.
 
-**02 Agent stage, empty** (pushed full screen from the orb, the agent line, or "Ask the agent"):
+**02 Agent stage, empty** (pushed full screen from the orb, the agent line, or "Ask the agent"). The owner's
+revision of the drawing: **the orb lives at the bottom centre, where a mic button would be**, and everything else
+sits above it.
 
 - Header: chevron-down (close), then `Chats` pill and a round `+` (new chat), both `surface` with 1 vp `border`.
-- Orb 168, "Tap to talk" in `brand_text` 15 fp / 700, then the agent line of Today centred in `title-3`.
-- Caps "ASK ME": starter chips stacked, start-aligned (white, 1.5 vp `border-strong`).
-- Caps "OR GO STRAIGHT TO": feature chips on `surface-alt`, no border (Scan a box, Log how I feel, Doctor visit,
-  Trends), wrapping.
-- Dock: 60 round `surface` camera, **80 coral mic**, 60 round `surface` "Aa" (typing). The microphone only opens on
-  a tap.
+- Content, top-aligned: the agent line of Today centred in `title-3`; caps "ASK ME" with starter chips stacked,
+  start-aligned (white, 1.5 vp `border-strong`); caps "OR GO STRAIGHT TO" with feature chips on `surface-alt`, no
+  border (Scan a box, Log how I feel, Doctor visit, Trends), wrapping.
+- **Orb dock** (`components/agent/OrbDock.ets`): state label ("Tap to talk", `brand_text` 15 fp / 700), then a row:
+  60 round `surface` scan button, **the orb at 104**, 60 round `surface` "Aa" (typing). Tap the orb: start talking.
+  The microphone only opens on that tap.
+- **Ambient light** (`OrbLight`): a radial glow behind the lower 460 vp of the stage, centred on the orb,
+  `orb_glow` → `orb_glow_clear`. Idle 40% strength. It takes no room in the layout and never covers text.
 
 **03 Agent stage, live voice**:
 
 - Header: chevron-down, then mono caps "VOICE · 0:42" centred (elapsed time of the session).
-- Orb 168 until the first words, then 120; state label with its dot.
+- Before the first words the state stands alone in `title-2`, centred ("I'm listening").
 - **Captions** instead of a chat list: "You: …" in `body` `ink-3`, the agent's sentence in `title-2` / 700 growing
-  word by word, the tool step pill, then the cards of this turn (verdict card, confirm cards, tiles) sliding in
-  under the captions. A verdict never needs a page change.
-- "Show conversation" (chevron-up, 14 fp / 600) swaps the captions for the full thread; "Hide conversation" swaps
-  back. Typing mode always shows the thread.
-- Dock: 60 round `Mute`, **80 ink `End`** (✕ over the word; ink, not red: ending a call is not an emergency),
-  60 round "Aa".
+  word by word (18 fp above 140 characters), the tool step pill, then the cards of this turn (verdict card,
+  confirm cards, tiles) sliding in under the captions. A verdict never needs a page change.
+- "Show conversation" (chevron, 14 fp / 600) swaps the captions for the full thread; "Hide conversation" swaps
+  back. Typing mode always shows the thread and the chat bar instead of the dock.
+- Orb dock, live: state label with its 8 vp dot (`brand` for the agent, `ink-4` for you) and the hint "Tap the orb
+  to mute". Row: 60 round **ink `End`** (✕ over the word; ink, not red: ending a call is not an emergency), the orb,
+  60 round "Aa". **Tap the orb: mute / unmute** (the orb fades and stills when muted; the label says "Muted").
+  Recording one question (tap-to-talk fallback): cancel ✕, orb (tap: send), "Aa".
+- Light and rings: the ambient light turns neutral (`orb_glow_user`) while you are heard and warm while the agent
+  speaks, and opens with the voice level (160 ms ease-out). While someone talks, two 1.5 vp rings leave the orb
+  (scale 1 → 2.6, fading out, 2.6 s, offset by half a cycle). Rings are slow and round: nothing that reads as a
+  pulse or a trace. Reduced motion: no rings, light stays.
 - Leaving the stage (close, a pushed page, the app going to the background) ends the live session.
 
-**04 Health (tab 2)**: the graph is the screen.
+**04 Health (tab 2)**: every watch metric, one tap from its graph (6.10).
 
 1. "Now" card: heart glyph in `brand`, bpm in `title-1`, "bpm now", source badge and one line in words on the right
-   ("In your usual range", "Above your usual range at rest", "Asleep", "Active").
-2. Three quiet cells: resting HR, HRV, rhythm.
-3. Segmented control `Today · 14 days · 30 days` (`surface-alt` track, radius 14, selected segment `surface`).
-4. Chart card: Today = the last-minutes line; 14 / 30 days = resting heart rate per day with the dose and symptom
-   rows, `SIMULATED` / `WATCH` badge top-right, caption "Heart rate only. This is not an ECG."
-5. Three stat tiles (average resting, last 7 days vs before, days dosed n/N), then "WHAT STANDS OUT" (fixed-rule
-   findings). Numbers are reported, never judged.
-6. Alerts, then demo controls.
-7. Pinned above the tab bar: coral `Log how I feel` + secondary `Doctor visit`, so they are never hunted for.
+   ("In your usual range", "Above your usual range at rest", "Asleep", "Active"). Under it the live line of the last
+   minutes (plot 96) and a quiet "Rhythm · regular" row. Tap: Heart rate detail.
+2. Caps "FROM YOUR WATCH · 14 DAYS", then the **metric cards** (6.10): Resting heart rate full width, then a
+   2-column grid: HRV, Blood oxygen, Breathing, Sleep, Steps, Stress time. Tap: the metric's detail page.
+3. "WHAT STANDS OUT" (fixed-rule findings), alerts, then demo controls.
+4. Pinned above the tab bar: coral `Log how I feel` + secondary `Doctor visit`, so they are never hunted for.
+
+**04a Metric detail (pushed)**: header with the metric name. Big value + unit with the source badge, segmented
+control `14 days · 30 days` (Heart rate adds `Now` first), the chart card (6.10) with the dose and symptom rows on
+Resting heart rate, the **What this means** box, three stat tiles (average, lowest, highest), the fixed-rules
+caption. Pinned: coral `Ask the agent about this`.
 
 **05 Medicines (tab 1)**: header with a round History button next to settings; "Can I take…" field + coral camera
 stay first. **Today's doses** (caps + "All ›" to Reminders) as a sideways row of 132 vp cards: taken (`surface-alt`,
@@ -565,10 +662,45 @@ languages, read aloud, QR, share") whose "Open ›" unfolds the full card with i
 contact call buttons; Pharmacy card row; NEARBY (Hospital, Pharmacy, AED); "Test SOS (nothing is sent)" last and
 small. Layout only: every action keeps its logic.
 
-**07 Doctor visit (pushed)**: specialty chips in one sideways row (selected = ink), section cards with a caps label
-and the lines in `body` / 600, the AI summary on `surface-alt` under a mono caps "AI SUMMARY · CHECK BEFORE SHARING"
-label, visually separate. Pinned: coral `Share with doctor` + secondary `Copy`. Share-as-text stays as a quiet link
-in the page.
+**07 Doctor visits (pushed, three pages)**. A visit is one saved page per doctor; the old single brief with
+specialty chips is gone. Everything is fixed data (profile, medicine list, event log, the visit plan built from the
+QT dataset); the only model text is the labelled AI summary.
+
+- **Gallery** (`pages/DoctorVisitsPage.ets`): header "Doctor visits", one `body-sm` intro line. Caps "LATEST" + the
+  newest visit as a full-width card (icon well 44 on `brand-tint`, specialty in `headline`, "Dr X · Today" in
+  `caption`, the reason in `body-sm` on two lines, chevron). Caps "EARLIER · N" + a two-column grid of 172 vp cards
+  (well 40, date top right, specialty, reason, then the pills) ending in a dashed "New visit" tile. Pills: the
+  **avoid count** (Known-risk shape 16 + "6 to avoid" on the Known tint, height 24) and a quiet "Shared" word. Tap
+  opens the visit, long press offers Delete (asks first). Empty: dashed card with the well, `title-3`
+  "Prepare your first visit" and one line. Pinned: coral `New visit`.
+- **New visit** (`pages/NewVisitPage.ets`): caps "WHO ARE YOU SEEING?" + a two-column grid of specialty tiles (height
+  64, well 36, name 15 fp / 700; selected = 1.5 vp `ink` border). Caps "WHY ARE YOU GOING?" + a 96 vp text area
+  (`surface`, 1.5 vp `border-strong`) and starter chips on `surface-alt` that add plain words to it. Then the
+  **guess card** on `surface-alt`, radius 20: caps "LOOKS LIKE", one row per purpose (title 15 fp / 700, what is
+  likely in `caption`; "From your words" in `brand-text` when the reason named it, otherwise "Usual for this
+  doctor"), a Known-tint strip with the shape and "N known-risk medicines will be flagged for the doctor", and a
+  caption that says the match is fixed rules on this phone. It updates while typing. Optional doctor's name last.
+  Pinned: coral `Create visit page`.
+- **Visit page** (`pages/DoctorVisitPage.ets`), the page handed to the doctor. **Share is in the header**, not
+  pinned at the bottom: back, specialty in `headline` over "Dr X · date" in `caption`, then a coral `Share` pill
+  (height 44, share icon). This is the one exception to the pinned-action rule: the screen is read top-down by
+  someone else, so the action stays out of the content. Top to bottom:
+  1. **At a glance** card: well 44, patient name in `title-3` / 800, "Long QT syndrome · LQT2 · ICD: no" in
+     `brand-text`; divider; caps "HERE FOR" + the reason in `body` / 500 + the purposes as quiet pills (height 28,
+     `surface-alt`); divider; caps "TAKES NOW" + up to four medicines, each with its compact risk badge; profile
+     notes in a `surface-alt` well.
+  2. **Don't prescribe** card: the verdict-card container (radius 20, 1.5 vp `risk_known_border`). Header band on
+     the Known tint: octagon 32, "Please don't prescribe" 16 fp / 800, "On the known-risk QT list". Body: one caps
+     label per purpose and the known-risk medicines as name chips (height 30, `surface-alt`, 14 fp / 700). Divider,
+     then a fold-open row "Check first · N" with the Possible shape (possible and conditional risk; open = one row
+     per medicine with its compact badge). Divider, then "Not on the QT lists" with the Not-listed shape, the names
+     per purpose, and always the caption "Not listed doesn't guarantee safety. The choice is the doctor's."
+  3. **AI summary** on `surface-alt` under the mono caps "AI SUMMARY · CHECK BEFORE SHARING", fetched once and kept
+     with the visit; typing dots while it loads, a quiet retry button when it fails.
+  4. Caps "IN DEPTH": the rest of the brief as folded rows (`surface`, 1 vp `border`, radius 16, min height 52: title
+     15 fp / 700, a count pill, chevron down / up). Open shows the lines in `body-sm`.
+  5. Secondary `Copy link` + `Copy text`, the coral text link "Share as text", the 48 h caption, the disclaimer, and
+     an underlined quiet "Delete visit".
 
 Rules kept from the earlier direction: one conversation in the app (`Routes.AGENT_CHAT` is the stage; "Ask the
 agent" from any screen opens it with the question); every control has an `accessibilityText`; verdict colours come
@@ -586,7 +718,7 @@ from deterministic payloads only.
   outlined = no) and symptom reported (8 vp `ink` dot). Marks are ink, never risk colours, and each row has a text
   label. Caption "This is not an ECG". Then four stat tiles (average resting, last 7 days vs before, days with a
   dose, days with a symptom) and "What stands out": fixed-rule findings as neutral cards with a `NOTE` / `IMPORTANT`
-  word. Numbers are reported, never judged as good or bad.
+  word. Findings report numbers; the good / okay / worth-a-look status lives in the metric status box (6.10).
 - **Emergency (calm)**: `title-1`, the Medical alert card (as the widget), a danger "Call 112" button, then rows for
   Bystander guide, Pharmacy card, Offline QR and Test SOS. The full emergency card stays always light (`card_fixed_*`).
   Above the full card: a **card language** row (horizontal chips, height 44, pill, `surface` + 1 vp `border`; selected
@@ -678,6 +810,7 @@ the browser; the page itself never sees anything until the key in the link's `#`
 ### 10.4 Extra resource names
 
 `radius_btn` 14, `button_height_sheet` 52, `chip_height` 44, `font_button` 15, `font_badge` 13, `font_mono` 9,
-`avatar_*` (incl. `avatar_hero` 168), `dock_side` 52, `dock_main` 72, `risk_<level>_border`, `danger`, `scrim`,
-`shadow_sheet`, `orb_light/mid/dark`, `orb_sheen`, `orb_sheen_clear`, `orb_glow`, and `card_fixed_*`
+`avatar_*` (incl. `avatar_tab` 56, `avatar_hero` 168), `dock_side` 60, `dock_main` 80, `risk_<level>_border`, `danger`, `scrim`,
+`shadow_sheet`, `orb_light/mid/dark`, `orb_sheen`, `orb_sheen_clear`, `orb_glow`, `orb_glow_clear`,
+`orb_glow_user`, `orb_glow_user_clear`, and `card_fixed_*`
 (always-light emergency card, the same in dark mode).
