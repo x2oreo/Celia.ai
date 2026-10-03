@@ -5,13 +5,25 @@
 > [`PLAN.md`](PLAN.md)). New contracts are sketched in [`ARCHITECTURE.md`](ARCHITECTURE.md) under "Proposed
 > contracts" — confirm with the owner before coding.
 
-## Status (non-AI build)
+## Status (3 Oct 2026)
 
-Built and running on the emulator: T1–T6, T8–T17 (T15 as phone-notification fallback), T18 (notification
-fallback), T19, T21 (in-app fallback; system reminders need an AGC quota), T22–T24, T28–T30, plus a manual
-symptom log in place of T27. Skipped as AI: T7, T20, T25, LLM parts of T13 / T27. Deferred: T26 (needs a Map key).
-UI is English-only for now (T11 translations kept in code, switcher hidden; no Polish resources).
-Details and limits: README "How to verify each feature" and ARCHITECTURE capability table.
+Built and running on the emulator: T1–T14, T16, T17, T19, T22–T24, T27–T30, plus:
+- **T7** saved chats (Chats page, New chat, rename/delete, `start_new_chat`);
+- **T11** in-app card language picker (13 languages, saved) and card viewer wording in 13 languages;
+- **T12** encrypted short links (`share`), revocable;
+- **T13** encrypted web report + optional validated AI summary (`/doctor-summary`);
+- **T15** phone → `watch_context` → Celia watch verdict glance (cloud path; Wear Engine still not wired);
+- **T20** five more intents (LogSymptom, TakeDose, ShowPharmacyCard, AddMedication, ReadEmergencyCard);
+- **T21** reminders with in-app fallback (system reminders need an AGC quota);
+- **T23** travel banner + localised pharmacy card;
+- **T25** read card aloud (medical part only);
+- **T26** fallback: map search for hospital / pharmacy / AED (full Map Kit needs a key);
+- **T27** `log_symptom` agent tool (red flags → SOS by rule).
+
+Partly built / blocked by approvals: T18 Live View (scenario approval; notification fallback, no HR/verdict updates),
+T21 "Taken" button on the system reminder (quota), T10 SOS via backend SMS from the phone (contacts would leave the
+phone; share-sheet path kept). Not built: F-17 caregiver tablet, F-18 Brugada/CPVT pack, A2A agent (HMAF).
+Unit tests: 188 Hypium + 59 Deno, all green. Details: README "How to verify each feature", ARCHITECTURE capability table.
 
 ## Feature map
 
