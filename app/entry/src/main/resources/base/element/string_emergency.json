@@ -195,6 +195,54 @@
     {
       "name": "em_widget_responder",
       "value": "Responder"
+    },
+    {
+      "name": "em_nfc_write",
+      "value": "Write to NFC tag"
+    },
+    {
+      "name": "em_nfc_hold",
+      "value": "Hold an NFC tag to the back of the phone…"
+    },
+    {
+      "name": "em_nfc_cancel",
+      "value": "Cancel"
+    },
+    {
+      "name": "em_nfc_off",
+      "value": "Turn on NFC in the phone settings first."
+    },
+    {
+      "name": "em_nfc_failed_start",
+      "value": "NFC is not available right now."
+    },
+    {
+      "name": "em_nfc_written",
+      "value": "Written. Any phone that taps this tag opens your card."
+    },
+    {
+      "name": "em_nfc_read_only",
+      "value": "This tag is locked and can't be written."
+    },
+    {
+      "name": "em_nfc_io_failed",
+      "value": "Couldn't write. Hold the tag still, or use a bigger tag (%s or larger)."
+    },
+    {
+      "name": "em_nfc_not_ndef",
+      "value": "This tag type isn't supported. Use an NTAG213, 215 or 216 sticker."
+    },
+    {
+      "name": "em_nfc_error",
+      "value": "Couldn't write the tag. Try again."
+    },
+    {
+      "name": "em_nfc_too_long",
+      "value": "This card link is too long for an NFC tag. Turn on sharing so the short link can be used."
+    },
+    {
+      "name": "em_nfc_hint",
+      "value": "Needs a %s tag or larger. Write it again after you change your card. Not yet tested with a real tag."
     }
   ]
 }

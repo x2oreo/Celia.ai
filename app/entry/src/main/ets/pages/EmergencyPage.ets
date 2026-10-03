@@ -22,6 +22,7 @@ import { toast } from '../common/Toast';
 import { copyText } from '../common/Clipboard';
 import { Logger } from '../common/Logger';
 import { common } from '@kit.AbilityKit';
+import { NfcCard, NfcWriteResult, smallestTagFor } from '../emergency/NfcCard';
 
 const log: Logger = new Logger('EmergencyPage');
 
@@ -39,10 +40,14 @@ export struct EmergencyPage {
   @Local shareUrl: string = '';        // short encrypted link (Supabase share); '' → the long in-link fallback
   @Local sharing: boolean = false;
   private shareDirty: boolean = false;
+  @Local nfcShown: boolean = false;    // device has NFC tag support (B14, built, unverified)
+  @Local nfcWaiting: boolean = false;
+  @Local nfcMsg: ResourceStr = '';
   private unsubscribe: () => void = () => {
   };
 
   aboutToAppear(): void {
+    this.nfcShown = NfcCard.availability() !== 'UNSUPPORTED';
     this.unsubSpeaking = VoiceOutput.get().onSpeaking((on: boolean) => {
       this.speaking = on;
     });
@@ -55,6 +60,7 @@ export struct EmergencyPage {
   }
 
   aboutToDisappear(): void {
+    NfcCard.stop();
     this.unsubscribe();
     this.unsubSpeaking();
     if (this.speaking) {
@@ -167,6 +173,52 @@ export struct EmergencyPage {
       log.warn(`card open failed: ${JSON.stringify(e)}`);
       toast(this.getUIContext(), $r('app.string.error_generic'));
     });
+  }
+
+  // NFC handover (B14): writes the same link as the QR to a tag. Built, unverified — no NFC on the emulator.
+  private writeNfc(): void {
+    if (NfcCard.availability() === 'OFF') {
+      toast(this.getUIContext(), $r('app.string.em_nfc_off'));
+      return;
+    }
+    const link: string = this.currentCardLink();
+    const tagName: string = smallestTagFor(link);
+    if (link.length === 0 || tagName === '') {
+      this.nfcMsg = $r('app.string.em_nfc_too_long');
+      return;
+    }
+    const ctx: common.UIAbilityContext = this.getUIContext().getHostContext() as common.UIAbilityContext;
+    const started: boolean = NfcCard.start(ctx, link, (r: NfcWriteResult) => {
+      this.nfcWaiting = false;
+      this.nfcMsg = this.nfcResult(r, tagName);
+    });
+    if (!started) {
+      toast(this.getUIContext(), $r('app.string.em_nfc_failed_start'));
+      return;
+    }
+    this.nfcWaiting = true;
+    this.nfcMsg = $r('app.string.em_nfc_hold');
+  }
+
+  private cancelNfc(): void {
+    NfcCard.stop();
+    this.nfcWaiting = false;
+    this.nfcMsg = '';
+  }
+
+  private nfcResult(r: NfcWriteResult, tagName: string): ResourceStr {
+    switch (r) {
+      case 'WRITTEN':
+        return $r('app.string.em_nfc_written');
+      case 'READ_ONLY':
+        return $r('app.string.em_nfc_read_only');
+      case 'IO_FAILED':
+        return $r('app.string.em_nfc_io_failed', tagName);
+      case 'NOT_NDEF':
+        return $r('app.string.em_nfc_not_ndef');
+      default:
+        return $r('app.string.em_nfc_error');
+    }
   }
 
   private async copyCard(): Promise<void> {
@@ -581,6 +633,30 @@ export struct EmergencyPage {
                   this.copyCard();
                 }
               })
+              if (this.nfcShown) {
+                SecondaryButton({
+                  label: this.nfcWaiting ? $r('app.string.em_nfc_cancel') : $r('app.string.em_nfc_write'),
+                  icon: $r('app.media.ic_wave'),
+                  onTap: () => {
+                    if (this.nfcWaiting) {
+                      this.cancelNfc();
+                    } else {
+                      this.writeNfc();
+                    }
+                  }
+                })
+                if (this.nfcMsg !== '') {
+                  Text(this.nfcMsg)
+                    .fontSize($r('app.float.font_small'))
+                    .fontColor($r('app.color.ink_2'))
+                    .textAlign(TextAlign.Center)
+                }
+                Text($r('app.string.em_nfc_hint', smallestTagFor(this.currentCardLink()) === '' ? 'NTAG216' :
+                  smallestTagFor(this.currentCardLink())))
+                  .fontSize($r('app.float.font_caption'))
+                  .fontColor($r('app.color.ink_3'))
+                  .textAlign(TextAlign.Center)
+              }
               if (this.shareUrl !== '') {
                 Text($r('app.string.share_card_caption'))
                   .fontSize($r('app.float.font_caption'))
