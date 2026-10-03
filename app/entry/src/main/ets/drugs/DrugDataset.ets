@@ -76,7 +76,7 @@ export const DRUGS: DrugEntry[] = [
 
   // ── Antifungals ───────────────────────────────────────────────────────────────────────────────
   d('fluconazole', KR, 'Azole antifungal', ['diflucan', 'flukonazol', 'flumycon', 'флуконазол', 'дифлукан'],
-    NONE, ['CYP3A4', 'CYP2C9'], NONE, false),
+    NONE, ['CYP3A4', 'CYP2C9', 'CYP2C19'], NONE, false),
   d('ketoconazole', CR, 'Azole antifungal', ['ketokonazol', 'кетоконазол'], ['CYP3A4'], ['CYP3A4'], NONE, false),
   d('itraconazole', CR, 'Azole antifungal', ['orungal', 'itrakonazol', 'итраконазол'],
     ['CYP3A4'], ['CYP3A4'], NONE, false),
@@ -109,9 +109,9 @@ export const DRUGS: DrugEntry[] = [
 
   // ── Acid reducers (risk via low magnesium) ───────────────────────────────────────────────────
   d('omeprazole', CR, 'Proton pump inhibitor', ['polprazol', 'helicid', 'losec', 'bioprazol', 'omeprazol',
-    'омепразол', 'лосек'], ['CYP2C19', 'CYP3A4'], NONE, NONE, false),
+    'омепразол', 'лосек'], ['CYP2C19', 'CYP3A4'], ['CYP2C19'], NONE, false),
   d('esomeprazole', CR, 'Proton pump inhibitor', ['nexium', 'emanera', 'esomeprazol', 'езомепразол', 'нексиум'],
-    ['CYP2C19'], NONE, NONE, false),
+    ['CYP2C19'], ['CYP2C19'], NONE, false),
   d('pantoprazole', CR, 'Proton pump inhibitor', ['controloc', 'nolpaza', 'anesteloc', 'pantoprazol',
     'пантопразол', 'контролок', 'нолпаза'], ['CYP2C19'], NONE, NONE, false),
   d('lansoprazole', CR, 'Proton pump inhibitor', ['lanzul', 'lansoprazol', 'лансопразол'],
@@ -295,5 +295,7 @@ export const DRUGS: DrugEntry[] = [
   d('montelukast', NL, 'Asthma / allergy', ['singulair', 'монтелукаст'], NONE, NONE, NONE, false),
   d('budesonide', NL, 'Inhaled steroid', ['pulmicort', 'будезонид'], NONE, NONE, NONE, false),
   d('potassium', NL, 'Potassium supplement', ['kaldyum', 'kalium', 'kalipoz', 'калий'], NONE, NONE, NONE, false),
-  d('magnesium', NL, 'Magnesium supplement', ['magne', 'magnez', 'магнезий'], NONE, NONE, NONE, false)
+  d('magnesium', NL, 'Magnesium supplement', ['magne', 'magnez', 'магнезий'], NONE, NONE, NONE, false),
+  // Not a medicine, but it blocks CYP3A4 like one, so it takes part in the interaction rules.
+  d('grapefruit', NL, 'Food (grapefruit and its juice)', ['grejpfrut', 'грейпфрут'], NONE, ['CYP3A4'], NONE, false)
 ];

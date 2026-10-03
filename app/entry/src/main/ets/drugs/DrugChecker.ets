@@ -14,7 +14,7 @@ const NOISE_TOKENS: string[] = [
   'mg', 'g', 'mcg', 'ug', 'ml', 'iu', 'j', 'x', 'tab', 'tabs', 'tablet', 'tablets', 'capsule', 'capsules', 'caps',
   'film', 'coated', 'syrup', 'drops', 'oral', 'solution', 'suspension', 'injection', 'cream', 'gel', 'spray',
   'inhaler', 'powder', 'sachet', 'forte', 'mite', 'retard', 'max', 'junior', 'plus', 'duo', 'rapid', 'express',
-  'sr', 'xr', 'xl', 'er', 'cr', 'mr', 'od', 'and', 'with', 'or', 'the', 'of', 'for', 'acid', 'hydrochloride', 'hcl',
+  'sr', 'xr', 'xl', 'er', 'cr', 'mr', 'od', 'and', 'with', 'or', 'the', 'of', 'for', 'juice', 'acid', 'hydrochloride', 'hcl',
   'sodium', 'calcium', 'maleate', 'succinate', 'tartrate', 'mesylate', 'besylate', 'fumarate', 'citrate', 'sulfate',
   'sulphate', 'phosphate', 'hydrobromide', 'dihydrate', 'monohydrate', 'trihydrate',
   // Polish
@@ -253,34 +253,50 @@ export class DrugChecker {
     return v;
   }
 
-  // Interaction of the checked medicine with the user's current medicines (F-19). Deterministic.
-  checkCombo(verdict: DrugVerdict, meds: Medication[]): ComboVerdict {
-    const none: ComboVerdict = { kind: 'NONE', drugs: [], enzyme: '', reason: '' };
-    const checked: DrugEntry | undefined = this.entry(verdict.ingredient);
-    if (checked === undefined) {
-      return none;
+  // Every interaction of the checked medicine with the user's current medicines (F-19). Deterministic.
+  // At most one finding per current medicine, enzyme interactions first.
+  checkCombos(verdict: DrugVerdict, meds: Medication[]): ComboVerdict[] {
+    if (verdict.ingredient === '') {
+      return [];
     }
-    let additive: ComboVerdict | undefined = undefined;
+    const checked: DrugEntry | undefined = this.entry(verdict.ingredient);
+    // A medicine resolved online is not in the dataset: no enzyme data, but its QT category still adds up.
+    const checkedQt: boolean = checked !== undefined ? isQtDrug(checked) :
+      (verdict.risk === 'KNOWN_RISK' || verdict.risk === 'POSSIBLE_RISK' || verdict.risk === 'CONDITIONAL_RISK');
+    const cyp: ComboVerdict[] = [];
+    const additive: ComboVerdict[] = [];
+    const seen: string[] = [];
     for (const med of meds) {
       const other: DrugEntry | undefined = this.entry(med.ingredient) ?? this.resolve(med.name);
-      if (other === undefined || other.ingredient === checked.ingredient) {
+      if (other === undefined || other.ingredient === verdict.ingredient || seen.includes(other.ingredient)) {
         continue;
       }
-      const cyp: ComboVerdict | undefined = this.cypInteraction(checked, other);
-      if (cyp !== undefined) {
-        return cyp;
-      }
-      if (additive === undefined && isQtDrug(checked) && isQtDrug(other)) {
-        additive = {
+      seen.push(other.ingredient);
+      const enzyme: ComboVerdict | undefined = checked !== undefined ? this.cypInteraction(checked, other) : undefined;
+      if (enzyme !== undefined) {
+        cyp.push(enzyme);
+      } else if (checkedQt && isQtDrug(other)) {
+        const combo: ComboVerdict = {
           kind: 'ADDITIVE_QT',
-          drugs: [checked.ingredient, other.ingredient],
+          drugs: [verdict.ingredient, other.ingredient],
           enzyme: '',
           reason: `You already take ${other.ingredient}, which also affects the QT interval. ` +
             `Two QT drugs together add up the risk.`
         };
+        additive.push(combo);
       }
     }
-    return additive ?? none;
+    return cyp.concat(additive);
+  }
+
+  // The most important interaction (an enzyme one if there is any), or NONE.
+  checkCombo(verdict: DrugVerdict, meds: Medication[]): ComboVerdict {
+    const all: ComboVerdict[] = this.checkCombos(verdict, meds);
+    if (all.length > 0) {
+      return all[0];
+    }
+    const none: ComboVerdict = { kind: 'NONE', drugs: [], enzyme: '', reason: '' };
+    return none;
   }
 
   private cypInteraction(a: DrugEntry, b: DrugEntry): ComboVerdict | undefined {

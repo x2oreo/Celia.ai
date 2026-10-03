@@ -6,38 +6,13 @@
 //   MANY_QT_DRUGS   three or more QT-risk drugs in total
 // Any finding escalates the combined risk by one level. UNKNOWN_DRUG is never escalated or lowered.
 //
-// Enzyme table: well-established inhibitor / substrate pairs (FDA drug interaction table, Flockhart CYP table).
-// Hand-picked subset for the curated LQTS list — keep it small, cited and conservative.
+// Enzyme data: the bundled dataset (drugs/DrugDataset.ets: cypInhibitor / cypSubstrate) — the same table the
+// check screen uses through DrugChecker.checkCombos, so the chat and the screens cannot disagree.
 
 import { DrugVerdict, RiskLevel } from '../model/DrugVerdict';
 import { InteractionFinding } from '../model/AgentTypes';
-
-interface EnzymeEntry {
-  enzyme: string;
-  inhibitors: string[];
-  substrates: string[];
-}
-
-const ENZYMES: EnzymeEntry[] = [
-  {
-    enzyme: 'CYP3A4',
-    inhibitors: ['clarithromycin', 'erythromycin', 'ketoconazole', 'itraconazole', 'fluconazole', 'voriconazole',
-      'ritonavir', 'diltiazem', 'verapamil', 'grapefruit'],
-    substrates: ['quetiapine', 'methadone', 'domperidone', 'haloperidol', 'pimozide', 'amiodarone', 'dronedarone',
-      'citalopram', 'escitalopram', 'ondansetron', 'tacrolimus', 'cilostazol', 'quinidine', 'disopyramide']
-  },
-  {
-    enzyme: 'CYP2D6',
-    inhibitors: ['fluoxetine', 'paroxetine', 'bupropion', 'quinidine'],
-    substrates: ['haloperidol', 'thioridazine', 'ondansetron', 'flecainide', 'venlafaxine', 'amitriptyline',
-      'risperidone', 'donepezil']
-  },
-  {
-    enzyme: 'CYP2C19',
-    inhibitors: ['fluconazole', 'fluvoxamine', 'omeprazole', 'esomeprazole'],
-    substrates: ['citalopram', 'escitalopram']
-  }
-];
+import { DrugChecker } from '../drugs/DrugChecker';
+import { DrugEntry } from '../drugs/DrugDataset';
 
 export interface ComboResult {
   combinedRisk: RiskLevel;
@@ -70,10 +45,15 @@ function cypFinding(a: DrugVerdict, b: DrugVerdict): InteractionFinding | undefi
   if (a.ingredient === '' || b.ingredient === '' || !isQtRisk(b.risk)) {
     return undefined;
   }
-  for (const e of ENZYMES) {
-    if (e.inhibitors.includes(a.ingredient) && e.substrates.includes(b.ingredient)) {
+  const inhibitor: DrugEntry | undefined = DrugChecker.get().entry(a.ingredient);
+  const substrate: DrugEntry | undefined = DrugChecker.get().entry(b.ingredient);
+  if (inhibitor === undefined || substrate === undefined) {
+    return undefined;
+  }
+  for (const enzyme of inhibitor.cypInhibitor) {
+    if (substrate.cypSubstrate.includes(enzyme)) {
       return finding('CYP_INHIBITION', '',
-        `${a.ingredient} slows the breakdown of ${b.ingredient} (${e.enzyme}), which can raise its level and ` +
+        `${a.ingredient} slows the breakdown of ${b.ingredient} (${enzyme}), which can raise its level and ` +
           'its effect on the QT interval.');
     }
   }

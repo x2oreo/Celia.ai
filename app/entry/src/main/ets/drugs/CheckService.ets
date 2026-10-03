@@ -1,7 +1,7 @@
 // One entry point for every medicine check in the UI: verdict + interaction with my meds + history log.
 // Deterministic only. Screens, the widget and (later) intents call this instead of DrugChecker directly.
 
-import { ComboVerdict, DrugVerdict } from '../model/DrugVerdict';
+import { ComboVerdict, DrugVerdict, RiskLevel } from '../model/DrugVerdict';
 import { Medication } from '../model/Medication';
 import { ScanRecord, ScanVia } from '../model/ScanRecord';
 import { LocalStore } from '../data/LocalStore';
@@ -10,17 +10,30 @@ import { Listener, Listeners } from '../common/Listeners';
 import { BarcodeResult, resolveBarcode } from './BarcodeService';
 import { BoxInfo } from '../model/BoxInfo';
 import { checkOnline } from './DrugCheckClient';
+import { escalate } from '../safety/ComboRules';
 
 export class CheckOutcome {
   verdict: DrugVerdict;
   combo: ComboVerdict;
   box: BoxInfo | undefined;   // set when the query was a box barcode we know
+  combos: ComboVerdict[];     // every interaction with my medicines; combo is the first of them (or NONE)
+  combinedRisk: RiskLevel;    // verdict.risk, one level up when anything interacts (never lower)
 
-  constructor(verdict: DrugVerdict, combo: ComboVerdict, box: BoxInfo | undefined = undefined) {
+  constructor(verdict: DrugVerdict, combo: ComboVerdict, box: BoxInfo | undefined = undefined,
+    combos: ComboVerdict[] | undefined = undefined) {
     this.verdict = verdict;
     this.combo = combo;
     this.box = box;
+    this.combos = combos ?? (combo.kind === 'NONE' ? [] : [combo]);
+    this.combinedRisk = this.combos.length > 0 ? escalate(verdict.risk) : verdict.risk;
   }
+}
+
+const NO_COMBO: ComboVerdict = { kind: 'NONE', drugs: [], enzyme: '', reason: '' };
+
+function outcomeOf(resolved: Resolved, meds: Medication[]): CheckOutcome {
+  const combos: ComboVerdict[] = DrugChecker.get().checkCombos(resolved.verdict, meds);
+  return new CheckOutcome(resolved.verdict, combos.length > 0 ? combos[0] : NO_COMBO, resolved.box, combos);
 }
 
 export class Resolved {
@@ -74,7 +87,8 @@ export class CheckService {
     const resolved: Resolved = await CheckService.resolveQuery(query);
     const verdict: DrugVerdict = resolved.verdict;
     const meds: Medication[] = await LocalStore.get().listMeds();
-    const combo: ComboVerdict = DrugChecker.get().checkCombo(verdict, meds);
+    const outcome: CheckOutcome = outcomeOf(resolved, meds);
+    const combo: ComboVerdict = outcome.combo;
     const record: ScanRecord = {
       id: 0,
       ts: Date.now(),
@@ -87,7 +101,6 @@ export class CheckService {
     await LocalStore.get().logScan(record);
     await LocalStore.get().logEvent('DRUG_CHECK',
       JSON.stringify(record));
-    const outcome: CheckOutcome = new CheckOutcome(verdict, combo, resolved.box);
     if (verdict.risk === 'KNOWN_RISK' || combo.kind !== 'NONE') {
       CheckService.riskyChecks.emit(outcome);
     }
@@ -98,6 +111,6 @@ export class CheckService {
   static async peek(query: string): Promise<CheckOutcome> {
     const resolved: Resolved = await CheckService.resolveQuery(query);
     const meds: Medication[] = await LocalStore.get().listMeds();
-    return new CheckOutcome(resolved.verdict, DrugChecker.get().checkCombo(resolved.verdict, meds), resolved.box);
+    return outcomeOf(resolved, meds);
   }
 }

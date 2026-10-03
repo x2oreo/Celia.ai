@@ -102,7 +102,8 @@ export struct CheckResultPage {
               Column() {
                 VerdictCard({
                   verdict: this.outcome.verdict,
-                  combo: this.outcome.combo,
+                  combos: this.outcome.combos,
+                  combinedRisk: this.outcome.combinedRisk,
                   genotype: this.genotype,
                   variant: 'SHEET',
                   actionLabel: (this.outcome.verdict.ingredient !== '' || this.outcome.box !== undefined) &&

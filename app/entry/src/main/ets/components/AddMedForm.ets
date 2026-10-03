@@ -1,11 +1,13 @@
 // "Add a medicine" form with autocomplete and a live risk chip. Used in the Medicines sheet and onboarding.
+// The preview also lists the deterministic interactions with the medicines already saved, before the tap.
 
 import { DrugChecker } from '../drugs/DrugChecker';
 import { DrugEntry } from '../drugs/DrugDataset';
 import { DrugInfo, drugInfo } from '../drugs/DrugInfo';
 import { LocalStore } from '../data/LocalStore';
-import { RiskLevel } from '../model/DrugVerdict';
-import { PrimaryButton, resText, RiskBadge } from './Common';
+import { ComboVerdict, RiskLevel } from '../model/DrugVerdict';
+import { Medication } from '../model/Medication';
+import { PrimaryButton, resText, RiskBadge, RiskShape } from './Common';
 import { RiskUi } from '../common/RiskUi';
 
 @ComponentV2
@@ -16,13 +18,29 @@ export struct AddMedForm {
   @Local dose: string = '';
   @Local suggestions: DrugEntry[] = [];
   @Local resolved: DrugEntry | undefined = undefined;
+  @Local combos: ComboVerdict[] = [];
+  private meds: Medication[] = [];
+
+  aboutToAppear(): void {
+    this.loadMeds();
+  }
+
+  private async loadMeds(): Promise<void> {
+    this.meds = await LocalStore.get().listMeds();
+  }
+
+  private setResolved(e: DrugEntry | undefined): void {
+    this.resolved = e;
+    this.combos = e === undefined ? [] :
+      DrugChecker.get().checkCombos(DrugChecker.get().checkSync(e.ingredient), this.meds);
+  }
 
   private onNameChange(value: string): void {
     this.name = value;
     // Hide the list once the text is exactly a known name (e.g. right after picking a suggestion).
     const exact: boolean = DrugChecker.get().entry(value.trim()) !== undefined;
     this.suggestions = exact ? [] : DrugChecker.get().suggest(value, 5);
-    this.resolved = value.trim().length >= 3 ? DrugChecker.get().resolve(value) : undefined;
+    this.setResolved(value.trim().length >= 3 ? DrugChecker.get().resolve(value) : undefined);
   }
 
   private pick(e: DrugEntry): void {
@@ -30,7 +48,7 @@ export struct AddMedForm {
     if (!e.aliases.includes(this.name.trim().toLowerCase())) {
       this.name = e.ingredient;
     }
-    this.resolved = e;
+    this.setResolved(e);
     this.suggestions = [];
   }
 
@@ -43,7 +61,8 @@ export struct AddMedForm {
     await LocalStore.get().addMed(n, e?.ingredient ?? '', this.dose.trim());
     this.name = '';
     this.dose = '';
-    this.resolved = undefined;
+    await this.loadMeds();
+    this.setResolved(undefined);
     this.suggestions = [];
     this.onAdded();
   }
@@ -131,6 +150,27 @@ export struct AddMedForm {
                 .alignItems(VerticalAlign.Top)
               }
             }
+            ForEach(this.combos, (c: ComboVerdict) => {
+              Row({ space: 8 }) {
+                RiskShape({ risk: 'POSSIBLE_RISK', dim: 20 })
+                  .accessibilityLevel('no-hide-descendants')
+                Column({ space: 2 }) {
+                  Text($r('app.string.meds_add_interaction'))
+                    .fontSize($r('app.float.font_caption'))
+                    .fontWeight(FontWeight.Bold)
+                    .fontColor($r('app.color.risk_possible_text'))
+                  Text(c.reason)
+                    .fontSize($r('app.float.font_small'))
+                    .fontColor($r('app.color.ink_2'))
+                    .lineHeight(20)
+                }
+                .alignItems(HorizontalAlign.Start)
+                .layoutWeight(1)
+              }
+              .width('100%')
+              .alignItems(VerticalAlign.Top)
+              .accessibilityGroup(true)
+            }, (c: ComboVerdict) => c.drugs.join('+') + c.kind)
           }
           .width('100%')
           .alignItems(HorizontalAlign.Start)

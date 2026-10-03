@@ -161,6 +161,49 @@ export default function drugCheckerTest() {
       expect(c.kind).assertEqual('NONE');
     });
 
+    it('everyInteractingMedicineIsReportedEnzymeFirst', 0, () => {
+      const v: DrugVerdict = checker.checkSync('ondansetron');
+      const all: ComboVerdict[] = checker.checkCombos(v,
+        [med('Cipralex', 'escitalopram'), med('Concor', 'bisoprolol'), med('Klacid', 'clarithromycin')]);
+      expect(all.length).assertEqual(2);
+      expect(all[0].kind).assertEqual('CYP_INTERACTION');
+      expect(all[0].drugs[1]).assertEqual('clarithromycin');
+      expect(all[1].kind).assertEqual('ADDITIVE_QT');
+      expect(checker.checkCombo(v, [med('Cipralex', 'escitalopram'), med('Klacid', 'clarithromycin')]).kind)
+        .assertEqual('CYP_INTERACTION');
+    });
+
+    it('notListedInhibitorIsFlaggedAgainstMyQtDrug', 0, () => {
+      // The checked medicine is "not listed" on its own, but it raises the level of a QT drug I take.
+      const diltiazem: DrugVerdict = checker.checkSync('diltiazem');
+      expect(diltiazem.risk).assertEqual('NOT_LISTED');
+      expect(checker.checkCombo(diltiazem, [med('Motilium', 'domperidone')]).kind).assertEqual('CYP_INTERACTION');
+      const grapefruit: DrugVerdict = checker.checkSync('grapefruit juice');
+      expect(grapefruit.risk).assertEqual('NOT_LISTED');
+      expect(checker.checkCombo(grapefruit, [med('Seroquel', 'quetiapine')]).enzyme).assertEqual('CYP3A4');
+    });
+
+    it('cyp2c19InhibitorRaisesCitalopram', 0, () => {
+      const v: DrugVerdict = checker.checkSync('omeprazole');
+      const c: ComboVerdict = checker.checkCombo(v, [med('Cipramil', 'citalopram')]);
+      expect(c.kind).assertEqual('CYP_INTERACTION');
+      expect(c.enzyme).assertEqual('CYP2C19');
+    });
+
+    it('onlineVerdictStillAddsUp', 0, () => {
+      // Resolved by the backend, not in the bundled dataset: no enzyme data, the QT category still counts.
+      const online: DrugVerdict = { query: 'newdrug', ingredient: 'newdrugum', risk: 'POSSIBLE_RISK', reason: '',
+        source: 'ONLINE' };
+      expect(checker.checkCombo(online, [med('Cipralex', 'escitalopram')]).kind).assertEqual('ADDITIVE_QT');
+      expect(checker.checkCombo(online, [med('Concor', 'bisoprolol')]).kind).assertEqual('NONE');
+    });
+
+    it('sameMedicineTwiceIsOneFinding', 0, () => {
+      const v: DrugVerdict = checker.checkSync('ondansetron');
+      expect(checker.checkCombos(v, [med('Cipralex', 'escitalopram'), med('Lexapro', 'escitalopram')]).length)
+        .assertEqual(1);
+    });
+
     it('unknownDrugHasNoCombo', 0, () => {
       const v: DrugVerdict = checker.checkSync('xyzzyqq');
       const c: ComboVerdict = checker.checkCombo(v, [med('Cipralex', 'escitalopram')]);

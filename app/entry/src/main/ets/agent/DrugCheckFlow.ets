@@ -39,7 +39,9 @@ export async function checkDrugFull(query: string, via: ScanVia = 'CHAT'): Promi
   const verdict: DrugVerdict = outcome.verdict;
   const combo: ComboResult = evaluateCombo(verdict, await currentMedVerdicts());
   const findings: InteractionFinding[] = combo.findings;
-  mergeCheckerCombo(findings, outcome.combo);
+  for (const c of outcome.combos) {
+    mergeCheckerCombo(findings, c);
+  }
   const card: VerdictCardPayload = {
     query: verdict.query,
     ingredient: verdict.ingredient,

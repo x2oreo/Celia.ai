@@ -6,7 +6,9 @@ import { TITLE_MAX_CHARS } from '../../model/Chat';
 import { AgentTool, PendingAction, PendingKind, TurnState, action, toolError } from '../ToolTypes';
 import { argString } from '../ResponseValidator';
 import { DrugChecker } from '../../drugs/DrugChecker';
-import { DrugVerdict } from '../../model/DrugVerdict';
+import { ComboVerdict, DrugVerdict, RiskLevel } from '../../model/DrugVerdict';
+import { escalate } from '../../safety/ComboRules';
+import { LocalStore } from '../../data/LocalStore';
 import {
   AddMedPayload, ConfirmPayload, EmergencyCardPayload, EmergencyPayload, LogDosePayload, UiAction
 } from '../../model/AgentTypes';
@@ -95,6 +97,7 @@ interface AddMedOutput {
   status: string;
   ingredient: string;
   verdict: string;
+  interactions: string[];   // with the medicines already saved; deterministic (DrugChecker.checkCombos)
   note: string;
 }
 
@@ -109,6 +112,8 @@ export class AddMedTool implements AgentTool {
     const dose: string = argString(args, 'dose', 80);
     // Resolve first so the saved medicine carries its ingredient (HeartBeat stored unknown brands as "safe").
     const v: DrugVerdict = await DrugChecker.get().check(name);
+    const combos: ComboVerdict[] = DrugChecker.get().checkCombos(v, await LocalStore.get().listMeds());
+    const combined: RiskLevel = combos.length > 0 ? escalate(v.risk) : v.risk;
     const p: PendingAction = pending('ADD_MED', name, v.ingredient, dose);
     turn.pending.push(p);
     const payload: AddMedPayload = {
@@ -116,14 +121,16 @@ export class AddMedTool implements AgentTool {
       name: name,
       ingredient: v.ingredient,
       dose: dose,
-      risk: v.risk
+      risk: combined
     };
     turn.actions.push(action('ADD_MED', payload));
     const out: AddMedOutput = {
       status: 'AWAITING_USER_CONFIRMATION',
       ingredient: v.ingredient,
-      verdict: v.risk,
-      note: 'Nothing is saved until the user taps Confirm. Say that a confirmation card is on screen.'
+      verdict: combined,
+      interactions: combos.map((c: ComboVerdict) => c.reason),
+      note: 'Nothing is saved until the user taps Confirm. Say that a confirmation card is on screen.' +
+        (combos.length > 0 ? ' Tell the user about the interactions first, in plain words.' : '')
     };
     return JSON.stringify(out);
   }

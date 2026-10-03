@@ -739,6 +739,22 @@ The tap-to-talk fallback is also untested end to end.
   settled it in one exchange. The tab-0 agent layout from T1 is being replaced by the owner's v2 design in another
   session, so the navigation rows in the README wait for that.
 
+### 2026-10-03 (night) — Kaloyan + Claude Code: interactions everywhere a medicine is handled (branch `kaloyan/agent-home`)
+
+- **Goal:** the owner asked whether a medicine that is "not listed" on its own is still caught when it raises the
+  level of a QT drug the user takes (enzyme inhibition), and wanted it on every medicine surface.
+- **What the AI found:** the rules existed, but twice: `ComboRules` (chat) had its own enzyme table and
+  `DrugChecker.checkCombo` (screens) read the dataset. They disagreed (omeprazole → citalopram and grapefruit only
+  in chat). The check screen showed the first interaction only and kept a green header next to an interaction row,
+  while the chat raised the verdict. Adding a medicine (form and agent `add_med`) ran no interaction check.
+- **What changed:** one enzyme table (`DrugDataset`; fluconazole/omeprazole/esomeprazole CYP2C19 and a grapefruit
+  entry moved in), `checkCombos` returns every interaction, `CheckOutcome` carries `combos` + `combinedRisk`, the
+  verdict sheet raises its header by the same one-level rule as the chat, the add form and the agent confirm card
+  show interactions before the tap. DESIGN.md §6.4 and §6.9 extended first.
+- **Validated:** 241 phone tests green (5 new in `DrugChecker.test.ets`), strict ArkTS HAP build.
+- **Not validated:** nothing was looked at on the emulator (it was in use by parallel sessions). The enzyme data is
+  a curated subset from public tables and still needs a pharmacist's check.
+
 ### 2026-10-04 (early morning) — Kaloyan + Claude Code: the owner's v2 design applied; integrator re-check (branch `kaloyan/agent-home`)
 - **Asked:** apply the owner's Claude Design v2 screens, the "Dawn" silk orb, Lucide icons, and move the orb to the
   bottom of the agent stage. A second session (the integrator) re-checks the result.
@@ -762,3 +778,4 @@ The tap-to-talk fallback is also untested end to end.
   sessions also drove the one emulator without the lock, so a tap could land on another session's fresh install.
   In one typed turn the agent answered a symptom-log question and also re-opened the dentist brief from earlier in
   the chat; that needs an eval case before the prompt is called stable.
+

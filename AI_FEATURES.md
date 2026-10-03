@@ -126,8 +126,9 @@ gate, the validator, offline intents, tool-schema parity with the backend, and t
 
 ## 5. Limitations
 
-- The interaction rules (`ComboRules`, unioned with `DrugChecker.checkCombo`) are a simplified, hand-curated subset: additive QT, a few CYP inhibitor–substrate
-  pairs, and three or more QT drugs. They are not a full clinical interaction checker.
+- The interaction rules (`ComboRules` and `DrugChecker.checkCombos`, both reading the one enzyme table in
+  `DrugDataset`) are a simplified, hand-curated subset: additive QT, CYP inhibitor–substrate pairs (3A4, 2D6,
+  2C19), and three or more QT drugs. Medicines resolved online have no enzyme data, so only additive QT applies. They are not a full clinical interaction checker.
 - Verdict quality depends on the curated drug list (`DrugChecker`, owned by Mark). A drug that isn't in the list is
   reported as unknown, never as safe.
 - Wrist heart rate is not an ECG. The app never interprets QT or rhythm.

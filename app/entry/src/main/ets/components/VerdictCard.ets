@@ -3,7 +3,7 @@
 // interaction with my meds, alternatives and the "How we know" trace. Colour always comes from the
 // deterministic verdict, never from model output.
 
-import { ComboVerdict, DrugVerdict, LookupStep } from '../model/DrugVerdict';
+import { ComboVerdict, DrugVerdict, LookupStep, RiskLevel } from '../model/DrugVerdict';
 import { Genotype } from '../model/Profile';
 import { RiskUi } from '../common/RiskUi';
 import { copyText } from '../common/Clipboard';
@@ -11,12 +11,26 @@ import { InkButton, resText, RiskShape, SecondaryButton } from './Common';
 import { Motion } from '../common/Motion';
 import { toast } from '../common/Toast';
 
-export function doctorQuestion(v: DrugVerdict, genotype: Genotype, combo: ComboVerdict | undefined): string {
+// The medicines I already take that the checked one interacts with, each once.
+export function interactingDrugs(combos: ComboVerdict[]): string[] {
+  const out: string[] = [];
+  for (const c of combos) {
+    for (const d of c.drugs.slice(1)) {
+      if (!out.includes(d)) {
+        out.push(d);
+      }
+    }
+  }
+  return out;
+}
+
+export function doctorQuestion(v: DrugVerdict, genotype: Genotype, combos: ComboVerdict[]): string {
   const gt: string = genotype === 'UNKNOWN' ? '' : ` (${genotype})`;
   const name: string = v.ingredient === '' ? v.query : `${v.query} (${v.ingredient})`;
   let q: string = `I have long QT syndrome${gt}. I was offered ${name}, which is listed as ${RiskUi.plain(v.risk)}. `;
-  if (combo !== undefined && combo.kind !== 'NONE') {
-    q += `It may also interact with ${combo.drugs.slice(1).join(', ')} that I already take. `;
+  const others: string[] = interactingDrugs(combos);
+  if (others.length > 0) {
+    q += `It may also interact with ${others.join(', ')} that I already take. `;
   }
   const alts: string[] = v.alternatives ?? [];
   if (alts.length > 0) {
@@ -33,6 +47,10 @@ export type VerdictSize = 'INLINE' | 'SHEET';
 export struct VerdictCard {
   @Param verdict: DrugVerdict | undefined = undefined;
   @Param combo: ComboVerdict | undefined = undefined;
+  // Every interaction with my medicines, and the risk after the interaction rules. Both deterministic
+  // (CheckService). Without them the card shows the medicine on its own.
+  @Param combos: ComboVerdict[] = [];
+  @Param combinedRisk: RiskLevel | undefined = undefined;
   @Param genotype: Genotype = 'UNKNOWN';
   @Param variant: VerdictSize = 'SHEET';
   // Second action ("Add to meds", "Open check"). Hidden when empty.
@@ -43,8 +61,20 @@ export struct VerdictCard {
   @Local shown: boolean = false;
 
   private async copyQuestion(v: DrugVerdict): Promise<void> {
-    const ok: boolean = await copyText(doctorQuestion(v, this.genotype, this.combo));
+    const ok: boolean = await copyText(doctorQuestion(v, this.genotype, this.allCombos()));
     toast(this.getUIContext(), ok ? $r('app.string.verdict_copied') : $r('app.string.error_generic'));
+  }
+
+  private allCombos(): ComboVerdict[] {
+    if (this.combos.length > 0) {
+      return this.combos;
+    }
+    return this.combo !== undefined && this.combo.kind !== 'NONE' ? [this.combo] : [];
+  }
+
+  // The risk the header shows: the medicine's own category, raised when it interacts with my medicines.
+  private headline(v: DrugVerdict): RiskLevel {
+    return this.combinedRisk ?? v.risk;
   }
 
   private title(v: DrugVerdict): string {
@@ -74,23 +104,24 @@ export struct VerdictCard {
   @Builder
   header(v: DrugVerdict) {
     Row({ space: 10 }) {
-      RiskShape({ risk: v.risk, dim: this.variant === 'SHEET' ? 40 : 32 })
+      RiskShape({ risk: this.headline(v), dim: this.variant === 'SHEET' ? 40 : 32 })
         .accessibilityLevel('no-hide-descendants')   // the word is the next text
       Column({ space: 1 }) {
-        Text(RiskUi.label(v.risk))
+        Text(RiskUi.label(this.headline(v)))
           .fontSize(this.variant === 'SHEET' ? $r('app.float.font_title_3') : $r('app.float.font_body'))
           .fontWeight(800)
-          .fontColor(RiskUi.text(v.risk))
-        Text(RiskUi.subtitle(v.risk))
+          .fontColor(RiskUi.text(this.headline(v)))
+        Text(this.headline(v) !== v.risk ? $r('app.string.verdict_sub_with_meds') : RiskUi.subtitle(v.risk))
           .fontSize(this.variant === 'SHEET' ? $r('app.float.font_small') : $r('app.float.font_caption'))
-          .fontColor(v.risk === 'KNOWN_RISK' ? $r('app.color.risk_known_subtitle') : RiskUi.text(v.risk))
+          .fontColor(this.headline(v) === 'KNOWN_RISK' ? $r('app.color.risk_known_subtitle') :
+            RiskUi.text(this.headline(v)))
       }
       .alignItems(HorizontalAlign.Start)
       .layoutWeight(1)
     }
     .width('100%')
     .padding({ left: 14, right: 14, top: 12, bottom: 12 })
-    .backgroundColor(RiskUi.tint(v.risk))
+    .backgroundColor(RiskUi.tint(this.headline(v)))
     .borderRadius(this.variant === 'SHEET' ? $r('app.float.radius_m') : 0)
     // Announced by its word and subtitle ("Known risk, Can affect heart rhythm"), never by colour.
     .accessibilityGroup(true)
@@ -98,18 +129,18 @@ export struct VerdictCard {
 
   @Builder
   extras(v: DrugVerdict) {
-    // Interaction with my medicines
-    if (this.combo !== undefined && this.combo.kind !== 'NONE') {
+    // Interactions with my medicines, one row each
+    ForEach(this.allCombos(), (c: ComboVerdict) => {
       Row({ space: 10 }) {
         RiskShape({ risk: 'POSSIBLE_RISK', dim: 20 })
           .accessibilityLevel('no-hide-descendants')
         Column({ space: 4 }) {
-          Text(this.combo.kind === 'CYP_INTERACTION' ? $r('app.string.combo_cyp_title') :
+          Text(c.kind === 'CYP_INTERACTION' ? $r('app.string.combo_cyp_title') :
             $r('app.string.combo_additive_title'))
             .fontSize($r('app.float.font_small'))
             .fontWeight(FontWeight.Bold)
             .fontColor($r('app.color.risk_possible_text'))
-          Text(this.combo.reason)
+          Text(c.reason)
             .fontSize($r('app.float.font_small'))
             .fontColor($r('app.color.ink_2'))
         }
@@ -122,7 +153,7 @@ export struct VerdictCard {
       .backgroundColor($r('app.color.risk_possible_tint'))
       .borderRadius($r('app.float.radius_s'))
       .accessibilityGroup(true)
-    }
+    }, (c: ComboVerdict) => c.drugs.join('+') + c.kind)
 
     if ((v.alternatives ?? []).length > 0) {
       Column({ space: 4 }) {
@@ -139,7 +170,7 @@ export struct VerdictCard {
       .accessibilityGroup(true)
     }
 
-    if (v.risk !== 'NOT_LISTED') {
+    if (this.headline(v) !== 'NOT_LISTED') {
       Text($r('app.string.verdict_dont_stop'))
         .fontSize($r('app.float.font_caption'))
         .fontColor($r('app.color.ink_3'))
@@ -196,7 +227,7 @@ export struct VerdictCard {
   actions(v: DrugVerdict) {
     Row({ space: 8 }) {
       // Not listed: adding it is the natural next step. Otherwise the doctor question comes first.
-      if (v.risk === 'NOT_LISTED' && this.actionLabel !== '') {
+      if (this.headline(v) === 'NOT_LISTED' && this.actionLabel !== '') {
         InkButton({ label: this.actionLabel, large: this.variant === 'SHEET', onTap: () => this.onAction() })
           .layoutWeight(1)
         SecondaryButton({
@@ -267,7 +298,7 @@ export struct VerdictCard {
       .alignItems(HorizontalAlign.Start)
       .backgroundColor(this.variant === 'SHEET' ? Color.Transparent : $r('app.color.surface'))
       .borderRadius(this.variant === 'SHEET' ? 0 : $r('app.float.radius_ml'))
-      .border({ width: this.variant === 'SHEET' ? 0 : 1.5, color: RiskUi.border(this.verdict.risk) })
+      .border({ width: this.variant === 'SHEET' ? 0 : 1.5, color: RiskUi.border(this.headline(this.verdict)) })
       .clip(this.variant !== 'SHEET')
       // Verdict reveal: slide up 12 vp and fade in. No bounce, even for Known risk.
       .opacity(this.shown ? 1 : 0)

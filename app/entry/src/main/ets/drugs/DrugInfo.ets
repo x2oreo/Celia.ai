@@ -293,7 +293,9 @@ export const DRUG_INFO: DrugInfo[] = [
   i('budesonide', 'Asthma prevention; some gut conditions', 'Calms inflammation (a steroid).',
     ['Rinse your mouth after inhaling.', 'Use daily, even when well.']),
   i('potassium', 'Low potassium', 'Tops up potassium, which steadies heart rhythm.', SUPPLEMENT_TIPS),
-  i('magnesium', 'Low magnesium, cramps', 'Tops up magnesium, which steadies heart rhythm.', SUPPLEMENT_TIPS)
+  i('magnesium', 'Low magnesium, cramps', 'Tops up magnesium, which steadies heart rhythm.', SUPPLEMENT_TIPS),
+  i('grapefruit', 'A fruit and juice, not a medicine', 'Blocks an enzyme (CYP3A4) that clears many medicines.',
+    ['Can raise the level of some medicines for a day or more.', 'Ask your pharmacist if it mixes with yours.'])
 ];
 
 const BY_INGREDIENT: Map<string, DrugInfo> = new Map<string, DrugInfo>();
