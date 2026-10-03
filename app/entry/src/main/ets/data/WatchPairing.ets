@@ -87,7 +87,12 @@ export class WatchPairing {
   static async load(): Promise<void> {
     const dev: string = await LocalStore.get().getSetting(KEY_DEVICE, '');
     Config.WATCH_DEVICE_ID = DEVICE_RE.test(dev) ? dev : Config.DEFAULT_WATCH_DEVICE_ID;
+    WatchPairing.paired = DEVICE_RE.test(dev) && (await LocalStore.get().getSetting(KEY_TOKEN, '')).length > 0;
   }
+
+  // A pairing token is stored. Not "the id differs from the demo id": a watch built with the shared demo id (the
+  // demo emulator) can be paired too, and then it is this account's watch like any other.
+  private static paired: boolean = false;
 
   private static listening: boolean = false;
 
@@ -127,7 +132,7 @@ export class WatchPairing {
   }
 
   static isPaired(): boolean {
-    return Config.WATCH_DEVICE_ID !== Config.DEFAULT_WATCH_DEVICE_ID;
+    return WatchPairing.paired;
   }
 
   /** Epoch ms of the pairing, 0 if unpaired. */
@@ -164,6 +169,7 @@ export class WatchPairing {
       // Claimed with the user's JWT (common/Net.ets adds it on /rest/v1/), so the server bound it to this account.
       await LocalStore.get().setSetting(KEY_BOUND, Session.userId());
       Config.WATCH_DEVICE_ID = r.deviceId;
+      WatchPairing.paired = (row.token ?? '').length > 0;
       log.info(`paired with watch ${shortId(r.deviceId)}`);
       await WatchPairing.syncGenotype();
       if (Session.isSignedIn()) {
@@ -180,6 +186,7 @@ export class WatchPairing {
     await LocalStore.get().setSetting(KEY_AT, '0');
     await LocalStore.get().setSetting(KEY_BOUND, '');
     Config.WATCH_DEVICE_ID = Config.DEFAULT_WATCH_DEVICE_ID;
+    WatchPairing.paired = false;
   }
 
   /**
