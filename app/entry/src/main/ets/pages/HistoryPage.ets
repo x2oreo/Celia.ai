@@ -4,7 +4,8 @@ import { CheckParam, Routes } from '../common/Routes';
 import { dateTime } from '../common/Format';
 import { LocalStore, StoreTopic } from '../data/LocalStore';
 import { ScanRecord } from '../model/ScanRecord';
-import { RiskBadge } from '../components/Common';
+import { PrimaryButton, resText, RiskBadge, ScreenHeader, SecondaryButton } from '../components/Common';
+import { RiskUi } from '../common/RiskUi';
 
 type HistoryFilter = 'ALL' | 'RISKY' | 'OK' | 'UNKNOWN';
 
@@ -78,9 +79,21 @@ export struct HistoryPage {
       .backgroundColor(this.filter === f.key ? $r('app.color.chat_user_bg') : $r('app.color.surface'))
       .border({ width: this.filter === f.key ? 0 : 1.5, color: $r('app.color.border_strong') })
       .borderRadius(100)
+      .accessibilitySelected(this.filter === f.key)
       .onClick(() => {
         this.filter = f.key;
       })
+  }
+
+  // "Ondansetron, Known risk, Today 04:12": the verdict by its word.
+  private spoken(s: ScanRecord): string {
+    const ui: UIContext = this.getUIContext();
+    const parts: string[] = [s.ingredient === '' ? s.query : s.ingredient, resText(ui, RiskUi.label(s.risk)),
+      dateTime(s.ts, Date.now())];
+    if (s.combo !== 'NONE') {
+      parts.push(resText(ui, $r('app.string.history_interaction')));
+    }
+    return parts.join(', ');
   }
 
   @Builder
@@ -93,7 +106,8 @@ export struct HistoryPage {
           .fontColor($r('app.color.ink'))
           .maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
-        Text(s.combo !== 'NONE' ? `${dateTime(s.ts, Date.now())} · interaction` : dateTime(s.ts, Date.now()))
+        Text(s.combo !== 'NONE' ? $r('app.string.history_when_interaction', dateTime(s.ts, Date.now())) :
+          dateTime(s.ts, Date.now()))
           .fontSize($r('app.float.font_caption'))
           .fontColor(s.combo !== 'NONE' ? $r('app.color.risk_known') : $r('app.color.ink_3'))
       }
@@ -107,6 +121,8 @@ export struct HistoryPage {
     .border({ width: 1, color: $r('app.color.border') })
     .borderRadius($r('app.float.radius_m'))
     .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.98 })
+    .accessibilityGroup(true)
+    .accessibilityText(this.spoken(s))
     .onClick(() => {
       this.navStack.pushPathByName(Routes.CHECK_RESULT, new CheckParam(s.query, false));
     })
@@ -114,6 +130,8 @@ export struct HistoryPage {
 
   build() {
     NavDestination() {
+      Column() {
+      ScreenHeader({ title: $r('app.string.history_title') })
       Column({ space: 12 }) {
         Scroll() {
           Row({ space: 8 }) {
@@ -133,6 +151,27 @@ export struct HistoryPage {
               .fontSize($r('app.float.font_body'))
               .fontColor($r('app.color.ink_3'))
               .textAlign(TextAlign.Center)
+            // No dead end: a first check, or back to every check.
+            if (this.scans.length === 0) {
+              PrimaryButton({
+                label: $r('app.string.history_empty_action'),
+                icon: $r('app.media.ic_search'),
+                onTap: () => {
+                  this.navStack.pop();
+                }
+              })
+                .width(240)
+                .margin({ top: 8 })
+            } else {
+              SecondaryButton({
+                label: $r('app.string.history_show_all'),
+                fill: false,
+                onTap: () => {
+                  this.filter = 'ALL';
+                }
+              })
+                .margin({ top: 8 })
+            }
           }
           .width('100%')
           .padding({ top: 64 })
@@ -150,9 +189,12 @@ export struct HistoryPage {
       }
       .padding({ left: 16, right: 16, top: 8 })
       .width('100%')
+      .layoutWeight(1)
+      }
+      .width('100%')
       .height('100%')
     }
-    .title($r('app.string.history_title'))
+    .hideTitleBar(true)
     .backgroundColor($r('app.color.bg'))
   }
 }
