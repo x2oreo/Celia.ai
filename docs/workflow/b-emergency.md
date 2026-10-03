@@ -24,11 +24,21 @@
     (900 chars); trimming drops the least urgent fields first and keeps genotype, ICD, blood type, first allergies.
   - `pages/ResponderPage.ets`: always light (`card_fixed_*`), large type, order of the brief, call buttons. Entry
     points: top of the Emergency tab, app lock screen, tap on the facts of the 2×4 alert widget.
-- Validated: phone unit tests (see report), emulator screenshots in `docs/screenshots/b/emergency-*`, the web
-  viewer in a browser with a v1 and a v2 link (`emergency-web-card-v1.png`, `-v2.png`).
-- Not validated: the alert-widget tap on a real home screen (built; the emulator widget host was not driven), the
-  lock-screen button with the app lock on (needs a screen lock on the emulator).
-
+- Validated: phone unit tests 233/233 (new suites StoredProfile, EmergencyDetails, Responder, CardPayloadV2).
+  Emulator (Pura 90, API 20), screenshots in `docs/screenshots/b/`:
+  - an existing profile saved by the old code opened with defaults (no crash, card intact);
+  - Settings → Emergency details: date of birth, sex, blood type, allergies, cardiologist, hospital and two extra
+    fields entered and kept across an app restart (`emergency-details-edit.jpeg`, `-extra.jpeg`);
+  - Emergency tab: "For first responders" row at the top (`emergency-tab-responder-row.jpeg`), the card shows the
+    details in order (`emergency-card-details.jpeg`);
+  - responder page top to bottom (`emergency-responder-top.jpeg`, `-scroll.jpeg`, `-bottom.jpeg`); hilog showed no
+    app network activity while it opened;
+  - widget target: a cold start with the alert-card want `{"target":"responder"}` lands on the responder page;
+  - web viewer in a browser with a v1 and a v2 link (`emergency-web-card-v1.png`, `-v2.png`).
+  - Two refresh bugs found and fixed on the emulator (chips and text fields in the form were @Builder by-value).
+- Not validated: the physical tap on the alert widget from a home screen (the want it sends was replayed instead);
+  the lock-screen button with the app lock on (the emulator has no screen lock to enable it); "show on card"
+  switches on the emulator (unit-tested only).
 ## README "How to verify" rows
 | Feature | How to check |
 |---|---|
