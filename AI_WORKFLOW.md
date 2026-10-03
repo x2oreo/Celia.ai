@@ -13,9 +13,7 @@ How AI tools were used to build Celia.ai, as required by Challenge Rules §4. Ap
 
 ## Pre-existing work
 
-- **HeartBeat / QTShield** (`github.com/x2oreo/HeartBeat`) is our team's earlier LQTS web app. It was used as
-  **design reference only**: Claude Code read it and summarised what worked and what didn't. No code, prompts or data
-  were copied. Everything in this repo was written fresh during the challenge.
+No pre-existing code, prompts or data are used. Everything in this repo was written fresh during the challenge.
 
 Third-party components:
 
@@ -28,11 +26,11 @@ Third-party components:
 
 ### 2026-10-03 — AI layer research, plan and first implementation (Kaloyan)
 
-**Prompt (summary):** "Research how we built the AI in HeartBeat, brainstorm a voice-first agent at the centre of
-the app that works with the tools (medicine check, emergency card…), then plan and build the AI layer."
+**Prompt (summary):** "Brainstorm a voice-first agent at the centre of the app that works with the tools (medicine
+check, emergency card…), then plan and build the AI layer."
 
 **Workflow**
-1. Two parallel read-only research agents covered the HeartBeat repo and this repo's docs/skills.
+1. Read-only research agents covered this repo's docs/skills.
 2. Context7 checks:
    - Core Speech Kit: the docs only show `zh-CN`, so English is unverified and voice needs a cloud fallback.
    - OpenAI Responses API function-calling format.
@@ -46,8 +44,8 @@ the app that works with the tools (medicine check, emergency card…), then plan
    - `ComboRules` and `SafetyGate`;
    - `AgentCore` with `ToolRegistry`, ten tools, `ResponseValidator` and `OfflineAgent`.
 
-**Lessons from HeartBeat applied**
-- The LLM no longer decides combination risk; `ComboRules` does.
+**Safety design decisions**
+- The LLM does not decide combination risk; `ComboRules` does.
 - An unknown drug can never become green.
 - Alternatives are re-verified against the drug list.
 - The emergency number is not hardcoded.

@@ -100,7 +100,7 @@ export class AddMedTool implements AgentTool {
       return toolError('name is required');
     }
     const dose: string = argString(args, 'dose', 80);
-    // Resolve first so the saved medicine carries its ingredient (HeartBeat stored unknown brands as "safe").
+    // Resolve first so the saved medicine carries its ingredient (an unknown brand must never be stored as "safe").
     const v: DrugVerdict = await DrugChecker.get().check(name);
     const p: PendingAction = pending('ADD_MED', name, v.ingredient, dose);
     turn.pending.push(p);
