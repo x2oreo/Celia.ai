@@ -102,3 +102,75 @@ responders** (doctor icon), the location line and the message preview.
 - Emergency tab row "Start SOS countdown — Alerts your contacts if you don't answer" and the countdown text "…call the
   ambulance and alert your contacts" overstate what happens (nothing is sent automatically). Strings in `string.json`
   / `EmergencyPage.ets` (S2). Suggest "Opens the call and message buttons if you don't answer."
+
+---
+
+# Phase 2: B13 Live View + lock screen, B12 Push Kit (built from `docs/research/live-view.md` and `push-kit.md` on `georgi/b-research`)
+
+## AI_WORKFLOW entry
+### 2026-10-04 — Georgi + Claude Code: Live View, lock-screen medical ID and Push Kit (branch `georgi/b-notify-sos`)
+- Asked: implement what S7's research says is possible without approvals; list the rest as blocked.
+- Produced:
+  - `emergency/LiveStatus.ets` + pure `emergency/SosLiveText.ets`: one `startLiveView` with a countdown `timer`
+    the system ticks, a timer capsule (emergency colour from the `danger` resource), `clickAction` (the SOS tap
+    WantAgent), a pickup layout with a picture (`rawfile/sos_live.png`, generated in this repo), `countdownPreset`
+    text at zero, and an end card that says how the SOS ended. No per-second updates. The notification fallback
+    stays and logs the kit's error code.
+  - Lock-screen medical ID: `widget/pages/MedIdCard.ets` + pure `widget/MedIdData.ets`, a third form with
+    `renderingMode: "autoColor"` (home screen and lock screen). Condition, AVOID line, ICD, medicines,
+    allergies, blood type; respects `hiddenOnCard`; never contacts, phone numbers or notes. Same snapshot as the
+    alert card, no network.
+  - Push Kit client: `account/PushToken.ets` (token on each launch, stored on the phone, upserted to
+    `push_tokens` once per user and token when signed in; `forget()` for sign-out), push tap →
+    `EntryAbility.handlePushTap` → SOS page in the watch-sent state (also cold start). `module.json5` home skill
+    also lists `ohos.want.action.home`.
+  - Push Kit server: `sos/huaweiPush.ts` (service-account JWT PS256 with `jose`, test messages, fixed copy, no
+    location), wired into `sos/index.ts` before the contacts step; result in `sos_dispatches.detail.push`, never
+    changes the SOS status. Migration `20261004110000_push_tokens.sql` (owner-only RLS, nothing for anon).
+- Validated:
+  - Phone 239/239 (12 new), backend 72/72 (4 new: config parsing, JWT header/claims verified with a throwaway key,
+    push message shape). `deno check` of `sos/index.ts` passes.
+  - Emulator: **Live View runs on the emulator** (no AGC approval needed there): capsule/timer in the panel and on
+    the lock screen counting down (`notify-sos-15/16`), end cards "SOS cancelled. Glad you are OK" and "Open Celia
+    to call the ambulance and your contacts" (`17/18`). The emulator showed the kit validates the payload before the
+    permission: the research's progress layout was rejected without `nodeIcons`, pickup without `descPic` (401);
+    fixed. Push token on the emulator: `1000900010 Illegal application identity` (no AGC project), logged and
+    ignored. Push tap (want with the push's `clickAction.data`) opens "Your watch sent an SOS" (`19`). Medical ID
+    card in the widget picker and on the home screen with real data (`20/21`).
+- Not validated: Live View on a real phone (needs an approved `TIMER` scenario and, per Huawei, a Chinese-mainland
+  device); the medical ID **on the lock screen** (the emulator has no lock-screen editing; home-screen only);
+  receiving a real push (no AGC project, no Chinese-mainland phone); the push send itself (no service-account key);
+  token upload (S1's accounts and per-user JWT in `Net.ets` not merged yet).
+
+## README "How to verify" rows
+| SOS Live View (B13) | Start an SOS countdown, pull down the panel / lock the screen: a live card "SOS in 00:25" ticking, red capsule. "I'm OK" → card "SOS cancelled". Works on the emulator; on a real phone needs Live View approval (built, unverified there). |
+| Lock-screen medical ID (B13) | Long-press the app icon → Widgets → "Medical ID (lock screen)". Shows condition, AVOID line, ICD, medicines; hidden card fields stay off; no contacts. Lock-screen placement: real phone only (built, unverified). |
+| Push: watch SOS to the phone (B12) | Built, unverified: needs an AGC project with Push Kit, the service-account key in Supabase secrets, B9's watch↔account binding and a Chinese-mainland phone. Emulator check of the tap: `hdc shell aa start -a EntryAbility -b com.celiaai.app --ps route sos --ps source watch --ps loc 1` → "Your watch sent an SOS". `hilog | grep PushToken` shows why no token. |
+
+## ARCHITECTURE notes
+- Live View: one start, system timer, no update loop; `isLiveViewEnabled()` false or an error → ongoing
+  notification every 5 s (B7 buttons). The payload is validated before the permission, so a wrong payload looks like
+  "not available"; LiveStatus logs `code message`.
+- Push: watch `sos` row → `sos` function → `watch_pairings.user_id` (B9) → `push_tokens` → Huawei Push
+  (`push-api.cloud.huawei.com/v3/<project>/messages:send`, JWT) → notification id 1004 → tap → `parsePushTap` →
+  `SosController.watchSent` → SOS page. Without the binding the function records `push.status:
+  no_account_binding` and pushes nothing: it never guesses a recipient.
+- Third-party: `npm:jose@5` (JWT signing in the `sos` function, and in its test). List in README + AI_WORKFLOW
+  (Challenge Rules §4). `rawfile/sos_live.png` is generated by a script in this session (no third-party asset).
+
+## Blocked, with the reason
+| Item | Blocked by |
+|---|---|
+| Live View on a real phone | AGC Live View `TIMER` scenario approval (5 working days, scenario meant for tool apps) and, per Huawei, a Chinese-mainland device |
+| Receiving pushes on a phone | Push Kit for phones is Chinese-mainland only; AGC project + Push Kit + signing profile |
+| Sending pushes | Service-account key → secrets `HUAWEI_PUSH_PROJECT_ID`, `HUAWEI_PUSH_SA_KEY` |
+| Knowing whose phone a watch belongs to | B9 (S1): `watch_pairings.user_id` |
+| Token upload | S1: Session + per-user JWT in `common/Net.ets` (RLS on `push_tokens` needs `auth.uid()`) |
+| Medical ID on the lock screen in the emulator | No lock-screen editing on the emulator |
+
+## For the coordinator / other streams
+- Coordinator (after Georgi's OK): apply `20261004110000_push_tokens.sql`; redeploy `sos` (`--no-verify-jwt`
+  unchanged); later set `HUAWEI_PUSH_PROJECT_ID` / `HUAWEI_PUSH_SA_KEY`.
+- S1: call `PushToken.forget()` before `Session.signOut()` (the row is deleted with the user's token); B9 should add
+  `watch_pairings.user_id` — `sos/index.ts` `pushToPatient` already reads it.
+- S2: the lock-screen card reuses `hiddenOnCard` and the widget snapshot (`WidgetData` got four `mid*` keys).
