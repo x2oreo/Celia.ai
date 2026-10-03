@@ -1,5 +1,6 @@
-// Doctor visit prep (F-31): pick the specialist → safety brief from my own data → send as an encrypted link that
-// opens on any device (site/report, 48 h), or share/copy as text.
+// Doctor visit (F-31; DESIGN.md §10.1a, screen 07): pick the specialist → safety brief from my own data → send as an
+// encrypted link that opens on any device (site/report, 48 h), or share/copy as text. The one primary action stays
+// pinned at the bottom; the AI summary is labelled and visually separate.
 
 import { common } from '@kit.AbilityKit';
 import { LocalStore } from '../data/LocalStore';
@@ -9,7 +10,9 @@ import { copyText } from '../common/Clipboard';
 import { DoctorPrepParam } from '../common/Routes';
 import { shareText } from '../common/Share';
 import { toast } from '../common/Toast';
-import { PrimaryButton, QuietButton, SecondaryButton, SourceBadge, TypingDots } from '../components/Common';
+import {
+  CapsLabel, PrimaryButton, QuietButton, ScreenHeader, SecondaryButton, TypingDots
+} from '../components/Common';
 import { DoctorSummary, SummaryOutcome, SummaryResult } from '../doctor/DoctorSummary';
 import { Motion } from '../common/Motion';
 import { buildReport, ReportPayload } from '../doctor/ReportPayload';
@@ -71,7 +74,12 @@ export struct DoctorPrepPage {
   summaryBlock() {
     if (this.summaryState === 'OK') {
       Column({ space: 8 }) {
-        SourceBadge({ label: $r('app.string.med_ai_badge'), solid: true })
+        Text($r('app.string.dp_ai_label'))
+          .fontFamily('monospace')
+          .fontSize($r('app.float.font_micro'))
+          .fontWeight(FontWeight.Bold)
+          .letterSpacing(1)
+          .fontColor($r('app.color.ink_3'))
         Text(this.summary)
           .fontSize($r('app.float.font_body'))
           .fontColor($r('app.color.ink'))
@@ -183,116 +191,171 @@ export struct DoctorPrepPage {
     }
   }
 
+  private async copyBrief(): Promise<void> {
+    const ok: boolean = await copyText(this.text());
+    toast(this.getUIContext(), ok ? $r('app.string.dp_copied') : $r('app.string.error_generic'));
+  }
+
+  @Builder
+  chips() {
+    Scroll() {
+      Row({ space: 8 }) {
+        ForEach(SPECIALTIES, (s: Specialty) => {
+          Text(specialtyName(s))
+            .fontSize($r('app.float.font_button'))
+            .fontWeight(FontWeight.Bold)
+            .fontColor(this.specialty === s ? $r('app.color.chat_user_text') : $r('app.color.ink'))
+            .height($r('app.float.chip_height'))
+            .padding({ left: 16, right: 16 })
+            .backgroundColor(this.specialty === s ? $r('app.color.chat_user_bg') : $r('app.color.surface'))
+            .border({ width: this.specialty === s ? 0 : 1, color: $r('app.color.border') })
+            .borderRadius(22)
+            .accessibilitySelected(this.specialty === s)
+            .onClick(() => {
+              this.specialty = s;
+              this.build_();
+            })
+        }, (s: Specialty) => s)
+      }
+      .padding({ left: 16, right: 16 })
+    }
+    .scrollable(ScrollDirection.Horizontal)
+    .scrollBar(BarState.Off)
+    .width('100%')
+    .align(Alignment.Start)
+  }
+
+  @Builder
+  section(sec: BriefSection) {
+    Column({ space: 6 }) {
+      CapsLabel({ text: sec.title })
+      ForEach(sec.lines, (l: string) => {
+        Text(l)
+          .fontSize($r('app.float.font_body'))
+          .fontWeight(600)
+          .lineHeight(23)
+          .fontColor($r('app.color.ink'))
+          .width('100%')
+      }, (l: string, i: number) => `${i}-${l}`)
+    }
+    .width('100%')
+    .alignItems(HorizontalAlign.Start)
+    .padding(16)
+    .backgroundColor($r('app.color.surface'))
+    .border({ width: 1, color: $r('app.color.border') })
+    .borderRadius($r('app.float.radius_ml'))
+    .accessibilityGroup(true)
+  }
+
+  // One primary action, pinned. With the share service: the encrypted report link. Without it: the brief as text.
+  @Builder
+  pinned() {
+    Row({ space: 10 }) {
+      if (ShareService.available()) {
+        PrimaryButton({
+          label: this.sending ? $r('app.string.share_preparing') : $r('app.string.dp_share_doctor'),
+          active: !this.sending,
+          large: true,
+          onTap: () => {
+            this.sendLink(false);
+          }
+        })
+          .layoutWeight(1)
+        SecondaryButton({
+          label: $r('app.string.dp_copy_short'),
+          large: true,
+          fill: false,
+          onTap: () => {
+            this.sendLink(true);
+          }
+        })
+      } else {
+        PrimaryButton({
+          label: $r('app.string.dp_share_doctor'),
+          large: true,
+          onTap: () => {
+            shareText(this.ctx(), 'Long QT safety brief', this.text());
+          }
+        })
+          .layoutWeight(1)
+        SecondaryButton({
+          label: $r('app.string.dp_copy_short'),
+          large: true,
+          fill: false,
+          onTap: () => {
+            this.copyBrief();
+          }
+        })
+      }
+    }
+    .width('100%')
+    .padding({ left: 16, right: 16, top: 12, bottom: 16 })
+    .backgroundColor($r('app.color.bg'))
+    .border({ width: { top: 1 }, color: $r('app.color.border') })
+  }
+
   build() {
     NavDestination() {
-      Scroll() {
-        Column({ space: 12 }) {
-          Text($r('app.string.dp_intro'))
-            .fontSize($r('app.float.font_body'))
-            .fontColor($r('app.color.ink_3'))
-            .width('100%')
-          Flex({ wrap: FlexWrap.Wrap }) {
-            ForEach(SPECIALTIES, (s: Specialty) => {
-              Text(specialtyName(s))
-                .fontSize($r('app.float.font_small'))
-                .fontColor(this.specialty === s ? $r('app.color.chat_user_text') : $r('app.color.ink'))
-                .padding({ left: 14, right: 14, top: 8, bottom: 8 })
-                .margin({ right: 8, bottom: 8 })
-                .backgroundColor(this.specialty === s ? $r('app.color.chat_user_bg') : $r('app.color.surface'))
-                .border({ width: this.specialty === s ? 0 : 1.5, color: $r('app.color.border_strong') })
-                .borderRadius(100)
-                .onClick(() => {
-                  this.specialty = s;
-                  this.build_();
-                })
-            }, (s: Specialty) => s)
-          }
-          .width('100%')
-
-          if (this.profile === undefined) {
-            Text($r('app.string.emergency_no_profile'))
-              .fontSize($r('app.float.font_body'))
-              .fontColor($r('app.color.ink_3'))
-          } else {
-            if (DoctorSummary.available()) {
-              this.summaryBlock()
-            }
-            ForEach(this.sections, (sec: BriefSection) => {
-              Column({ space: 6 }) {
-                Text(sec.title)
-                  .fontSize($r('app.float.font_small'))
-                  .fontWeight(FontWeight.Bold)
-                  .fontColor($r('app.color.brand_text'))
-                ForEach(sec.lines, (l: string) => {
-                  Row({ space: 8 }) {
-                    Text('•').fontColor($r('app.color.ink_3'))
-                    Text(l)
-                      .fontSize($r('app.float.font_body'))
-                      .fontColor($r('app.color.ink'))
-                      .layoutWeight(1)
-                  }
-                  .alignItems(VerticalAlign.Top)
-                  .width('100%')
-                }, (l: string, i: number) => `${i}-${l}`)
-              }
-              .width('100%')
-              .alignItems(HorizontalAlign.Start)
-              .padding(16)
-              .backgroundColor($r('app.color.surface'))
-              .border({ width: 1, color: $r('app.color.border') })
-              .borderRadius($r('app.float.radius_m'))
-            }, (sec: BriefSection) => `${this.specialty}-${sec.title}`)
-
-            if (ShareService.available()) {
-              PrimaryButton({
-                label: this.sending ? $r('app.string.share_preparing') : $r('app.string.dp_send_link'),
-                icon: $r('app.media.ic_share'),
-                active: !this.sending,
-                onTap: () => {
-                  this.sendLink(false);
-                }
-              })
-              SecondaryButton({
-                label: $r('app.string.dp_copy_link'),
-                onTap: () => {
-                  this.sendLink(true);
-                }
-              })
-              Text($r('app.string.dp_link_caption'))
-                .fontSize($r('app.float.font_caption'))
+      Column() {
+        ScreenHeader({ title: $r('app.string.doctor_visit'), settings: false })
+        this.chips()
+        Scroll() {
+          Column({ space: 12 }) {
+            if (this.profile === undefined) {
+              Text($r('app.string.emergency_no_profile'))
+                .fontSize($r('app.float.font_body'))
                 .fontColor($r('app.color.ink_3'))
+            } else {
+              ForEach(this.sections, (sec: BriefSection) => {
+                this.section(sec)
+              }, (sec: BriefSection) => `${this.specialty}-${sec.title}`)
+              if (DoctorSummary.available()) {
+                this.summaryBlock()
+              }
+              if (ShareService.available()) {
+                Text($r('app.string.dp_link_caption'))
+                  .fontSize($r('app.float.font_caption'))
+                  .fontColor($r('app.color.ink_3'))
+                  .width('100%')
+                Row({ space: 8 }) {
+                  QuietButton({
+                    label: $r('app.string.dp_share_text'),
+                    onTap: () => {
+                      shareText(this.ctx(), 'Long QT safety brief', this.text());
+                    }
+                  })
+                    .layoutWeight(1)
+                  QuietButton({
+                    label: $r('app.string.dp_copy'),
+                    onTap: () => {
+                      this.copyBrief();
+                    }
+                  })
+                    .layoutWeight(1)
+                }
                 .width('100%')
-                .textAlign(TextAlign.Center)
+              }
+              Text($r('app.string.disclaimer'))
+                .fontSize($r('app.float.font_caption'))
+                .fontColor($r('app.color.ink_4'))
+                .width('100%')
             }
-            QuietButton({
-              label: $r('app.string.dp_share_text'),
-              onTap: () => {
-                shareText(this.ctx(), 'Long QT safety brief', this.text());
-              }
-            })
-            QuietButton({
-              label: $r('app.string.dp_copy'),
-              onTap: async () => {
-                const ok: boolean = await copyText(this.text());
-                toast(this.getUIContext(), ok ? $r('app.string.dp_copied') : $r('app.string.error_generic'));
-              }
-            })
-            Text($r('app.string.disclaimer'))
-              .fontSize($r('app.float.font_caption'))
-              .fontColor($r('app.color.ink_4'))
-              .width('100%')
-              .textAlign(TextAlign.Center)
           }
+          .padding({ left: 16, right: 16, top: 12, bottom: 24 })
+          .width('100%')
         }
-        .padding({ left: 16, right: 16, bottom: 32 })
         .width('100%')
+        .layoutWeight(1)
+        .align(Alignment.Top)
+        .scrollBar(BarState.Off)
+        if (this.profile !== undefined) {
+          this.pinned()
+        }
       }
       .width('100%')
       .height('100%')
-      .align(Alignment.Top)
-      .scrollBar(BarState.Off)
     }
-    .title($r('app.string.home_doctor'))
+    .hideTitleBar(true)
     .backgroundColor($r('app.color.bg'))
     .onReady((ctx: NavDestinationContext) => {
       const p: DoctorPrepParam | undefined = ctx.pathInfo.param as DoctorPrepParam | undefined;
