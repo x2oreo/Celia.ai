@@ -53,3 +53,44 @@ Deno.test('isE164', () => {
 Deno.test('escapeXml neutralises TwiML injection via patient name', () => {
   assertEquals(escapeXml('<Dial>&"\''), '&lt;Dial&gt;&amp;&quot;&apos;');
 });
+
+// 3 Oct 2026, 18:00 in Kraków (UTC+2).
+const NOW = Date.UTC(2026, 9, 3, 16, 0, 0);
+const MIN = 60_000;
+const HOUR = 3_600_000;
+
+Deno.test('message: recent symptom and today\'s dose are included', () => {
+  const ctx: PatientContext = {
+    ...CTX,
+    lastDose: { name: 'nadolol', at: NOW - 10 * HOUR },
+    recentSymptom: { kind: 'dizziness', bpm: 142, at: NOW - 2 * MIN },
+  };
+  const m = buildSosMessage({ reason: 'fall', bpm: 40 }, ctx, NOW);
+  assertStringIncludes(m.sms, 'Reported dizziness at 17:58 (HR 142).');
+  assertStringIncludes(m.sms, 'Last nadolol dose today 08:00.');
+  assertStringIncludes(m.voice, 'Shortly before, they reported dizziness.');
+  assertStringIncludes(m.voice, 'Their last nadolol dose was 10 hours ago.');
+  assert(m.sms.length <= 612, `SMS too long: ${m.sms.length}`);
+});
+
+Deno.test('message: old symptom is left out, missed dose is called out', () => {
+  const ctx: PatientContext = {
+    ...CTX,
+    lastDose: { name: 'nadolol', at: NOW - 30 * HOUR },
+    recentSymptom: { kind: 'palpitations', bpm: 150, at: NOW - 3 * HOUR },
+  };
+  const m = buildSosMessage({ reason: 'need_help', bpm: 0 }, ctx, NOW);
+  assert(!m.sms.includes('Reported'), 'symptom older than 1 h must not be in the alert');
+  assertStringIncludes(m.sms, 'No nadolol dose logged for 30 h.');
+});
+
+Deno.test('message: yesterday\'s dose and a racing-heart symptom read naturally', () => {
+  const ctx: PatientContext = {
+    ...CTX,
+    lastDose: { name: 'nadolol', at: NOW - 20 * HOUR },
+    recentSymptom: { kind: 'palpitations', bpm: 0, at: NOW - 30 * MIN },
+  };
+  const m = buildSosMessage({ reason: 'need_help', bpm: 160 }, ctx, NOW);
+  assertStringIncludes(m.sms, 'Last nadolol dose yesterday 22:00.');
+  assertStringIncludes(m.sms, 'Reported a racing heart at 17:30.');
+});
