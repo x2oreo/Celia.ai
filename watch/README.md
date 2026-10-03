@@ -53,8 +53,25 @@ Simulated values are plausible for the current state and heart rate (`MockedVita
 and listed in `payload.mocked` in the data. They show what the product does once Huawei opens these signals to
 watch apps.
 
-Watch pages (swipe): **Heart** (bpm, state, current max) → **Vitals** (all inputs above) → **Log** (symptoms,
-medication) → **Settings** (source, demo scenario) → **Simulate**.
+## Screens (Watch companion design W1–W7)
+
+Swipe pages: **Home** (W1: status, bpm, genotype · phone link, ring = bpm between your min and max) → **Vitals**
+(all inputs above) → **Check-in** (W4 + "Took nadolol") → **Settings** (source, demo scenario) → **Simulate**.
+
+Full-screen flows, most urgent wins (SOS > fall/alert > check-in > drug verdict):
+
+| Screen | When | Buttons |
+|---|---|---|
+| W2 heart rate high / W3 heart rate low | `hr_alert` for the current state's limit; low while asleep uses a gentle vibration | *I'm OK* → W4 check-in · *Need help* → W5 |
+| Fall detected (W2 style, 30 s) | accelerometer / Faint scenario / Simulate | *I'm OK* → W4 · *Need help* or no answer → W5 |
+| Irregular rhythm, slow recovery (W2 style) | `rhythm_alert` (simulated), slow `hr_recovery` | same as W2 |
+| W4 How do you feel? | after *I'm OK*, and as a page | Fine / Dizzy / Racing → `symptom` |
+| W5 SOS countdown (10 s) → SOS sent | *Need help* or unanswered fall | *Cancel*; at 0 an `sos` row is sent |
+| W6 drug verdict glance | a new QT-risk drug arrives via `watch_context` (or Simulate) | *Got it* |
+| W7 not on wrist | wear sensor / Simulate | — |
+
+**The watch never dials 112 itself** (auto-dialling emergency services from a test build is unsafe). The `sos` row
+is the trigger: the phone app / agent alerts emergency contacts and offers the 112 call.
 
 ## Context: activity, falls, wear (beyond heart rate)
 
@@ -93,13 +110,14 @@ What the demo shows is the part we can run on the emulator: our own monitoring l
 | `hr_live` | every 5 s while monitoring | `{ bpm, activity }` |
 | `hr_alert` | HR outside the current limit for ≥ 10 s (60 s cooldown) | `{ bpm, limitBpm, direction, sustainedSec, activity }` |
 | `hr_session` | every 5 min, and when the app is left | `{ avgBpm, maxBpm, minBpm, durationSec, samples }` |
-| `symptom` | "I feel unwell" buttons | `{ kind, bpm }` |
+| `symptom` | check-in answer | `{ kind: "fine" \| "dizziness" \| "palpitations" \| …, bpm }` |
 | `medication_taken` | "Took nadolol" | `{ name }` |
-| `fall_detected` | after a fall, when answered or after 30 s | `{ bpm, response: "ok" \| "no_response", responseSec }` |
+| `fall_detected` | after a fall, when answered or after 30 s | `{ bpm, response: "ok" \| "need_help" \| "no_response", responseSec }` |
 | `wear_state` | watch put on / taken off | `{ onWrist }` |
 | `vitals` | every 30 s | every input above: `{ bpm, restingBpm, activity, stress, steps, hrvMs, spo2, breathingRate, irregularRhythm, highLimitBpm, lowLimitBpm, genotype, riskyDrug, mocked[] }` |
 | `hr_recovery` | 60 s after an exercise bout | `{ peakBpm, bpmAfter60s, dropBpm, slow }` |
 | `rhythm_alert` | irregular rhythm starts (simulated) | `{ bpm, activity, mocked: true }` |
+| `sos` | SOS countdown ran out | `{ reason: "need_help" \| "fall", bpm, activity }` |
 
 The watch also **reads** `watch_context` (`device_id`, `genotype`, `risky_drug`, `risky_drug_risk`, `risky_drug_at`).
 The phone app upserts it after onboarding and after each drug check that returns a QT-risk verdict:
