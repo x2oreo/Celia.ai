@@ -1,6 +1,7 @@
 import { AbilityConstant, ConfigurationConstant, UIAbility, Want } from '@kit.AbilityKit';
 import { window } from '@kit.ArkUI';
 import { Logger } from '../common/Logger';
+import { AgentCore } from '../agent/AgentCore';
 
 const log: Logger = new Logger('EntryAbility');
 
@@ -12,6 +13,8 @@ export default class EntryAbility extends UIAbility {
     } catch (e) {
       log.warn(`setColorMode failed: ${JSON.stringify(e)}`);
     }
+    // Agent listens for vitals alerts from app start (proactive check-ins).
+    AgentCore.get().start();
     log.info('onCreate');
   }
 
