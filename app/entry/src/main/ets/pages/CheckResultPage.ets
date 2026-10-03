@@ -9,6 +9,8 @@ import { VerdictCard } from '../components/VerdictCard';
 import { PrimaryButton, SecondaryButton } from '../components/Common';
 import { Logger } from '../common/Logger';
 import { toast } from '../common/Toast';
+import { AgentPrompt } from '../agent/AgentPrompt';
+import { DrugVerdict } from '../model/DrugVerdict';
 
 const log: Logger = new Logger('CheckResult');
 
@@ -44,6 +46,18 @@ export struct CheckResultPage {
     toast(this.getUIContext(), $r('app.string.meds_added'));
   }
 
+  // Hand the checked medicine to Celia: back to the tabs, Agent tab, question already sent.
+  private askCelia(): void {
+    if (this.outcome === undefined) {
+      return;
+    }
+    const v: DrugVerdict = this.outcome.verdict;
+    const name: string = v.ingredient !== '' && v.ingredient !== v.query.toLowerCase() ? `${v.query} (${v.ingredient})` :
+      v.query;
+    this.navStack.clear();
+    AgentPrompt.ask(`I was offered ${name}. Is it safe for me, and what should I ask my doctor?`);
+  }
+
   build() {
     NavDestination() {
       Scroll() {
@@ -66,6 +80,13 @@ export struct CheckResultPage {
                 }
               })
             }
+            SecondaryButton({
+              label: $r('app.string.agent_ask_about'),
+              icon: $r('app.media.ic_tab_agent'),
+              onTap: () => {
+                this.askCelia();
+              }
+            })
             PrimaryButton({
               label: $r('app.string.check_another'),
               icon: $r('app.media.ic_search'),

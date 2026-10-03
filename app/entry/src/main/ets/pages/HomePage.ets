@@ -147,6 +147,9 @@ export struct HomePage {
           this.action($r('app.media.ic_search'), $r('app.string.home_check'), true, () => {
             this.activeTab = TabIndex.MEDICINES;
           })
+          this.action($r('app.media.ic_tab_agent'), $r('app.string.agent_ask_celia'), false, () => {
+            this.activeTab = TabIndex.AGENT;
+          })
           this.action($r('app.media.ic_tab_emergency'), $r('app.string.home_card'), false, () => {
             this.activeTab = TabIndex.EMERGENCY;
           })
