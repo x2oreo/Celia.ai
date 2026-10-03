@@ -3,34 +3,14 @@
 
 import { LocalStore } from '../data/LocalStore';
 import { AppEvent } from '../model/AppEvent';
-import { VitalsSample } from '../model/Vitals';
+import {
+  ACTIVITIES, buildSymptomEntry, isRedFlag, Symptom, SymptomEntry, SYMPTOMS, symptomLabel
+} from '../model/SymptomEntry';
 import { VitalsService } from '../vitals/VitalsService';
 import { Routes, SosParam } from '../common/Routes';
 import { dateTime } from '../common/Format';
 import { toast } from '../common/Toast';
 import { PrimaryButton, SectionHeader } from '../components/Common';
-
-export type Symptom = 'DIZZINESS' | 'PALPITATIONS' | 'FAINTING' | 'CHEST_PAIN' | 'SHORTNESS_OF_BREATH' | 'OTHER';
-const SYMPTOMS: Symptom[] = ['DIZZINESS', 'PALPITATIONS', 'FAINTING', 'CHEST_PAIN', 'SHORTNESS_OF_BREATH', 'OTHER'];
-const ACTIVITIES: string[] = ['resting', 'sleeping', 'exercise', 'swimming', 'sudden noise / stress', 'other'];
-
-export interface SymptomEntry {
-  symptom: Symptom;
-  severity: number;
-  activity: string;
-  note: string;
-  hrMin: number;
-  hrMax: number;
-}
-
-export function isRedFlag(s: Symptom, severity: number): boolean {
-  return s === 'FAINTING' || s === 'CHEST_PAIN' || (s === 'SHORTNESS_OF_BREATH' && severity >= 4);
-}
-
-function label(s: Symptom): string {
-  const t: string = s.toLowerCase().replace(/_/g, ' ');
-  return t.charAt(0).toUpperCase() + t.substring(1);
-}
 
 @ComponentV2
 export struct SymptomLogPage {
@@ -51,15 +31,8 @@ export struct SymptomLogPage {
   }
 
   private async save(): Promise<void> {
-    const hrs: number[] = VitalsService.get().history().map((s: VitalsSample) => s.hr);
-    const entry: SymptomEntry = {
-      symptom: this.symptom,
-      severity: this.severity,
-      activity: this.activity,
-      note: this.note.trim(),
-      hrMin: hrs.length === 0 ? -1 : hrs.reduce((a: number, b: number) => Math.min(a, b), 999),
-      hrMax: hrs.length === 0 ? -1 : hrs.reduce((a: number, b: number) => Math.max(a, b), 0)
-    };
+    const entry: SymptomEntry = buildSymptomEntry(this.symptom, this.severity, this.activity, this.note,
+      VitalsService.get().history(), Date.now());
     await LocalStore.get().logEvent('SYMPTOM', JSON.stringify(entry));
     toast(this.getUIContext(), $r('app.string.sym_saved'));
     this.note = '';
@@ -69,7 +42,7 @@ export struct SymptomLogPage {
   // Builders read state through `this` so the highlight re-renders (builder arguments are passed by value).
   @Builder
   symptomChip(sym: Symptom) {
-    Text(label(sym))
+    Text(symptomLabel(sym))
       .fontSize($r('app.float.font_small'))
       .fontColor(this.symptom === sym ? $r('app.color.chat_user_text') : $r('app.color.ink'))
       .padding({ left: 14, right: 14, top: 8, bottom: 8 })
@@ -120,7 +93,7 @@ export struct SymptomLogPage {
                 icon: $r('app.media.ic_bell'),
                 danger: true,
                 onTap: () => {
-                  this.navStack.pushPathByName(Routes.SOS, new SosParam(false, label(this.symptom).toLowerCase()));
+                  this.navStack.pushPathByName(Routes.SOS, new SosParam(false, symptomLabel(this.symptom).toLowerCase()));
                 }
               })
             }
@@ -195,6 +168,6 @@ export struct SymptomLogPage {
   private describe(e: AppEvent): string {
     const s: SymptomEntry = JSON.parse(e.detail) as SymptomEntry;
     const hr: string = s.hrMax > 0 ? ` · HR ${s.hrMin}–${s.hrMax}` : '';
-    return `${label(s.symptom)} ${s.severity}/5 · ${s.activity}${hr}`;
+    return `${symptomLabel(s.symptom)} ${s.severity}/5 · ${s.activity}${hr}`;
   }
 }

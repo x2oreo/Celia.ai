@@ -7,6 +7,11 @@
 | `speak` | Kaloyan | Text-to-speech fallback: `{text}` → raw PCM 24 kHz 16-bit mono. |
 | `realtime-session` | Kaloyan | `{context}` → short-lived OpenAI Realtime client secret with the same instructions + tools. |
 | `vision-extract` | Kaloyan | Box photo → medicine **names only** (`{drugs:[{name,strength,confidence}], imageQuality}`). Never judges risk. |
+| `drug-check` | Georgi | `{query}` → deterministic QT verdict: curated list, then RxNav + openFDA label rule. No AI. |
+| `box-identify` | Georgi | `{gtin, stage}` → brand + English ingredients of any box (registries, product DBs, AI web search last). Never a verdict. |
+| `med-info` | Georgi | `{medicine, ingredient}` → plain-language explanation (`{recognised,summary,contains,usedFor,tips[]}`). Never judges heart/QT safety or doses; replies with banned words are dropped. |
+| `doctor-summary` | Georgi | `{specialty, genotype, medicines, interactions, flagged, heartAlerts, symptoms}` (lists newline-joined) → `{summary}`: 2–3 sentences atop the deterministic doctor brief. No name/notes/contacts are sent. Reassurance ("safe", "no risk"), doses or start/stop advice → `{summary:'', dropped:true}`. |
+| `share` | Georgi | End-to-end encrypted card/report links (ciphertext only). See `docs/ARCHITECTURE.md` → share. Deploy with `--no-verify-jwt`. |
 
 Shared code lives in `_shared/` (`prompt.ts` system prompt + `PROMPT_VERSION`, `tools.ts` tool schemas,
 `openai.ts` fetch client, `validate.ts` request validation).
@@ -20,7 +25,7 @@ Shared code lives in `_shared/` (`prompt.ts` system prompt + `PROMPT_VERSION`, `
   "messages": [{ "role": "user", "text": "Can I take Klacid?" }] }
 
 // response
-{ "promptVersion": "2026-10-03.2", "responseId": "resp_…",
+{ "promptVersion": "2026-10-03.4", "responseId": "resp_…",
   "toolCalls": [{ "callId": "call_…", "name": "check_drug", "arguments": "{\"name\":\"Klacid\",\"dosage\":null}" }],
   "text": "" }
 
@@ -38,7 +43,15 @@ Errors: `400` invalid request, `502` model error/timeout. The app treats any non
 cp supabase/functions/.env.example supabase/functions/.env   # add OPENAI_API_KEY
 supabase functions serve agent --env-file supabase/functions/.env
 supabase secrets set OPENAI_API_KEY=sk-... OPENAI_MODEL=gpt-6-astra
-supabase functions deploy agent transcribe speak vision-extract realtime-session
+supabase functions deploy agent transcribe speak vision-extract med-info doctor-summary realtime-session
 ```
 
 Type-check without the Supabase CLI: `cd supabase/functions && npx deno@2 check */index.ts`.
+Unit tests (pure logic, no network): `npx -y deno test --no-lock backend/supabase/functions/` from the repo root.
+
+Agent tools added on 3 Oct: `log_symptom` (T27; prompt rule 7b, `PROMPT_VERSION` 2026-10-03.4). The device executes it
+(`agent/tools/SymptomTools.ets`); redeploy `agent` and `realtime-session` so the model sees it.
+
+Security limits (3 Oct review): `share` creates are rate-limited per client address; `box-identify` shares an AI
+web answer only after 2 distinct device confirmations and expires every cached row after 30 days (optional secret
+`BOX_VOTE_SALT`); `sos` caps real alert rounds per hour across all devices (`SOS_GLOBAL_MAX_PER_HOUR`, default 10).

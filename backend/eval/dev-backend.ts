@@ -3,7 +3,8 @@
 // Calls go to the real OpenAI API and cost money. See README.md → "Emulator against a local backend".
 const FN_DIR = new URL('../supabase/functions/', import.meta.url).pathname;
 const WRAP = new URL('./fn-wrap.ts', import.meta.url).pathname;
-const names = ['agent', 'transcribe', 'speak', 'vision-extract', 'realtime-session'];
+// drug-check and box-identify need the Supabase database (label/box caches), so they are not served here.
+const names = ['agent', 'transcribe', 'speak', 'vision-extract', 'box-identify', 'drug-check', 'med-info', 'doctor-summary', 'realtime-session', 'share'];
 const ports: Record<string, number> = {};
 const children: Deno.ChildProcess[] = [];
 
@@ -29,7 +30,7 @@ Deno.serve({ port: 8000, hostname: '127.0.0.1' }, async (req) => {
   const port = m ? ports[m[1]] : undefined;
   if (port === undefined) return new Response('not found', { status: 404 });
   const t0 = Date.now();
-  const res = await fetch(`http://127.0.0.1:${port}/`, { method: req.method, headers: req.headers, body: req.body });
+  const res = await fetch(`http://127.0.0.1:${port}/${new URL(req.url).search}`, { method: req.method, headers: req.headers, body: req.body });
   console.log(`${m![1]} ${res.status} ${Date.now() - t0}ms`);
   return res;
 });

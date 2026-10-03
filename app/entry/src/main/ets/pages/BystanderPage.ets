@@ -145,6 +145,8 @@ export struct BystanderPage {
           .border({ width: 1, color: $r('app.color.border') })
           .borderRadius($r('app.float.radius_m'))
           .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.98 })
+          .accessibilityGroup(true)
+          .accessibilityText(this.running ? 'Stop the CPR rhythm' : 'Start the CPR rhythm, 110 compressions a minute')
           .onClick(() => this.toggle())
 
           this.step('3', $r('app.string.by_step3_title'), $r('app.string.by_step3_body'))

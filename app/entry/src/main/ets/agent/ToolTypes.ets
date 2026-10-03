@@ -24,6 +24,10 @@ export class TurnState {
   pending: PendingAction[] = [];
   emergencyStarted: boolean = false;
   toolsUsed: string[] = [];
+  // start_new_chat: AgentCore saves the current chat (optionally renamed) and opens a new one when the turn ends,
+  // so the reply already lands in the new chat.
+  newChatRequested: boolean = false;
+  newChatTitle: string = '';
 }
 
 export interface AgentTool {

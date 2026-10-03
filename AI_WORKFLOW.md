@@ -384,6 +384,28 @@ The tap-to-talk fallback is also untested end to end.
 - **Worked in parallel** with the watch session: the watch button was handed over as a written spec instead of
   editing the same files, to avoid merge conflicts.
 
+### 2026-10-03 — Mark + Claude Code: watch data the phone was ignoring
+- **Asked:** check what the watch sends that the phone doesn't use yet.
+- **Found (AI, from the code on main):** the phone's `WatchCloudSource` uses `vitals`, `sos`, `fall_detected`,
+  `hr_recovery` and `vitals_alert`, but ignores `medication_taken`, `symptom` and `wear_state`.
+- **Produced:** migration `…240000_watch_phone_views.sql` with three read-only views for the phone team:
+  `watch_status` (ON_WRIST / OFF_WRIST / OFFLINE), `watch_doses` (doses confirmed on the watch) and
+  `watch_symptoms`. Phone code was left to the phone team (newer app on `app_development`).
+- **Validated:** all migrations applied in order on a local Postgres 17 (except `pg_net`, which is Supabase-only);
+  the views were checked with test rows: wear state, offline detection, empty names and unknown symptom kinds
+  filtered out, simulated rows labelled.
+
+### 2026-10-03 — Mark + Claude Code: using watch doses and "How do you feel?" answers
+- **Asked:** make the watch's "Took nadolol" taps and symptom answers useful beyond a log.
+- **Produced:** migration `…250000_watch_insights.sql`: `watch_daily_summary` (per-day doses, symptoms, alerts,
+  resting HR) and `watch_insights` (fixed rules with fixed texts: symptom within 24 h of a QT-risk drug, fainting,
+  repeated symptoms, no dose logged in 26 h). The `sos` function now adds the last watch dose and any symptom from
+  the last hour to the SMS and call. `docs/team/watch-data-for-phone.md` hands the phone/agent wiring to Georgi
+  and Kaloyan; the missed-dose nudge was handed to the watch session as a spec.
+- **Validated:** all migrations on a local Postgres 17 with test rows (each insight fires once, `fine` answers and
+  old symptoms are ignored, wording checked); 10 Deno tests for the SOS message pass (3 new) and `deno check` passes.
+- **Not yet validated:** the new SOS text over real Twilio; the views on Supabase (migration not pushed yet).
+
 ### 2026-10-03 — Georgi + Claude Code: emergency-card link fallbacks and branch merges (branch `app_development`)
 - **Asked:** the card QR only opened on the laptop. Fix it for phone scans, add a visible link under the QR, make
   112 the main number on the card page, then merge `main` and `kaloyan/ai-layer` into the branch.
@@ -402,3 +424,228 @@ The tap-to-talk fallback is also untested end to end.
 - **Validated:** `hvigorw assembleHap` after each change and merge; installed on the emulator; the card page
   opened from the local server in the emulator browser.
 - **Not yet validated:** a real phone on the same Wi-Fi; the public viewer (needs Pages enabled on `main`).
+
+### 2026-10-03 — Georgi + Claude Code: chat history and new chats for the agent (branch `app_development`)
+- **Asked:** save conversations with the agent, start a new chat with a button, switch between chats from the agent
+  screen and Home, and let the user say "save this chat and start a new one".
+- **Plan (AI, approved by Georgi):** written with the planning skill before any code, in six tasks with checkpoints.
+  Decisions: every chat saves automatically, titles come from the first user message (no model), and the model only
+  ever sees the open chat.
+- **Produced:**
+  - `chats` and `chat_messages` tables (schema v2) in the encrypted `LocalStore`, limited to 50 chats × 200 messages.
+  - `AgentCore` saves each message to the open chat and has `newChat` / `openChat` / `deleteChat`; the last chat is
+    restored at start.
+  - `ChatCommands` matches short "new chat" commands on device, after `SafetyGate`. The `start_new_chat` tool is
+    defined on device and backend, with prompt `2026-10-03.3`.
+  - `ChatsPage` (list, open, rename, delete), New chat and Chats buttons in the agent header, and a Chats link on
+    Home. The screen spec was added to DESIGN.md first.
+- **Safety:** reopened chats keep display cards only. Confirm, quick-reply and SOS cards are dropped, so an old chat
+  can never add a medicine or start an SOS.
+- **Validated:**
+  - 9 new unit tests (143 total pass).
+  - The live model chose `start_new_chat` with the name the user gave.
+  - On the emulator: asked about Klacid, saved the chat by asking in plain words, saw both chats in the list,
+    reopened the old one with its verdict card, and it was still there after an app restart.
+- **Not yet validated:** the live-voice path for "new chat" (the realtime session keeps its own memory until it is
+  restarted).
+
+### 2026-10-03 — Georgi + Claude Code: medicine info and a redesigned reminders page (branch `app_development`)
+- **Asked:** make the Medicine reminders page look better within the current colours and structure. Load info about
+  each medicine (what it is, what's in it, what to know) so the cards say more than a name, and allow an OpenAI
+  explanation on demand.
+- **Plan (AI, approved by Georgi):** written with the planning skill before any code. Georgi picked curated offline
+  data + an optional AI explanation, on the reminders page, a new medicine detail sheet and the medicines grid.
+  DESIGN.md was extended first (§6.9, Reminders in §10.2).
+- **Produced:**
+  - `drugs/DrugInfo.ets`: what it's for, how it works and up to 3 everyday tips for all 137 dataset medicines,
+    written by the AI from general patient-leaflet knowledge. **Needs review by the team before the demo.**
+  - `drugs/MedFacts.ets` merges class, brands, risk reason, interactions with my other medicines and DrugInfo.
+  - `/med-info` Edge Function + `drugs/MedInfoClient.ets`: strict schema, banned-word filter on both sides, cached
+    on the phone, sent through the privacy ledger. AI text never sets a badge or colour.
+  - `MedicineDetailSheet`, richer cards in the Medicines grid, and a rebuilt `RemindersPage` (progress summary,
+    timeline with status words, medicine chips and time presets instead of the dropdown).
+- **Validated:** strict ArkTS build with no new warnings; `deno check` on `med-info`; 9 new unit tests (DrugInfo
+  coverage and lengths, MedFacts, reply validation), all passing. Other failures in the run (agent verdict card,
+  chat history, card link) come from parallel work in the same working tree, not from this change.
+- **Completed in a second pass:** "Ask the agent" in the medicine sheet (opens the chat with an `AskParam` question
+  that goes through the normal SafetyGate → agent → validator path), a live info preview in the add-medicine form,
+  `med-info` registered in `backend/eval/dev-backend.ts`, and the function deployed to the Supabase project with the
+  Supabase MCP (version 1, JWT check on).
+- **Validated live:** `med-info` run locally with the real key: Zofran → correct plain summary and leaflet tips, a
+  made-up name → `recognised: false`, an empty body → 400. The hosted function answers 502 until the
+  `OPENAI_API_KEY` secret is set in that project (logs: "Missing env OPENAI_API_KEY").
+- **Not yet validated:** emulator screenshots (skipped on purpose in this pass).
+
+
+### 2026-10-03 — Georgi + Claude Code: encrypted share links for the emergency card and doctor report (branch `app_development`)
+- **Asked:** put the card QR and the doctor report on Supabase so both open from a link on any device, redesigned
+  to the new design system.
+- **Research (AI, from Supabase docs):** Edge Functions rewrite `text/html` to `text/plain` and Storage serves
+  HTML as plain text, so Supabase cannot host the pages. Decision (with Georgi): Supabase stores and serves
+  the data; Vercel hosts two static viewer pages.
+- **Design (AI, approved by Georgi):**
+  - End-to-end encryption: the phone seals JSON with AES-256-GCM and keeps the key in the link's `#`, so Supabase
+    and Vercel only ever see ciphertext.
+  - Report links expire after 48 h. Card links last until the card changes or the user revokes them.
+  - The QR shrank from about 900 to about 90 characters.
+- **Produced:**
+  - Backend: the `share` Edge Function (POST/GET/DELETE, private Storage bucket, revoke tokens stored as SHA-256)
+    with Deno tests.
+  - App: `ShareCrypto`, `ShareService`, `ReportPayload` (structured report: resting-HR trend, doses), wired into
+    the Emergency and Doctor prep screens. Celia's scanner opens short card links in the app.
+  - Web: `site/assets` (tokens, crypto helper), a rebuilt `site/card`, a new `site/report` (print-ready, dark
+    mode), and `vercel.json` (CSP limited to the Supabase URL, `no-referrer`, `noindex`).
+  - DESIGN.md §10.2a spec written before building.
+- **Validated:**
+  - 5 Deno tests.
+  - Real round trip against Supabase Storage via the local backend: create, get, wrong revoke token → 403,
+    revoke → 404.
+  - Sample shares sealed with WebCrypto opened in Playwright: card at 390 px, report at 390 px and 1280 px, dark
+    mode.
+  - 157 ArkTS unit tests pass.
+- **Bugs found:** the local proxy dropped query strings (fixed in `dev-backend.ts`). The chart labels were
+  unreadable at phone width (now drawn at the real width).
+
+### 2026-10-03 — Georgi + Claude Code: online check for any medicine, step 1 (branch `app_development`)
+- **Asked:** plan how scanning can recognise medicines outside our dataset online with AI, then build it.
+- **Plan (AI, choices made by Georgi):** a 10-task plan. Verdicts for medicines outside the curated list come from
+  the FDA drug label using a fixed keyword rule, not from the LLM. Unknown barcodes go through a cache, then a public
+  register, then AI web search that must cite a source, then a box photo; the user always confirms. Built so far:
+  the risk part (tasks 1–3).
+- **Research (AI, against the live APIs):**
+  - RxNav fuzzy search matches junk ("table" → table sugar), so it is used only when the match starts with the typed
+    name.
+  - RxNorm marks discontinued brands (Zofran, Atarax) obsolete, so ingredients come from `historystatus`.
+  - One label per drug can miss a warning (loperamide), so the worst of 5 labels counts.
+  - RxNav returns US names (acetaminophen), so tier 2 checks the curated list through its aliases.
+- **Produced:**
+  - Backend: `_shared/labelRisk.ts`, `_shared/rxnav.ts`, `_shared/openfda.ts`, `drug-check/tier2.ts`; `drug-check`
+    rewritten as tier 1 + tier 2; `label_cache` migration.
+  - App: `DrugCheckClient.parseOnlineVerdict` (validated, label quote shown in "How we know", confidence capped at 0.9),
+    `LABEL` trace step.
+- **Deployed (Supabase MCP):** `label_cache` migration; `seed.sql`, which the cloud database never had (137 drugs,
+  495 aliases); `drug-check` v1 (first deploy, JWT required).
+- **Validated:**
+  - 17 Deno tests (label rule + tier 2 with fake dependencies).
+  - 5 new Hypium tests. The full suite ran 162 tests: 160 passed; `unknownDrugIsNeverReportedSafe` timed out and
+    `drugQuestionGetsDeterministicVerdictCard` failed. Neither runs the changed code.
+  - Live calls: Tasigna / Caprelsa → KNOWN_RISK (boxed warning), Fanapt → POSSIBLE_RISK, Keppra → NOT_LISTED 0.6,
+    Lexapro / Zofran → curated KNOWN_RISK, junk → UNKNOWN_DRUG. Uncached 1.2–3.1 s.
+- **Rejected:** raising the app timeout to 9 s. Unit tests that hit the unreachable local backend timed out
+  (3 extra failures), and the live path fits within 5 s.
+
+### 2026-10-03 — Georgi + Claude Code: everything on Supabase, so links work from any device (branch `app_development`)
+- **Asked:** make sharing and the AI work from any phone without the laptop, secure and working.
+- **Plan (AI, approved by Georgi):**
+  - Sharing always goes to the deployed project (`Config.SHARE_BACKEND_URL`), independent of the AI backend.
+  - The AI functions are deployed and the app points at Supabase.
+  - Then a security review.
+- **Produced:**
+  - `share` v3: creating and revoking need the project's publishable key and fail closed; blobs live in `card/` and
+    `report/` folders; expired reports are swept on create.
+  - `agent`, `transcribe`, `speak`, `vision-extract` and `realtime-session` deployed with JWT checking on.
+  - `Net.ets` gained request targets (`NetTarget`).
+  - `ShareService` keeps the revoke token until the server confirms and retries pending revokes (bug found by the
+    parallel docs session).
+- **Validated (live):**
+  - Every AI function returns 401 without a key.
+  - With the app key: `agent` called `check_drug` for Klacid, `speak` returned audio, `realtime-session` issued a
+    client secret, `transcribe` answered.
+  - `share`: 401 without or with a wrong key; view, revoke and 404 work with the key.
+  - The `shares` bucket is private and was emptied of test data.
+  - A card and a report sealed like the app opened on celia-share.vercel.app.
+  - No secrets in tracked files; 170 unit tests pass.
+- **Found (not changed, teammates' database):**
+  - Advisors flag `handle_new_user` and `simulate_missed_beta_blocker` as callable by `anon`.
+  - `pg_net` is in the public schema.
+  - Leaked-password protection is off.
+
+### 2026-10-03 — Georgi + Claude Code: identify any medicine box by barcode, online (branch `app_development`)
+- **Asked:** finish the feature so that any medicine box can be identified, not only Polish ones, and make it as fast
+  as possible.
+- **Research (AI, against the live APIs, timed):**
+  - openFDA labels can be searched by barcode (`openfda.upc`, ~0.8 s), so no NDC splitting is needed.
+  - Spanish barcodes carry the national code, which the AEMPS CIMA register answers in ~0.3 s.
+  - UPCitemdb (~0.5 s) and Open Food Facts (~0.13 s) cover retail and OTC products.
+  - German and Polish codes are in no open database (Polish ones are already bundled in the app).
+  - RxClass returns nothing for ATC codes, so the idea of using ATC was dropped.
+  - The cloud project had no `OPENAI_API_KEY` at first, so the AI stages are built to skip cleanly.
+- **Design (AI, approved by Georgi earlier):**
+  - Two calls, so the screen never waits on AI: `fast` (cache plus all deterministic sources in parallel, awaited in
+    trust order) and `deep` (AI web search, only after a fast miss).
+  - Every ingredient must resolve in RxNav; ones that do not are passed on, so the check says UNKNOWN for them.
+  - The user always confirms the box. AI finds are cached for others only after a user confirmed them.
+- **Produced:**
+  - Backend: `_shared/gtin.ts`; `box-identify/{sources,resolve,ai,index}.ts` with Deno tests; the `box_cache`
+    migration.
+  - `drug-check`: phrase-first checking ("ascorbic acid"), salts mapped to the base ingredient, a 4.3 s budget with
+    a background finish, and an RxNav memo.
+  - App: `BoxIdentifyClient.ets` (validated parse), `BoxCandidateSheet.ets`, the ScanPage flow (fast → web search →
+    teach form) and `BoxSource 'ONLINE'`.
+  - DESIGN.md §10.2 spec written before building.
+- **Deployed (Supabase MCP):** `box_cache` migration; `box-identify` v3; `drug-check` v5.
+- **Validated:**
+  - 56 Deno tests and 175 Hypium tests pass; `assembleHap` builds.
+  - Live calls:
+
+    | Barcode | Result | Time |
+    |---|---|---|
+    | US Tylenol, US Loratadine | identified (registry) | 2–3 s on first sight |
+    | Spanish Aspirina C | aspirin + ascorbic acid | ~1.5 s |
+    | Spanish Depakine | valproate (via INN translation) | — |
+    | Any repeat lookup | from cache | ~0.35 s |
+    | `1234` | rejected (400) | — |
+- **Bugs found and fixed:**
+  - "sodium valproate" was checked as the word "sodium". Salts now map to the base ingredient, and a phrase RxNav
+    knows is never split into words.
+  - A colour token (`brand` → `brand_accent`) that broke the HAP build; a parallel session caught it.
+- **Not done:** the box-photo fallback from the scan screen (the agent's photo scan still exists). Unknown boxes fall
+  back to the teach form.
+
+### 2026-10-04 — Georgi + Claude Code: scanning a box showed nothing (branch `app_development`)
+- **Reported:** scanning a Nurofen box gave a click and no result.
+- **Found (hilog + code + backend logs):** the barcode was read (`Barcode: scanned 8`), but nothing appeared because
+  1. `ScanPage` chained three `.bindSheet()` calls on one node. Only the last (teach) sheet was bound, so the
+     verdict sheet and the online-lookup sheet never opened. Nurofen is in the bundled Polish register, so its
+     verdict sheet was the one that was lost;
+  2. `/box-identify` was not in the local dev backend, so the online lookup returned 404;
+  3. the emulator had no `hdc rport tcp:8000`, so no online call reached the backend;
+  4. locally `box-identify` crashed creating the DB client (`.env` has `SUPABASE_SECRET_KEY`, the function only read
+     `SUPABASE_SERVICE_ROLE_KEY`).
+- **Fixed:** one sheet per node in `ScanPage`, the key fallbacks (also in `drug-check`, which read the same keys),
+  `box-identify` and `drug-check` in `dev-backend.ts`, the port forward. The other session that owns `/box-identify`
+  was told; it keeps the fixes. Locally `drug-check` now answers (`nurofen` → ibuprofen, NOT_LISTED).
+- **Validated:** clean ArkTS build; local `box-identify` fast stage answers (cache hit for a US Tylenol code returns
+  brand, ingredients and source) and the deep stage runs; fixed build installed on the emulator for the user to
+  rescan. UI not driven by the AI, at the user's request.
+
+
+### 2026-10-03 — Georgi + Claude Code: finish what the docs still promised, then a regression pass (branch `app_development`)
+- **Asked:** find everything the md docs specify that is not built, build it, then test that nothing else broke and
+  report back.
+- **Plan (AI, approved by Georgi):** three read-only audits (app features, backend/site, docs vs code) → one plan
+  with batched questions. Georgi chose: everything without external approvals; report links stay at one; deploys,
+  `.hap` release and video are his; A2A, caregiver tablet and Brugada/CPVT stay out. Three other Claude sessions were
+  editing the same tree, so file ownership was agreed over cross-session messages before each edit.
+- **Produced:**
+  - Tests: `Config.forceOffline` seam so unit tests never call the developer's backend (157 → 188 tests, all green).
+  - Safety: med-info banned-words filter fixed (`\b` after stems missed "arrhythmias", "torsades", "QTc"), cached AI
+    text re-validated and expired after 30 days, rejected vs unknown vs unreachable told apart; `med-info/logic.ts`.
+  - Privacy ledger now covers every AI call (`BackendClient`) and live-voice sockets; ledger export.
+  - Saved chats hardened (corrupt rows, id reuse after a partial load, title limit, busy guard, 50-chat test).
+  - Genotype tip of the day on Home + coach tips in `explain_condition`; `log_symptom` agent tool (red flags → SOS
+    by rule); 5 more Celia intents; card language picker + read aloud (medical part only); nearby help (map search
+    link, no location sent); travel banner + localised pharmacy card; phone → `watch_context`; doctor-brief AI summary
+    (`/doctor-summary`, no name/notes sent, reassurance/doses dropped); accessibility groups and states; bystander
+    button on the alert widget; Remove-link confirmation; report links scanned in the app open in the browser.
+  - Web: card viewer wording in 13 languages; GitHub Pages publishes only the card viewer.
+  - Docs: DESIGN.md (coach card, travel banner, card language/read aloud/nearby, Taken pill 44 vp), README verify
+    table + test counts, ARCHITECTURE capability table, AI_FEATURES, functions README, TASKS status,
+    `docs/REGRESSION.md`.
+- **Validated:** 188 Hypium + 59 Deno tests green, all functions type-check, strict ArkTS build clean; emulator
+  screenshots of Home, medicine sheet, Emergency (found and fixed two bugs: stale card labels after a language switch,
+  wrong "nothing is uploaded" hint); Playwright on the card viewer in pl/bg/de, light/dark.
+- **Not validated / lessons:** the rest of the emulator walk was stopped because the emulator was in use by hand —
+  several sessions sharing one emulator needs a lock. Could not verify a Petal Maps link format (docs page body did
+  not load), so nearby help uses the documented Google Maps URL instead of guessing. Translations written by AI need a
+  native-speaker check.

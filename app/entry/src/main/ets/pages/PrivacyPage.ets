@@ -1,9 +1,11 @@
 // Privacy (F-45, F-46): app lock switch and "What left my phone" — the ledger of every outbound request.
 
-import { Ledger, LedgerEntry } from '../privacy/Ledger';
+import { Ledger, LedgerEntry, ledgerReport } from '../privacy/Ledger';
+import { common } from '@kit.AbilityKit';
+import { shareText } from '../common/Share';
 import { AppLock } from '../common/AppLock';
 import { dateTime } from '../common/Format';
-import { SectionHeader } from '../components/Common';
+import { SecondaryButton, SectionHeader } from '../components/Common';
 import { toast } from '../common/Toast';
 
 @ComponentV2
@@ -108,6 +110,15 @@ export struct PrivacyPage {
             .border({ width: 1, color: $r('app.color.border') })
             .borderRadius($r('app.float.radius_m'))
           }, (e: LedgerEntry) => `${e.ts}-${e.endpoint}`)
+          if (this.entries.length > 0) {
+            SecondaryButton({
+              label: $r('app.string.privacy_export'),
+              onTap: () => {
+                const ctx: common.UIAbilityContext = this.getUIContext().getHostContext() as common.UIAbilityContext;
+                shareText(ctx, 'Celia privacy ledger', ledgerReport(this.entries));
+              }
+            })
+          }
         }
         .padding({ left: 16, right: 16, bottom: 32 })
         .width('100%')

@@ -1,4 +1,8 @@
 import { describe, it, expect } from '@ohos/hypium';
+import { cardSpeech } from '../main/ets/emergency/CardSpeech';
+import { nearbySearchUrl } from '../main/ets/emergency/NearbyHelp';
+import { cardText as cardTextFor } from '../main/ets/common/CardStrings';
+import { Profile as SpeechProfile } from '../main/ets/model/Profile';
 import { CARD_VIEWER_URL, CardPayload, cardLink, decodePayload, parseCardLink } from '../main/ets/emergency/CardLink';
 import { Profile } from '../main/ets/model/Profile';
 import { Medication } from '../main/ets/model/Medication';
@@ -53,6 +57,27 @@ export default function cardLinkTest() {
       expect(parseCardLink('https://example.com/card/#abc') === undefined).assertTrue();
       expect(parseCardLink(CARD_VIEWER_URL + '#not-base64!') === undefined).assertTrue();
       expect(decodePayload('') === undefined).assertTrue();
+    });
+  });
+
+  describe('CardSpeech', () => {
+    it('speaksMedicalPartNeverNameOrContacts', 0, () => {
+      const p: SpeechProfile = { name: 'Anna Kowalska', condition: 'LQTS', genotype: 'LQT2', hasIcd: true,
+        notes: 'Allergic to latex', contacts: [{ name: 'Marek', relation: 'husband', phone: '+48600100200' }] };
+      const pl: string = cardSpeech(cardTextFor('pl'), p, []);
+      expect(pl.includes(cardTextFor('pl').avoid)).assertTrue();
+      expect(pl.includes('Anna')).assertFalse();
+      expect(pl.includes('Marek')).assertFalse();
+      expect(pl.includes('+48600100200')).assertFalse();
+      expect(pl.includes('latex')).assertFalse();
+      expect(cardSpeech(cardTextFor('en'), p, []).includes('L Q T 2')).assertTrue();
+    });
+
+    it('nearbySearchIsAKeylessMapLinkWithoutLocation', 0, () => {
+      const u: string = nearbySearchUrl('AED');
+      expect(u.startsWith('https://www.google.com/maps/search/?api=1&query=')).assertTrue();
+      expect(u.includes('AED')).assertTrue();
+      expect(u.includes('lat=') || u.includes('ll=') || u.includes('@')).assertFalse();   // no coordinates
     });
   });
 }

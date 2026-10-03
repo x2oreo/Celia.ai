@@ -100,6 +100,56 @@ export class VoiceOutput {
     }
   }
 
+  // Read a fixed text aloud in a given card language (T25, emergency card). English uses the on-device engine when
+  // it exists; other languages (and English without it) use cloud /speak. Returns false when neither can speak —
+  // the caller hides its button then. Independent of the agent's voice mode.
+  async say(text: string, lang: string): Promise<boolean> {
+    const clean: string = text.trim();
+    if (clean.length === 0) {
+      return false;
+    }
+    await this.stop();
+    try {
+      if (lang === 'en' && (await this.createOnDeviceEngine()) && this.tts !== undefined) {
+        const extra: Record<string, Object> = { 'queueMode': 0, 'speed': 0.9, 'volume': 2, 'pitch': 1,
+          'languageContext': 'en-US', 'audioType': 'pcm', 'soundChannel': 3, 'playType': 1 };
+        const params: textToSpeech.SpeakParams = { requestId: `card-${Date.now()}-${this.requestSeq++}`,
+          extraParams: extra };
+        this.tts.speak(clean, params);
+        this.setSpeaking(true);
+        this.speakingTimer = setTimeout(() => this.setSpeaking(false), clean.length * TTS_MS_PER_CHAR);
+        return true;
+      }
+      if (!BackendClient.available()) {
+        return false;
+      }
+      const req: SpeakRequest = { text: clean };
+      const pcm: ArrayBuffer | undefined = await BackendClient.postForBinary('speak', JSON.stringify(req), 20000);
+      if (pcm === undefined || pcm.byteLength === 0) {
+        return false;
+      }
+      await this.playPcm(new Uint8Array(pcm));
+      this.setSpeaking(true);
+      return true;
+    } catch (e) {
+      const err: BusinessError = e as BusinessError;
+      log.warn(`say failed: ${err.code} ${err.message}`);
+      return false;
+    }
+  }
+
+  // Whether say() can work for this language right now (no network call).
+  async canSay(lang: string): Promise<boolean> {
+    if (lang === 'en' && (await this.createOnDeviceEngine())) {
+      return true;
+    }
+    return BackendClient.available();
+  }
+
+  isSpeaking(): boolean {
+    return this.speaking;
+  }
+
   // Barge-in: stop talking as soon as the user presses the mic.
   async stop(): Promise<void> {
     try {

@@ -104,6 +104,8 @@ export function sourceLine(box: BoxInfo): string {
       return `Polish medicines register (URPL), snapshot ${box.sourceDate}`;
     case 'LEARNED':
       return `Added by you on ${box.sourceDate} — stored only on this phone`;
+    case 'ONLINE':
+      return `Found online (${box.sourceName ?? 'barcode lookup'}), confirmed by you on ${box.sourceDate}`;
     default:
       return 'Demo barcode (not a real product)';
   }

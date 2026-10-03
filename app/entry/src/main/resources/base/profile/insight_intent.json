@@ -1,6 +1,11 @@
 {
   "insightIntentsSrcEntry": [
     { "srcEntry": "./ets/insightintents/CheckDrugIntent.ets" },
-    { "srcEntry": "./ets/insightintents/ShowEmergencyCardIntent.ets" }
+    { "srcEntry": "./ets/insightintents/ShowEmergencyCardIntent.ets" },
+    { "srcEntry": "./ets/insightintents/LogSymptomIntent.ets" },
+    { "srcEntry": "./ets/insightintents/TakeDoseIntent.ets" },
+    { "srcEntry": "./ets/insightintents/ShowPharmacyCardIntent.ets" },
+    { "srcEntry": "./ets/insightintents/AddMedicationIntent.ets" },
+    { "srcEntry": "./ets/insightintents/ReadEmergencyCardIntent.ets" }
   ]
 }

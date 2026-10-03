@@ -38,7 +38,7 @@ export function specialtyName(s: Specialty): string {
   }
 }
 
-const WATCH_OUTS_ALL: string[] = [
+export const WATCH_OUTS_ALL: string[] = [
   'Avoid QT-prolonging drugs; check each new drug at crediblemeds.org.',
   'Keep potassium and magnesium in the normal range (vomiting, diarrhoea and diuretics lower them).',
   'Do not stop the beta-blocker without a cardiologist.'
@@ -116,38 +116,13 @@ export function buildBrief(p: Profile, meds: Medication[], scans: ScanRecord[], 
       combos.map((c: ComboVerdict) => c.reason)));
   }
 
-  const flagged: string[] = [];
-  for (const sc of scans) {
-    if (sc.ts >= since && isRiskyScan(sc)) {
-      const name: string = sc.ingredient === '' ? sc.query : sc.ingredient;
-      const line: string = `${fullDate(sc.ts)}: ${name} — ${RiskUi.plain(sc.risk)}` +
-        `${sc.combo !== 'NONE' ? ', interaction with current medicines' : ''}`;
-      if (!flagged.includes(line)) {
-        flagged.push(line);
-      }
-    }
-  }
+  const flagged: string[] = flaggedChecks(scans, since).map((f: ReportItem) => `${fullDate(f.ts)}: ${f.text}`);
   if (flagged.length > 0) {
     out.push(new BriefSection('Medicines I was offered and flagged (last 90 days)', flagged.slice(0, 10)));
   }
 
-  const heart: string[] = [];
-  const symptoms: string[] = [];
-  for (const e of events) {
-    if (e.ts < since) {
-      continue;
-    }
-    if (e.kind === 'VITALS_ALERT') {
-      const a: VitalsAlert = JSON.parse(e.detail) as VitalsAlert;
-      if (a.severity === 'CRITICAL' || a.severity === 'WARN') {
-        heart.push(`${fullDate(e.ts)}: ${a.kind.toLowerCase().replace(/_/g, ' ')}${a.hr > 0 ? `, ${a.hr} bpm` : ''}`);
-      }
-    } else if (e.kind === 'SYMPTOM') {
-      symptoms.push(`${fullDate(e.ts)}: ${symptomLine(e.detail)}`);
-    } else if (e.kind === 'SOS') {
-      heart.push(`${fullDate(e.ts)}: SOS (${sosOutcome(e.detail)})`);
-    }
-  }
+  const heart: string[] = heartEvents(events, since).map((h: ReportItem) => `${fullDate(h.ts)}: ${h.text}`);
+  const symptoms: string[] = symptomEvents(events, since).map((h: ReportItem) => `${fullDate(h.ts)}: ${h.text}`);
   if (heart.length > 0) {
     out.push(new BriefSection('Heart alerts and SOS (watch data — simulated on the emulator)',
       heart.slice(-10)));
@@ -161,7 +136,69 @@ export function buildBrief(p: Profile, meds: Medication[], scans: ScanRecord[], 
   return out;
 }
 
-function questions(s: Specialty, flagged: boolean): string[] {
+// One dated line of the report (a flagged check, a heart alert, an SOS or a symptom).
+export interface ReportItem {
+  ts: number;
+  text: string;
+  level: string;   // RiskLevel for checks; 'CRITICAL' | 'WARN' | 'SOS' for heart; 'SYMPTOM'
+}
+
+// Medicines checked in the window that were risky alone or with the current medicines, newest first, deduplicated.
+export function flaggedChecks(scans: ScanRecord[], since: number): ReportItem[] {
+  const out: ReportItem[] = [];
+  const seen: string[] = [];
+  for (const sc of scans) {
+    if (sc.ts >= since && isRiskyScan(sc)) {
+      const name: string = sc.ingredient === '' ? sc.query : sc.ingredient;
+      const text: string = `${name} — ${RiskUi.plain(sc.risk)}` +
+        `${sc.combo !== 'NONE' ? ', interaction with current medicines' : ''}`;
+      const key: string = `${fullDate(sc.ts)}|${text}`;
+      if (!seen.includes(key)) {
+        seen.push(key);
+        const item: ReportItem = { ts: sc.ts, text: text, level: sc.risk };
+        out.push(item);
+      }
+    }
+  }
+  return out.slice(0, 10);
+}
+
+// Out-of-range heart alerts and SOS events in the window, oldest first (last 10).
+export function heartEvents(events: AppEvent[], since: number): ReportItem[] {
+  const out: ReportItem[] = [];
+  for (const e of events) {
+    if (e.ts < since) {
+      continue;
+    }
+    if (e.kind === 'VITALS_ALERT') {
+      const a: VitalsAlert = JSON.parse(e.detail) as VitalsAlert;
+      if (a.severity === 'CRITICAL' || a.severity === 'WARN') {
+        const item: ReportItem = {
+          ts: e.ts, text: `${a.kind.toLowerCase().replace(/_/g, ' ')}${a.hr > 0 ? `, ${a.hr} bpm` : ''}`,
+          level: a.severity
+        };
+        out.push(item);
+      }
+    } else if (e.kind === 'SOS') {
+      const item: ReportItem = { ts: e.ts, text: `SOS (${sosOutcome(e.detail)})`, level: 'SOS' };
+      out.push(item);
+    }
+  }
+  return out.slice(-10);
+}
+
+export function symptomEvents(events: AppEvent[], since: number): ReportItem[] {
+  const out: ReportItem[] = [];
+  for (const e of events) {
+    if (e.ts >= since && e.kind === 'SYMPTOM') {
+      const item: ReportItem = { ts: e.ts, text: symptomLine(e.detail), level: 'SYMPTOM' };
+      out.push(item);
+    }
+  }
+  return out.slice(-10);
+}
+
+export function questions(s: Specialty, flagged: boolean): string[] {
   const q: string[] = [];
   if (flagged) {
     q.push('Are the flagged medicines above safe for me, or is there an alternative?');

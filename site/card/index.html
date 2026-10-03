@@ -2,133 +2,157 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27%3E%3Ccircle cx=%2712%27 cy=%2712%27 r=%2711%27 fill=%27%23E5484D%27/%3E%3Ccircle cx=%279%27 cy=%279%27 r=%273.4%27 fill=%27%23fff%27 opacity=%27.55%27/%3E%3C/svg%3E">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
 <meta name="theme-color" content="#B42318">
-<title>Medical Alert Card</title>
+<title>Medical alert card</title>
 <!--
-  Emergency-card viewer for the Celia app (F-30). The card is in the URL #fragment, which browsers never send to
-  the server: this page is static, makes no requests besides data.js, and stores nothing.
+  Emergency-card viewer for the Celia app (F-30), design: docs/design/DESIGN.md §10.2a "Web card".
+  Link: /card/#<id>.<key>. The card is end-to-end encrypted on the owner's phone and stored as ciphertext by the
+  Supabase `share` function; the key after # never leaves this browser. Legacy links (/card/#<payload>) still open.
   Card text and emergency numbers come from data.js, generated from the app sources (data/export_card_site.py).
 -->
+<link rel="stylesheet" href="../assets/celia.css">
 <style>
-  :root {
-    --alert: #B42318;
-    --alert-ink: #FFFFFF;
-    --ink: #101828;
-    --muted: #475467;
-    --line: #D0D5DD;
-    --paper: #FFFFFF;
-    --page: #F2F4F7;
-    --call: #027A48;
+  body { background: var(--bg); }
+  main { max-width: 520px; margin: 0 auto; padding: max(16px, env(safe-area-inset-top)) 16px 40px; }
+
+  .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+  .brandmark { display: flex; align-items: center; gap: 8px; color: var(--ink-3); }
+  .brandmark svg { width: 20px; height: 20px; }
+  .lang select {
+    font: 600 15px/1 var(--font); color: var(--ink); background: var(--surface); appearance: none;
+    border: 1.5px solid var(--border-strong); border-radius: 999px; padding: 9px 30px 9px 14px;
+    background-image: linear-gradient(45deg, transparent 50%, var(--ink-3) 50%), linear-gradient(135deg, var(--ink-3) 50%, transparent 50%);
+    background-position: calc(100% - 16px) 50%, calc(100% - 11px) 50%; background-size: 5px 5px; background-repeat: no-repeat;
   }
-  * { box-sizing: border-box; }
-  html { -webkit-text-size-adjust: 100%; }
-  body {
-    margin: 0;
-    background: var(--page);
-    color: var(--ink);
-    font: 18px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+
+  /* The card: always light, high contrast (card_fixed_*) */
+  .card {
+    background: var(--fixed-bg); color: var(--fixed-ink); border: 1px solid var(--fixed-border);
+    border-radius: var(--r-l); overflow: hidden; box-shadow: 0 1px 2px rgba(31, 26, 23, 0.06), 0 8px 24px rgba(31, 26, 23, 0.06);
   }
-  main { max-width: 560px; margin: 0 auto; padding: 16px 16px 40px; }
-  .card { background: var(--paper); border: 2px solid var(--alert); border-radius: 16px; overflow: hidden; }
-  .banner {
-    background: var(--alert); color: var(--alert-ink); padding: 16px 20px;
-    display: flex; align-items: center; gap: 12px;
-  }
-  .banner svg { flex: none; }
-  .banner h1 { margin: 0; font-size: 26px; line-height: 1.15; letter-spacing: .02em; text-transform: uppercase; }
-  .banner .who { margin: 2px 0 0; font-size: 20px; font-weight: 600; opacity: .95; }
-  .body { padding: 18px 20px 20px; display: grid; gap: 18px; }
-  .condition { font-size: 21px; font-weight: 700; margin: 0; }
+  .band { background: var(--fixed-alert); color: #FFFFFF; padding: 18px 20px 20px; }
+  .band-top { display: flex; align-items: center; gap: 10px; }
+  .band-top svg { width: 26px; height: 26px; flex: none; }
+  .band .t-label { letter-spacing: 0.08em; opacity: 0.95; }
+  .band h1 { margin: 10px 0 0; }
+  .card-body { padding: 18px 20px 22px; display: grid; gap: 18px; }
+  .condition { margin: 0; color: var(--fixed-alert); }
   .facts { display: flex; flex-wrap: wrap; gap: 8px; }
-  .chip { border: 1.5px solid var(--ink); border-radius: 999px; padding: 4px 12px; font-size: 16px; font-weight: 600; }
-  .chip.icd { background: var(--ink); color: var(--paper); }
-  .warn {
-    margin: 0; padding: 14px 16px; border-radius: 12px; background: #FEF3F2; border-left: 6px solid var(--alert);
-    font-weight: 700;
+  .chip {
+    display: inline-flex; align-items: center; height: 32px; padding: 0 14px; border-radius: 16px;
+    border: 1.5px solid var(--fixed-ink); font: 700 14px/1 var(--font);
   }
-  .label {
-    margin: 0 0 4px; font-size: 13px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
-    color: var(--muted);
+  .chip.solid { background: var(--fixed-ink); color: #FFFFFF; }
+  .avoid {
+    margin: 0; padding: 14px 16px 14px 14px; background: var(--fixed-alert-tint); border-radius: 12px;
+    border-left: 6px solid var(--fixed-alert); font-weight: 700; color: var(--fixed-ink);
   }
-  .value { margin: 0; }
-  ul { margin: 0; padding-left: 22px; }
-  li + li { margin-top: 2px; }
+  .k { margin: 0 0 6px; color: var(--fixed-ink-3); }
+  .v { margin: 0; color: var(--fixed-ink-2); }
+  .card ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+  .card li { padding-left: 16px; position: relative; color: var(--fixed-ink); }
+  .card li::before { content: ""; position: absolute; left: 2px; top: 10px; width: 6px; height: 6px; border-radius: 3px; background: var(--fixed-alert); }
+
   .actions { display: grid; gap: 10px; margin-top: 16px; }
-  a.btn {
-    display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 56px; padding: 12px 16px;
-    border-radius: 14px; text-decoration: none; font-weight: 700; font-size: 20px;
-    transition: transform 120ms ease-out;
+  .call { min-height: 64px; background: var(--danger); color: #FFFFFF; font-size: 20px; }
+  .call svg { width: 24px; height: 24px; }
+  .outline { background: var(--surface); color: var(--ink); border: 1.5px solid var(--border-strong); font-size: 17px; }
+  .outline small { font-weight: 500; color: var(--ink-3); }
+  .section-label { margin: 18px 4px 2px; color: var(--ink-3); }
+
+  .state {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-l); padding: 24px 22px;
+    display: grid; gap: 10px;
   }
-  a.btn:active { transform: scale(0.97); }
-  a.call { background: var(--call); color: #FFFFFF; }
-  a.contact { background: var(--paper); color: var(--ink); border: 2px solid var(--ink); font-size: 18px; }
-  a.contact small { font-weight: 500; color: var(--muted); }
-  .lang { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin: 0 0 12px; font-size: 15px; }
-  select {
-    font: inherit; font-size: 16px; padding: 6px 10px; border-radius: 10px; border: 1.5px solid var(--line);
-    background: var(--paper); color: var(--ink);
+  .state h1 { margin: 0; }
+  .state p { margin: 0; color: var(--ink-2); }
+  .foot { margin: 22px 4px 0; display: flex; gap: 8px; align-items: flex-start; color: var(--ink-3); }
+  .foot svg { width: 16px; height: 16px; flex: none; margin-top: 2px; }
+
+  .skeleton { display: grid; gap: 12px; }
+  .skeleton .band-sk { height: 104px; border-radius: var(--r-l) var(--r-l) 0 0; }
+
+  @media print {
+    body { background: #FFFFFF; }
+    .topbar, .actions, .foot, .section-label { display: none !important; }
+    .card { box-shadow: none; }
   }
-  .foot { margin: 18px 4px 0; font-size: 14px; color: var(--muted); }
-  .error { background: var(--paper); border-radius: 16px; padding: 24px 20px; border: 2px solid var(--line); }
-  .error h1 { margin: 0 0 8px; font-size: 22px; }
-  [hidden] { display: none !important; }
-  @media (prefers-reduced-motion: reduce) { a.btn { transition: none; } }
-  @media print { body { background: #fff; } .lang, .actions, .foot { display: none; } }
 </style>
+<script src="../assets/config.js"></script>
+<script src="../assets/share.js"></script>
 <script src="data.js"></script>
 </head>
 <body>
-<main>
-  <div class="lang" id="langRow" hidden>
-    <label for="lang" aria-hidden="true">🌐</label>
-    <select id="lang" aria-label="Language"></select>
+<main id="root">
+  <div class="topbar" data-reveal>
+    <div class="brandmark">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#E5484D"/><circle cx="9" cy="9" r="3.2" fill="#FFFFFF" opacity=".55"/></svg>
+      <span class="t-label">Celia</span>
+    </div>
+    <label class="lang" id="langRow" hidden>
+      <span class="sr" hidden>Language</span>
+      <select id="lang" aria-label="Language"></select>
+    </label>
   </div>
 
-  <article class="card" id="card" hidden aria-live="polite">
-    <header class="banner">
-      <svg width="34" height="34" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/><path fill="#B42318" d="M5 10h3l1.5-3 3 6 1.5-3h5v1.6h-4l-2.5 4.4-3-6-1 2H5z"/></svg>
-      <div>
-        <h1 id="title"></h1>
-        <p class="who" id="who" hidden></p>
+  <div class="skeleton" id="loading" aria-busy="true" aria-label="Opening the card">
+    <div class="skel band-sk"></div>
+    <div class="skel" style="width:70%"></div>
+    <div class="skel" style="width:90%"></div>
+    <div class="skel" style="width:55%"></div>
+    <div class="skel" style="height:64px;border-radius:32px;margin-top:12px"></div>
+  </div>
+
+  <article class="card" id="card" hidden data-reveal>
+    <header class="band">
+      <div class="band-top">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#FFFFFF" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/><path fill="#B42318" d="M5 10h3l1.5-3 3 6 1.5-3h5v1.6h-4l-2.5 4.4-3-6-1 2H5z"/></svg>
+        <span class="t-label" id="title"></span>
       </div>
+      <h1 class="t-title-1" id="who" hidden></h1>
     </header>
-    <div class="body">
-      <p class="condition" id="condition"></p>
+    <div class="card-body">
+      <p class="condition t-title-3" id="condition"></p>
       <div class="facts" id="facts"></div>
-      <p class="warn" id="avoid"></p>
-      <p class="value" id="treatment"></p>
+      <p class="avoid" id="avoid"></p>
+      <p class="v" id="treatment"></p>
       <div>
-        <p class="label" id="medsLabel"></p>
+        <p class="k t-label" id="medsLabel"></p>
         <ul id="meds"></ul>
       </div>
       <div id="notesBox" hidden>
-        <p class="label" id="notesLabel"></p>
-        <p class="value" id="notes"></p>
+        <p class="k t-label" id="notesLabel"></p>
+        <p class="v" id="notes"></p>
       </div>
     </div>
   </article>
 
-  <section class="actions" id="actions" hidden>
+  <section class="actions" id="actions" hidden data-reveal>
     <a class="btn call" id="call" href="tel:112">
-      <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6.6 10.8a15.1 15.1 0 006.6 6.6l2.2-2.2a1 1 0 011-.25 11.4 11.4 0 003.6.57 1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.45.57 3.57a1 1 0 01-.25 1z"/></svg>
-      <span id="callText">112</span>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6.6 10.8a15.1 15.1 0 006.6 6.6l2.2-2.2a1 1 0 011-.25 11.4 11.4 0 003.6.57 1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.45.57 3.57a1 1 0 01-.25 1z"/></svg>
+      <span id="callText">Call 112</span>
     </a>
-    <a class="btn contact" id="callLocal" href="tel:112" hidden></a>
-    <p class="label" id="contactsLabel" hidden></p>
+    <a class="btn outline" id="callLocal" href="tel:112" hidden></a>
+    <p class="section-label t-label" id="contactsLabel" hidden></p>
     <div class="actions" id="contacts" style="margin-top:0"></div>
   </section>
 
-  <section class="error" id="error" hidden>
-    <h1>This medical card link is incomplete</h1>
-    <p>The QR code could not be read fully. Ask the person to show the card in the Celia app, or scan the code again.</p>
-    <p>If this is an emergency, call <a href="tel:112"><strong>112</strong></a> (Europe) or your local emergency number.</p>
+  <section class="state" id="gone" hidden data-reveal>
+    <span class="t-label" style="color:var(--brand-text)">Medical alert card</span>
+    <h1 class="t-title-2" id="goneTitle">This card link was replaced or removed</h1>
+    <p id="goneBody">Ask the person to show their card in the Celia app, or look for a newer QR code.</p>
+    <p><strong id="goneCall">If this is an emergency, call 112.</strong></p>
+    <a class="btn call" href="tel:112" id="goneButton">Call 112</a>
   </section>
 
-  <p class="foot" id="foot" hidden>Shared from the Celia app. The card is stored only in this link — nothing was uploaded.</p>
+  <p class="foot t-caption" id="foot" hidden>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a5 5 0 00-5 5v3H6a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2v-8a2 2 0 00-2-2h-1V7a5 5 0 00-5-5zm-3 8V7a3 3 0 016 0v3H9z"/></svg>
+    <span id="footText">Encrypted on the owner's phone. Only people with this link can read it.</span>
+  </p>
 </main>
 
 <script>
@@ -136,25 +160,40 @@
   'use strict';
   var texts = window.CARD_TEXTS || [];
   var numbers = window.EMERGENCY_NUMBERS || {};
+  var el = window.CeliaShare.el;
   var $ = function (id) { return document.getElementById(id); };
 
-  function decode(fragment) {
+  // Page wording around the card (the card text itself comes from data.js, generated from the app).
+  // call · ambulance · direct line · footer · removed-link title · emergency line. Needs a native-speaker check.
+  var UI = {
+    en: ['Call', 'Ambulance', 'direct line', 'Encrypted on the owner’s phone. Only people with this link can read it.', 'This card link was replaced or removed', 'If this is an emergency, call 112.'],
+    pl: ['Zadzwoń', 'Pogotowie', 'numer bezpośredni', 'Zaszyfrowane na telefonie właściciela. Odczytać mogą tylko osoby z tym linkiem.', 'Ten link do karty został zastąpiony lub usunięty', 'W nagłym wypadku zadzwoń pod 112.'],
+    bg: ['Обадете се', 'Линейка', 'пряка линия', 'Криптирано на телефона на собственика. Само хора с тази връзка могат да я прочетат.', 'Тази връзка към картата е заменена или премахната', 'При спешен случай се обадете на 112.'],
+    de: ['Anrufen', 'Rettungsdienst', 'Direktnummer', 'Auf dem Telefon des Besitzers verschlüsselt. Nur Personen mit diesem Link können sie lesen.', 'Dieser Kartenlink wurde ersetzt oder entfernt', 'Im Notfall die 112 anrufen.'],
+    fr: ['Appeler', 'Ambulance', 'ligne directe', 'Chiffré sur le téléphone du propriétaire. Seules les personnes ayant ce lien peuvent la lire.', 'Ce lien de carte a été remplacé ou supprimé', 'En cas d’urgence, appelez le 112.'],
+    es: ['Llamar al', 'Ambulancia', 'línea directa', 'Cifrado en el teléfono del titular. Solo quien tenga este enlace puede leerla.', 'Este enlace de la tarjeta se ha sustituido o eliminado', 'En caso de emergencia, llame al 112.'],
+    it: ['Chiama', 'Ambulanza', 'linea diretta', 'Cifrato sul telefono del titolare. Solo chi ha questo link può leggerla.', 'Questo link alla tessera è stato sostituito o rimosso', 'In caso di emergenza chiama il 112.'],
+    uk: ['Зателефонуйте', 'Швидка допомога', 'прямий номер', 'Зашифровано на телефоні власника. Прочитати можуть лише люди з цим посиланням.', 'Це посилання на картку замінено або видалено', 'У разі надзвичайної ситуації телефонуйте 112.'],
+    ro: ['Sunați la', 'Ambulanță', 'linie directă', 'Criptat pe telefonul proprietarului. Doar persoanele cu acest link o pot citi.', 'Acest link al cardului a fost înlocuit sau șters', 'În caz de urgență, sunați la 112.'],
+    cs: ['Volejte', 'Záchranná služba', 'přímá linka', 'Zašifrováno v telefonu majitele. Číst ji mohou jen lidé s tímto odkazem.', 'Tento odkaz na kartu byl nahrazen nebo odstraněn', 'V případě nouze volejte 112.'],
+    nl: ['Bel', 'Ambulance', 'direct nummer', 'Versleuteld op de telefoon van de eigenaar. Alleen mensen met deze link kunnen hem lezen.', 'Deze kaartlink is vervangen of verwijderd', 'Bel bij een noodgeval 112.'],
+    pt: ['Ligar', 'Ambulância', 'linha direta', 'Encriptado no telemóvel do titular. Só quem tem esta ligação a pode ler.', 'Esta ligação do cartão foi substituída ou removida', 'Em caso de emergência, ligue 112.'],
+    tr: ['Ara', 'Ambulans', 'doğrudan hat', 'Sahibinin telefonunda şifrelendi. Yalnızca bu bağlantıya sahip olanlar okuyabilir.', 'Bu kart bağlantısı değiştirildi veya kaldırıldı', 'Acil bir durumdaysa 112’yi arayın.']
+  };
+  function ui(code) { return UI[code] || UI.en; }
+
+  // Legacy links carry the card itself: #<base64url(JSON)>
+  function decodeLegacy(fragment) {
     try {
-      var b64 = fragment.replace(/-/g, '+').replace(/_/g, '/');
-      while (b64.length % 4) { b64 += '='; }
-      var bin = atob(b64);
-      var bytes = new Uint8Array(bin.length);
-      for (var i = 0; i < bin.length; i++) { bytes[i] = bin.charCodeAt(i); }
-      var p = JSON.parse(new TextDecoder('utf-8').decode(bytes));
-      if (p.v !== 1 || !Array.isArray(p.m) || !Array.isArray(p.c)) { return null; }
-      return p;
+      var p = JSON.parse(new TextDecoder('utf-8').decode(window.CeliaShare.fromB64url(fragment)));
+      return p.v === 1 && Array.isArray(p.m) && Array.isArray(p.c) ? p : null;
     } catch (e) {
       return null;
     }
   }
 
   function pickLanguage() {
-    var wanted = (navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || 'en']);
+    var wanted = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || 'en'];
     for (var i = 0; i < wanted.length; i++) {
       var code = String(wanted[i]).toLowerCase().split('-')[0];
       for (var j = 0; j < texts.length; j++) { if (texts[j].code === code) { return code; } }
@@ -167,17 +206,12 @@
     return texts[0];
   }
 
-  function el(tag, cls, text) {
-    var e = document.createElement(tag);
-    if (cls) { e.className = cls; }
-    if (text !== undefined) { e.textContent = text; }
-    return e;
-  }
+  function titleCase(s) { return s.charAt(0) + s.slice(1).toLowerCase(); }
 
   function render(p, code) {
     var t = textFor(code);
     document.documentElement.lang = t.code;
-    document.title = t.title + (p.n ? ' — ' + p.n : '');
+    document.title = titleCase(t.title) + (p.n ? ' — ' + p.n : '');
     $('title').textContent = t.title;
     $('who').textContent = p.n || '';
     $('who').hidden = !p.n;
@@ -186,16 +220,14 @@
     var facts = $('facts');
     facts.textContent = '';
     facts.appendChild(el('span', 'chip', t.genotype + ': ' + (p.g && p.g !== 'UNKNOWN' ? p.g : '?')));
-    facts.appendChild(el('span', 'chip' + (p.i ? ' icd' : ''), p.i ? t.icdYes : t.icdNo));
+    facts.appendChild(el('span', 'chip' + (p.i ? ' solid' : ''), p.i ? t.icdYes : t.icdNo));
 
     $('avoid').textContent = t.avoid;
     $('treatment').textContent = t.treatment;
     $('medsLabel').textContent = t.meds;
     var meds = $('meds');
     meds.textContent = '';
-    if (p.m.length === 0 && !p.x) {
-      meds.appendChild(el('li', '', t.noMeds));
-    }
+    if (p.m.length === 0 && !p.x) { meds.appendChild(el('li', '', t.noMeds)); }
     p.m.forEach(function (m) { meds.appendChild(el('li', '', m)); });
     if (p.x) { meds.appendChild(el('li', '', '+' + p.x + ' …')); }
 
@@ -208,14 +240,16 @@
     var info = numbers[(p.cc || '').toUpperCase()];
     var number = info ? info.general : '112';
     $('call').href = 'tel:' + number;
-    $('callText').textContent = number + (info ? ' · ' + info.name : '');
+    var w = ui(code);
+    $('callText').textContent = w[0] + ' ' + number + (info ? ' · ' + info.name : '');
+    $('footText').textContent = legacyLink ? $('footText').textContent : w[3];
     var local = $('callLocal');
     local.hidden = !info || info.ambulance === info.general;
     if (info && !local.hidden) {
       local.href = 'tel:' + info.ambulance;
       local.textContent = '';
-      local.appendChild(document.createTextNode(info.ambulance + ' '));
-      local.appendChild(el('small', '', '· ambulance direct'));
+      local.appendChild(document.createTextNode(w[1] + ' ' + info.ambulance + ' '));
+      local.appendChild(el('small', '', '· ' + w[2]));
     }
 
     $('contactsLabel').textContent = t.contacts;
@@ -223,7 +257,7 @@
     var contacts = $('contacts');
     contacts.textContent = '';
     p.c.forEach(function (c) {
-      var a = el('a', 'btn contact');
+      var a = el('a', 'btn outline');
       a.href = 'tel:' + String(c[1] || '').replace(/[^0-9+]/g, '');
       a.appendChild(document.createTextNode(c[0] + ' '));
       if (c[2]) { a.appendChild(el('small', '', '(' + c[2] + ')')); }
@@ -232,28 +266,56 @@
     });
   }
 
-  var payload = decode((location.hash || '').replace(/^#/, ''));
-  if (!payload || texts.length === 0) {
-    $('error').hidden = false;
-    return;
+  var legacyLink = false;
+
+  function showCard(payload, legacy) {
+    legacyLink = legacy;
+    var select = $('lang');
+    texts.forEach(function (t) {
+      var o = document.createElement('option');
+      o.value = t.code;
+      o.textContent = t.language;
+      select.appendChild(o);
+    });
+    var lang = pickLanguage();
+    select.value = lang;
+    select.addEventListener('change', function () { render(payload, select.value); });
+    render(payload, lang);
+    if (legacy) { $('footText').textContent = 'Shared from the Celia app. The card is stored only in this link.'; }
+    $('loading').hidden = true;
+    $('langRow').hidden = false;
+    $('card').hidden = false;
+    $('actions').hidden = false;
+    $('foot').hidden = false;
+    window.CeliaShare.reveal($('root'));
   }
 
-  var select = $('lang');
-  texts.forEach(function (t) {
-    var o = document.createElement('option');
-    o.value = t.code;
-    o.textContent = t.language;
-    select.appendChild(o);
-  });
-  var lang = pickLanguage();
-  select.value = lang;
-  select.addEventListener('change', function () { render(payload, select.value); });
+  function showGone(title, body) {
+    var w = ui(pickLanguage());
+    $('goneTitle').textContent = w[4];
+    $('goneCall').textContent = w[5];
+    $('goneButton').textContent = w[0] + ' 112';
+    if (title) { $('goneTitle').textContent = title; }
+    if (body) { $('goneBody').textContent = body; }
+    $('loading').hidden = true;
+    $('gone').hidden = false;
+    window.CeliaShare.reveal($('root'));
+  }
 
-  render(payload, lang);
-  $('langRow').hidden = false;
-  $('card').hidden = false;
-  $('actions').hidden = false;
-  $('foot').hidden = false;
+  var hash = (location.hash || '').replace(/^#/, '');
+  if (texts.length === 0) { showGone('This card could not be opened', 'Please reload the page.'); return; }
+  if (!window.CeliaShare.parseHash(location.hash)) {
+    var legacy = decodeLegacy(hash);
+    if (legacy) { showCard(legacy, true); } else { showGone('This card link is incomplete', 'The QR code could not be read fully. Scan it again, or ask the person to show the card in the Celia app.'); }
+    return;
+  }
+  window.CeliaShare.open('card').then(function (r) {
+    if (r.status === 'ok') { showCard(r.data, false); return; }
+    if (r.status === 'offline') { showGone('No internet connection', 'Connect to the internet and reload to open this medical card.'); return; }
+    if (r.status === 'invalid') { showGone('This card link is incomplete', 'The QR code could not be read fully. Scan it again, or ask the person to show the card in the Celia app.'); return; }
+    if (r.status === 'error') { showGone('This card could not be opened right now', 'Please try again in a moment.'); return; }
+    showGone();
+  });
 })();
 </script>
 </body>

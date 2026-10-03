@@ -22,6 +22,19 @@ export function forbiddenFields(fields: string[]): string[] {
   return fields.filter((f: string) => FORBIDDEN_FIELDS.includes(f.toLowerCase()));
 }
 
+// Plain-text export of the ledger (newest first, as listed). Field names and sizes only — never values.
+export function ledgerReport(entries: LedgerEntry[]): string {
+  const lines: string[] = ['What left my phone (Celia privacy ledger)', ''];
+  entries.forEach((e: LedgerEntry) => {
+    const fields: string = e.fields.length > 0 ? e.fields.join(', ') : '(no fields)';
+    lines.push(`${new Date(e.ts).toISOString()}  ${e.outcome}  ${e.endpoint}  sent: ${fields}  ${e.bytes} B`);
+  });
+  if (entries.length === 0) {
+    lines.push('Nothing has left this phone.');
+  }
+  return lines.join('\n');
+}
+
 export class Ledger {
   static async list(): Promise<LedgerEntry[]> {
     const raw: string = await LocalStore.get().getSetting(SETTING_KEY, '[]');

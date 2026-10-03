@@ -11,6 +11,10 @@ import { medsInteractions, riskCounts, RiskCounts } from '../drugs/MedsReview';
 import { Routes, TabIndex } from '../common/Routes';
 import { PrimaryButton, QuietButton, RiskShape, StatusChip } from '../components/Common';
 import { AgentAvatar } from '../components/AgentAvatar';
+import { CoachTip, tipOfTheDay } from '../coach/Coach';
+import { TravelService, travelCountry } from '../emergency/TravelService';
+import { emergencyFor, systemCountry } from '../common/EmergencyNumbers';
+import { cardText, languageForCountry } from '../common/CardStrings';
 import { HrRing, HrZone } from '../components/HrRing';
 
 const MONTHS: string[] = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September',
@@ -26,12 +30,18 @@ export struct HomePage {
   @Local counts: RiskCounts = new RiskCounts();
   @Local interactions: ComboVerdict[] = [];
   @Local hr: VitalsSample | undefined = undefined;
+  @Local here: string = TravelService.current();
+  private offTravel: () => void = () => {
+  };
   private offStore: () => void = () => {
   };
   private offHr: () => void = () => {
   };
 
   aboutToAppear(): void {
+    this.offTravel = TravelService.onChange((c: string) => {
+      this.here = c;
+    });
     this.reload();
     this.offStore = LocalStore.get().onChange((t: StoreTopic) => {
       if (t === 'profile' || t === 'meds') {
@@ -45,6 +55,7 @@ export struct HomePage {
   }
 
   aboutToDisappear(): void {
+    this.offTravel();
     this.offStore();
     this.offHr();
   }
@@ -141,6 +152,79 @@ export struct HomePage {
     return `${hello} Everything looks calm. Got a new prescription? I can check it in seconds.`;
   }
 
+  private abroad(): string {
+    return travelCountry(this.here, this.profile?.country ?? systemCountry());
+  }
+
+  // Travel banner (T23): where the phone is, the local emergency number, pharmacy card language.
+  @Builder
+  travelBanner() {
+    Row({ space: 12 }) {
+      Image($r('app.media.ic_location')).width(18).height(18).fillColor($r('app.color.ink_2'))
+      Column({ space: 2 }) {
+        Text(`You're in ${emergencyFor(this.abroad()).name}`)
+          .fontSize($r('app.float.font_headline'))
+          .fontWeight(FontWeight.Bold)
+          .fontColor($r('app.color.ink'))
+        Text(`Emergency ${emergencyFor(this.abroad()).general} · Pharmacy card in ` +
+          `${cardText(languageForCountry(this.abroad())).language}`)
+          .fontSize($r('app.float.font_small'))
+          .fontColor($r('app.color.ink_2'))
+      }
+      .alignItems(HorizontalAlign.Start)
+      .layoutWeight(1)
+      Image($r('app.media.ic_chevron_right')).width(16).height(16).fillColor($r('app.color.ink_4'))
+    }
+    .width('100%')
+    .constraintSize({ minHeight: $r('app.float.chip_height') })
+    .padding(14)
+    .margin({ top: 16 })
+    .backgroundColor($r('app.color.surface'))
+    .border({ width: 1, color: $r('app.color.border') })
+    .borderRadius($r('app.float.radius_m'))
+    .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.97 })
+    .onClick(() => {
+      this.navStack.pushPathByName(Routes.PHARMACY_CARD, null);
+    })
+  }
+
+  // Tip of the day (F-39): static, sourced genotype tips — never AI, never a risk colour.
+  @Builder
+  coachCard() {
+    Column({ space: 6 }) {
+      Text(this.coachLabel())
+        .fontSize($r('app.float.font_micro'))
+        .fontWeight(FontWeight.Bold)
+        .letterSpacing(0.8)
+        .fontColor($r('app.color.ink_3'))
+      Text(this.coachTip().title)
+        .fontSize($r('app.float.font_headline'))
+        .fontWeight(FontWeight.Bold)
+        .fontColor($r('app.color.ink'))
+      Text(this.coachTip().body)
+        .fontSize($r('app.float.font_small'))
+        .fontColor($r('app.color.ink_2'))
+        .lineHeight(20)
+    }
+    .width('100%')
+    .alignItems(HorizontalAlign.Start)
+    .padding(16)
+    .margin({ top: 12 })
+    .backgroundColor($r('app.color.surface'))
+    .border({ width: 1, color: $r('app.color.border') })
+    .borderRadius($r('app.float.radius_l'))
+    .accessibilityGroup(true)
+  }
+
+  private coachTip(): CoachTip {
+    return tipOfTheDay(this.profile?.genotype ?? 'UNKNOWN', Date.now());
+  }
+
+  private coachLabel(): string {
+    const g: string = this.profile?.genotype ?? 'UNKNOWN';
+    return g === 'UNKNOWN' ? 'TIP OF THE DAY' : `TIP FOR ${g}`;
+  }
+
   @Builder
   agentCard() {
     Column({ space: 14 }) {
@@ -154,6 +238,20 @@ export struct HomePage {
         Text(this.clock())
           .fontSize($r('app.float.font_badge'))
           .fontColor($r('app.color.ink_3'))
+        // Saved conversations with the agent
+        Row({ space: 4 }) {
+          Image($r('app.media.ic_history')).width(16).height(16).fillColor($r('app.color.brand_text'))
+          Text($r('app.string.home_chats'))
+            .fontSize($r('app.float.font_small'))
+            .fontWeight(FontWeight.Bold)
+            .fontColor($r('app.color.brand_text'))
+        }
+        .height($r('app.float.touch_min'))
+        .padding({ left: 8 })
+        .accessibilityText($r('app.string.a11y_chats'))
+        .onClick(() => {
+          this.navStack.pushPathByName(Routes.CHATS, null);
+        })
       }
       .width('100%')
       Text(this.agentLine())
@@ -245,6 +343,10 @@ export struct HomePage {
         .alignItems(VerticalAlign.Bottom)
         .padding({ top: 16 })
 
+        if (this.abroad() !== '') {
+          this.travelBanner()
+        }
+
         HrRing({
           bpm: this.hr?.hr ?? 0,
           caption: this.caption(),
@@ -275,6 +377,7 @@ export struct HomePage {
         .margin({ bottom: 20 })
 
         this.agentCard()
+        this.coachCard()
       }
       .padding({ left: $r('app.float.space_screen'), right: $r('app.float.space_screen'), bottom: 24 })
       .width('100%')

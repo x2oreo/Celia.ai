@@ -14,6 +14,8 @@ watch inserts watch_metrics{type:'sos'}
 ```
 
 The message text is deterministic (`message.ts`); no LLM is involved.
+It also adds the last dose logged on the watch (`watch_doses`) and any symptom from the last hour
+(`watch_symptoms`); if those views can't be read, the alert goes out without them.
 
 ## Setup (once per Supabase project)
 

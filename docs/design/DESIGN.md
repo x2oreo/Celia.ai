@@ -311,6 +311,44 @@ results, never from model text.
 - **Action tile** (open the scanner, open the emergency card): icon well 40, title 15 fp / 700, subtitle in
   `ink-3`, chevron.
 
+### 6.9 Medicine cards, detail sheet and dose status
+
+Everything a medicine card says comes from data: class, risk and interactions from the QT dataset, "what it's for",
+"how it works" and tips from `drugs/DrugInfo.ets` (public patient leaflets). An AI explanation is optional,
+labelled and separate.
+
+- **Grid card** (Medicines, B4): height 164, compact risk badge, name in `headline`, "what it's for" in `caption`
+  `ink-3` (2 lines), dose as a small `surface-alt` pill. Tap opens the detail sheet; long press keeps the menu.
+- **Detail sheet** (`components/MedicineDetailSheet.ets`, large detent): pill icon well 52 on `brand-tint`, name in
+  `title-2`, "ingredient · class · dose" in `ink-3`. Then, in order:
+  1. **Risk band**: full risk badge + the dataset reason, `surface`, radius 20, 1.5 vp border (`risk_known_border`
+     for Known, dashed for Unknown).
+  2. **What it's for**: caps label, use in `headline`, how it works in `body-sm` `ink-3`, divider, "Good to know"
+     tip rows (icon well 28 + `body-sm`).
+  3. **With your medicines**: one row per deterministic interaction (Possible shape 20 + "+ other drug" in
+     `risk_possible_text` + reason), or one quiet line when there is none. Alternatives as "Ask your doctor about".
+  4. **Also sold as**: brand chips, height 32, pill, `surface-alt`.
+  5. **AI explanation**: a quiet button "Explain it in plain words". While loading, typing dots with a label. The
+     result sits on `surface-alt` (no border) with a solid `AI SUMMARY` source badge, body text, "What's in it",
+     tips, and the 11 fp caption saying it is generated and that the badge above is from the QT list. It enters
+     with the verdict-reveal motion. **AI text never sets a colour, shape or badge.**
+  6. Actions: ink `Full check` + secondary `Remind me` (opens Reminders with the medicine picked), then a full-width
+     quiet `Ask the agent` (opens the chat and sends "Tell me about X…"), then the source caption.
+- **Add-medicine preview** (`AddMedForm`): once the name resolves, a `surface` box (radius 12, 1 vp `border`, padding
+  12) shows the ingredient (`body` / 700), class in `caption`, compact risk badge, "what it's for" in `body-sm` and
+  the first tip. It fades in over 180 ms. An unknown name keeps the one-line "not recognised" row.
+- **Dose status** (Reminders) is not a verdict, so it never uses risk red or risk shapes:
+
+| Status | Rail dot | Word (caps, 11 fp / 700) | Card |
+|---|---|---|---|
+| Taken | 20 vp `ink` circle + white check | `TAKEN`, `ink-3` | 72% opacity |
+| Due now | 14 vp solid `brand` dot | `DUE NOW`, `brand-text` | 1.5 vp `brand` border, coral `Taken` pill |
+| Missed | 12 vp hollow `risk_possible` ring | `MISSED`, `risk_possible_text` | coral `Taken` pill |
+| Later | 12 vp hollow `border-strong` ring | `LATER`, `ink-3` | quiet `Taken` pill (`surface-alt`) |
+
+The `Taken` pill is 44 vp tall (`chip_height`, radius 22) so a dose is logged with one thumb.
+
+
 ---
 
 ## 7. Watch
@@ -335,7 +373,7 @@ results, never from model text.
 | **Live words** | The user's bubble sits at 60% opacity while the words are still being recognised (three dots before the first word), then becomes solid. The agent's text grows word by word. No cursor, no typewriter effect. |
 | **Typing** | Three 7 vp dots, 1.2 s loop, staggered 150 ms. Pair with a label like "Reading the box…" when the wait is known. |
 | **Verdict reveal** | Card slides up 12 vp and fades in over 240 ms. Badge settles 100 ms later. No bounce or shake, even for Known risk. |
-| **Sheets** | Bottom sheets rise over 280 ms with a 45% scrim. SOS countdown ring drains linearly over 10 s. |
+| **Sheets** | Bottom sheets rise over 280 ms with a 45% scrim. SOS countdown ring drains linearly over 10 s. Every sheet body is a full-height `Scroll` (`height('100%')`), so long content scrolls inside the sheet instead of being clipped. One `bindSheet` per node. |
 
 In ArkUI, use `animateTo` / `.animation()` with `Curve.EaseInOut` and `iterations: -1` for loops, and
 `keyframeAnimateTo` for the heartbeat. Respect the system reduced-motion setting by dropping loops to static.
@@ -371,8 +409,17 @@ In ArkUI, use `animateTo` / `.animation()` with `Curve.EaseInOut` and `iteration
 - **Home** (B1) = the Agent tab: date, "Hi {name}", genotype chip, settings gear. Heart-rate ring (track `border`,
   arc `brand`, `display` bpm, "bpm · resting", source badge), status chips, then the **agent card** (orb 28, name,
   time, `body` message, `Scan a box` primary + `Ask something` quiet).
+  Below it, the **tip of the day** (F-39 genotype coach, `coach/Coach.ets`, static and sourced, no AI): `surface` card
+  with 1 vp `border`, `radius_l`, padding 16. Caps label "TIP FOR {LQT2}" (or "TIP OF THE DAY" when the genotype is
+  unknown) in `label` `ink_3`, the tip title in `headline`, the body in `body-sm` `ink_2`. One tip per day; not
+  tappable, so no press state. Never uses risk colours.
+  **Travel banner** (T23, only when the phone is in another country than Settings and location was already allowed):
+  above the HR ring, `surface` card, 1 vp `border`, `radius_m`, padding 14, location icon 18 `ink_2`, "You're in
+  {Germany}" in `headline`, "Emergency {112} · Pharmacy card in {Deutsch}" in `body-sm` `ink_2`; the whole card
+  (min 44 vp) opens the pharmacy card. The pharmacy card then shows the local language large and English small.
 - **Conversation** (B2, revised: voice first) is a pushed page, not a tab. Header: back, "The agent", `ON-DEVICE`
-  badge when there is no backend. It has two modes over the same thread.
+  badge when there is no backend, then two 44 icon buttons in `ink_2`: **Chats** (history icon, opens the chats list)
+  and **New chat** (plus). New chat saves the open chat and returns to the empty state (orb 168, starters). It has two modes over the same thread.
   - **Voice (default)**: the voice orb (6.6a) with its state label, then the thread, then the dock: 52 camera
     circle, **72 coral mic**, and a 52 circle that is the keyboard (switch to typing) while idle and ✕ (end) while
     a conversation is running. Before anything is said the orb is 168 with the label in `title-3`, a one-line hint
@@ -403,6 +450,12 @@ In ArkUI, use `animateTo` / `.animation()` with `Curve.EaseInOut` and `iteration
   The chart is a trend line in `brand` on `surface`, with dashed `border_strong` guides at 60 and 120. Never ECG-like.
 - **Emergency (calm)**: `title-1`, the Medical alert card (as the widget), a danger "Call 112" button, then rows for
   Bystander guide, Pharmacy card, Offline QR and Test SOS. The full emergency card stays always light (`card_fixed_*`).
+  Above the full card: a **card language** row (horizontal chips, height 44, pill, `surface` + 1 vp `border`; selected
+  = `ink` fill + `on_accent` text; each chip shows the language in its own name, e.g. "Polski") and a secondary
+  **Read aloud** button (wave icon; `Stop` while speaking). The choice is saved as the card language. Read aloud speaks
+  only the medical part (title, condition, genotype, ICD, avoid, treatment, medicines), never name or contacts; it
+  is hidden when no voice is available. **Nearby help** row: three 44 vp quiet buttons "Hospital", "Pharmacy",
+  "Defibrillator (AED)" that open a map search around the phone. "Remove this link" asks first (dialog, danger).
 - **Emergency (active / SOS)**: `bg` surface, `EMERGENCY` label, "Are you OK?" (`title-1`), a 200 vp ring in
   `risk_known` draining linearly, big seconds number, white secondary `I'm OK` (52) and danger `Send now`.
 - **Onboarding**: progress segments in `brand`, orb 96 on step 1, `title-1` per step, primary `Continue`.
@@ -413,6 +466,64 @@ In ArkUI, use `animateTo` / `.animation()` with `Curve.EaseInOut` and `iteration
   card: one `body` intro line, two `body-sm` steps in `ink-3`, a 56 vp `surface-alt` input centred in `title-2`, the
   error strip from 6.7 when a code fails (neutral offline strip when there is no backend), and a primary `Pair`
   that stays inactive until 6 digits are typed. Pairing again replaces the old pairing.
+- **Reminders** (pushed page): summary card (bell well 48 on `brand-tint`, "2 of 4 taken today" in `title-3`,
+  "Next: X at 20:00", a segmented bar with one 6 vp segment per dose: `brand` taken, `risk_possible` missed,
+  `border` open). Then the TODAY timeline: time column 48 (`headline`, tabular figures), a 2 vp `border` rail with
+  the status dot (6.9), and a card per dose (risk shape 16 + name, status word, "what it's for", first tip, `Taken`
+  pill). Long press deletes. Empty: dashed card with a bell. NEW REMINDER card: horizontal medicine chips (148 wide,
+  `surface-alt`, selected = `surface` + 1.5 vp `ink`; risk shape + name + class), time chips Morning 08:00 · Midday
+  13:00 · Evening 20:00 · Night 22:00 · Other (selected = `ink` fill; Other reveals the time picker), primary
+  "Remind me daily at HH:MM", and the gentle-alarm caption.
+- **Chats** (pushed page): back + `title-1` "Chats", primary `New chat` (plus icon), then one row per saved chat on
+  `surface` with a 1 vp `border`, `radius_m`, 14 padding: title in `headline` (one line, ellipsis; "New chat" when
+  untitled), caption in `ink_3` "{N} messages · {Today 14:05 | 2 Oct}". The open chat shows an `Open now` caption in
+  `brand_text`. Tap opens the chat; long press opens a menu with `Rename` and `Delete` (Delete in `danger`). Empty
+  state: dashed card "No chats yet. Ask the agent something to start one." Chats are on this phone only, said once in
+  a caption under the list.
+- **Scan → box we don't know yet** (online lookup, on the scan sheet, `bg`, radius 28, 20 padding):
+  - **Looking up**: `LoadingProgress` 32 in `brand_accent` + `headline` "Looking this box up…" + caption in `ink_3` with
+    the barcode and country. After the quick lookup misses: "Searching pharmacies on the web…" + caption "This can
+    take up to 20 seconds." A `Type the name instead` secondary button stays visible the whole time.
+  - **Found**: `title-3` "Is this your box?", brand in `headline`, ingredients in `body` `ink`, strength · form in
+    `ink_3`, then the source line (11 fp, `ink_4`, e.g. "FDA drug label (openFDA)"). A web-search find adds the
+    outlined `SourceBadge` `AI · WEB` next to the title and the caption "Found by a web search. Check the name
+    matches your box." Ingredients we could not confirm are listed in `ink_3` ("Not confirmed: …"); the verdict
+    then says Unknown for them. Actions: ink `Yes, check it` (flex 1) + secondary `Not my box` (opens the teach
+    form). Never a risk colour on this sheet: identification is not a verdict.
+  - **Not found / offline**: straight to the teach form (unchanged).
+
+### 10.2a Shared web pages (opened from a link on any device)
+
+Static pages in `site/` (Vercel). Same tokens as the app, written as CSS custom properties in
+`site/assets/celia.css`; system font stack (HarmonyOS Sans, then the platform UI font), no web fonts so nothing is
+fetched from a third party. Data comes end-to-end encrypted from the Supabase `share` function and is decrypted in
+the browser; the page itself never sees anything until the key in the link's `#` opens it.
+
+- **Web card** (read by a stranger or paramedic, often outdoors, under stress): always light (`card_fixed_*`).
+  Max width 520. Top: the card itself, same layout as the app's Medical alert card: `card_fixed_alert` header band
+  with the heart mark and "MEDICAL ALERT" (`label`, +0.08em) and the patient name (`title-1`), then condition
+  (`title-3`, alert colour), genotype + ICD chips, the "Do NOT give QT-prolonging drugs" panel (`card_fixed_alert_tint`,
+  6 vp alert rule on the left), treatment (`body`), medicines and notes. Below the card: a 64 vp `danger` call
+  button "Call 112 · {country}" and, when different, a secondary outlined "Ambulance {number}" button; contacts as
+  outlined tap-to-call rows. Language picker top right (13 languages). States: loading (skeleton bars in
+  `surface_alt`), link removed ("This card link was replaced or removed" + the 112 button), cannot open
+  (corrupt/foreign link) with the same 112 button. Footer caption: "Encrypted on the owner's phone. Only people with
+  this link can read it."
+- **Web report** (read by a doctor on a phone or desktop, printable): `bg` page, content column 760 max, light and
+  dark (`prefers-color-scheme`). Header: "Long QT safety report" `label` in `brand_text`, patient name `title-1`,
+  facts line (condition · genotype · ICD), "Prepared for {specialist} · {date}" and an expiry pill
+  ("Link expires in 47 h"). Summary strip: four `surface` tiles with big numbers (`title-1`, tabular figures):
+  medicines with QT risk, interactions, heart alerts (90 d), symptoms logged. Sections as `surface` cards with
+  `border` and `radius_l`: Current medicines (each row with the risk badge: colour + shape + word, never colour
+  alone), Interactions, Flagged checks (dated rows), Resting heart rate (SVG line in `brand` over 30 days, dashed
+  `border_strong` guides at 60 and 120, the median as a caption, `SIMULATED` mono badge when any day is
+  simulated, and "Heart rate only — this is not an ECG"), Heart alerts & SOS and Symptoms as a dated timeline,
+  Dose adherence (taken / skipped of scheduled, last 14 days), For the {specialist} (watch-outs), Questions.
+  Footer: "Prepared with Celia from the patient's own records. Not a medical device." Print: white background, no
+  shadows, cards become bordered blocks, URL and expiry printed in the footer, sections avoid page breaks.
+- **Motion (both pages)**: content groups fade and rise 8 px once on load, 220 ms `cubic-bezier(0.23, 1, 0.32, 1)`,
+  40 ms stagger, at most 5 groups; buttons scale 0.97 on press (120 ms ease-out). Nothing loops. With
+  `prefers-reduced-motion`, opacity only.
 
 ### 10.3 Still open
 

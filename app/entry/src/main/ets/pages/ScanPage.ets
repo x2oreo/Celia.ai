@@ -1,10 +1,15 @@
 // Scan a box (design B5): the system scanner reads the barcode, then the verdict rises as a sheet over the dark
 // scan surface. The verdict comes from CheckService (deterministic data). A box we cannot read is not an error:
-// amber strip plus a "type the name" fallback. A real box we don't know yet (e.g. Bulgarian) is taught once; a
+// amber strip plus a "type the name" fallback. A real box we don't know yet (any country) is looked up online
+// (/box-identify: registries first, AI web search last) and confirmed by the user; otherwise it is taught once. A
 // Celia emergency-card QR opens the card.
 
+import { common } from '@kit.AbilityKit';
 import { Routes } from '../common/Routes';
-import { BarcodeResult, scanBox } from '../drugs/BarcodeService';
+import { BarcodeResult, learnOnlineBox, scanBox } from '../drugs/BarcodeService';
+import { BoxCandidate, confirmBox, identifyBox, IdentifyReply } from '../drugs/BoxIdentifyClient';
+import { BoxCandidateSheet, LookupPhase } from '../components/BoxCandidateSheet';
+import { Config } from '../common/Config';
 import { CheckOutcome, CheckService } from '../drugs/CheckService';
 import { LocalStore } from '../data/LocalStore';
 import { Medication } from '../model/Medication';
@@ -13,7 +18,8 @@ import { Genotype, Profile } from '../model/Profile';
 import { VerdictCard } from '../components/VerdictCard';
 import { MedicineInfoCard } from '../components/MedicineInfoCard';
 import { TeachBoxForm } from '../components/TeachBoxForm';
-import { CardPayload, parseCardLink } from '../emergency/CardLink';
+import { CardPayload, parseCardLink, parsePayloadJson } from '../emergency/CardLink';
+import { parseShareLink, ShareService, viewerUrl } from '../share/ShareService';
 import { PrimaryButton, StatusStrip } from '../components/Common';
 import { Logger } from '../common/Logger';
 import { toast } from '../common/Toast';
@@ -31,6 +37,55 @@ export struct ScanPage {
   @Local showSheet: boolean = false;
   @Local teachGtin: string = '';
   @Local showTeach: boolean = false;
+  @Local showLookup: boolean = false;
+  @Local lookupPhase: LookupPhase = 'FAST';
+  @Local candidate: BoxCandidate | undefined = undefined;
+  private lookupId: number = 0;   // a newer scan or "type instead" makes older lookups stale
+
+  // Unknown barcode: quick lookup first (registries, product databases), AI web search only if that misses.
+  private async lookUp(gtin: string): Promise<void> {
+    const id: number = ++this.lookupId;
+    this.candidate = undefined;
+    this.lookupPhase = 'FAST';
+    this.showLookup = true;
+    const quick: IdentifyReply = await identifyBox(gtin, 'fast', '');
+    if (id !== this.lookupId) {
+      return;
+    }
+    let found: BoxCandidate | undefined = quick.candidate;
+    if (found === undefined) {
+      this.lookupPhase = 'DEEP';
+      const deep: IdentifyReply = await identifyBox(gtin, 'deep', quick.hint);
+      if (id !== this.lookupId) {
+        return;
+      }
+      found = deep.candidate;
+    }
+    if (found === undefined) {
+      this.teachInstead();
+      return;
+    }
+    this.candidate = found;
+    this.lookupPhase = 'FOUND';
+  }
+
+  private teachInstead(): void {
+    this.lookupId++;
+    this.showLookup = false;
+    this.showTeach = true;
+  }
+
+  private async acceptCandidate(): Promise<void> {
+    const c: BoxCandidate | undefined = this.candidate;
+    if (c === undefined) {
+      return;
+    }
+    this.lookupId++;
+    this.showLookup = false;
+    await learnOnlineBox(c.gtin, c.brand, c.ingredients, c.strength, c.form, c.source, c.sourceUrl);
+    confirmBox(c).catch((e: Error) => log.warn(`confirm failed: ${e.message}`));
+    await this.check(c.gtin);
+  }
 
   private async scan(): Promise<void> {
     if (this.scanning) {
@@ -44,9 +99,36 @@ export struct ScanPage {
         return;   // cancelled: stay on the scan surface
       }
       if (r.box === undefined && r.gtin !== '') {
-        // A real product code we don't know yet: teach it once, then check it.
+        // A real product code we don't know yet: look it up online, else teach it once; then check it.
         this.teachGtin = r.gtin;
-        this.showTeach = true;
+        if (Config.hasBackend()) {
+          this.lookUp(r.gtin).catch((e: Error) => {
+            log.warn(`box lookup failed: ${e.message}`);
+            this.teachInstead();
+          });
+        } else {
+          this.showTeach = true;
+        }
+        return;
+      }
+      // A short encrypted Celia link: a card opens here (fetched and decrypted on this phone).
+      const share: string[] | undefined = r.box === undefined ? parseShareLink(r.raw) : undefined;
+      if (share !== undefined && share[0] === 'card') {
+        const json: string | undefined = await ShareService.fetchShared(share[1], share[2]);
+        const shared: CardPayload | undefined = json !== undefined ? parsePayloadJson(json) : undefined;
+        if (shared !== undefined) {
+          this.navStack.replacePath({ name: Routes.CARD_VIEW, param: shared });
+          return;
+        }
+        this.unreadable = true;
+        return;
+      }
+      if (share !== undefined && share[0] === 'report') {
+        // A doctor report link: it is a web page for a doctor, so open it in the browser (decrypted there). The URL
+        // is rebuilt from the parsed id and key on our own viewer, never the scanned text, so a crafted QR that
+        // merely ends like a Celia link can't send the user to another site.
+        const ctx: common.UIAbilityContext = this.getUIContext().getHostContext() as common.UIAbilityContext;
+        await ctx.openLink(viewerUrl('report', share[1], share[2]));
         return;
       }
       const card: CardPayload | undefined = r.box === undefined ? parseCardLink(r.raw) : undefined;
@@ -133,6 +215,26 @@ export struct ScanPage {
     }
     .scrollBar(BarState.Off)
     .width('100%')
+    .height('100%')   // fill the sheet so a long verdict scrolls instead of being clipped
+    .align(Alignment.Top)
+  }
+
+  @Builder
+  lookupSheet() {
+    BoxCandidateSheet({
+      gtin: this.teachGtin,
+      phase: this.lookupPhase,
+      candidate: this.candidate,
+      onYes: () => {
+        this.acceptCandidate().catch((e: Error) => {
+          log.warn(`online box check failed: ${e.message}`);
+          this.unreadable = true;
+        });
+      },
+      onNo: () => {
+        this.teachInstead();
+      }
+    })
   }
 
   @Builder
@@ -225,29 +327,43 @@ export struct ScanPage {
           })
         }
         .padding({ left: 32, right: 32 })
+        .bindSheet(this.showLookup, this.lookupSheet(), {
+          detents: [SheetSize.MEDIUM, SheetSize.LARGE],
+          showClose: true,
+          backgroundColor: $r('app.color.bg'),
+          radius: { topLeft: 28, topRight: 28 },
+          onDisappear: () => {
+            if (this.showLookup) {
+              this.lookupId++;   // closed by the user: drop the pending lookup
+              this.showLookup = false;
+            }
+          }
+        })
 
         Blank()
         Blank()
       }
       .width('100%')
       .height('100%')
+      .bindSheet(this.showSheet, this.verdictSheet(), {
+        detents: [SheetSize.MEDIUM, SheetSize.LARGE],
+        dragBar: true,
+        showClose: false,
+        backgroundColor: $r('app.color.bg'),
+        radius: { topLeft: 28, topRight: 28 },
+        maskColor: $r('app.color.scrim'),
+        onDisappear: () => {
+          this.showSheet = false;
+        }
+      })
     }
     .hideTitleBar(true)
     .backgroundColor($r('app.color.scan_bg'))
     .onReady(() => {
       this.scan();
     })
-    .bindSheet(this.showSheet, this.verdictSheet(), {
-      detents: [SheetSize.MEDIUM, SheetSize.LARGE],
-      dragBar: true,
-      showClose: false,
-      backgroundColor: $r('app.color.bg'),
-      radius: { topLeft: 28, topRight: 28 },
-      maskColor: $r('app.color.scrim'),
-      onDisappear: () => {
-        this.showSheet = false;
-      }
-    })
+    // One sheet per node: a second bindSheet on the same node replaces the first (the verdict sheet never opened),
+    // so the verdict sheet sits on the page column, the online-lookup sheet on the scan frame, the teach sheet here.
     .bindSheet(this.showTeach, this.teachSheet(), {
       detents: [SheetSize.MEDIUM, SheetSize.LARGE],
       showClose: true,

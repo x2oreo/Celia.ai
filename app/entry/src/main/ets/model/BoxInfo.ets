@@ -1,7 +1,8 @@
 // What we know about a scanned medicine box (F-36). Facts from the national register or from the user — never
 // a safety statement; the verdict (DrugVerdict) stays the only safety answer.
 
-export type BoxSource = 'PL_REGISTER' | 'LEARNED' | 'DEMO';
+// ONLINE: identified by /box-identify (any country) and confirmed by the user; kept on this phone like LEARNED.
+export type BoxSource = 'PL_REGISTER' | 'LEARNED' | 'DEMO' | 'ONLINE';
 
 export interface BoxInfo {
   gtin: string;            // 13-digit GTIN from the barcode
@@ -18,4 +19,6 @@ export interface BoxInfo {
   country: string;         // ISO code of the GS1 prefix, e.g. 'PL', 'BG'; '' if unknown
   source: BoxSource;
   sourceDate: string;      // register snapshot date (YYYY-MM-DD) or the date the user added it
+  sourceName?: string;     // ONLINE only: where the box was found, e.g. "FDA drug label (openFDA)"
+  sourceUrl?: string;      // ONLINE only: page that shows this box
 }

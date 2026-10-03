@@ -10,12 +10,20 @@ import doctorPrepTest from './DoctorPrep.test';
 import utilsTest from './Utils.test';
 import boxCatalogTest from './BoxCatalog.test';
 import cardLinkTest from './CardLink.test';
+import chatHistoryTest from './ChatHistory.test';
+import shareTest from './Share.test';
 import restingTrendTest from './RestingTrend.test';
 import watchCloudSourceTest from './WatchCloudSource.test';
 import watchDataClientTest from './WatchDataClient.test';
 import watchPairingTest from './WatchPairing.test';
+import medInfoTest from './MedInfo.test';
+import drugCheckClientTest from './DrugCheckClient.test';
+import boxIdentifyTest from './BoxIdentify.test';
+import { Config } from '../main/ets/common/Config';
 
 export default function testsuite() {
+  // Unit tests never call the network, whatever the developer's LocalConfig points at.
+  Config.forceOffline(true);
   contractSmokeTest();
   agentSafetyTest();
   agentCoreTest();
@@ -28,8 +36,13 @@ export default function testsuite() {
   utilsTest();
   boxCatalogTest();
   cardLinkTest();
+  chatHistoryTest();
+  shareTest();
   restingTrendTest();
   watchCloudSourceTest();
   watchDataClientTest();
   watchPairingTest();
+  medInfoTest();
+  drugCheckClientTest();
+  boxIdentifyTest();
 }

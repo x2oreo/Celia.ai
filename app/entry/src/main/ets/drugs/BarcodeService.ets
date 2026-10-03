@@ -74,6 +74,32 @@ export async function learnBox(gtin: string, name: string, ingredients: string, 
   return box;
 }
 
+// A box /box-identify found and the user confirmed ("Yes, this is my box"). Stored on this phone like a taught
+// box, so the next scan resolves instantly and offline.
+export async function learnOnlineBox(gtin: string, brand: string, ingredients: string[], strength: string,
+  form: string, sourceName: string, sourceUrl: string): Promise<BoxInfo> {
+  const box: BoxInfo = {
+    gtin: gtin,
+    brand: brand,
+    substance: ingredients.join(' + '),
+    ingredients: ingredients.join(' + '),
+    strength: strength,
+    form: form,
+    pack: '',
+    atc: '',
+    holder: '',
+    rxCategory: '',
+    leafletUrl: '',
+    country: gtinCountry(gtin),
+    source: 'ONLINE',
+    sourceDate: new Date().toISOString().substring(0, 10),
+    sourceName: sourceName,
+    sourceUrl: sourceUrl
+  };
+  await LocalStore.get().setSetting(LEARNED_PREFIX + gtin, JSON.stringify(box));
+  return box;
+}
+
 export async function forgetBox(gtin: string): Promise<void> {
   await LocalStore.get().setSetting(LEARNED_PREFIX + gtin, '');
 }

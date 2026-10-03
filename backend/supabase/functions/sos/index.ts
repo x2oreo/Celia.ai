@@ -8,11 +8,24 @@
 // Twilio SMS + call per contact → audit row in sos_dispatches. Without Twilio secrets it runs in dry-run mode and
 // only records what it would have sent, so the emulator demo never fails.
 import { createClient } from 'npm:@supabase/supabase-js@2';
-import { buildSosMessage, type Genotype, isE164, parseSosPayload, type PatientContext } from './message.ts';
+import {
+  buildSosMessage,
+  type Genotype,
+  isE164,
+  type LastDose,
+  parseSosPayload,
+  type PatientContext,
+  type RecentSymptom,
+  SYMPTOM_WINDOW_MS,
+} from './message.ts';
 import { placeCall, type SendResult, sendSms, twilioConfigFromEnv } from './twilio.ts';
 
 const COOLDOWN_MINUTES = 10;
 const MAX_CONTACTS = 5;
+// Abuse cap across ALL devices: the anon key is public, so anyone can create a device with contacts and fire an SOS.
+// Real (non dry-run) alert rounds are capped per hour for the whole project, which bounds SMS/call costs and
+// harassment. Hackathon scale: one demo watch. Raise SOS_GLOBAL_MAX_PER_HOUR for a real deployment with auth.
+const GLOBAL_MAX_PER_HOUR = Number(Deno.env.get('SOS_GLOBAL_MAX_PER_HOUR') ?? '10');
 
 interface SosRecord {
   id: number;
@@ -114,11 +127,30 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return json(200, { status: 'skipped_cooldown' });
   }
 
-  const [contactsRes, contextRes] = await Promise.all([
+  const hourAgo = new Date(Date.now() - 3600_000).toISOString();
+  const { count: globalCount, error: globalError } = await db.from('sos_dispatches')
+    .select('id', { count: 'exact', head: true })
+    .in('status', ['sent', 'partial'])
+    .gte('created_at', hourAgo);
+  if (globalError) {
+    console.error(`[sos] global cap check failed, sending anyway: ${globalError.message}`);
+  } else if ((globalCount ?? 0) >= GLOBAL_MAX_PER_HOUR) {
+    await audit('skipped_global_limit', { maxPerHour: GLOBAL_MAX_PER_HOUR });
+    return json(429, { status: 'skipped_global_limit' });
+  }
+
+  const symptomSince = new Date(Date.now() - SYMPTOM_WINDOW_MS).toISOString();
+  const [contactsRes, contextRes, doseRes, symptomRes] = await Promise.all([
     db.from('emergency_contacts').select('name, phone').eq('device_id', record.device_id)
       .order('priority', { ascending: true }).limit(MAX_CONTACTS),
     db.from('watch_context').select('patient_name, genotype, risky_drug, risky_drug_at')
       .eq('device_id', record.device_id).maybeSingle(),
+    // Optional extras from the watch views; an error here must never block the alert.
+    db.from('watch_doses').select('name, taken_at').eq('device_id', record.device_id)
+      .order('taken_at', { ascending: false }).limit(1).maybeSingle(),
+    db.from('watch_symptoms').select('kind, bpm, recorded_at').eq('device_id', record.device_id)
+      .neq('kind', 'fine').gte('recorded_at', symptomSince)
+      .order('recorded_at', { ascending: false }).limit(1).maybeSingle(),
   ]);
   if (contactsRes.error) {
     console.error(`[sos] contacts query failed: ${contactsRes.error.message}`);
@@ -134,7 +166,18 @@ Deno.serve(async (req: Request): Promise<Response> => {
   const c = contextRes.data;
   // Only mention a risky drug scanned in the last 24 h; older scans are noise in an emergency text.
   const drugFresh = c?.risky_drug_at ? Date.now() - Date.parse(c.risky_drug_at) < 24 * 3600_000 : false;
+  const dose: LastDose | null = doseRes.data && typeof doseRes.data.name === 'string'
+    ? { name: doseRes.data.name, at: Date.parse(doseRes.data.taken_at) }
+    : null;
+  const symptom: RecentSymptom | null = symptomRes.data && typeof symptomRes.data.kind === 'string'
+    ? { kind: symptomRes.data.kind, bpm: Number(symptomRes.data.bpm) || 0, at: Date.parse(symptomRes.data.recorded_at) }
+    : null;
+  if (doseRes.error || symptomRes.error) {
+    console.warn(`[sos] watch extras unavailable: ${doseRes.error?.message ?? ''} ${symptomRes.error?.message ?? ''}`);
+  }
   const ctx: PatientContext = {
+    lastDose: dose,
+    recentSymptom: symptom,
     name: c?.patient_name ?? null,
     genotype: (['LQT1', 'LQT2', 'LQT3'].includes(c?.genotype) ? c?.genotype : 'UNKNOWN') as Genotype,
     riskyDrug: drugFresh ? (c?.risky_drug ?? null) : null,

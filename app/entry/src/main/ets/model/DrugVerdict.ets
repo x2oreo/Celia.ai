@@ -4,7 +4,7 @@
 export type RiskLevel = 'KNOWN_RISK' | 'POSSIBLE_RISK' | 'CONDITIONAL_RISK' | 'NOT_LISTED' | 'UNKNOWN_DRUG';
 
 // One step of how a verdict was found ("How we know" on the verdict card).
-export type LookupStepKind = 'EXACT' | 'ALIAS' | 'TYPO' | 'NOT_FOUND' | 'ONLINE';
+export type LookupStepKind = 'EXACT' | 'ALIAS' | 'TYPO' | 'NOT_FOUND' | 'ONLINE' | 'LABEL';   // LABEL: FDA label QT rule (server)
 
 export interface LookupStep {
   kind: LookupStepKind;

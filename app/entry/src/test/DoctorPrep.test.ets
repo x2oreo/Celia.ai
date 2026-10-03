@@ -5,6 +5,7 @@ import { Medication } from '../main/ets/model/Medication';
 import { ScanRecord } from '../main/ets/model/ScanRecord';
 import { AppEvent } from '../main/ets/model/AppEvent';
 import { beatIntervalMs } from '../main/ets/bystander/Metronome';
+import { parseSummary, summaryFields } from '../main/ets/doctor/DoctorSummary';
 
 function profile(): Profile {
   const p: Profile = { condition: 'LQTS', genotype: 'LQT1', hasIcd: false, notes: 'Allergic to penicillin',
@@ -15,6 +16,37 @@ function profile(): Profile {
 const NOW: number = 1790000000000;
 
 export default function doctorPrepTest() {
+  describe('DoctorSummary', () => {
+    it('sendsNoNameNotesOrSymptomText', 0, () => {
+      const p: Profile = profile();
+      p.name = 'Anna Kowalska';
+      const meds: Medication[] = [
+        { id: 1, name: 'Nadolol', ingredient: 'nadolol', dose: '40 mg', addedAt: 0 } as Medication
+      ];
+      const symptom: AppEvent = { id: 9, ts: NOW - 1000, kind: 'SYMPTOM',
+        detail: '{"symptom":"DIZZINESS","severity":2,"activity":"resting","note":"after my sister called","hrMin":-1,"hrMax":-1}' };
+      const sections: BriefSection[] = buildBrief(p, meds, [], [symptom], 'DENTIST', NOW);
+      const fields: Record<string, string> = summaryFields(sections, 'DENTIST', p.genotype);
+      const all: string = Object.keys(fields).map((k: string) => fields[k]).join(' ');
+      expect(all.includes('Anna')).assertFalse();
+      expect(all.includes('penicillin')).assertFalse();
+      expect(all.includes('sister')).assertFalse();
+      expect(fields['medicines'].includes('Nadolol')).assertTrue();
+      expect(fields['symptoms']).assertEqual('1');
+    });
+
+    it('rejectsReassuranceAndDoses', 0, () => {
+      expect(parseSummary('{"summary":"Clarithromycin is safe for this patient with LQT2."}').result)
+        .assertEqual('REJECTED');
+      expect(parseSummary('{"summary":"Continue nadolol 40 mg daily as prescribed for LQT1."}').result)
+        .assertEqual('REJECTED');
+      expect(parseSummary('{"summary":"",' + '"dropped":true}').result).assertEqual('REJECTED');
+      expect(parseSummary('oops').result).assertEqual('REJECTED');
+      const ok: string = '{"summary":"LQT1 patient on nadolol; one flagged antibiotic in the last 90 days."}';
+      expect(parseSummary(ok).result).assertEqual('OK');
+    });
+  });
+
   describe('DoctorPrep', () => {
     it('dentistBriefMentionsAdrenalineAndFlaggedDrug', 0, () => {
       const meds: Medication[] = [

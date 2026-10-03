@@ -8,7 +8,7 @@ Agent-first heart-safety companion for people with Long QT syndrome — HarmonyO
 - [Architecture](docs/ARCHITECTURE.md) — big picture, ownership, shared contracts, API
 - [Plan](docs/PLAN.md) — checkpoints, mentor questions, submission checklist
 - [Tasks](docs/TASKS.md) — feature expansion (F-19..F-34) as implementable tasks
-- Per person: [Kaloyan — agent](docs/team/kaloyan-agent.md) · [Georgie — app](docs/team/georgie-app.md) · [Mark — data & watch](docs/team/mark-data-watch.md)
+- Per person: [Kaloyan — agent](docs/team/kaloyan-agent.md) · [Georgi — app](docs/team/georgi-app.md) · [Mark — data & watch](docs/team/mark-data-watch.md)
 - [Watch app](watch/README.md) — HarmonyOS wearable app (emulator), metrics → Supabase
 - [SOS backend](backend/supabase/functions/sos/README.md) — watch SOS → SMS + call to emergency contacts (Twilio)
 - Background: [task text](docs/hackathon/huawei-task.txt) · [condition research](docs/hackathon/conditions-research.md)
@@ -62,16 +62,29 @@ Everything below runs on the emulator with no backend and no watch. Heart data i
 | History, dashboard (F-23, F-24) | Home shows meds by risk, interactions and recent checks; Medicines → Check history (filters). |
 | Heart + alerts (F-09, F-32) | Heart → Simulation controls → `lqt2 startle tachy`, `lqt3 night brady`, `lqt1 exercise`, `irregular rhythm`, `watch disconnect`. |
 | SOS (F-27, F-28, F-35) | A CRITICAL alert (e.g. `lqt2 startle tachy`) opens the 30 s "Are you OK?" countdown → "I'm OK" or let it run → call / share message / call contacts. Settings → Test SOS runs a 10 s test marked TEST. 10-min cooldown for automatic SOS. |
-| Emergency card (F-08, F-26, F-29, F-30) | Emergency tab: country number (e.g. Bulgaria 150, Poland 999), English card, QR. The QR is a link to the card viewer (`site/card/`, GitHub Pages) with the card in the `#fragment` — any phone camera opens the formatted card in the reader's language (13 languages); scanning it with Celia's own scanner opens it offline. Preview locally: `python3 -m http.server -d site` → `/card/#<payload>`. |
+| Emergency card (F-08, F-26, F-29, F-30) | Emergency tab → Show card as QR code. With a backend, the card is encrypted on the phone and uploaded to the `share` function; the QR is a short link (`/card/#<id>.<key>`) that any phone camera opens as the formatted card in the reader's language (13 languages), with 112 first. "Remove this link" revokes it. Offline/no backend: the QR carries the whole card (legacy link). Celia's own scanner opens both kinds inside the app. |
 | Help guide (F-41) | Emergency → Help guide: 3 steps + CPR metronome 110/min (haptic). Also reachable from the lock screen. |
-| Pharmacy card (F-40) | Home → More → Pharmacy card (English for now). |
-| Doctor prep (F-31) | Home → Doctor visit prep → pick the specialist → share / copy. No AI: built from your own data. |
+| Pharmacy card, travel (F-40, T23) | Emergency → Pharmacy card: in the language of the country you're in, with English below. With location allowed, being in another country than Settings shows "You're in …" on Home (country found on the phone; nothing uploaded). |
+| Doctor prep (F-31) | Home → Doctor visit prep → pick the specialist → **Send report link**: an encrypted web report (meds with risk badges, interactions, flagged checks, 30-day resting HR chart, alerts/SOS/symptoms timeline, doses, watch-outs, questions) that opens on any phone or computer and can be printed to PDF; the link stops working after 48 h. Share/copy as text still works. No AI: built from your own data. |
 | Reminders (F-38) | Medicines → Medicine reminders. See ARCHITECTURE: system reminders need an AGC quota; the in-app fallback notifies while the app runs. |
-| Symptom log (F-44, manual) | Home → More → Symptom log; fainting / chest pain shows an SOS button. Appears in the doctor brief. |
-| Privacy, app lock (F-45, F-46) | Settings → What left my phone: ledger of outbound requests (empty when offline). App lock needs a screen lock (PIN) on the device. |
+| Symptom log (F-44, T27) | Home → More → Symptom log; fainting / chest pain shows an SOS button. Or tell the agent "I felt dizzy after the alarm" (backend): it calls `log_symptom`; red flags start the SOS countdown by rule, not by the model. Appears in the doctor brief. |
+| Card language, read aloud (T11, T25) | Emergency → pick one of 13 card languages (saved) → **Read the card aloud**: only the medical part, never name or contacts (on-device English voice, cloud `/speak` otherwise; hidden with neither). |
+| Nearby help (T26 fallback) | Emergency → Nearby help → Hospital / Pharmacy / Defibrillator: a map search around the phone (map app or browser; the app sends no location). The in-app map needs a Map Kit key. |
+| Agent chat, saved chats (F-02, T7) | Agent → ask "Can I take Klacid?" (works offline with the deterministic agent). Header: Chats (history) and New chat. Chats → long press → Rename / Delete. "new chat" / "start over" work offline. |
+| Medicine sheet, AI explanation | Medicines → tap a medicine: risk band, what it's for, interactions, brands. "Explain it in plain words" (backend only; hidden offline) shows an `AI SUMMARY`; replies that mention QT/arrhythmia/doses are dropped. |
+| Doctor summary (T13) | Doctor visit prep → **Summarise for the doctor** (backend only): 2–3 sentences from the brief's medicines, risk words, interactions and counts — never name, notes or symptom notes. Reassurance or doses → dropped. |
+| Celia intents (F-11, T20) | `CheckDrugSafety`, `ShowEmergencyCard`, `LogSymptom`, `TakeDose`, `ShowPharmacyCard`, `AddMedication`, `ReadEmergencyCard` (`insight_intent.json`). Built and compiled; routing from Celia needs a real device with Celia/Xiaoyi. |
+| Widgets (F-12) | Home screen → add Celia "Check a medicine" (2×2) and "Medical alert" (2×4); Help this person opens the bystander guide. |
+| Watch context (T15) | With the cloud backend, a risky check writes `watch_context` (genotype, ingredient, risk) and the Celia watch shows the verdict glance within 60 s. |
+| Privacy, app lock (F-45, F-46) | Settings → What left my phone: every outbound request — drug check, agent, voice, vision, explanations, share links, live voice — with field names and size, never values; **Export the list**. App lock needs a screen lock (PIN) on the device. |
 
-Unit tests: `app/scripts/test.sh` — 57 tests (drug data + checker, interactions, alarm rules, SOS state machine and
-message, doctor brief, GS1, emergency numbers, card text completeness, dose schedule, privacy guard).
+Unit tests: `app/scripts/test.sh` — **188 tests, 0 failures** (3 Oct 2026): drug data + checker, interactions,
+agent safety gate + validator + tool registry, offline agent, saved chats, alarm rules, SOS state machine and message,
+doctor brief + AI summary guard, report payload + share links, medicine info + AI reply guard, symptom tool, GS1,
+emergency numbers, card text + read-aloud privacy, dose schedule, travel, privacy guard + ledger. Tests never call the
+network (`Config.forceOffline`).
+Backend: `npx -y deno test --no-lock backend/supabase/functions/` — **59 tests, 0 failures** (labels, RxNav/openFDA
+tier 2, share, SOS message, box identify, med-info and doctor-summary output guards).
 
 Optional online drug check: create a Supabase project, run `backend/supabase/migrations/0001_drugs.sql` and
 `backend/supabase/seed.sql` (regenerate with `python3 data/export_seed.py`), deploy `functions/drug-check`, and put
@@ -83,6 +96,13 @@ How AI tools were used, and which pre-existing components are reused: [`AI_WORKF
 
 **Pre-existing / third-party components (Challenge Rules §4):** DevEco Studio's Empty Ability template
 (hvigor files, `EntryAbility` skeleton, Hypium test harness) and the `@ohos/hypium` / `@ohos/hamock` test libraries.
+Hosting: Supabase (Edge Functions, Storage) and Vercel (static viewer pages in `site/`; they hold no data).
+Public APIs called by the `/drug-check` and `/box-identify` Edge Functions for medicines outside our data: NLM RxNav
+(name → ingredient, rxnav.nlm.nih.gov), openFDA drug labels (api.fda.gov, public domain), AEMPS CIMA (Spanish
+medicines register, cima.aemps.es), UPCitemdb (free trial API) and Open Food / Products / Beauty Facts (ODbL). Only a
+medicine name or a barcode is sent; no personal data.
+Nearby help opens Google Maps search URLs (developers.google.com/maps/documentation/urls, no key, no location sent
+by the app).
 App code, data and prompts are written in this repo.
 
 **Data sources:** drug risk categories follow the public CredibleMeds QTdrugs lists (crediblemeds.org); brand names

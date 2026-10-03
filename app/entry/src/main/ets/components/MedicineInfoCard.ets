@@ -90,7 +90,7 @@ export struct MedicineInfoCard {
           .fontSize($r('app.float.font_caption'))
           .fontColor($r('app.color.ink_3'))
 
-        if (this.box.source === 'LEARNED') {
+        if (this.box.source === 'LEARNED' || this.box.source === 'ONLINE') {
           Text($r('app.string.info_forget'))
             .fontSize($r('app.float.font_small'))
             .fontColor($r('app.color.risk_known'))

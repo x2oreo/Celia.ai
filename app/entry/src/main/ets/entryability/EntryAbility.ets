@@ -52,6 +52,8 @@ export default class EntryAbility extends UIAbility {
     }
     if (target === 'scan') {
       RouteRequest.open(Routes.SCAN);
+    } else if (target === 'bystander') {
+      RouteRequest.open(Routes.BYSTANDER);
     } else if (target === 'emergency' || target === 'call' || target === 'ice') {
       TabRequest.open(TabIndex.EMERGENCY);
       if (target !== 'emergency') {

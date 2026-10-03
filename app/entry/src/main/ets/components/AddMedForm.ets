@@ -2,6 +2,7 @@
 
 import { DrugChecker } from '../drugs/DrugChecker';
 import { DrugEntry } from '../drugs/DrugDataset';
+import { DrugInfo, drugInfo } from '../drugs/DrugInfo';
 import { LocalStore } from '../data/LocalStore';
 import { RiskLevel } from '../model/DrugVerdict';
 import { PrimaryButton, RiskBadge } from './Common';
@@ -46,6 +47,10 @@ export struct AddMedForm {
     this.onAdded();
   }
 
+  private infoOf(e: DrugEntry): DrugInfo | undefined {
+    return drugInfo(e.ingredient);
+  }
+
   private riskOf(e: DrugEntry | undefined): RiskLevel {
     return e === undefined ? 'UNKNOWN_DRUG' : e.risk;
   }
@@ -78,14 +83,60 @@ export struct AddMedForm {
         .border({ width: 1, color: $r('app.color.divider') })
       }
       if (this.name.trim().length >= 3) {
-        Row({ space: 8 }) {
-          Text(this.resolved === undefined ? $r('app.string.meds_not_recognised') : this.resolved.ingredient)
-            .fontSize($r('app.float.font_small'))
-            .fontColor($r('app.color.ink_3'))
-            .layoutWeight(1)
-          RiskBadge({ risk: this.riskOf(this.resolved), compact: true })
+        if (this.resolved === undefined) {
+          Row({ space: 8 }) {
+            Text($r('app.string.meds_not_recognised'))
+              .fontSize($r('app.float.font_small'))
+              .fontColor($r('app.color.ink_3'))
+              .layoutWeight(1)
+            RiskBadge({ risk: this.riskOf(this.resolved), compact: true })
+          }
+          .width('100%')
+        } else {
+          // Live preview of what the medicine is, from the curated data (DrugInfo), before it is saved.
+          Column({ space: 6 }) {
+            Row({ space: 8 }) {
+              Column({ space: 2 }) {
+                Text(this.resolved.ingredient)
+                  .fontSize($r('app.float.font_body'))
+                  .fontWeight(FontWeight.Bold)
+                  .fontColor($r('app.color.ink'))
+                Text(this.resolved.drugClass)
+                  .fontSize($r('app.float.font_caption'))
+                  .fontColor($r('app.color.ink_3'))
+              }
+              .alignItems(HorizontalAlign.Start)
+              .layoutWeight(1)
+              RiskBadge({ risk: this.riskOf(this.resolved), compact: true })
+            }
+            .width('100%')
+            if (this.infoOf(this.resolved) !== undefined) {
+              Text(this.infoOf(this.resolved)?.usedFor ?? '')
+                .fontSize($r('app.float.font_small'))
+                .fontColor($r('app.color.ink_2'))
+                .lineHeight(20)
+              if ((this.infoOf(this.resolved)?.tips.length ?? 0) > 0) {
+                Row({ space: 6 }) {
+                  Image($r('app.media.ic_check')).width(12).height(12).fillColor($r('app.color.ink_4'))
+                  Text(this.infoOf(this.resolved)?.tips[0] ?? '')
+                    .fontSize($r('app.float.font_caption'))
+                    .fontColor($r('app.color.ink_3'))
+                    .lineHeight(16)
+                    .layoutWeight(1)
+                }
+                .width('100%')
+                .alignItems(VerticalAlign.Top)
+              }
+            }
+          }
+          .width('100%')
+          .alignItems(HorizontalAlign.Start)
+          .padding(12)
+          .backgroundColor($r('app.color.surface'))
+          .border({ width: 1, color: $r('app.color.border') })
+          .borderRadius($r('app.float.radius_s'))
+          .transition(TransitionEffect.OPACITY.animation({ duration: 180, curve: Curve.EaseOut }))
         }
-        .width('100%')
       }
       TextInput({ text: this.dose, placeholder: $r('app.string.meds_dose_hint') })
         .height(48)

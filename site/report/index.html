@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27%3E%3Ccircle cx=%2712%27 cy=%2712%27 r=%2711%27 fill=%27%23E5484D%27/%3E%3Ccircle cx=%279%27 cy=%279%27 r=%273.4%27 fill=%27%23fff%27 opacity=%27.55%27/%3E%3C/svg%3E">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#F8F5F2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14100F" media="(prefers-color-scheme: dark)">
+<title>Long QT safety report</title>
+<!--
+  Doctor report viewer for the Celia app (F-31), design: docs/design/DESIGN.md §10.2a "Web report".
+  Link: /report/#<id>.<key>. End-to-end encrypted on the patient's phone; the Supabase `share` function stores only
+  ciphertext and deletes it after 48 hours. Built from deterministic on-device data (doctor/ReportPayload.ets), no AI.
+-->
+<link rel="stylesheet" href="../assets/celia.css">
+<style>
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --bg: #14100F; --surface: #1F1A17; --surface-alt: #2A2421; --border: #332C28; --border-strong: #4A413B;
+      --divider: #2A2421; --ink: #F5F0EC; --ink-2: #E2D9D3; --ink-3: #B8AEA8; --ink-4: #948A84;
+      --brand: #F26B6F; --brand-text: #F58A8D; --brand-tint: #3B1A1A;
+      --known: #F97066; --known-tint: #3A1A17; --known-text: #FDA29B;
+      --possible: #FDB022; --possible-tint: #3A2A12; --possible-text: #FEC84B;
+      --conditional: #FAC515; --conditional-tint: #36300F; --conditional-text: #FDE272;
+      --listed: #32D583; --listed-tint: #132C1F; --listed-text: #75E0A7;
+      --unknown: #98A2B3; --unknown-tint: #272A2F; --unknown-text: #D0D5DD;
+    }
+  }
+  main { max-width: 760px; margin: 0 auto; padding: max(20px, env(safe-area-inset-top)) 16px 48px; }
+
+  .head { padding: 8px 4px 20px; display: grid; gap: 6px; }
+  .eyebrow { color: var(--brand-text); display: flex; align-items: center; gap: 8px; }
+  .eyebrow svg { width: 18px; height: 18px; }
+  .head h1 { margin: 6px 0 0; }
+  .facts { color: var(--ink-2); }
+  .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; color: var(--ink-3); margin-top: 6px; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 12px; border-radius: 14px;
+    background: var(--surface-alt); color: var(--ink-2); font: 700 13px/1 var(--font);
+  }
+  .pill.soon { background: var(--possible-tint); color: var(--possible-text); }
+  .pill svg { width: 14px; height: 14px; }
+
+  .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 14px; }
+  @media (max-width: 560px) { .tiles { grid-template-columns: repeat(2, 1fr); } }
+  .tile {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-ml); padding: 14px 14px 12px;
+    display: grid; gap: 4px;
+  }
+  .tile .n { font-size: 32px; line-height: 34px; font-weight: 800; letter-spacing: -0.02em; }
+  .tile .n.alert { color: var(--known-text); }
+  .tile .t-caption { color: var(--ink-3); }
+
+  .sec {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-l);
+    padding: 18px 18px 8px; margin-bottom: 12px; break-inside: avoid;
+  }
+  .sec > h2 { margin: 0 0 6px; color: var(--ink-3); display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .rows { list-style: none; margin: 0; padding: 0; }
+  .rows li {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0;
+    border-top: 1px solid var(--divider);
+  }
+  .rows li:first-child { border-top: 0; }
+  .rows .main { min-width: 0; }
+  .rows .name { font-weight: 700; color: var(--ink); }
+  .rows .sub { color: var(--ink-3); font-size: 14px; line-height: 20px; }
+  .rows.timeline li { justify-content: flex-start; align-items: flex-start; }
+  .when { flex: none; width: 92px; color: var(--ink-3); font-size: 14px; line-height: 22px; }
+  .dot { flex: none; width: 10px; height: 10px; border-radius: 5px; margin-top: 7px; background: var(--ink-4); }
+  .dot.CRITICAL, .dot.SOS { background: var(--known); }
+  .dot.WARN { background: var(--possible); }
+  .dot.SYMPTOM { background: var(--brand); }
+  .bullets { margin: 0; padding: 4px 0 12px; list-style: none; display: grid; gap: 8px; }
+  .bullets li { padding-left: 18px; position: relative; color: var(--ink-2); }
+  .bullets li::before { content: ""; position: absolute; left: 3px; top: 9px; width: 6px; height: 6px; border-radius: 3px; background: var(--ink-4); }
+  .q li::before { background: var(--brand); }
+  .empty { color: var(--ink-3); padding: 6px 0 14px; margin: 0; }
+
+  .chart { padding-bottom: 14px; }
+  .chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .chart .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; color: var(--ink-3); font-size: 13px; margin-top: 8px; }
+  .chart .legend b { color: var(--ink); }
+
+  .doses { display: flex; align-items: center; gap: 16px; padding: 8px 0 16px; }
+  .bar { flex: 1; height: 12px; border-radius: 6px; background: var(--surface-alt); overflow: hidden; display: flex; }
+  .bar span { display: block; height: 100%; }
+  .bar .taken { background: var(--listed); }
+  .bar .skipped { background: var(--possible); }
+
+  .foot { margin: 22px 4px 0; color: var(--ink-3); display: grid; gap: 4px; }
+  .actions { display: flex; gap: 10px; margin: 18px 0 0; }
+  .actions .btn { min-height: 48px; font-size: 16px; background: var(--surface); color: var(--ink); border: 1.5px solid var(--border-strong); padding: 10px 18px; }
+
+  .state { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-l); padding: 28px 22px; display: grid; gap: 10px; }
+  .state h1, .state p { margin: 0; }
+  .state p { color: var(--ink-2); }
+  .skeleton { display: grid; gap: 12px; }
+
+  @media print {
+    :root { color-scheme: light; }
+    body { background: #FFFFFF; font-size: 12pt; }
+    main { max-width: none; padding: 0; }
+    .actions, .no-print { display: none !important; }
+    .sec, .tile { box-shadow: none; border-color: #D9D1CA; }
+    [data-reveal] { opacity: 1 !important; transform: none !important; }
+    .print-only { display: block !important; }
+  }
+  .print-only { display: none; }
+</style>
+<script src="../assets/config.js"></script>
+<script src="../assets/share.js"></script>
+</head>
+<body>
+<main id="root">
+  <div class="skeleton" id="loading" aria-busy="true" aria-label="Opening the report">
+    <div class="skel" style="width:40%"></div>
+    <div class="skel" style="height:32px;width:70%"></div>
+    <div class="skel" style="width:55%"></div>
+    <div class="skel" style="height:90px;border-radius:20px;margin-top:10px"></div>
+    <div class="skel" style="height:180px;border-radius:24px"></div>
+  </div>
+  <div id="report" hidden></div>
+  <section class="state" id="state" hidden data-reveal>
+    <span class="t-label" style="color:var(--brand-text)">Long QT safety report</span>
+    <h1 class="t-title-2" id="stateTitle">This report link has expired</h1>
+    <p id="stateBody">Report links work for 48 hours. Ask the patient to send a new link from the Celia app.</p>
+  </section>
+</main>
+
+<script>
+(function () {
+  'use strict';
+  var el = window.CeliaShare.el;
+  var $ = function (id) { return document.getElementById(id); };
+  var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  var RISK = {
+    KNOWN_RISK: { cls: 'known', word: 'Known risk', shape: '<path d="M8 2h8l6 6v8l-6 6H8l-6-6V8z" fill="var(--known)"/><path d="M8.5 8.5l7 7m0-7l-7 7" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>' },
+    POSSIBLE_RISK: { cls: 'possible', word: 'Possible risk', shape: '<path d="M12 2.5l10.5 18.5H1.5z" fill="var(--possible)"/><path d="M12 9v5.5" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><circle cx="12" cy="17.8" r="1.4" fill="#fff"/>' },
+    CONDITIONAL_RISK: { cls: 'conditional', word: 'Conditional', shape: '<path d="M12 1.5L22.5 12 12 22.5 1.5 12z" fill="var(--conditional)"/><path d="M12 7.5v5.5" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><circle cx="12" cy="16.3" r="1.4" fill="#fff"/>' },
+    NOT_LISTED: { cls: 'listed', word: 'Not listed', shape: '<circle cx="12" cy="12" r="10.5" fill="var(--listed)"/><path d="M7 12.4l3.2 3.2L17 8.8" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>' },
+    UNKNOWN: { cls: 'unknown', word: 'Unknown', shape: '<circle cx="12" cy="12" r="9.5" fill="none" stroke="var(--unknown)" stroke-width="2.2" stroke-dasharray="3 2.6"/><path d="M9.6 9.4a2.5 2.5 0 114 2c-.9.6-1.6 1.1-1.6 2.3" stroke="var(--unknown)" stroke-width="2" fill="none" stroke-linecap="round"/><circle cx="12" cy="17" r="1.2" fill="var(--unknown)"/>' }
+  };
+
+  function riskBadge(level) {
+    var r = RISK[level] || RISK.UNKNOWN;
+    var b = el('span', 'risk ' + r.cls);
+    b.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + r.shape + '</svg>';
+    b.appendChild(document.createTextNode(r.word));
+    return b;
+  }
+
+  function date(ts) {
+    var d = new Date(ts);
+    return d.getDate() + ' ' + MONTHS[d.getMonth()] + ' ' + d.getFullYear();
+  }
+  function shortDate(ts) {
+    var d = new Date(ts);
+    return d.getDate() + ' ' + MONTHS[d.getMonth()];
+  }
+
+  function section(title, right) {
+    var s = el('section', 'sec');
+    s.setAttribute('data-reveal', '');
+    var h = el('h2', 't-label', title);
+    if (right) { h.appendChild(right); }
+    s.appendChild(h);
+    return s;
+  }
+
+  function bullets(lines, cls) {
+    var ul = el('ul', 'bullets' + (cls ? ' ' + cls : ''));
+    lines.forEach(function (l) { ul.appendChild(el('li', '', l)); });
+    return ul;
+  }
+
+  function timeline(items) {
+    var ul = el('ul', 'rows timeline');
+    items.forEach(function (it) {
+      var li = el('li');
+      li.appendChild(el('span', 'when', shortDate(it.ts)));
+      li.appendChild(el('span', 'dot ' + it.level));
+      li.appendChild(el('span', 'main', it.text.charAt(0).toUpperCase() + it.text.slice(1)));
+      ul.appendChild(li);
+    });
+    return ul;
+  }
+
+  function median(values) {
+    var s = values.slice().sort(function (a, b) { return a - b; });
+    var m = Math.floor(s.length / 2);
+    return s.length % 2 ? s[m] : Math.round((s[m - 1] + s[m]) / 2);
+  }
+
+  // Resting heart rate, last 30 days: brand line, dashed guides at 60 and 120 (DESIGN §10.2). Never ECG-like.
+  // Drawn at the real width so labels stay 11 px on a phone.
+  function chart(days, width) {
+    var W = Math.max(280, Math.round(width)), H = W < 480 ? 150 : 180, L = 30, R = 8, T = 10, B = 24;
+    var bpms = days.map(function (d) { return d.bpm; });
+    var lo = Math.min(50, Math.min.apply(null, bpms) - 5), hi = Math.max(125, Math.max.apply(null, bpms) + 5);
+    var x = function (i) { return L + (days.length === 1 ? 0 : i * (W - L - R) / (days.length - 1)); };
+    var y = function (v) { return T + (hi - v) * (H - T - B) / (hi - lo); };
+    var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Resting heart rate, last ' + days.length + ' days">';
+    [60, 120].forEach(function (g) {
+      svg += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y(g) + '" y2="' + y(g) + '" stroke="var(--border-strong)" stroke-dasharray="4 4"/>';
+      svg += '<text x="' + (L - 6) + '" y="' + (y(g) + 4) + '" text-anchor="end" font-size="11" fill="var(--ink-3)">' + g + '</text>';
+    });
+    var pts = days.map(function (d, i) { return x(i).toFixed(1) + ',' + y(d.bpm).toFixed(1); });
+    var area = 'M' + x(0) + ',' + (H - B) + ' L' + pts.join(' L') + ' L' + x(days.length - 1) + ',' + (H - B) + ' Z';
+    svg += '<path d="' + area + '" fill="var(--brand)" opacity="0.08"/>';
+    svg += '<polyline points="' + pts.join(' ') + '" fill="none" stroke="var(--brand)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>';
+    var last = days.length - 1;
+    svg += '<circle cx="' + x(last) + '" cy="' + y(days[last].bpm) + '" r="4.5" fill="var(--surface)" stroke="var(--brand)" stroke-width="2.5"/>';
+    svg += '<text x="' + L + '" y="' + (H - 6) + '" font-size="11" fill="var(--ink-3)">' + days[0].day.slice(5) + '</text>';
+    svg += '<text x="' + (W - R) + '" y="' + (H - 6) + '" text-anchor="end" font-size="11" fill="var(--ink-3)">' + days[last].day.slice(5) + '</text>';
+    return svg + '</svg>';
+  }
+
+  function expiryPill(expiresAt) {
+    if (!expiresAt) { return null; }
+    var hours = Math.max(0, Math.round((Date.parse(expiresAt) - Date.now()) / 3600000));
+    var p = el('span', 'pill' + (hours <= 6 ? ' soon' : ''));
+    p.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>';
+    p.appendChild(document.createTextNode(hours >= 1 ? 'Link expires in ' + hours + ' h' : 'Link expires within the hour'));
+    return p;
+  }
+
+  // The decrypted payload is untrusted (anyone holding the public key can publish one). Only plain numbers and
+  // ISO dates reach the chart, which is built as SVG markup.
+  function cleanResting(list) {
+    if (!Array.isArray(list)) { return []; }
+    var out = [];
+    list.forEach(function (d) {
+      var bpm = Math.round(Number(d && d.bpm));
+      var day = String(d && d.day);
+      if (isFinite(bpm) && bpm > 0 && bpm < 300 && /^\d{4}-\d{2}-\d{2}$/.test(day)) {
+        out.push({ day: day, bpm: bpm, simulated: !!(d && d.simulated) });
+      }
+    });
+    return out;
+  }
+
+  function render(r, expiresAt) {
+    r.resting = cleanResting(r.resting);
+    var root = $('report');
+    var p = r.patient;
+    document.title = 'Long QT safety report' + (p.name ? ' — ' + p.name : '');
+
+    var head = el('header', 'head');
+    head.setAttribute('data-reveal', '');
+    var eyebrow = el('div', 'eyebrow t-label');
+    eyebrow.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
+    eyebrow.appendChild(document.createTextNode('Long QT safety report'));
+    head.appendChild(eyebrow);
+    head.appendChild(el('h1', 't-title-1', p.name || 'Patient'));
+    head.appendChild(el('div', 'facts', p.condition + ' · ' + (p.genotype === 'UNKNOWN' ? 'genotype unknown' : p.genotype) +
+      ' · ICD: ' + (p.icd ? 'yes' : 'no')));
+    var meta = el('div', 'meta t-body-sm');
+    meta.appendChild(el('span', '', 'Prepared for the ' + r.specialtyName.toLowerCase() + ' · ' + date(r.generatedAt)));
+    var pill = expiryPill(expiresAt);
+    if (pill) { meta.appendChild(pill); }
+    head.appendChild(meta);
+    if (p.notes) { head.appendChild(el('div', 't-body-sm', 'Notes: ' + p.notes)); }
+    root.appendChild(head);
+
+    var tiles = el('div', 'tiles');
+    tiles.setAttribute('data-reveal', '');
+    [[r.summary.medsAtRisk, 'medicines with QT risk', r.summary.medsAtRisk > 0],
+      [r.summary.interactions, 'interactions', r.summary.interactions > 0],
+      [r.summary.heartEvents, 'heart alerts · ' + r.windowDays + ' d', r.summary.heartEvents > 0],
+      [r.summary.symptoms, 'symptoms logged', false]].forEach(function (t) {
+      var tile = el('div', 'tile');
+      tile.appendChild(el('div', 'n' + (t[2] ? ' alert' : ''), t[0]));
+      tile.appendChild(el('div', 't-caption', t[1]));
+      tiles.appendChild(tile);
+    });
+    root.appendChild(tiles);
+
+    var meds = section('Current medicines');
+    if (r.meds.length === 0) { meds.appendChild(el('p', 'empty', 'None recorded.')); } else {
+      var ul = el('ul', 'rows');
+      r.meds.forEach(function (m) {
+        var li = el('li');
+        var main = el('div', 'main');
+        main.appendChild(el('div', 'name', m.name + (m.dose ? ' ' + m.dose : '')));
+        if (m.ingredient && m.ingredient.toLowerCase() !== m.name.toLowerCase()) { main.appendChild(el('div', 'sub', m.ingredient)); }
+        li.appendChild(main);
+        li.appendChild(riskBadge(m.risk));
+        ul.appendChild(li);
+      });
+      meds.appendChild(ul);
+    }
+    root.appendChild(meds);
+
+    if (r.interactions.length > 0) {
+      var inter = section('Interactions between current medicines');
+      inter.appendChild(bullets(r.interactions));
+      root.appendChild(inter);
+    }
+
+    if (r.flagged.length > 0) {
+      var fl = section('Medicines checked and flagged · last ' + r.windowDays + ' days');
+      var ful = el('ul', 'rows');
+      r.flagged.forEach(function (f) {
+        var li = el('li');
+        var main = el('div', 'main');
+        main.appendChild(el('div', 'name', f.text.split(' — ')[0]));
+        main.appendChild(el('div', 'sub', shortDate(f.ts) + (f.text.indexOf('interaction') >= 0 ? ' · interacts with current medicines' : '')));
+        li.appendChild(main);
+        li.appendChild(riskBadge(f.level));
+        ful.appendChild(li);
+      });
+      fl.appendChild(ful);
+      root.appendChild(fl);
+    }
+
+    if (r.resting.length >= 2) {
+      var badge = r.restingSimulated ? el('span', 'mono-badge', 'Simulated') : null;
+      var hr = section('Resting heart rate · last ' + r.resting.length + ' days', badge);
+      var box = el('div', 'chart');
+      box.innerHTML = chart(r.resting, Math.min(760, $('root').clientWidth) - 70);
+      var bpms = r.resting.map(function (d) { return d.bpm; });
+      var legend = el('div', 'legend');
+      [['Median', median(bpms) + ' bpm'], ['Latest', r.resting[r.resting.length - 1].bpm + ' bpm'],
+        ['Range', Math.min.apply(null, bpms) + '–' + Math.max.apply(null, bpms)]].forEach(function (kv) {
+        var span = el('span', '', kv[0] + ' ');
+        span.appendChild(el('b', '', kv[1]));
+        legend.appendChild(span);
+      });
+      box.appendChild(legend);
+      box.appendChild(el('div', 't-caption', 'Heart rate only, from the watch. This is not an ECG and does not measure QT.'));
+      hr.appendChild(box);
+      root.appendChild(hr);
+    }
+
+    var events = r.heart.concat(r.symptoms).sort(function (a, b) { return a.ts - b.ts; });
+    var ev = section('Heart alerts, SOS and symptoms · last ' + r.windowDays + ' days');
+    if (events.length === 0) { ev.appendChild(el('p', 'empty', 'Nothing recorded.')); } else { ev.appendChild(timeline(events)); }
+    root.appendChild(ev);
+
+    if (r.doses.tracked) {
+      var d = r.doses;
+      var ds = section('Doses · last ' + d.days + ' days');
+      var row = el('div', 'doses');
+      var bar = el('div', 'bar');
+      var sch = Math.max(1, d.scheduled);
+      var tk = el('span', 'taken'); tk.style.width = (100 * d.taken / sch) + '%';
+      var sk = el('span', 'skipped'); sk.style.width = (100 * d.skipped / sch) + '%';
+      bar.appendChild(tk); bar.appendChild(sk);
+      row.appendChild(bar);
+      row.appendChild(el('span', 't-body-sm', d.taken + ' taken · ' + d.skipped + ' skipped · ' + d.scheduled + ' scheduled'));
+      ds.appendChild(row);
+      root.appendChild(ds);
+    }
+
+    var wo = section('For the ' + r.specialtyName.toLowerCase());
+    wo.appendChild(bullets(r.watchOuts));
+    root.appendChild(wo);
+
+    var qs = section('Questions from the patient');
+    qs.appendChild(bullets(r.questions, 'q'));
+    root.appendChild(qs);
+
+    var actions = el('div', 'actions no-print');
+    actions.setAttribute('data-reveal', '');
+    var print = el('button', 'btn', 'Print or save as PDF');
+    print.type = 'button';
+    print.addEventListener('click', function () { window.print(); });
+    actions.appendChild(print);
+    root.appendChild(actions);
+
+    var foot = el('footer', 'foot t-caption');
+    foot.setAttribute('data-reveal', '');
+    foot.appendChild(el('span', '', 'Prepared with Celia from the patient’s own records. Medicine risk comes from a CredibleMeds-derived list. Not a medical device.'));
+    foot.appendChild(el('span', '', 'End-to-end encrypted: only people with this link can read it.' + (expiresAt ? ' The link stops working on ' + date(Date.parse(expiresAt)) + '.' : '')));
+    root.appendChild(foot);
+
+    $('loading').hidden = true;
+    root.hidden = false;
+    window.CeliaShare.reveal($('root'));
+  }
+
+  function state(title, body) {
+    $('stateTitle').textContent = title;
+    $('stateBody').textContent = body;
+    $('loading').hidden = true;
+    $('state').hidden = false;
+    window.CeliaShare.reveal($('root'));
+  }
+
+  window.CeliaShare.open('report').then(function (res) {
+    if (res.status === 'ok' && res.data && res.data.v === 1) { render(res.data, res.expiresAt); return; }
+    if (res.status === 'expired' || res.status === 'gone') {
+      state('This report link has expired', 'Report links work for 48 hours or until the patient removes them. Ask the patient to send a new link from the Celia app.');
+      return;
+    }
+    if (res.status === 'offline') { state('No internet connection', 'Connect to the internet and reload to open this report.'); return; }
+    if (res.status === 'error') { state('The report could not be opened right now', 'Please try again in a moment.'); return; }
+    state('This report link is incomplete', 'Copy the whole link from the message, including everything after the # sign.');
+  });
+})();
+</script>
+</body>
+</html>

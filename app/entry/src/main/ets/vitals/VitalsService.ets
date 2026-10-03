@@ -45,11 +45,12 @@ export class VitalsService {
     if (this.source !== undefined) {
       return;
     }
-    if (source === 'WATCH' && !Config.hasBackend()) {
-      // The watch reaches the phone through Supabase; without a backend fall back, clearly labelled.
-      log.warn('WATCH source needs a backend (LocalConfig.ets) — using SIMULATED');
+    if (source === 'WATCH' && !Config.hasWatchCloud()) {
+      // The watch reaches the phone through Supabase; without it (no backend, or the local AI-only dev backend)
+      // fall back, clearly labelled.
+      log.warn('WATCH source needs a Supabase backend (LocalConfig.ets) — using SIMULATED');
     }
-    this.source = source === 'WATCH' && Config.hasBackend() ? 'WATCH' : 'SIMULATED';
+    this.source = source === 'WATCH' && Config.hasWatchCloud() ? 'WATCH' : 'SIMULATED';
     this.loadGenotype();
     LocalStore.get().onChange((t: StoreTopic) => {
       if (t === 'profile') {

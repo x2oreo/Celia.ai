@@ -11,10 +11,16 @@ The app's main design rule is that **verdicts come from deterministic data and t
 | Emergency detection | **none** | `SafetyGate` regex (EN/PL) runs before any model call |
 | Proactive heart-rate check-in | **none** | Vitals alert → fixed message → 60 s without answer → SOS countdown screen. Critical alerts go straight to the SOS screen |
 | Offline / failure mode | **none** | `OfflineAgent` pattern intents + templated verdict text |
+| Unknown box barcode (any country) | Only when registries and product databases miss: OpenAI web search for the barcode (`/box-identify` deep stage, strict JSON, must cite a page it opened); and translation of foreign ingredient names to English INNs | Registries first (openFDA, AEMPS CIMA, UPCitemdb, Open Facts). Every ingredient must resolve in NLM RxNav or the check says UNKNOWN for it. The user confirms "Is this your box?"; the verdict then comes from `CheckService` (curated list → FDA label rule). AI finds are cached for others only after a user confirmed them |
 | Medicine photo | On-device OCR (Core Vision); fallback `/vision-extract` reads **names only** (strict JSON schema, low-confidence dropped) | Every name → `DrugChecker`; user confirms the drug before any verdict |
+| Medicine explanation ("Explain it in plain words" in the medicine sheet) | Optional `/med-info`: the model writes a plain summary, what's in it, what it's for and up to 3 everyday tips (strict JSON schema). It is told never to talk about QT/heart safety or doses | Curated facts (`drugs/DrugInfo.ets`) and the risk badge/interactions (`DrugDataset`, `DrugChecker`) are shown without AI and never change. The reply is validated twice (backend + `MedInfoClient.parseMedInfo`: types, lengths, banned words like QT/torsade/mg doses) and is shown under an `AI SUMMARY` badge; anything off is dropped and the sheet keeps the curated data. Cached on the phone |
 | Push-to-talk voice | Core Speech ASR/TTS on device (en-US) or `/transcribe` + `/speak` (OpenAI) | Transcript goes through the same `SafetyGate` → agent → validator path as text |
 | Hands-free voice | OpenAI Realtime (speech-to-speech) via a 2-minute client secret from `/realtime-session` | Same on-device tools; input transcripts pass `SafetyGate`; a streaming check of the model's words cancels any reassurance about a medicine and speaks the deterministic verdict instead |
-| Celia system assistant | none | Intents `CheckDrugSafety` / `ShowEmergencyCard` call the deterministic paths directly |
+| Celia system assistant | none | Intents `CheckDrugSafety`, `ShowEmergencyCard`, `LogSymptom`, `TakeDose`, `ShowPharmacyCard`, `AddMedication`, `ReadEmergencyCard` call the deterministic paths directly (no LLM) |
+| Chat history and new chats | Optional: the model may call `start_new_chat` (with a name the user gave) | Chats are saved on the phone (encrypted RDB) message by message. Short commands ("new chat", "start over", "save this chat") are matched on device after `SafetyGate`, so they work offline. Reopened chats keep display cards only (verdict, medicines, alternatives, emergency card); confirm, quick-reply and SOS cards are dropped |
+| Symptom logging in chat (T27) | Optional: the model may call `log_symptom` with an enum symptom, severity 1–5, activity and a few of the user's words | Symptom enum and severity are validated on the phone; the heart-rate window (±10 min) is attached on the phone; a red-flag symptom (fainting, chest pain, severe breathlessness) starts the SOS countdown by rule (`isRedFlag`), not by the model. Unknown symptom → error back to the model, nothing logged |
+| Doctor brief summary (T13) | Optional `/doctor-summary`: 2–3 sentences atop the brief | The brief itself is deterministic and complete. The model gets only the brief's medicine lines with their risk words, interactions, flagged checks and counts — never the Patient section, notes, contacts or symptom notes. Output checked on server and phone: 20–420 chars, no "safe / harmless / no risk", no doses, no start/stop advice → otherwise dropped and the brief stands alone. Shown under `AI SUMMARY` |
+| Read the emergency card aloud (T25) | Cloud `/speak` (TTS) for non-English cards or when no on-device voice exists | Text is the pre-translated card (`CardStrings`), built by `emergency/CardSpeech.ets`: medical part only, never name, contacts or notes |
 | Emergency hand-off | **none** | Any agent emergency (typed, spoken, unanswered check-in) opens the app's SOS countdown; the agent quotes the same ambulance number and countdown that screen uses |
 
 ## 2. Model and inference flow
@@ -26,6 +32,8 @@ The app's main design rule is that **verdicts come from deterministic data and t
   |---|---|---|
   | Agent (`/agent`) | `gpt-6.1-sol`, reasoning effort `low` | Sol is the middle tier. In our own benchmark (5 agent tasks, 2 runs) it routed tools correctly 9/10 times at about 2.1–2.4 s per step. Its explanations passed the validator, matching Astra at lower cost. |
   | Photo name reading (`/vision-extract`) | `gpt-6.1-sol` | Same model, with a strict JSON schema. |
+  | Medicine explanation (`/med-info`) | `gpt-6.1-sol`, reasoning `low` | Short structured text; the same model keeps the stack to one family. |
+  | Doctor brief summary (`/doctor-summary`) | `gpt-6.1-sol`, reasoning `low` | 2–3 sentences in a strict JSON schema; same family as the agent. |
   | Speech-to-text (`/transcribe`) | `gpt-transcribe` | Supports `keywords`, which biases recognition toward medicine names (Klacid, ondansetron…). |
   | Text-to-speech (`/speak`) | `gpt-4o-mini-tts`, voice `marin` | Outputs PCM directly; the voice style can be set with instructions. |
   | Hands-free voice | `gpt-realtime-2.1` | The newest Realtime reasoning model, with better tool precision and alphanumeric recognition. `gpt-realtime-2.1-mini` is the cost switch. | The prompt is versioned (`PROMPT_VERSION` in
@@ -58,13 +66,27 @@ Only this de-identified context is sent to `/agent`:
 - a one-line heart-rate summary
 - the local emergency number
 - the locale
-- recent chat text
+- recent chat text (the last 12 messages of the open chat only — other saved chats are never sent)
 
-It never sends names, phone numbers, emergency contacts or device IDs. Request validation in `_shared/validate.ts`
+`/med-info` receives only a medicine name and its active ingredient, through the privacy-ledger path
+(`common/Net.ets`), and only when the user taps "Explain it in plain words".
+
+`/doctor-summary` receives only the specialty, genotype, the brief's medicine lines with risk words, interactions,
+flagged checks (date + medicine) and two counts, and only when the user taps "Summarise for the doctor".
+`/speak` for the card receives only the card's medical text (no name, contacts or notes).
+
+Every AI call (`/agent`, `/transcribe`, `/speak`, `/vision-extract`, `/realtime-session`, `/med-info`,
+`/doctor-summary`) and the opening of a live-voice socket appear in the privacy ledger ("What left my phone") with
+field names and size, never values; a request with a personal top-level field (name, phone, email, contacts, notes,
+address, location) is blocked before it is sent (`BackendClient` / `Net`).
+
+It never sends names, phone numbers, emergency contacts or device IDs. (Separately, and only when the user taps
+"Send report link" or opens the card QR, the card/report is uploaded **encrypted on the phone** to `/share`; the server
+stores ciphertext only and the key stays in the link — no AI is involved in that path.) Request validation in `_shared/validate.ts`
 rejects anything outside that shape.
 
 The relay uses `previous_response_id` within a turn, so OpenAI keeps the response under its standard API retention.
-Personal data (profile, medicines, contacts, events) stays in on-device storage.
+Personal data (profile, medicines, contacts, events, saved chats) stays in on-device storage.
 
 ## 4. Validation of model output (`app/.../agent/ResponseValidator.ets`)
 
@@ -86,7 +108,7 @@ Personal data (profile, medicines, contacts, events) stays in on-device storage.
 6. **Logging:** every fallback is logged to hilog (`CeliaAI/AgentCore`) and as an `AGENT_FALLBACK` event.
 7. **Demo switch:** `AgentClient.forceGarbage` corrupts the model response so the fallback can be shown live.
 
-Tests: `app/entry/src/test/AgentSafety.test.ets` and `AgentCore.test.ets` cover the interaction rules, the emergency
+Tests: `app/entry/src/test/AgentSafety.test.ets` (incl. `LogSymptom`), `DoctorPrep.test.ets` (`DoctorSummary`), `MedInfo.test.ets` and `AgentCore.test.ets` cover the interaction rules, the emergency
 gate, the validator, offline intents, tool-schema parity with the backend, and the offline end-to-end path.
 
 ## 5. Limitations
