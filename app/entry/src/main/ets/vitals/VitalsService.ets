@@ -137,6 +137,11 @@ export class VitalsService {
     }
   }
 
+  // Alerts from slower checks outside the per-sample rules (e.g. BetaBlockerWatch's multi-day trend).
+  report(a: VitalsAlert): void {
+    this.fire(a);
+  }
+
   private fire(a: VitalsAlert): void {
     this.recentAlerts.push(a);
     if (this.recentAlerts.length > KEEP_ALERTS) {

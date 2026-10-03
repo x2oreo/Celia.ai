@@ -29,4 +29,9 @@ export class AgentCore {
   onProactive(cb: Listener<AgentReply>): () => void {
     return this.proactive.add(cb);
   }
+
+  // Services that notice something (e.g. BetaBlockerWatch) start a conversation through here.
+  pushProactive(reply: AgentReply): void {
+    this.proactive.emit(reply);
+  }
 }

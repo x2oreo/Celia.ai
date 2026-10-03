@@ -206,7 +206,7 @@ export interface ScanRecord { id: number; ts: number; via: 'CHAT' | 'TEXT' | 'PH
 
 // model/Vitals.ets (additions, Mark) — all optional, SimulatedSource fills all
 // VitalsSample gains: hrv?, rrMs?, restingHr?, stress?, asleep?, irregular?, steps?
-// AlertKind gains: 'IRREGULAR_RHYTHM' | 'HRV_DROP'; VitalsAlert gains severity: 'INFO' | 'WARN' | 'CRITICAL'
+// AlertKind gains: 'IRREGULAR_RHYTHM' | 'HRV_DROP' | 'HIGH_HR_EXERTION' | 'RESTING_HR_RISE' (multi-day, BetaBlockerWatch); VitalsAlert gains severity: 'INFO' | 'WARN' | 'CRITICAL'
 
 // model/SosEvent.ets (Kaloyan + Mark)
 export interface SosEvent { ts: number; trigger: 'VITALS' | 'BUTTON' | 'KEYWORD'; test: boolean;
