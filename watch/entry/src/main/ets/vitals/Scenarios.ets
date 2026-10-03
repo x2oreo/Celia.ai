@@ -1,13 +1,15 @@
+import { Activity } from '../model/WatchMetric';
+
 /**
- * Scripted scenarios for the emulator / demo: heart rate, activity and an optional fall. Pure functions so they can
- * be unit-tested. Each scenario is a list of segments; the last segment holds forever.
+ * Scripted scenarios for the emulator / demo: heart rate, state (rest/active/asleep) and an optional fall. Pure
+ * functions so they can be unit-tested. Each scenario is a list of segments; the last segment holds forever.
  */
 
 export interface Segment {
   durationSec: number;
   fromBpm: number;
   toBpm: number;
-  active: boolean;
+  state: Activity;
 }
 
 export interface Scenario {
@@ -18,14 +20,21 @@ export interface Scenario {
   fallAtSec: number;
 }
 
-function rest(durationSec: number, fromBpm: number, toBpm: number): Segment {
-  const s: Segment = { durationSec: durationSec, fromBpm: fromBpm, toBpm: toBpm, active: false };
+function seg(state: Activity, durationSec: number, fromBpm: number, toBpm: number): Segment {
+  const s: Segment = { durationSec: durationSec, fromBpm: fromBpm, toBpm: toBpm, state: state };
   return s;
 }
 
+function rest(durationSec: number, fromBpm: number, toBpm: number): Segment {
+  return seg('REST', durationSec, fromBpm, toBpm);
+}
+
 function move(durationSec: number, fromBpm: number, toBpm: number): Segment {
-  const s: Segment = { durationSec: durationSec, fromBpm: fromBpm, toBpm: toBpm, active: true };
-  return s;
+  return seg('ACTIVE', durationSec, fromBpm, toBpm);
+}
+
+function sleep(durationSec: number, fromBpm: number, toBpm: number): Segment {
+  return seg('ASLEEP', durationSec, fromBpm, toBpm);
 }
 
 function scenario(id: string, label: string, segments: Segment[], fallAtSec: number): Scenario {
@@ -35,16 +44,18 @@ function scenario(id: string, label: string, segments: Segment[], fallAtSec: num
 
 export const SCENARIOS: Scenario[] = [
   scenario('rest', 'Resting', [rest(60, 68, 72), rest(60, 72, 66)], -1),
-  // Normal workout: high HR while moving is expected, stays under the exercise limit.
-  scenario('workout', 'Normal workout', [move(10, 72, 80), move(20, 80, 132), move(60, 132, 128)], -1),
-  // LQT1: exercise-triggered. Climbs past the exercise limit while moving.
-  scenario('lqt1_exercise', 'LQT1 exercise', [move(10, 75, 80), move(25, 80, 150), move(60, 150, 152)], -1),
+  // Normal workout + healthy recovery (~35 bpm drop in the first minute).
+  scenario('workout', 'Normal workout',
+    [rest(5, 72, 74), move(15, 74, 128), move(25, 128, 132), rest(60, 130, 95), rest(60, 95, 80)], -1),
+  // LQT1: exercise-triggered. Passes the exercise limit, then recovers slowly (< 12 bpm in 1 min).
+  scenario('lqt1_exercise', 'LQT1 exercise',
+    [rest(5, 75, 78), move(20, 78, 150), move(20, 150, 152), rest(60, 150, 141), rest(60, 141, 110)], -1),
   // LQT2: sudden noise/startle at rest. Fast jump with no movement.
   scenario('lqt2_startle', 'LQT2 startle',
     [rest(10, 66, 68), rest(3, 68, 165), rest(30, 165, 160), rest(30, 160, 90)], -1),
-  // LQT3: events during rest/sleep with slow heart rate.
-  scenario('lqt3_night_brady', 'LQT3 night', [rest(10, 58, 54), rest(20, 54, 38), rest(60, 38, 40)], -1),
-  // Arrhythmic syncope: racing heart while still, collapse, then lying still with a low rate.
+  // LQT3: events during sleep with slow heart rate.
+  scenario('lqt3_night_brady', 'LQT3 night', [sleep(10, 56, 52), sleep(20, 52, 36), sleep(60, 36, 38)], -1),
+  // Arrhythmic syncope: racing heart while still (irregular rhythm), collapse, then lying still with a low rate.
   scenario('faint', 'Faint', [rest(8, 70, 72), rest(4, 72, 190), rest(4, 190, 185), rest(60, 50, 48)], 15)
 ];
 
@@ -81,7 +92,7 @@ export function bpmAt(s: Scenario, tSec: number): number {
   return s.segments[s.segments.length - 1].toBpm;
 }
 
-/** Whether the wearer is moving at `tSec`. */
-export function activeAt(s: Scenario, tSec: number): boolean {
-  return segmentAt(s, tSec).active;
+/** Wearer state (rest / active / asleep) at `tSec`. */
+export function stateAt(s: Scenario, tSec: number): Activity {
+  return segmentAt(s, tSec).state;
 }

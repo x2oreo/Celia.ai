@@ -4,7 +4,7 @@
  */
 
 export type MetricType = 'hr_live' | 'hr_session' | 'hr_alert' | 'symptom' | 'medication_taken' | 'fall_detected' |
-  'wear_state';
+  'wear_state' | 'vitals' | 'hr_recovery' | 'rhythm_alert';
 
 /** Where the heart rate came from. `simulated` must always be labelled as demo data in the UI. */
 export type MetricSource = 'watch' | 'simulated';
@@ -13,8 +13,10 @@ export type HrSourceKind = 'SENSOR' | 'SIMULATED';
 
 export type AlertDirection = 'high' | 'low';
 
-/** What the wearer is doing, from motion. UNKNOWN when there is no motion data. */
-export type Activity = 'REST' | 'ACTIVE' | 'UNKNOWN';
+/** What the wearer is doing: from motion, time of day and heart rate. UNKNOWN when there is no motion data. */
+export type Activity = 'REST' | 'ACTIVE' | 'ASLEEP' | 'UNKNOWN';
+
+export type Genotype = 'LQT1' | 'LQT2' | 'LQT3' | 'UNKNOWN';
 
 export type FallResponse = 'ok' | 'no_response';
 
@@ -63,8 +65,45 @@ export interface WearStateValues {
   onWrist: boolean;
 }
 
+/**
+ * Snapshot of every risk-model input, every 30 s. Fields listed in `mocked` are simulated: Huawei watches measure
+ * them, but third-party apps can't read them yet (HRV, rhythm, SpO2, breathing). They show the intended design.
+ */
+export interface VitalsValues {
+  bpm: number;
+  restingBpm: number;
+  activity: Activity;
+  stress: boolean;
+  steps: number;
+  hrvMs: number;
+  spo2: number;
+  breathingRate: number;
+  irregularRhythm: boolean;
+  highLimitBpm: number;
+  lowLimitBpm: number;
+  genotype: Genotype;
+  riskyDrug: string;
+  mocked: string[];
+}
+
+/** Heart-rate recovery after exercise (LQT1): drop in the first minute after the activity peak. */
+export interface HrRecoveryValues {
+  peakBpm: number;
+  bpmAfter60s: number;
+  dropBpm: number;
+  /** Drop under 12 bpm in 1 min is a commonly used "abnormal recovery" cut-off. */
+  slow: boolean;
+}
+
+/** Irregular rhythm flag. Simulated until watch apps can access Huawei's rhythm detection. */
+export interface RhythmAlertValues {
+  bpm: number;
+  activity: Activity;
+  mocked: boolean;
+}
+
 export type MetricPayload = HrLiveValues | HrSessionValues | HrAlertValues | SymptomValues | MedicationTakenValues |
-  FallValues | WearStateValues;
+  FallValues | WearStateValues | VitalsValues | HrRecoveryValues | RhythmAlertValues;
 
 /** One row as stored in Supabase (snake_case to match the table columns). */
 export interface MetricRow {

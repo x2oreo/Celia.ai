@@ -10,6 +10,7 @@ const ACTIVITY_WINDOW_MS = 4000;
 /** After an impact, ignore 1 s of bounce, then require stillness until 4 s after the impact. */
 const FALL_SETTLE_MS = 1000;
 const FALL_STILL_UNTIL_MS = 4000;
+const SILENT_MS = 2000;
 
 interface MagSample {
   ts: number;
@@ -42,6 +43,18 @@ export class MotionAnalyzer {
   private impactAt: number = -1;
 
   get activity(): Activity {
+    return this.current;
+  }
+
+  /**
+   * Activity at `nowMs`, given that an accelerometer is running. Some sensors (incl. the emulator's) report only on
+   * change, so silence for 2 s means nothing is moving: rest.
+   */
+  activityAt(nowMs: number): Activity {
+    const last = this.samples.length > 0 ? this.samples[this.samples.length - 1].ts : -1;
+    if (last < 0 || nowMs - last > SILENT_MS) {
+      return 'REST';
+    }
     return this.current;
   }
 

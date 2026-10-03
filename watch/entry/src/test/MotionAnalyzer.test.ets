@@ -40,6 +40,14 @@ export default function motionAnalyzerTest() {
       expect(m.activity).assertEqual('ACTIVE');
     });
 
+    it('silent accelerometer (report-on-change) means rest', 0, () => {
+      const m = new MotionAnalyzer();
+      expect(m.activityAt(1000)).assertEqual('REST');
+      feed(m, 0, 6, 4);
+      expect(m.activityAt(6000)).assertEqual('ACTIVE');
+      expect(m.activityAt(9000)).assertEqual('REST');
+    });
+
     it('reports a fall: impact then lying still', 0, () => {
       const m = new MotionAnalyzer();
       feed(m, 0, 5, 0.1);
