@@ -5,6 +5,7 @@ import { AgentCore } from '../main/ets/agent/AgentCore';
 import { AgentReply, UiAction, VerdictCardPayload } from '../main/ets/model/AgentTypes';
 import { LocalStore } from '../main/ets/data/LocalStore';
 import { Medication } from '../main/ets/model/Medication';
+import { AgentPrompt } from '../main/ets/agent/AgentPrompt';
 
 function find(reply: AgentReply, type: string): UiAction | undefined {
   return reply.actions.find((a: UiAction) => a.type === type);
@@ -47,6 +48,35 @@ export default function agentCoreTest() {
       expect(expired.text.includes('expired')).assertTrue();
       const after: Medication[] = await LocalStore.get().listMeds();
       expect(after.length).assertEqual(before);
+    });
+  });
+
+  describe('AgentPrompt', () => {
+    it('queuesUntilTheChatSubscribes', 0, () => {
+      AgentPrompt.drain();
+      AgentPrompt.ask('  Can I take Klacid?  ');
+      AgentPrompt.ask('   ');
+      const queued: string[] = AgentPrompt.drain();
+      expect(queued.length).assertEqual(1);
+      expect(queued[0]).assertEqual('Can I take Klacid?');
+      expect(AgentPrompt.drain().length).assertEqual(0);
+    });
+
+    it('deliversLiveAndRequestsTheAgentTab', 0, () => {
+      const heard: string[] = [];
+      let opened: number = 0;
+      const offAsk: () => void = AgentPrompt.onAsk((q: string) => {
+        heard.push(q);
+      });
+      const offOpen: () => void = AgentPrompt.onOpenRequest(() => {
+        opened++;
+      });
+      AgentPrompt.ask('Is ondansetron OK?');
+      offAsk();
+      offOpen();
+      expect(heard.length).assertEqual(1);
+      expect(opened).assertEqual(1);
+      expect(AgentPrompt.drain().length).assertEqual(0);
     });
   });
 }

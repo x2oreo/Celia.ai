@@ -54,6 +54,15 @@ verdicts are neutral ink.
 
 ✅ = already in `app/entry/src/main/resources/base/element/color.json`. Others are to be added under the listed name.
 
+### 2.1a Chat and status resources (in `color.json`)
+
+| Resource | Light | Dark | Use |
+|---|---|---|---|
+| `chat_user_bg` | `#1F1A17` (`ink`) | `#F5F0EC` | User bubble, ink buttons inside agent cards |
+| `chat_user_text` | `#FFFFFF` | `#1F1A17` | Text on `chat_user_bg` |
+| `status_offline_bg` | `#EFEAE6` | `#2A2421` | Offline / live-voice strip (6.7) |
+| `status_offline_text` | `#4A423D` | `#D6CCC6` | Text on the offline strip |
+
 ### 2.2 Dark mode (phone)
 
 Proposals, not yet drawn. Override the same resource names in `resources/dark/element/color.json`.

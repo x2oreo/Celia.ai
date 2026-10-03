@@ -91,6 +91,22 @@
     {
       "name": "emergency_header",
       "value": "#B42318"
+    },
+    {
+      "name": "chat_user_bg",
+      "value": "#1F1A17"
+    },
+    {
+      "name": "chat_user_text",
+      "value": "#FFFFFF"
+    },
+    {
+      "name": "status_offline_bg",
+      "value": "#EFEAE6"
+    },
+    {
+      "name": "status_offline_text",
+      "value": "#4A423D"
     }
   ]
 }

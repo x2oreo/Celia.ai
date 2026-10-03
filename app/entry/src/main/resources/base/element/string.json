@@ -807,6 +807,130 @@
     {
       "name": "mic_reason",
       "value": "Celia listens while you hold the microphone button, so you can ask about medicines by voice."
+    },
+    {
+      "name": "agent_name",
+      "value": "Celia"
+    },
+    {
+      "name": "agent_status",
+      "value": "Your heart-safety agent · not a medical device"
+    },
+    {
+      "name": "agent_offline",
+      "value": "I'm offline, but medicine checks still work."
+    },
+    {
+      "name": "agent_welcome",
+      "value": "Hi, I'm Celia. Ask me about a medicine, scan a box, or tell me how you feel. Medicine verdicts always come from the QT-risk list, never from guesswork."
+    },
+    {
+      "name": "agent_starter_ibuprofen",
+      "value": "Can I take ibuprofen?"
+    },
+    {
+      "name": "agent_starter_avoid",
+      "value": "What should I avoid with my genotype?"
+    },
+    {
+      "name": "agent_starter_meds",
+      "value": "Check my current medicines"
+    },
+    {
+      "name": "agent_input_hint",
+      "value": "Ask about a medicine or how you feel"
+    },
+    {
+      "name": "agent_thinking",
+      "value": "Thinking…"
+    },
+    {
+      "name": "agent_listening",
+      "value": "Listening… release to send"
+    },
+    {
+      "name": "agent_live_on",
+      "value": "Live voice is on. Just talk."
+    },
+    {
+      "name": "agent_live_connecting",
+      "value": "Connecting live voice…"
+    },
+    {
+      "name": "agent_live_failed",
+      "value": "Live voice isn't available right now. Hold the mic to talk instead."
+    },
+    {
+      "name": "agent_mic_unavailable",
+      "value": "I can't use the microphone. Allow it in Settings, or type instead."
+    },
+    {
+      "name": "agent_open_check",
+      "value": "Open full check"
+    },
+    {
+      "name": "agent_confirm",
+      "value": "Confirm"
+    },
+    {
+      "name": "agent_cancel",
+      "value": "Cancel"
+    },
+    {
+      "name": "agent_add_med_title",
+      "value": "Add to my medicines?"
+    },
+    {
+      "name": "agent_share_card_title",
+      "value": "Share your emergency card?"
+    },
+    {
+      "name": "agent_scan",
+      "value": "Scan a medicine box"
+    },
+    {
+      "name": "agent_scan_reading",
+      "value": "Reading the box…"
+    },
+    {
+      "name": "agent_scan_pick",
+      "value": "Which one is it?"
+    },
+    {
+      "name": "agent_open_card",
+      "value": "Open emergency card"
+    },
+    {
+      "name": "agent_emergency_started",
+      "value": "Emergency countdown started"
+    },
+    {
+      "name": "agent_open_sos",
+      "value": "Open SOS"
+    },
+    {
+      "name": "agent_findings",
+      "value": "With your medicines"
+    },
+    {
+      "name": "agent_ask_celia",
+      "value": "Ask Celia"
+    },
+    {
+      "name": "agent_ask_about",
+      "value": "Ask Celia about this"
+    },
+    {
+      "name": "a11y_send",
+      "value": "Send"
+    },
+    {
+      "name": "a11y_mic",
+      "value": "Hold to talk"
+    },
+    {
+      "name": "a11y_live",
+      "value": "Live voice"
     }
   ]
 }
