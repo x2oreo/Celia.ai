@@ -10,6 +10,8 @@
 set -euo pipefail
 APP_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 source "$APP_DIR/env.sh"
+# With the watch emulator also attached, plain hdc refuses to pick a device: HDC_TARGET=127.0.0.1:5555 picks one.
+hdc() { command hdc ${HDC_TARGET:+-t "$HDC_TARGET"} "$@"; }
 mkdir -p "$APP_DIR/build"
 LAYOUT="$APP_DIR/build/layout.json"
 
@@ -32,7 +34,7 @@ case "${1:-}" in
   list|tapt)
     dump
     python3 - "$LAYOUT" "$1" "${2:-}" <<'PY'
-import json, re, subprocess, sys
+import json, os, re, subprocess, sys
 layout, mode, want = sys.argv[1], sys.argv[2], sys.argv[3].lower()
 hits = []
 def walk(n):
@@ -54,7 +56,8 @@ if mode == 'tapt':
         sys.exit(f'no element with text containing "{want}"')
     text, x, y = hits[-1]
     print(f'tap {text!r} at {x},{y}')
-    subprocess.run(['hdc', 'shell', 'uitest', 'uiInput', 'click', str(x), str(y)], check=True)
+    target = ['-t', os.environ['HDC_TARGET']] if os.environ.get('HDC_TARGET') else []
+    subprocess.run(['hdc'] + target + ['shell', 'uitest', 'uiInput', 'click', str(x), str(y)], check=True)
 PY
     ;;
   *) sed -n 2,10p "$0"; exit 1 ;;

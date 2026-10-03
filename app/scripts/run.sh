@@ -6,6 +6,8 @@ set -euo pipefail
 APP_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$APP_DIR"
 source ./env.sh
+# With the watch emulator also attached, plain hdc refuses to pick a device: HDC_TARGET=127.0.0.1:5555 picks one.
+hdc() { command hdc ${HDC_TARGET:+-t "$HDC_TARGET"} "$@"; }
 
 BUNDLE="com.celiaai.app"
 HAP="entry/build/default/outputs/default/entry-default-signed.hap"
