@@ -2,8 +2,9 @@
 // link's #fragment — works offline, nothing is stored. Same high-contrast look as our own card.
 // Param: CardPayload (emergency/CardLink.ets).
 
-import { CardPayload } from '../emergency/CardLink';
-import { cardText, CardText } from '../common/CardStrings';
+import { CardPayload, payloadDetailRows } from '../emergency/CardLink';
+import { CardRow } from '../emergency/EmergencyDetails';
+import { cardLabels, cardText, CardText } from '../common/CardStrings';
 import { emergencyFor, EmergencyInfo } from '../common/EmergencyNumbers';
 import { dial } from '../common/Dialer';
 import { PrimaryButton, SecondaryButton } from '../components/Common';
@@ -76,6 +77,10 @@ export struct CardViewPage {
           .borderRadius(12)
           .width('100%')
         Text(this.text().treatment).fontSize(16).fontColor('#344054')
+        // Emergency details of a v2 card (empty for older cards).
+        ForEach(payloadDetailRows(c, cardLabels(this.lang), Date.now()), (r: CardRow) => {
+          this.line(r.label, r.value)
+        }, (r: CardRow, i: number) => `${i}-${r.id}-${r.label}`)
         this.line(this.text().meds, this.medsText(c))
         if (c.o.length > 0) {
           this.line(this.text().notes, c.o)

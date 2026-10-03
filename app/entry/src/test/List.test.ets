@@ -23,6 +23,7 @@ import boxIdentifyTest from './BoxIdentify.test';
 import trendsTest from './Trends.test';
 import emergencyProfileTest from './EmergencyProfile.test';
 import responderTest from './Responder.test';
+import cardPayloadTest from './CardPayload.test';
 import { Config } from '../main/ets/common/Config';
 
 export default function testsuite() {
@@ -53,4 +54,5 @@ export default function testsuite() {
   boxIdentifyTest();
   emergencyProfileTest();
   responderTest();
+  cardPayloadTest();
 }
