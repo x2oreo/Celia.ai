@@ -133,7 +133,7 @@ async function runRobustness(): Promise<number> {
   const joined = allLogs.join('\n');
   report('5.4 logs: no user message text', !joined.includes('EVAL-MARKER-7731'), `${allLogs.length} lines`);
   report('5.4 logs: no real API key', realKey === '' || !joined.includes(realKey), realKey === '' ? 'no key loaded' : 'checked');
-  const echoed = allLogs.filter((l) => /invalid|Incorrect API key|does-not-exist|resp_doesnotexist/i.test(l));
+  const echoed = allLogs.filter((l) => /Incorrect API key|does-not-exist|resp_doesnotexist|\\"message\\"/i.test(l));
   report('5.4 logs: no upstream error detail echoed', echoed.length === 0,
     echoed.length === 0 ? '' : `${echoed.length} line(s) echo upstream detail, e.g. ${echoed[0].slice(0, 220)}`);
   console.log('\nlog lines:');

@@ -9,7 +9,7 @@
 
 import { buildInstructions, PROMPT_VERSION } from '../_shared/prompt.ts';
 import { TOOL_NAMES, TOOLS } from '../_shared/tools.ts';
-import { env, json, openaiJson, outputText, UpstreamError } from '../_shared/openai.ts';
+import { env, json, openaiJson, outputText } from '../_shared/openai.ts';
 import { parseAgentRequest } from '../_shared/validate.ts';
 
 const UPSTREAM_TIMEOUT_MS = 18000; // the app gives up at 20 s and falls back
@@ -88,8 +88,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
     }));
     return json(200, { promptVersion: PROMPT_VERSION, responseId: res.id, toolCalls, text });
   } catch (err) {
-    const status = err instanceof UpstreamError ? err.status : 500;
     console.error(JSON.stringify({ fn: 'agent', promptVersion: PROMPT_VERSION, error: String(err), ms: Date.now() - started }));
-    return json(status >= 500 ? 502 : status, { error: 'upstream model error' });
+    // Always 502: a 4xx here is our upstream problem (key, model, response id), not a bad request from the app.
+    return json(502, { error: 'upstream model error' });
   }
 });

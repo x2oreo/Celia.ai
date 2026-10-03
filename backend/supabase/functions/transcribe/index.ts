@@ -2,7 +2,7 @@
 // cannot recognise English/Polish. Request: { audioBase64: <WAV 16 kHz mono PCM16>, language: 'en' | 'pl' | '' }
 // Response: { text }. Audio is not stored or logged.
 
-import { env, json, openaiFetch, decodeBase64, UpstreamError } from '../_shared/openai.ts';
+import { env, json, openaiFetch, decodeBase64 } from '../_shared/openai.ts';
 
 const MAX_AUDIO_BYTES = 2_000_000; // ~60 s of 16 kHz mono PCM16
 // Medicine names bias the recogniser toward words people actually say to Celia (gpt-transcribe "keywords").
@@ -42,7 +42,6 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return json(200, { text });
   } catch (err) {
     console.error(JSON.stringify({ fn: 'transcribe', error: String(err), ms: Date.now() - started }));
-    const status = err instanceof UpstreamError && err.status < 500 ? err.status : 502;
-    return json(status, { error: 'transcription failed' });
+    return json(502, { error: 'transcription failed' }); // upstream failures are never the app's fault
   }
 });

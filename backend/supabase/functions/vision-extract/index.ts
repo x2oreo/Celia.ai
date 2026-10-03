@@ -3,7 +3,7 @@
 // DrugChecker on the device and the user confirms the drug before seeing a verdict.
 // Request: { imageBase64: <JPEG> }. Response: { drugs: [{ name, strength, confidence }], imageQuality }.
 
-import { env, json, openaiJson, outputText, UpstreamError } from '../_shared/openai.ts';
+import { env, json, openaiJson, outputText } from '../_shared/openai.ts';
 
 const MAX_IMAGE_BYTES = 4_000_000;
 
@@ -81,7 +81,6 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return json(200, { drugs, imageQuality: parsed.imageQuality });
   } catch (err) {
     console.error(JSON.stringify({ fn: 'vision-extract', error: String(err), ms: Date.now() - started }));
-    const status = err instanceof UpstreamError && err.status < 500 ? err.status : 502;
-    return json(status, { error: 'extraction failed' });
+    return json(502, { error: 'extraction failed' }); // upstream failures are never the app's fault
   }
 });

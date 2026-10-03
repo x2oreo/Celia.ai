@@ -2,7 +2,7 @@
 // Request: { text }. Response: raw PCM, 24 kHz, 16-bit, mono, little-endian (application/octet-stream),
 // which the app plays directly with AudioRenderer.
 
-import { env, json, openaiFetch, UpstreamError } from '../_shared/openai.ts';
+import { env, json, openaiFetch } from '../_shared/openai.ts';
 
 const MAX_CHARS = 1500;
 const VOICE_STYLE = 'Calm, warm and clear, like a kind nurse. Steady pace. Never dramatic, even for warnings.';
@@ -36,7 +36,6 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return new Response(audio, { status: 200, headers: { 'Content-Type': 'application/octet-stream' } });
   } catch (err) {
     console.error(JSON.stringify({ fn: 'speak', error: String(err), ms: Date.now() - started }));
-    const status = err instanceof UpstreamError && err.status < 500 ? err.status : 502;
-    return json(status, { error: 'speech failed' });
+    return json(502, { error: 'speech failed' }); // upstream failures are never the app's fault
   }
 });

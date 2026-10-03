@@ -17,6 +17,16 @@ export class UpstreamError extends Error {
   }
 }
 
+// OpenAI error code from an error response ('invalid_api_key', 'model_not_found', …), or 'unknown'.
+async function errorCode(res: Response): Promise<string> {
+  try {
+    const body = await res.json() as { error?: { code?: string | null; type?: string } };
+    return body.error?.code ?? body.error?.type ?? 'unknown';
+  } catch {
+    return 'unknown';
+  }
+}
+
 // Raw call to OpenAI with a hard timeout (JSON, multipart or binary). Throws UpstreamError on non-2xx or timeout.
 export async function openaiFetch(path: string, init: RequestInit, timeoutMs: number): Promise<Response> {
   const controller = new AbortController();
@@ -26,8 +36,8 @@ export async function openaiFetch(path: string, init: RequestInit, timeoutMs: nu
   try {
     const res = await fetch(`${OPENAI_BASE}${path}`, { ...init, headers, signal: controller.signal });
     if (!res.ok) {
-      const detail = (await res.text()).slice(0, 500);
-      throw new UpstreamError(res.status, `OpenAI ${path} ${res.status}: ${detail}`);
+      // Log only the status and OpenAI's error code. The body can echo request details (e.g. a masked key).
+      throw new UpstreamError(res.status, `OpenAI ${path} ${res.status} ${await errorCode(res)}`);
     }
     // Read the body inside the timeout window.
     const body = await res.arrayBuffer();

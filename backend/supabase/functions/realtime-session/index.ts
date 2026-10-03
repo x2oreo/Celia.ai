@@ -5,7 +5,7 @@
 
 import { buildInstructions, PROMPT_VERSION } from '../_shared/prompt.ts';
 import { TOOLS } from '../_shared/tools.ts';
-import { env, json, openaiJson, UpstreamError } from '../_shared/openai.ts';
+import { env, json, openaiJson } from '../_shared/openai.ts';
 import { parseContext } from '../_shared/validate.ts';
 
 const VOICE_RULES = `
@@ -62,7 +62,6 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return json(200, { clientSecret: res.value, expiresAt: res.expires_at, model, promptVersion: PROMPT_VERSION });
   } catch (err) {
     console.error(JSON.stringify({ fn: 'realtime-session', error: String(err), ms: Date.now() - started }));
-    const status = err instanceof UpstreamError && err.status < 500 ? err.status : 502;
-    return json(status, { error: 'could not start a voice session' });
+    return json(502, { error: 'could not start a voice session' }); // upstream failures are never the app's fault
   }
 });
