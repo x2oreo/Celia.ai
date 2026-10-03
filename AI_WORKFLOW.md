@@ -695,3 +695,44 @@ The tap-to-talk fallback is also untested end to end.
   not seen because the laptop's backend is the local proxy, which has no database. The first voice test failed with
   "no voice session from backend" — the local proxy was simply not running; reading the log beat guessing. The new
   tool schemas only reach users after the `agent` and `realtime-session` functions are redeployed.
+
+### 2026-10-03 (night) — Kaloyan + Claude Code: Workstream A in three parallel agent sessions and one integrator (branch `kaloyan/agent-home`)
+- **Asked:** read the handoff brief (`docs/handoff/KALOYAN_agent_and_ui.md`), plan it as parallel agent work, run
+  it, then a full sweep. The visual look was taken out of scope by the owner (done separately in Claude Design).
+- **How the work was split (AI plan, owner picked the options):** one integrator session wrote a brief per track
+  (`docs/handoff/tracks/`), created three git worktrees with their own branches so one agent's half-done edit could
+  not break another's build, and added `app/scripts/emu.sh` (a lock for the single phone emulator). The owner
+  started three Claude Code sessions, one per worktree. Rules that carried the weight: each track owns a list of
+  files; `string.json` keys are inserted next to related keys, not at the end; tracks write a log file instead of
+  editing `AI_WORKFLOW.md` and `README.md`; nobody but the integrator merges.
+- **Produced:**
+  - T1 (agent home): `pages/AgentPage.ets` split from 1,110 lines into `components/agent/*`; the conversation made
+    tab 0 with a status strip, a notes strip and quick actions; live voice ends when the tab is left; full-height
+    voice stage; `Motion.reduced` now follows the system setting; two orb animation bugs fixed.
+  - T2 (agent brain): tools `open_symptom_log`, `open_reminders`, `log_dose` (confirmed write: the model proposes,
+    the phone picks the dose, the user confirms on a card); offline answers for the same requests; quick replies
+    after a verdict chosen by risk level; five new demo clips and a barge-in session; eval cases 18-24; prompt
+    `2026-10-03.6`, 18 tools.
+  - T3 (screens): one `ScreenHeader` on nine pages, buried links moved up as chips, a way forward from every empty
+    and error state, screen-reader text across pages and cards, 37 strings moved to resources, Trends reading the
+    cloud project while the AI backend is local. Three stale-value bugs found and fixed (`@Builder` arguments are
+    passed by value).
+  - Integrator: merges, the tiles and confirm card T2 could not add before the split was merged, camera-first box
+    photo with a gallery fallback, `docs/research/celia-assistant.md`.
+- **Validated:** 236 phone tests, 68 backend tests, HAP builds on the merged branch. On the emulator after the
+  merge: cold start, a typed question → `open_symptom_log` → tile → Symptom log page and back; the camera button
+  falls back to the gallery (the emulator has no camera to open); Medicines, Heart and Emergency tabs render with
+  the new header and chips. Per track, with screenshots in `docs/handoff/tracks/shots/`: the six voice states, nine
+  demo-voice sessions against the real Realtime model, mute, barge-in, the tap-to-talk fallback, Trends on 14 and
+  30 days from the project's rows. Agent eval: 21 pass, 1 unsafe sentence caught by the device validator, 0 fail
+  on prompt `.5`; 9 of 9 on the cases re-run on `.6`.
+- **Not validated:** the `log_dose` confirm card on screen (unit tests only: the emulator profile has no dose due);
+  camera capture (needs a real phone); anything with the screen reader on; reduced motion switched on; Trends with
+  non-simulated watch rows (the demo watch has none); eval cases 3, 4, 6, 8-17, 19, 22 on prompt `.6`; emulator
+  audio was never listened to; the watch app was not touched or re-run this session. The new tools are not deployed:
+  `agent` and `realtime-session` must be redeployed by the owner.
+- **Lessons:** T2 finished its unblocked work before the integrator had merged T1's split, so its last step sat
+  blocked; merging the split the minute it was green would have saved a hand-over. A second session merged the
+  tracks into the same checkout while the integrator was mid-merge; asking it by message which files it owned
+  settled it in one exchange. The tab-0 agent layout from T1 is being replaced by the owner's v2 design in another
+  session, so the navigation rows in the README wait for that.
