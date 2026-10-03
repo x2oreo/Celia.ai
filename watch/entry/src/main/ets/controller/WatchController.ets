@@ -278,9 +278,6 @@ export class WatchController {
       this.pairing = new PairingClient(this.cfg.supabaseUrl, this.cfg.supabaseAnonKey);
       this.syncState = this.pending > 0 ? 'PENDING' : 'OK';
     }
-    this.syncTimer = setInterval(() => {
-      this.syncNow();
-    }, SYNC_EVERY_MS);
     this.monitoringSinceMs = Date.now();
     // Ask for permissions once, up front, so the dialog doesn't interrupt a running monitor.
     this.ready = this.requestPermissions().then(() => this.notifier.init(ctx)).then(() => {
@@ -291,10 +288,6 @@ export class WatchController {
   dispose(): void {
     this.pause();
     this.stopPairPolling();
-    if (this.syncTimer >= 0) {
-      clearInterval(this.syncTimer);
-      this.syncTimer = -1;
-    }
   }
 
   get scenarioLabel(): string {
@@ -312,6 +305,11 @@ export class WatchController {
     if (this.visible) {
       this.startSource();
       this.refreshContext();
+      if (this.syncTimer < 0) {
+        this.syncTimer = setInterval(() => {
+          this.syncNow();
+        }, SYNC_EVERY_MS);
+      }
     }
   }
 
@@ -320,6 +318,11 @@ export class WatchController {
     this.visible = false;
     this.closePairing();
     this.stopSource();
+    // No upload timer while hidden: nothing new is recorded, so it would only wake the radio.
+    if (this.syncTimer >= 0) {
+      clearInterval(this.syncTimer);
+      this.syncTimer = -1;
+    }
     this.flushWindow(Date.now());
     this.syncNow();
   }

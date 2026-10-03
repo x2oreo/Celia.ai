@@ -106,6 +106,15 @@ export struct HeartPage {
     }
   }
 
+  /** One sentence for the screen reader instead of eight fragments. */
+  spoken(): string {
+    if (this.ctrl.bpm <= 0) {
+      return `Heart rate not available. ${this.status()}`;
+    }
+    return `Heart rate ${this.ctrl.bpm} beats per minute ${this.stateWord()}. ${this.status()}. ` +
+      `Your maximum is ${this.ctrl.limitHigh}.`;
+  }
+
   build() {
     if (!this.ctrl.onWrist) {
       NotWorn()
@@ -133,7 +142,7 @@ export struct HeartPage {
               .fontSize(15)
               .fontWeight(FontWeight.Bold)
               .fontColor(this.ctrl.hrvMs > 0 && this.ctrl.hrvMs < 20 ? Theme.DANGER : Theme.TEXT)
-            Text('sim').fontSize(8).fontColor(Theme.WARN)
+            Text('sim').fontSize(10).fontColor(Theme.WARN)
           }
           .margin({ top: 2 })
 
@@ -147,12 +156,14 @@ export struct HeartPage {
             .margin({ top: 4 })
 
           if (this.ctrl.sourceKind === 'SIMULATED') {
-            Text(`DEMO · ${this.ctrl.scenarioLabel}`).fontSize(9).fontColor(Theme.WARN).margin({ top: 2 })
+            Text(`DEMO · ${this.ctrl.scenarioLabel}`).fontSize(10).fontColor(Theme.WARN).margin({ top: 2 })
           }
         }
       }
       .width('100%')
       .height('100%')
+      .accessibilityGroup(true)
+      .accessibilityText(this.spoken())
     }
   }
 }
