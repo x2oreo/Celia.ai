@@ -52,6 +52,8 @@
     border-left: 6px solid var(--fixed-alert); font-weight: 700; color: var(--fixed-ink);
   }
   .k { margin: 0 0 6px; color: var(--fixed-ink-3); }
+  #details { display: grid; gap: 14px; }
+  #details .v { font-size: 18px; color: var(--fixed-ink); }
   .v { margin: 0; color: var(--fixed-ink-2); }
   .card ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
   .card li { padding-left: 16px; position: relative; color: var(--fixed-ink); }
@@ -120,6 +122,7 @@
       <div class="facts" id="facts"></div>
       <p class="avoid" id="avoid"></p>
       <p class="v" id="treatment"></p>
+      <div id="details" hidden></div>
       <div>
         <p class="k t-label" id="medsLabel"></p>
         <ul id="meds"></ul>
@@ -182,14 +185,60 @@
   };
   function ui(code) { return UI[code] || UI.en; }
 
+  // Card payload versions (app: emergency/CardLink.ets). v1: name, genotype, ICD, medicines, contacts, notes,
+  // country. v2 adds optional emergency details: d date of birth, s sex (F/M/O), b blood type, a allergies, k ICD
+  // model, r cardiologist [name, phone], h hospital, e extra [[label, value]]. Both stay readable forever.
+  function validCard(p) {
+    return !!p && (p.v === 1 || p.v === 2) && typeof p.g === 'string' && Array.isArray(p.m) && Array.isArray(p.c);
+  }
+
   // Legacy links carry the card itself: #<base64url(JSON)>
   function decodeLegacy(fragment) {
     try {
       var p = JSON.parse(new TextDecoder('utf-8').decode(window.CeliaShare.fromB64url(fragment)));
-      return p.v === 1 && Array.isArray(p.m) && Array.isArray(p.c) ? p : null;
+      return validCard(p) ? p : null;
     } catch (e) {
       return null;
     }
+  }
+
+  // Labels for the v2 details. English only until a checked translation exists (same rule as the app's
+  // CardStrings.cardLabels): every language falls back to English, nothing is machine-translated.
+  var DETAIL_LABELS = {
+    en: { dob: 'Date of birth', age: 'age', sex: 'Sex', F: 'Female', M: 'Male', O: 'Other', blood: 'Blood type',
+      allergies: 'Allergies', icd: 'ICD model', cardiologist: 'Cardiologist', hospital: 'Hospital' }
+  };
+  function detailLabels(code) { return DETAIL_LABELS[code] || DETAIL_LABELS.en; }
+
+  function str(v) { return typeof v === 'string' ? v.trim() : ''; }
+
+  function ageFrom(dob) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dob);
+    if (!m) { return null; }
+    var now = new Date();
+    var age = now.getFullYear() - Number(m[1]);
+    if (now.getMonth() + 1 < Number(m[2]) || (now.getMonth() + 1 === Number(m[2]) && now.getDate() < Number(m[3]))) { age -= 1; }
+    return age >= 0 && age < 130 ? age : null;
+  }
+
+  // Same fixed order as the card in the app; empty fields are not shown.
+  function detailRows(p, code) {
+    var l = detailLabels(code);
+    var rows = [];
+    function add(label, value) { if (value) { rows.push([label, value]); } }
+    var dob = str(p.d);
+    var age = dob ? ageFrom(dob) : null;
+    add(l.dob, dob ? dob + (age === null ? '' : ' (' + l.age + ' ' + age + ')') : '');
+    add(l.sex, l[p.s] && (p.s === 'F' || p.s === 'M' || p.s === 'O') ? l[p.s] : '');
+    add(l.blood, str(p.b));
+    add(l.allergies, Array.isArray(p.a) ? p.a.map(str).filter(Boolean).join(', ') : '');
+    add(l.icd, p.i ? str(p.k) : '');
+    add(l.cardiologist, Array.isArray(p.r) ? p.r.map(str).filter(Boolean).join(' · ') : '');
+    add(l.hospital, str(p.h));
+    if (Array.isArray(p.e)) {
+      p.e.forEach(function (x) { if (Array.isArray(x)) { add(str(x[0]), str(x[0]) ? str(x[1]) : ''); } });
+    }
+    return rows;
   }
 
   function pickLanguage() {
@@ -224,6 +273,17 @@
 
     $('avoid').textContent = t.avoid;
     $('treatment').textContent = t.treatment;
+    var details = $('details');
+    details.textContent = '';
+    var rows = detailRows(p, code);
+    rows.forEach(function (r) {
+      var box = el('div');
+      box.appendChild(el('p', 'k t-label', r[0]));
+      box.appendChild(el('p', 'v', r[1]));
+      details.appendChild(box);
+    });
+    details.hidden = rows.length === 0;
+
     $('medsLabel').textContent = t.meds;
     var meds = $('meds');
     meds.textContent = '';
@@ -310,7 +370,8 @@
     return;
   }
   window.CeliaShare.open('card').then(function (r) {
-    if (r.status === 'ok') { showCard(r.data, false); return; }
+    if (r.status === 'ok' && validCard(r.data)) { showCard(r.data, false); return; }
+    if (r.status === 'ok') { showGone('This card could not be opened', 'Ask the person to show the card in the Celia app.'); return; }
     if (r.status === 'offline') { showGone('No internet connection', 'Connect to the internet and reload to open this medical card.'); return; }
     if (r.status === 'invalid') { showGone('This card link is incomplete', 'The QR code could not be read fully. Scan it again, or ask the person to show the card in the Celia app.'); return; }
     if (r.status === 'error') { showGone('This card could not be opened right now', 'Please try again in a moment.'); return; }

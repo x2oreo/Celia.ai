@@ -11,6 +11,7 @@ import { toast } from '../common/Toast';
 import { WatchPairing, shortId } from '../data/WatchPairing';
 import { Config } from '../common/Config';
 import { Session } from '../account/Session';
+import { cloneProfile } from '../emergency/EmergencyDetails';
 
 const GENOTYPES: Genotype[] = ['LQT1', 'LQT2', 'LQT3', 'UNKNOWN'];
 
@@ -61,16 +62,8 @@ export struct SettingsPage {
     if (this.profile === undefined) {
       return;
     }
-    const p: Profile = {
-      condition: this.profile.condition,
-      genotype: this.profile.genotype,
-      hasIcd: this.profile.hasIcd,
-      notes: this.profile.notes,
-      contacts: this.profile.contacts.slice(),
-      name: this.profile.name,
-      country: this.profile.country,
-      cardLanguage: this.profile.cardLanguage
-    };
+    // Start from the stored profile (another page may have changed it) and copy every field.
+    const p: Profile = cloneProfile((await LocalStore.get().getProfile()) ?? this.profile);
     mutate(p);
     this.profile = p;
     await LocalStore.get().saveProfile(p);
@@ -265,6 +258,15 @@ export struct SettingsPage {
 
             SectionHeader({ title: $r('app.string.settings_contacts') })
             this.contactsGroup()
+
+            NavRow({
+              icon: $r('app.media.ic_tab_emergency'),
+              title: $r('app.string.em_row_title'),
+              subtitle: $r('app.string.em_row_sub'),
+              onTap: () => {
+                this.navStack.pushPathByName(Routes.EMERGENCY_PROFILE, null);
+              }
+            })
 
             SectionHeader({ title: $r('app.string.settings_region') })
             Column({ space: 12 }) {

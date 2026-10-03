@@ -27,6 +27,10 @@ import notifySosTest from './NotifySos.test';
 import liveStatusTest from './LiveStatus.test';
 import accountTest from './Account.test';
 import sosContactsTest from './SosContacts.test';
+import emergencyProfileTest from './EmergencyProfile.test';
+import responderTest from './Responder.test';
+import cardPayloadTest from './CardPayload.test';
+import nfcCardTest from './NfcCard.test';
 import { Config } from '../main/ets/common/Config';
 
 export default function testsuite() {
@@ -61,4 +65,8 @@ export default function testsuite() {
   liveStatusTest();
   accountTest();
   sosContactsTest();
+  emergencyProfileTest();
+  responderTest();
+  cardPayloadTest();
+  nfcCardTest();
 }

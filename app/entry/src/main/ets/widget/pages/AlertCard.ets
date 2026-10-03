@@ -39,6 +39,7 @@ struct AlertCard {
       .border({ width: 4, color: $r('app.color.risk_known_border') })
       .onClick(() => this.open('call'))
 
+      // Tapping the medical facts opens the first-responder view (B5); the buttons below keep their own targets.
       Column({ space: 2 }) {
         Text($r('app.string.em_alert_label'))
           .fontSize($r('app.float.font_micro'))
@@ -94,6 +95,7 @@ struct AlertCard {
       }
       .alignItems(HorizontalAlign.Start)
       .layoutWeight(1)
+      .onClick(() => this.open('responder'))
     }
     .width('100%')
     .height('100%')

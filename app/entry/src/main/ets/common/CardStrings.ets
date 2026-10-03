@@ -164,3 +164,32 @@ export function languageForCountry(country: string): string {
       return 'en';
   }
 }
+
+// Labels for the emergency details (Workstream B4). English only for now: a language gets its own entry here only
+// once a checked translation exists — we never invent one, and every other language falls back to English.
+export interface CardLabels {
+  code: string;
+  dateOfBirth: string;
+  age: string;
+  sex: string;
+  female: string;
+  male: string;
+  other: string;
+  bloodType: string;
+  allergies: string;
+  icdModel: string;
+  cardiologist: string;
+  hospital: string;
+}
+
+export const CARD_LABELS: CardLabels[] = [
+  {
+    code: 'en', dateOfBirth: 'Date of birth', age: 'age', sex: 'Sex', female: 'Female', male: 'Male', other: 'Other',
+    bloodType: 'Blood type', allergies: 'Allergies', icdModel: 'ICD model', cardiologist: 'Cardiologist',
+    hospital: 'Hospital'
+  }
+];
+
+export function cardLabels(code: string | undefined): CardLabels {
+  return CARD_LABELS.find((x: CardLabels) => x.code === code) ?? CARD_LABELS[0];
+}

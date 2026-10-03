@@ -3,10 +3,11 @@
 // and a QR link to the card viewer.
 
 import { LocalStore, StoreTopic } from '../data/LocalStore';
-import { Contact, Profile } from '../model/Profile';
+import { CardField, Contact, Profile } from '../model/Profile';
 import { Medication } from '../model/Medication';
 import { emergencyFor, EmergencyInfo, systemCountry } from '../common/EmergencyNumbers';
-import { CARD_TEXTS, CardText, cardText } from '../common/CardStrings';
+import { CARD_TEXTS, CardText, cardLabels, cardText } from '../common/CardStrings';
+import { CardRow, detailRows, shownOnCard } from '../emergency/EmergencyDetails';
 import { cardSpeech } from '../emergency/CardSpeech';
 import { NearbyKind, nearbySearchUrl } from '../emergency/NearbyHelp';
 import { VoiceOutput } from '../voice/VoiceOutput';
@@ -21,6 +22,7 @@ import { toast } from '../common/Toast';
 import { copyText } from '../common/Clipboard';
 import { Logger } from '../common/Logger';
 import { common } from '@kit.AbilityKit';
+import { NfcCard, NfcWriteResult, smallestTagFor } from '../emergency/NfcCard';
 
 const log: Logger = new Logger('EmergencyPage');
 
@@ -38,10 +40,14 @@ export struct EmergencyPage {
   @Local shareUrl: string = '';        // short encrypted link (Supabase share); '' → the long in-link fallback
   @Local sharing: boolean = false;
   private shareDirty: boolean = false;
+  @Local nfcShown: boolean = false;    // device has NFC tag support (B14, built, unverified)
+  @Local nfcWaiting: boolean = false;
+  @Local nfcMsg: ResourceStr = '';
   private unsubscribe: () => void = () => {
   };
 
   aboutToAppear(): void {
+    this.nfcShown = NfcCard.availability() !== 'UNSUPPORTED';
     this.unsubSpeaking = VoiceOutput.get().onSpeaking((on: boolean) => {
       this.speaking = on;
     });
@@ -54,6 +60,7 @@ export struct EmergencyPage {
   }
 
   aboutToDisappear(): void {
+    NfcCard.stop();
     this.unsubscribe();
     this.unsubSpeaking();
     if (this.speaking) {
@@ -166,6 +173,52 @@ export struct EmergencyPage {
       log.warn(`card open failed: ${JSON.stringify(e)}`);
       toast(this.getUIContext(), $r('app.string.error_generic'));
     });
+  }
+
+  // NFC handover (B14): writes the same link as the QR to a tag. Built, unverified — no NFC on the emulator.
+  private writeNfc(): void {
+    if (NfcCard.availability() === 'OFF') {
+      toast(this.getUIContext(), $r('app.string.em_nfc_off'));
+      return;
+    }
+    const link: string = this.currentCardLink();
+    const tagName: string = smallestTagFor(link);
+    if (link.length === 0 || tagName === '') {
+      this.nfcMsg = $r('app.string.em_nfc_too_long');
+      return;
+    }
+    const ctx: common.UIAbilityContext = this.getUIContext().getHostContext() as common.UIAbilityContext;
+    const started: boolean = NfcCard.start(ctx, link, (r: NfcWriteResult) => {
+      this.nfcWaiting = false;
+      this.nfcMsg = this.nfcResult(r, tagName);
+    });
+    if (!started) {
+      toast(this.getUIContext(), $r('app.string.em_nfc_failed_start'));
+      return;
+    }
+    this.nfcWaiting = true;
+    this.nfcMsg = $r('app.string.em_nfc_hold');
+  }
+
+  private cancelNfc(): void {
+    NfcCard.stop();
+    this.nfcWaiting = false;
+    this.nfcMsg = '';
+  }
+
+  private nfcResult(r: NfcWriteResult, tagName: string): ResourceStr {
+    switch (r) {
+      case 'WRITTEN':
+        return $r('app.string.em_nfc_written');
+      case 'READ_ONLY':
+        return $r('app.string.em_nfc_read_only');
+      case 'IO_FAILED':
+        return $r('app.string.em_nfc_io_failed', tagName);
+      case 'NOT_NDEF':
+        return $r('app.string.em_nfc_not_ndef');
+      default:
+        return $r('app.string.em_nfc_error');
+    }
   }
 
   private async copyCard(): Promise<void> {
@@ -317,7 +370,7 @@ export struct EmergencyPage {
       .borderRadius({ topLeft: 18, topRight: 18 })
 
       Column({ space: 14 }) {
-        if ((this.cardProfile().name ?? '').length > 0) {
+        if ((this.cardProfile().name ?? '').length > 0 && shownOnCard(this.cardProfile(), CardField.NAME)) {
           Text(this.cardProfile().name ?? '').fontSize($r('app.float.font_title')).fontWeight(FontWeight.Bold).fontColor($r('app.color.card_fixed_ink'))
         }
         Text(cardText(this.lang).condition)
@@ -343,13 +396,17 @@ export struct EmergencyPage {
         Text(cardText(this.lang).treatment)
           .fontSize($r('app.float.font_body'))
           .fontColor($r('app.color.card_fixed_ink_2'))
+        // Emergency details (B4) in their fixed order; empty and switched-off fields are left out.
+        ForEach(detailRows(this.cardProfile(), cardLabels(this.lang), Date.now()), (r: CardRow) => {
+          this.cardLine(r.label, r.value)
+        }, (r: CardRow, i: number) => `${i}-${r.id}-${r.label}-${r.value}`)
         this.cardLine(cardText(this.lang).meds, this.meds.length === 0 ? cardText(this.lang).noMeds :
           this.meds.map((m: Medication) => medLine(m)).join('\n'))
-        if (this.cardProfile().contacts.length > 0) {
+        if (this.cardProfile().contacts.length > 0 && shownOnCard(this.cardProfile(), CardField.CONTACTS)) {
           this.cardLine(cardText(this.lang).contacts,
             this.cardProfile().contacts.map((c: Contact) => `${c.name} (${c.relation}) ${c.phone}`).join('\n'))
         }
-        if (this.cardProfile().notes.length > 0) {
+        if (this.cardProfile().notes.length > 0 && shownOnCard(this.cardProfile(), CardField.NOTES)) {
           this.cardLine(cardText(this.lang).notes, this.cardProfile().notes)
         }
       }
@@ -433,6 +490,16 @@ export struct EmergencyPage {
     Scroll() {
       Column({ space: 12 }) {
         PageTitle({ title: $r('app.string.emergency_title') })
+
+        // First-responder view (B5): the top of the tab, for whoever arrives to help.
+        NavRow({
+          icon: $r('app.media.ic_doctor'),
+          title: $r('app.string.em_resp_title'),
+          subtitle: $r('app.string.em_resp_open_sub'),
+          onTap: () => {
+            this.navStack.pushPathByName(Routes.RESPONDER, null);
+          }
+        })
 
         this.alertCard()
 
@@ -566,6 +633,30 @@ export struct EmergencyPage {
                   this.copyCard();
                 }
               })
+              if (this.nfcShown) {
+                SecondaryButton({
+                  label: this.nfcWaiting ? $r('app.string.em_nfc_cancel') : $r('app.string.em_nfc_write'),
+                  icon: $r('app.media.ic_wave'),
+                  onTap: () => {
+                    if (this.nfcWaiting) {
+                      this.cancelNfc();
+                    } else {
+                      this.writeNfc();
+                    }
+                  }
+                })
+                if (this.nfcMsg !== '') {
+                  Text(this.nfcMsg)
+                    .fontSize($r('app.float.font_small'))
+                    .fontColor($r('app.color.ink_2'))
+                    .textAlign(TextAlign.Center)
+                }
+                Text($r('app.string.em_nfc_hint', smallestTagFor(this.currentCardLink()) === '' ? 'NTAG216' :
+                  smallestTagFor(this.currentCardLink())))
+                  .fontSize($r('app.float.font_caption'))
+                  .fontColor($r('app.color.ink_3'))
+                  .textAlign(TextAlign.Center)
+              }
               if (this.shareUrl !== '') {
                 Text($r('app.string.share_card_caption'))
                   .fontSize($r('app.float.font_caption'))
