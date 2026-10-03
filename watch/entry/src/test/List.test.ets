@@ -1,3 +1,4 @@
+import watchControllerTest from './WatchController.test';
 import alarmRulesTest from './AlarmRules.test';
 import doseNudgeTest from './DoseNudge.test';
 import limitsTest from './Limits.test';
@@ -20,4 +21,5 @@ export default function testsuite() {
   doseNudgeTest();
   pairingTest();
   drugBadgeTest();
+  watchControllerTest();
 }
