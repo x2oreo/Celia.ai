@@ -108,7 +108,7 @@ export struct SosPage {
 
   private onSent(): void {
     stopPulse();
-    LiveStatus.end();
+    LiveStatus.end('SENT');
     this.record('SENT');
   }
 
@@ -137,7 +137,7 @@ export struct SosPage {
   private closeAcked(): void {
     this.state = 'ACKED';
     stopPulse();
-    LiveStatus.end();
+    LiveStatus.end('OK');
     this.record('ACKED');
     toast(this.getUIContext(), $r('app.string.sos_glad'));
     this.navStack.pop();

@@ -40,6 +40,23 @@ export function notifyText(name: string): string {
   return FALLBACK.get(name) ?? name;
 }
 
+// A colour resource as an ARGB number (Live View wants colours as strings); -1 when unavailable.
+export function notifyColor(name: string): number {
+  try {
+    if (appCtx !== undefined) {
+      return appCtx.resourceManager.getColorByNameSync(name);
+    }
+  } catch (e) {
+    log.warn(`colour ${name}: ${JSON.stringify(e)}`);
+  }
+  return -1;
+}
+
+// The "open the app" WantAgent of a notification id, for surfaces that share its tap (the SOS Live View).
+export async function tapAgent(id: number): Promise<WantAgent | undefined> {
+  return agentFor(id, kindForId(id), 'OPEN', -1);
+}
+
 function slotType(name: SlotName): notificationManager.SlotType {
   if (name === 'SOCIAL_COMMUNICATION') {
     return notificationManager.SlotType.SOCIAL_COMMUNICATION;
