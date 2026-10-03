@@ -20,7 +20,7 @@ Shared code lives in `_shared/` (`prompt.ts` system prompt + `PROMPT_VERSION`, `
   "messages": [{ "role": "user", "text": "Can I take Klacid?" }] }
 
 // response
-{ "promptVersion": "2026-10-03.1", "responseId": "resp_…",
+{ "promptVersion": "2026-10-03.2", "responseId": "resp_…",
   "toolCalls": [{ "callId": "call_…", "name": "check_drug", "arguments": "{\"name\":\"Klacid\",\"dosage\":null}" }],
   "text": "" }
 
