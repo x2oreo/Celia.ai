@@ -1,12 +1,46 @@
 // Trends: resting heart rate, doses and symptoms per day over 14 or 30 days, plus the fixed-rule findings from the
 // watch data. Heart rate only — never QT, never a diagnosis.
 
-import { Card, EmptyCard, SectionHeader, SourceBadge } from '../components/Common';
+import { Card, EmptyCard, ScreenHeader, SectionHeader, SourceBadge } from '../components/Common';
 import { TrendChart } from '../components/TrendChart';
 import { WatchInsight } from '../model/WatchData';
 import { loadTrends, TrendData, TrendStats, trendStats } from '../vitals/Trends';
 
 const SPANS: number[] = [14, 30];
+
+// One number with its unit and label. A component, not a @Builder with arguments: builder arguments are passed by
+// value, so the tiles kept the 14-day numbers after switching to 30 days.
+@ComponentV2
+struct StatTile {
+  @Param value: ResourceStr = '';
+  @Param unit: ResourceStr = '';
+  @Param label: ResourceStr = '';
+
+  build() {
+    Column({ space: 2 }) {
+      Row({ space: 4 }) {
+        Text(this.value)
+          .fontSize($r('app.float.font_title'))
+          .fontWeight(FontWeight.Bold)
+          .fontColor($r('app.color.ink'))
+        Text(this.unit)
+          .fontSize($r('app.float.font_caption'))
+          .fontColor($r('app.color.ink_3'))
+      }
+      .alignItems(VerticalAlign.Bottom)
+      Text(this.label)
+        .fontSize($r('app.float.font_caption'))
+        .fontColor($r('app.color.ink_3'))
+    }
+    .layoutWeight(1)
+    .alignItems(HorizontalAlign.Start)
+    .padding(12)
+    .backgroundColor($r('app.color.surface'))
+    .border({ width: 1, color: $r('app.color.border') })
+    .borderRadius($r('app.float.radius_m'))
+    .accessibilityGroup(true)
+  }
+}
 
 @ComponentV2
 export struct TrendsPage {
@@ -38,32 +72,6 @@ export struct TrendsPage {
   }
 
   @Builder
-  tile(value: ResourceStr, unit: ResourceStr, label: ResourceStr) {
-    Column({ space: 2 }) {
-      Row({ space: 4 }) {
-        Text(value)
-          .fontSize($r('app.float.font_title'))
-          .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.ink'))
-        Text(unit)
-          .fontSize($r('app.float.font_caption'))
-          .fontColor($r('app.color.ink_3'))
-      }
-      .alignItems(VerticalAlign.Bottom)
-      Text(label)
-        .fontSize($r('app.float.font_caption'))
-        .fontColor($r('app.color.ink_3'))
-    }
-    .layoutWeight(1)
-    .alignItems(HorizontalAlign.Start)
-    .padding(12)
-    .backgroundColor($r('app.color.surface'))
-    .border({ width: 1, color: $r('app.color.border') })
-    .borderRadius($r('app.float.radius_m'))
-    .accessibilityGroup(true)
-  }
-
-  @Builder
   spanChips() {
     Row({ space: 8 }) {
       ForEach(SPANS, (n: number) => {
@@ -77,6 +85,7 @@ export struct TrendsPage {
           .height($r('app.float.touch_min'))
           .padding({ left: 16, right: 16 })
           .accessibilityText($r('app.string.trends_days_a11y', n))
+          .accessibilitySelected(this.span === n)
           .onClick(() => {
             if (this.span !== n) {
               this.span = n;
@@ -110,18 +119,29 @@ export struct TrendsPage {
     .backgroundColor($r('app.color.surface'))
     .border({ width: 1, color: $r('app.color.border') })
     .borderRadius($r('app.float.radius_m'))
+    .accessibilityGroup(true)
   }
 
   build() {
     NavDestination() {
+      Column() {
+      ScreenHeader({ title: $r('app.string.trends_title') })
       Scroll() {
         Column({ space: 12 }) {
           this.spanChips()
 
           if (this.data === undefined) {
             LoadingProgress().width(32).height(32).color($r('app.color.ink_3')).margin({ top: 48 })
+              .accessibilityText($r('app.string.a11y_loading'))
           } else if (this.data.source === 'OFFLINE') {
-            EmptyCard({ message: $r('app.string.trends_offline') })
+            EmptyCard({
+              message: $r('app.string.trends_offline'),
+              action: $r('app.string.check_retry'),
+              onAction: () => {
+                this.data = undefined;
+                this.load();
+              }
+            })
           } else {
             Card() {
               Column({ space: 8 }) {
@@ -142,16 +162,29 @@ export struct TrendsPage {
             }
 
             Row({ space: 8 }) {
-              this.tile(this.stats().avgResting > 0 ? `${this.stats().avgResting}` : '–', $r('app.string.trends_bpm'),
-                $r('app.string.trends_avg'))
-              this.tile(this.changeText(), $r('app.string.trends_bpm'), $r('app.string.trends_change'))
+              StatTile({
+                value: this.stats().avgResting > 0 ? `${this.stats().avgResting}` : '–',
+                unit: $r('app.string.trends_bpm'),
+                label: $r('app.string.trends_avg')
+              })
+              StatTile({
+                value: this.changeText(),
+                unit: $r('app.string.trends_bpm'),
+                label: $r('app.string.trends_change')
+              })
             }
             .width('100%')
             Row({ space: 8 }) {
-              this.tile(`${this.stats().doseDays}`, $r('app.string.trends_of_days', this.span),
-                $r('app.string.trends_dose_days'))
-              this.tile(`${this.stats().symptomDays}`, $r('app.string.trends_of_days', this.span),
-                $r('app.string.trends_symptom_days'))
+              StatTile({
+                value: `${this.stats().doseDays}`,
+                unit: $r('app.string.trends_of_days', this.data.days.length),
+                label: $r('app.string.trends_dose_days')
+              })
+              StatTile({
+                value: `${this.stats().symptomDays}`,
+                unit: $r('app.string.trends_of_days', this.data.days.length),
+                label: $r('app.string.trends_symptom_days')
+              })
             }
             .width('100%')
 
@@ -172,11 +205,14 @@ export struct TrendsPage {
         .width('100%')
       }
       .width('100%')
-      .height('100%')
+      .layoutWeight(1)
       .align(Alignment.Top)
       .scrollBar(BarState.Off)
+      }
+      .width('100%')
+      .height('100%')
     }
-    .title($r('app.string.trends_title'))
+    .hideTitleBar(true)
     .backgroundColor($r('app.color.bg'))
   }
 }
