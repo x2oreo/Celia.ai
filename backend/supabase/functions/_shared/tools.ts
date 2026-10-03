@@ -101,6 +101,34 @@ export const TOOLS: FunctionTool[] = [
     'Share the emergency card through the system share sheet. The user must confirm.',
     {},
   ),
+  tool(
+    'log_symptom',
+    'Save a symptom the user describes (e.g. "I felt dizzy after the alarm") to their symptom log, with the heart ' +
+      'rate of the last minutes attached on the phone. A red-flag symptom also starts the emergency flow on the ' +
+      'phone. Only log what the user actually reported.',
+    {
+      symptom: {
+        type: 'string',
+        enum: ['DIZZINESS', 'PALPITATIONS', 'FAINTING', 'CHEST_PAIN', 'SHORTNESS_OF_BREATH', 'OTHER'],
+        description: 'Closest symptom category.',
+      },
+      severity: { type: 'integer', minimum: 1, maximum: 5, description: 'How bad, 1 (mild) to 5 (severe). Use 3 if unsure.' },
+      activity: {
+        type: ['string', 'null'],
+        enum: ['resting', 'sleeping', 'exercise', 'swimming', 'sudden noise / stress', 'other', null],
+        description: 'What the user was doing, if they said; otherwise null.',
+      },
+      note: nullableString('A few of the user\'s own words (max 120 characters), otherwise null.'),
+    },
+  ),
+  tool(
+    'start_new_chat',
+    'Save the current conversation and start a new, empty one. Use when the user asks for a new chat, to start ' +
+      'over, or to save this chat. Every chat is already kept on the phone, so nothing is lost.',
+    {
+      title: nullableString('Name for the chat being saved if the user gave one, e.g. "ibuprofen questions", otherwise null.'),
+    },
+  ),
 ];
 
 export const TOOL_NAMES: string[] = TOOLS.map((t) => t.name);

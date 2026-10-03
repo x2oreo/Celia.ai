@@ -95,4 +95,4 @@ app/scripts/ui.sh tapt Agent && app/scripts/ui.sh shot      # drive the UI and t
 ```
 
 Put `LocalConfig.ets` back to empty values before running the unit tests, because the offline tests assume there is
-no backend. `/drug-check` is not served here (it needs the database), so the app uses its bundled dataset.
+no backend. `/drug-check` and `/box-identify` are served here too; they use the Supabase database from `.env`.

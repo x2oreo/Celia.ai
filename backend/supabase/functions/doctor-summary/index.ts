@@ -1,0 +1,67 @@
+// POST /functions/v1/doctor-summary — a 2-3 sentence summary at the top of the doctor brief (T13, F-31).
+// The brief itself is deterministic and complete without this. The model only condenses what the app sends:
+// specialty, genotype, the brief's medicine lines with their risk words, interactions, flagged checks and counts.
+// Never the patient's name, notes, contacts or symptom notes (the app leaves those out). The reply is checked
+// (logic.ts: length, no reassurance, no doses) and dropped when it fails; the app checks it again.
+// Request: SummaryInput as JSON strings/arrays. Response: { summary } or { summary: '', dropped: true }.
+
+import { env, json, openaiJson, outputText } from '../_shared/openai.ts';
+import { checkSummary, parseInput, SummaryInput } from './logic.ts';
+
+const PROMPT = `You help a patient with long QT syndrome brief a doctor. Write 2 or 3 short, factual sentences for
+the doctor named in the input, using ONLY the facts given: genotype, current medicines and their QT-risk words,
+interactions, medicines the patient was offered and flagged, and the counts of heart alerts and symptoms.
+Hard rules: never call any medicine safe, harmless or without risk; keep every risk word exactly as given; no doses;
+never tell anyone to start or stop a medicine; no diagnosis; no greetings. Plain English, under 400 characters.`;
+
+const SCHEMA = {
+  type: 'object',
+  properties: { summary: { type: 'string' } },
+  required: ['summary'],
+  additionalProperties: false,
+};
+
+function userText(i: SummaryInput): string {
+  const block = (title: string, l: string[]) => `${title}:\n${l.length === 0 ? '- none' : l.map((x) => `- ${x}`).join('\n')}`;
+  return [
+    `Doctor: ${i.specialty}`,
+    `Genotype: ${i.genotype}`,
+    block('Current medicines (risk word is final)', i.medicines),
+    block('Interactions', i.interactions),
+    block('Offered and flagged (last 90 days)', i.flagged),
+    `Heart alerts (90 days): ${i.heartAlerts}`,
+    `Symptoms logged (90 days): ${i.symptoms}`,
+  ].join('\n');
+}
+
+Deno.serve(async (req: Request): Promise<Response> => {
+  if (req.method !== 'POST') return json(405, { error: 'POST only' });
+  const started = Date.now();
+  let input: SummaryInput | undefined;
+  try {
+    input = parseInput(await req.json() as Record<string, unknown>);
+  } catch {
+    input = undefined;
+  }
+  if (input === undefined) return json(400, { error: 'bad request' });
+
+  try {
+    const res = await openaiJson<{ output?: { type: string; content?: { type: string; text?: string }[] }[] }>(
+      '/responses',
+      {
+        model: env('OPENAI_MODEL', 'gpt-6.1-sol'),
+        reasoning: { effort: 'low' },
+        input: [{ role: 'system', content: PROMPT }, { role: 'user', content: userText(input) }],
+        text: { format: { type: 'json_schema', name: 'doctor_summary', schema: SCHEMA, strict: true } },
+        max_output_tokens: 300,
+      },
+      20000,
+    );
+    const summary = checkSummary((JSON.parse(outputText(res)) as { summary?: unknown }).summary);
+    console.log(JSON.stringify({ fn: 'doctor-summary', ok: summary !== undefined, ms: Date.now() - started }));
+    return json(200, summary === undefined ? { summary: '', dropped: true } : { summary });
+  } catch (err) {
+    console.error(JSON.stringify({ fn: 'doctor-summary', error: String(err), ms: Date.now() - started }));
+    return json(502, { error: 'summary failed' });
+  }
+});
