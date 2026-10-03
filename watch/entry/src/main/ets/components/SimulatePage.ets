@@ -26,6 +26,14 @@ struct SimButton {
 export struct SimulatePage {
   @Param @Require ctrl: WatchController;
 
+  toast(msg: string): void {
+    try {
+      this.getUIContext().getPromptAction().showToast({ message: msg, duration: 1500 });
+    } catch (e) {
+      // Toast is cosmetic.
+    }
+  }
+
   activityLabel(): string {
     switch (this.ctrl.activityOverride) {
       case 'REST':
@@ -59,6 +67,14 @@ export struct SimulatePage {
         SimButton({ label: this.ctrl.riskyDrug.length > 0 ? 'Risky drug: on' : 'Risky drug: off', onTap: () => {
           this.ctrl.toggleRiskyDrug();
         } })
+        SimButton({ label: this.ctrl.betaBlockerMissed ? 'Beta-blocker: missed' : 'Beta-blocker: ok',
+          highlight: this.ctrl.betaBlockerMissed, onTap: () => {
+            this.ctrl.toggleMissedBetaBlocker().then((ok: boolean) => {
+              if (!ok) {
+                this.toast('Server not ready (see log)');
+              }
+            });
+          } })
         SimButton({ label: 'Med reminder in 10 s', onTap: () => {
           this.ctrl.testMedicationReminder().then((ok: boolean) => {
             try {

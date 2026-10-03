@@ -54,6 +54,7 @@ import { isAsleep } from '../vitals/SleepDetector';
 import { MemoryOutboxStore, MetricOutbox } from '../sync/MetricOutbox';
 import { PatientContext, PatientContextClient } from '../sync/PatientContextClient';
 import { PreferencesOutboxStore } from '../sync/PreferencesOutboxStore';
+import { DemoRpcClient } from '../sync/DemoRpcClient';
 import { Fix, currentFix } from '../sync/SosLocation';
 import { SupabaseUploader } from '../sync/SupabaseUploader';
 
@@ -143,6 +144,8 @@ export class WatchController {
   @Trace demoSpeed: number = 4;
   /** Signal currently forced abnormal from the Vitals page. */
   @Trace anomaly: Anomaly = 'none';
+  /** Demo: 16 simulated days of resting HR with the last 2 elevated (missed beta-blocker), on the server. */
+  @Trace betaBlockerMissed: boolean = false;
 
   private ctx: common.UIAbilityContext | undefined = undefined;
   private cfg: AppConfigData = AppConfig.defaults();
@@ -165,6 +168,7 @@ export class WatchController {
   private outbox: MetricOutbox = new MetricOutbox(new MemoryOutboxStore(), 500);
   private uploader: SupabaseUploader | undefined = undefined;
   private contextClient: PatientContextClient | undefined = undefined;
+  private demoRpc: DemoRpcClient | undefined = undefined;
   private lastLiveMs: number = 0;
   private lastVitalsMs: number = 0;
   private lastMockMs: number = 0;
@@ -224,6 +228,7 @@ export class WatchController {
       this.uploader = new SupabaseUploader(this.cfg.supabaseUrl, this.cfg.supabaseAnonKey);
       this.contextClient = new PatientContextClient(this.cfg.supabaseUrl, this.cfg.supabaseAnonKey,
         this.cfg.deviceId);
+      this.demoRpc = new DemoRpcClient(this.cfg.supabaseUrl, this.cfg.supabaseAnonKey);
       this.syncState = this.pending > 0 ? 'PENDING' : 'OK';
     }
     this.syncTimer = setInterval(() => {
@@ -328,6 +333,20 @@ export class WatchController {
   /** Demo: system reminder for the medication in 10 s (try closing the app first). */
   async testMedicationReminder(): Promise<boolean> {
     return this.notifier.testReminder(10, this.cfg.medicationName);
+  }
+
+  /** Demo: toggles the server-side "missed beta-blocker" resting-HR history. Label flips only on success. */
+  async toggleMissedBetaBlocker(): Promise<boolean> {
+    if (this.demoRpc === undefined) {
+      Logger.warn('missed beta-blocker sim needs Supabase settings in watch/.env');
+      return false;
+    }
+    const next = !this.betaBlockerMissed;
+    const ok = await this.demoRpc.simulateMissedBetaBlocker(this.cfg.deviceId, next);
+    if (ok) {
+      this.betaBlockerMissed = next;
+    }
+    return ok;
   }
 
   simulateFall(): void {
