@@ -31,7 +31,15 @@ import { AlarmRules } from '../vitals/AlarmRules';
 import { ContextSensors } from '../vitals/ContextSensors';
 import { HeartRateSource } from '../vitals/HeartRateSource';
 import { BaseLimits, HrLimits, isStressed, limitsFor } from '../vitals/Limits';
-import { Anomaly, MOCKED_FIELDS, applyAnomaly, mockVitals, vitalAlertFor } from '../vitals/MockedVitals';
+import {
+  ANOMALY_TOTAL_MS,
+  Anomaly,
+  MOCKED_FIELDS,
+  anomalyProgress,
+  applyAnomaly,
+  mockVitals,
+  vitalAlertFor
+} from '../vitals/MockedVitals';
 import { MotionAnalyzer } from '../vitals/MotionAnalyzer';
 import { RecoveryTracker } from '../vitals/RecoveryTracker';
 import { RestingHr } from '../vitals/RestingHr';
@@ -56,9 +64,7 @@ export type ActivityOverride = 'AUTO' | 'REST' | 'ACTIVE' | 'ASLEEP';
 
 const LIVE_EVERY_MS = 5000;
 const VITALS_EVERY_MS = 30000;
-const MOCK_EVERY_MS = 2000;
-/** How long a tapped anomaly (Vitals page) stays abnormal. */
-const ANOMALY_MS = 20000;
+const MOCK_EVERY_MS = 1000;
 const VITAL_ALERT_COOLDOWN_MS = 60000;
 const SYNC_EVERY_MS = 3000;
 const CONTEXT_EVERY_MS = 60000;
@@ -157,8 +163,10 @@ export class WatchController {
   private lastLiveMs: number = 0;
   private lastVitalsMs: number = 0;
   private lastMockMs: number = 0;
-  private anomalyUntilMs: number = 0;
+  private anomalyStartMs: number = 0;
   private lastVitalAlertMs: number = 0;
+  /** When HRV/SpO2 first went past its threshold; -1 = not past it. Same sustain rule as heart rate. */
+  private vitalLowSinceMs: number = -1;
   private lastContextMs: number = 0;
   private lastSampleMs: number = 0;
   private monitoringSinceMs: number = 0;
@@ -259,16 +267,16 @@ export class WatchController {
     this.restart();
   }
 
-  /** Vitals page: tap a simulated tile to push that signal abnormal for 20 s (demo of HRV/SpO2/rhythm alerts). */
+  /**
+   * Vitals page: tap a simulated tile to make that signal drift abnormal (8 s), hold, and recover. The alert fires
+   * through the normal rule once the value has been past its threshold for the sustain time.
+   */
   triggerAnomaly(kind: Anomaly): void {
     this.anomaly = kind;
-    this.anomalyUntilMs = Date.now() + ANOMALY_MS;
+    this.anomalyStartMs = Date.now();
     this.lastVitalAlertMs = 0;
-    this.lastMockMs = Date.now();
+    this.vitalLowSinceMs = -1;
     Logger.info(`anomaly: ${kind}`);
-    if (this.running && this.onWrist && this.bpm > 0) {
-      this.updateMockedVitals();
-    }
   }
 
   cycleDemoSpeed(): void {
@@ -620,10 +628,12 @@ export class WatchController {
 
   /** Simulated HRV / SpO2 / breathing / rhythm (Huawei measures them; watch apps can't read them yet). */
   private updateMockedVitals(): void {
-    if (this.anomaly !== 'none' && Date.now() > this.anomalyUntilMs) {
+    const elapsed = Date.now() - this.anomalyStartMs;
+    if (this.anomaly !== 'none' && elapsed >= ANOMALY_TOTAL_MS) {
       this.anomaly = 'none';
     }
-    const m = applyAnomaly(mockVitals(this.bpm, this.activity, Math.random), this.anomaly, Math.random);
+    const m = applyAnomaly(mockVitals(this.bpm, this.activity, Math.random), this.anomaly,
+      this.anomaly === 'none' ? 0 : anomalyProgress(elapsed), Math.random);
     this.hrvMs = m.hrvMs;
     this.spo2 = m.spo2;
     this.breathingRate = m.breathingRate;
@@ -637,7 +647,15 @@ export class WatchController {
     this.irregularRhythm = m.irregularRhythm;
     const signal = vitalAlertFor(m, this.activity);
     const now = Date.now();
-    if (signal !== undefined && now - this.lastVitalAlertMs >= VITAL_ALERT_COOLDOWN_MS) {
+    if (signal === undefined) {
+      this.vitalLowSinceMs = -1;
+      return;
+    }
+    if (this.vitalLowSinceMs < 0) {
+      this.vitalLowSinceMs = now;
+    }
+    const sustained = now - this.vitalLowSinceMs >= this.cfg.alertSustainSec * 1000;
+    if (sustained && now - this.lastVitalAlertMs >= VITAL_ALERT_COOLDOWN_MS) {
       this.lastVitalAlertMs = now;
       this.raiseVitalAlert(signal, signal === 'hrv' ? m.hrvMs : m.spo2, now);
     }

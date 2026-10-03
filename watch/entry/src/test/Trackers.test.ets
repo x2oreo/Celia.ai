@@ -2,7 +2,7 @@ import { describe, it, expect } from '@ohos/hypium';
 import { RestingHr } from '../main/ets/vitals/RestingHr';
 import { RecoveryTracker } from '../main/ets/vitals/RecoveryTracker';
 import { isAsleep } from '../main/ets/vitals/SleepDetector';
-import { applyAnomaly, mockVitals, vitalAlertFor } from '../main/ets/vitals/MockedVitals';
+import { ANOMALY_RAMP_MS, anomalyProgress, applyAnomaly, mockVitals, vitalAlertFor } from '../main/ets/vitals/MockedVitals';
 import { Activity, HrRecoveryValues } from '../main/ets/model/WatchMetric';
 
 function runRecovery(peak: number, after: number): HrRecoveryValues | undefined {
@@ -61,12 +61,16 @@ export default function trackersTest() {
 
     it('anomalies push one signal abnormal and the rule picks it up', 0, () => {
       expect(vitalAlertFor(mockVitals(70, 'REST', half), 'REST') === undefined).assertTrue();
-      const hrv = applyAnomaly(mockVitals(70, 'REST', half), 'hrv', half);
+      const early = applyAnomaly(mockVitals(70, 'REST', half), 'hrv', anomalyProgress(1000), half);
+      expect(vitalAlertFor(early, 'REST') === undefined).assertTrue();
+      expect(anomalyProgress(ANOMALY_RAMP_MS / 2)).assertEqual(0.5);
+      const hrv = applyAnomaly(mockVitals(70, 'REST', half), 'hrv', 1, half);
       expect(vitalAlertFor(hrv, 'REST')).assertEqual('hrv');
       expect(vitalAlertFor(hrv, 'ACTIVE') === undefined).assertTrue();
-      const spo2 = applyAnomaly(mockVitals(70, 'REST', half), 'spo2', half);
+      const spo2 = applyAnomaly(mockVitals(70, 'REST', half), 'spo2', 1, half);
       expect(vitalAlertFor(spo2, 'REST')).assertEqual('spo2');
-      expect(applyAnomaly(mockVitals(70, 'REST', half), 'rhythm', half).irregularRhythm).assertTrue();
+      expect(applyAnomaly(mockVitals(70, 'REST', half), 'rhythm', 1, half).irregularRhythm).assertTrue();
+      expect(applyAnomaly(mockVitals(70, 'REST', half), 'rhythm', 0.3, half).irregularRhythm).assertFalse();
     });
 
     it('mocked vitals: plausible ranges, irregular only for very fast HR at rest', 0, () => {

@@ -83,6 +83,23 @@ Full-screen flows, most urgent wins (SOS > fall/alert > check-in > drug verdict)
 **The watch never dials 112 itself** (auto-dialling emergency services from a test build is unsafe). The `sos` row
 is the trigger: the phone app / agent alerts emergency contacts and offers the 112 call.
 
+## Alert rules (all deterministic, in code, configurable; demo heuristics, not clinical advice)
+
+| Alert | Rule | Where |
+|---|---|---|
+| Heart rate high / low | HR above / below the **current limit** for `ALERT_SUSTAIN_SEC` (5 s); then 60 s cooldown per direction | `vitals/AlarmRules.ets` (timing), `vitals/Limits.ets` (limits) |
+| Current limit | max: rest `REST_HIGH_BPM` 120 · active `HIGH_BPM` 140 · asleep `SLEEP_HIGH_BPM` 100; min: `LOW_BPM` 45 · asleep `SLEEP_LOW_BPM` 40. LQT1 −10 while active, LQT2 −10 at rest, LQT3 min +5, recent risky drug −10 on every max | `limitsFor()` in `vitals/Limits.ets`, values in `watch/.env` |
+| Slow recovery | < 12 bpm drop in the 60 s after an exercise bout of ≥ 20 s | `vitals/RecoveryTracker.ets` |
+| Low HRV (sim input) | HRV < 20 ms while not exercising, for the sustain time; 60 s cooldown | `vitalAlertFor()` in `vitals/MockedVitals.ets` |
+| Low SpO2 (sim input) | SpO2 < 92 %, for the sustain time; 60 s cooldown | same |
+| Irregular rhythm (sim input) | rhythm flag turns on (simulated: HR ≥ 170 without exertion, or the Rhythm tile) | `mockVitals()` / `applyAnomaly()` |
+| Stress (shown, no alert) | HR > resting × 1.35 at rest, and HRV < 25 ms when known | `isStressed()` in `vitals/Limits.ets` |
+| Fall | impact > 2.5 g, then still 1–4 s later → 30 s "Are you OK?" | `vitals/MotionAnalyzer.ets` |
+| SOS | *Need help* or unanswered fall → 10 s countdown → `sos` row | `WatchController.startSos()` |
+
+The sim-tile demo (Vitals page) drifts the signal over 8 s, holds 15 s and recovers over 6 s
+(`anomalyProgress()`), so the alert appears through the same sustain rule as a real signal would.
+
 ## Context: activity, falls, wear (beyond heart rate)
 
 PPG heart rate can't show QT, so the watch adds context that matters for LQTS:

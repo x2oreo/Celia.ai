@@ -56,16 +56,44 @@ export function mockVitals(bpm: number, activity: Activity, rand: () => number):
   return v;
 }
 
-/** Forces the chosen signal abnormal (demo). */
-export function applyAnomaly(v: MockVitals, anomaly: Anomaly, rand: () => number): MockVitals {
+/** A tapped anomaly drifts in, holds, then drifts back, so the demo looks like a real deterioration. */
+export const ANOMALY_RAMP_MS = 8000;
+export const ANOMALY_HOLD_MS = 15000;
+export const ANOMALY_RECOVER_MS = 6000;
+export const ANOMALY_TOTAL_MS = ANOMALY_RAMP_MS + ANOMALY_HOLD_MS + ANOMALY_RECOVER_MS;
+
+/** 0 = normal, 1 = fully abnormal, `elapsedMs` after the tap. */
+export function anomalyProgress(elapsedMs: number): number {
+  if (elapsedMs <= 0 || elapsedMs >= ANOMALY_TOTAL_MS) {
+    return 0;
+  }
+  if (elapsedMs < ANOMALY_RAMP_MS) {
+    return elapsedMs / ANOMALY_RAMP_MS;
+  }
+  if (elapsedMs < ANOMALY_RAMP_MS + ANOMALY_HOLD_MS) {
+    return 1;
+  }
+  return 1 - (elapsedMs - ANOMALY_RAMP_MS - ANOMALY_HOLD_MS) / ANOMALY_RECOVER_MS;
+}
+
+function lerp(from: number, to: number, k: number): number {
+  return from + (to - from) * k;
+}
+
+/** Blends the chosen signal from its normal value towards an abnormal one by `progress` (demo). */
+export function applyAnomaly(v: MockVitals, anomaly: Anomaly, progress: number, rand: () => number): MockVitals {
+  if (progress <= 0) {
+    return v;
+  }
   if (anomaly === 'hrv') {
-    v.hrvMs = Math.round(11 + rand() * 4);
-    v.breathingRate = Math.max(v.breathingRate, 20);
+    v.hrvMs = Math.max(5, Math.round(lerp(v.hrvMs, 11 + rand() * 2, progress)));
+    v.breathingRate = Math.round(lerp(v.breathingRate, 20, progress));
   } else if (anomaly === 'spo2') {
-    v.spo2 = Math.round((88.5 + rand()) * 10) / 10;
-    v.breathingRate = Math.max(v.breathingRate, 22);
+    v.spo2 = Math.round(lerp(v.spo2, 88.5 + rand() * 0.6, progress) * 10) / 10;
+    v.breathingRate = Math.round(lerp(v.breathingRate, 22, progress));
   } else if (anomaly === 'rhythm') {
-    v.irregularRhythm = true;
+    // Rhythm is yes/no: it becomes irregular once the episode is well under way.
+    v.irregularRhythm = v.irregularRhythm || progress >= 0.6;
   }
   return v;
 }
