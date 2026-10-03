@@ -19,7 +19,15 @@ The app's main design rule is that **verdicts come from deterministic data and t
 ## 2. Model and inference flow
 
 - **Model:** OpenAI Responses API, called from a Supabase Edge Function in the EU region (`backend/supabase/functions/agent`).
-  The model ID is set by the `OPENAI_MODEL` secret (default `gpt-6-astra`). The prompt is versioned (`PROMPT_VERSION` in
+  Models (all overridable via secrets):
+
+  | Use | Model | Why |
+  |---|---|---|
+  | Agent (`/agent`) | `gpt-6.1-sol`, reasoning effort `low` | Sol is the middle tier. In our own benchmark (5 agent tasks, 2 runs) it routed tools correctly 9/10 times at about 2.1–2.4 s per step. Its explanations passed the validator, matching Astra at lower cost. |
+  | Photo name reading (`/vision-extract`) | `gpt-6.1-sol` | Same model, with a strict JSON schema. |
+  | Speech-to-text (`/transcribe`) | `gpt-transcribe` | Supports `keywords`, which biases recognition toward medicine names (Klacid, ondansetron…). |
+  | Text-to-speech (`/speak`) | `gpt-4o-mini-tts`, voice `marin` | Outputs PCM directly; the voice style can be set with instructions. |
+  | Hands-free voice | `gpt-realtime-2.1` | The newest Realtime reasoning model, with better tool precision and alphanumeric recognition. `gpt-realtime-2.1-mini` is the cost switch. | The prompt is versioned (`PROMPT_VERSION` in
   `_shared/prompt.ts`) and the version is logged with every call.
 - **Agent loop runs on the phone.** The Edge Function is a stateless relay that does one model step per call. The app
   (`AgentCore`) executes each tool call locally, then sends the result back. The loop is capped at 5 steps per turn.

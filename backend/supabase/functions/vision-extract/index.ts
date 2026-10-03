@@ -58,7 +58,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const res = await openaiJson<{ output?: { type: string; content?: { type: string; text?: string }[] }[] }>(
       '/responses',
       {
-        model: env('OPENAI_VISION_MODEL', env('OPENAI_MODEL', 'gpt-6-astra')),
+        model: env('OPENAI_VISION_MODEL', env('OPENAI_MODEL', 'gpt-6.1-sol')),
+        reasoning: { effort: 'low' },
         input: [{
           role: 'user',
           content: [

@@ -90,3 +90,29 @@ the app that works with the tools (medicine check, emergency card…), then plan
 - Nothing has been tested on the emulator or a device yet: Core Speech English, Core Vision on the emulator, and
   Celia intent routing.
 - No call has been made with a real OpenAI key yet; the backend needs to be deployed first.
+
+### 2026-10-03 (cont.) — model selection and first live calls (Kaloyan)
+
+**Prompt:** "Research latest OpenAI models, pick best quality/cost — thinking of gpt-6.1-sol."
+
+**How the model was chosen**
+1. Listed the models available to our key through `/v1/models`, and read the model guide and pricing through Context7.
+2. Wrote a benchmark script (local scratch, not committed) that runs the real `prompt.ts` and `tools.ts` against
+   `gpt-6-luna`, `gpt-6.1-sol` and `gpt-6-astra`. It covered 5 routing cases plus one explanation step, scored against
+   the validator's rules.
+3. Results:
+   - All models chose the right tool in 9 or 10 of 10 cases. The only miss was a sensible "check before add".
+   - Every explanation passed the validator.
+   - Latency was about 1.6–2.4 s per step.
+   - Sol and Astra reject `reasoning.effort=none`.
+4. Choice: `gpt-6.1-sol` at `low` effort. Quality is close to Astra at mid-tier cost.
+
+**Live checks with the real key** (functions run locally with `deno run`)
+- **`/agent`:** "Can I take Klacid?" returned a `check_drug` call. The device tool output then produced a correct
+  KNOWN_RISK explanation that mentioned the escitalopram interaction (about 2.7 s per step).
+- **`/transcribe`:** our own TTS audio was transcribed back word for word.
+- **Realtime:** a `gpt-realtime-2.1` client secret was minted successfully.
+
+**Security**
+- The API key was pasted into the chat once. It is stored only in the gitignored `backend/supabase/functions/.env`
+  and will be rotated after the event.

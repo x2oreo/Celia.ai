@@ -29,7 +29,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return json(400, { error: `bad request: ${(err as Error).message}` });
   }
 
-  const model = env('OPENAI_REALTIME_MODEL', 'gpt-realtime');
+  const model = env('OPENAI_REALTIME_MODEL', 'gpt-realtime-2.1');
   // Realtime function tools use the same JSON schemas; `strict` is a Responses-only field.
   const tools = TOOLS.map((t) => ({ type: t.type, name: t.name, description: t.description, parameters: t.parameters }));
 
