@@ -269,6 +269,13 @@ export class AgentCore {
       this.proactive.emit(this.say('Your watch disconnected, so I can\'t see your heart rate right now.', [], true));
       return;
     }
+    if (alert.severity === 'CRITICAL') {
+      // Index already opened the SOS countdown for this alert; don't start a second emergency path.
+      this.cancelCheckIn();
+      this.proactive.emit(this.say(`Your heart rate is ${Math.round(alert.hr)} bpm. I've started the SOS countdown — ` +
+        'tap "I\'m OK" on that screen if you are fine.', [], true));
+      return;
+    }
     const replies: QuickRepliesPayload = { options: [QUICK_REPLY_OK, QUICK_REPLY_UNWELL] };
     const detail: string = alert.message !== '' ? ` ${alert.message}` : '';
     const reply: AgentReply = this.say(

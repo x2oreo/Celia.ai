@@ -17,6 +17,7 @@ import { keepScreenOn } from '../common/Screen';
 import { toast } from '../common/Toast';
 import { PrimaryButton, SecondaryButton } from '../components/Common';
 import { LiveStatus } from '../emergency/LiveStatus';
+import { AgentCore } from '../agent/AgentCore';
 
 @ComponentV2
 export struct SosPage {
@@ -101,6 +102,7 @@ export struct SosPage {
 
   private imOk(): void {
     SosController.get().ack();
+    AgentCore.get().emergencyCancelled();
     this.state = 'ACKED';
     stopPulse();
     LiveStatus.end();

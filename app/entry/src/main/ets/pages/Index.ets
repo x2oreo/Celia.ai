@@ -25,6 +25,8 @@ import { SosController } from '../emergency/SosController';
 import { askNotificationPermission } from '../common/Notify';
 import { AppLock } from '../common/AppLock';
 import { ReminderService } from '../reminders/ReminderService';
+import { AgentCore } from '../agent/AgentCore';
+import { AgentReply, EmergencyPayload, UiAction } from '../model/AgentTypes';
 
 @Entry
 @ComponentV2
@@ -37,6 +39,7 @@ struct Index {
     VitalsService.get().start('SIMULATED');
     WearNotifier.start();
     VitalsService.get().onAlert((a: VitalsAlert) => this.onAlert(a));
+    AgentCore.get().onProactive((r: AgentReply) => this.onAgentProactive(r));
     askNotificationPermission(this.getUIContext().getHostContext() as common.UIAbilityContext);
     AppLock.onLockChange((locked: boolean) => {
       this.locked = locked;
@@ -64,6 +67,16 @@ struct Index {
     const reason: string = a.hr > 0 ? `heart rate ${Math.round(a.hr)} — ${a.kind.toLowerCase().replace(/_/g, ' ')}` :
       a.kind.toLowerCase().replace(/_/g, ' ');
     this.navStack.pushPathByName(Routes.SOS, new SosParam(false, reason, true));
+  }
+
+  // Unanswered heart-rate check-in → the agent starts an emergency; hand it to the SOS screen.
+  private onAgentProactive(r: AgentReply): void {
+    const a: UiAction | undefined = r.actions.find((x: UiAction) => x.type === 'START_EMERGENCY');
+    if (a === undefined || !SosController.get().canAutoStart(Date.now())) {
+      return;
+    }
+    const p: EmergencyPayload = JSON.parse(a.payload) as EmergencyPayload;
+    this.navStack.pushPathByName(Routes.SOS, new SosParam(false, p.reason, true));
   }
 
   @Builder

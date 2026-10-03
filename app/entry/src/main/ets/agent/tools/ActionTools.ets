@@ -10,7 +10,10 @@ import {
   AddMedPayload, ConfirmPayload, EmergencyCardPayload, EmergencyPayload, UiAction
 } from '../../model/AgentTypes';
 
-export const EMERGENCY_COUNTDOWN_SEC: number = 10;
+import { COUNTDOWN_S } from '../../emergency/SosController';
+
+// Same countdown the SOS screen runs, so what Celia says matches what happens.
+export const EMERGENCY_COUNTDOWN_SEC: number = COUNTDOWN_S;
 
 let nextActionSeq: number = 1;
 
