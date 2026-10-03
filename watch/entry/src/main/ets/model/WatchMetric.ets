@@ -4,7 +4,7 @@
  */
 
 export type MetricType = 'hr_live' | 'hr_session' | 'hr_alert' | 'symptom' | 'medication_taken' | 'fall_detected' |
-  'wear_state' | 'vitals' | 'hr_recovery' | 'rhythm_alert' | 'sos';
+  'wear_state' | 'vitals' | 'hr_recovery' | 'rhythm_alert' | 'sos' | 'vitals_alert';
 
 /** Where the heart rate came from. `simulated` must always be labelled as demo data in the UI. */
 export type MetricSource = 'watch' | 'simulated';
@@ -112,6 +112,16 @@ export interface SosValues {
   accuracyM?: number;
 }
 
+export type VitalSignal = 'hrv' | 'spo2';
+
+/** Low HRV or low SpO2. These inputs are simulated today (see VitalsValues.mocked). */
+export interface VitalsAlertValues {
+  signal: VitalSignal;
+  value: number;
+  activity: Activity;
+  mocked: boolean;
+}
+
 /** Irregular rhythm flag. Simulated until watch apps can access Huawei's rhythm detection. */
 export interface RhythmAlertValues {
   bpm: number;
@@ -120,7 +130,8 @@ export interface RhythmAlertValues {
 }
 
 export type MetricPayload = HrLiveValues | HrSessionValues | HrAlertValues | SymptomValues | MedicationTakenValues |
-  FallValues | WearStateValues | VitalsValues | HrRecoveryValues | RhythmAlertValues | SosValues;
+  FallValues | WearStateValues | VitalsValues | HrRecoveryValues | RhythmAlertValues | SosValues |
+  VitalsAlertValues;
 
 /** One row as stored in Supabase (snake_case to match the table columns). */
 export interface MetricRow {

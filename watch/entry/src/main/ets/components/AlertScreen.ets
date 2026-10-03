@@ -23,6 +23,7 @@ export struct AlertScreen {
       case 'LOW':
         return Theme.LOW;
       case 'RHYTHM':
+      case 'SPO2':
         return Theme.DANGER;
       default:
         return Theme.WARN;
@@ -47,6 +48,10 @@ export struct AlertScreen {
         return 'HEART RATE LOW';
       case 'RHYTHM':
         return '))) IRREGULAR RHYTHM';
+      case 'HRV':
+        return '))) HRV LOW';
+      case 'SPO2':
+        return '))) OXYGEN LOW';
       default:
         return 'SLOW RECOVERY';
     }
@@ -75,6 +80,12 @@ export struct AlertScreen {
     }
     if (this.ctrl.alertKind === 'RECOVERY') {
       return 'bpm 1 min after exercise';
+    }
+    if (this.ctrl.alertKind === 'HRV') {
+      return `ms HRV${this.stateWord()}`;
+    }
+    if (this.ctrl.alertKind === 'SPO2') {
+      return `% SpO2${this.stateWord()}`;
     }
     return `bpm${this.stateWord()}`;
   }

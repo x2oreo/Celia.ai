@@ -24,7 +24,7 @@ export class AlarmRules {
   }
 
   static defaultTiming(): AlarmTiming {
-    const t: AlarmTiming = { sustainSec: 10, cooldownSec: 60 };
+    const t: AlarmTiming = { sustainSec: 5, cooldownSec: 60 };
     return t;
   }
 

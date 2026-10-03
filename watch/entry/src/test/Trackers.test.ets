@@ -2,7 +2,7 @@ import { describe, it, expect } from '@ohos/hypium';
 import { RestingHr } from '../main/ets/vitals/RestingHr';
 import { RecoveryTracker } from '../main/ets/vitals/RecoveryTracker';
 import { isAsleep } from '../main/ets/vitals/SleepDetector';
-import { mockVitals } from '../main/ets/vitals/MockedVitals';
+import { applyAnomaly, mockVitals, vitalAlertFor } from '../main/ets/vitals/MockedVitals';
 import { Activity, HrRecoveryValues } from '../main/ets/model/WatchMetric';
 
 function runRecovery(peak: number, after: number): HrRecoveryValues | undefined {
@@ -57,6 +57,16 @@ export default function trackersTest() {
       expect(isAsleep({ onWrist: false, stillSec: 900, bpm: 58, restingBpm: 60, hour: 2 })).assertFalse();
       expect(isAsleep({ onWrist: true, stillSec: 60, bpm: 58, restingBpm: 60, hour: 2 })).assertFalse();
       expect(isAsleep({ onWrist: true, stillSec: 900, bpm: 95, restingBpm: 60, hour: 2 })).assertFalse();
+    });
+
+    it('anomalies push one signal abnormal and the rule picks it up', 0, () => {
+      expect(vitalAlertFor(mockVitals(70, 'REST', half), 'REST') === undefined).assertTrue();
+      const hrv = applyAnomaly(mockVitals(70, 'REST', half), 'hrv', half);
+      expect(vitalAlertFor(hrv, 'REST')).assertEqual('hrv');
+      expect(vitalAlertFor(hrv, 'ACTIVE') === undefined).assertTrue();
+      const spo2 = applyAnomaly(mockVitals(70, 'REST', half), 'spo2', half);
+      expect(vitalAlertFor(spo2, 'REST')).assertEqual('spo2');
+      expect(applyAnomaly(mockVitals(70, 'REST', half), 'rhythm', half).irregularRhythm).assertTrue();
     });
 
     it('mocked vitals: plausible ranges, irregular only for very fast HR at rest', 0, () => {

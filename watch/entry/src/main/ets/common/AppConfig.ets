@@ -29,6 +29,8 @@ export interface AppConfigData {
   restingBpm: number;
   /** Fast-forward factor for demo scenarios. */
   demoSpeed: number;
+  /** HR must stay out of range this long before the alert screen. */
+  alertSustainSec: number;
 }
 
 export class AppConfig {
@@ -46,7 +48,8 @@ export class AppConfig {
       sleepLowBpm: 40,
       genotype: 'UNKNOWN',
       restingBpm: 65,
-      demoSpeed: 4
+      demoSpeed: 4,
+      alertSustainSec: 5
     };
     return cfg;
   }
@@ -106,6 +109,9 @@ export class AppConfig {
     }
     if (src.demoSpeed === 1 || src.demoSpeed === 2 || src.demoSpeed === 4 || src.demoSpeed === 8) {
       target.demoSpeed = src.demoSpeed;
+    }
+    if (typeof src.alertSustainSec === 'number' && src.alertSustainSec >= 1 && src.alertSustainSec <= 60) {
+      target.alertSustainSec = src.alertSustainSec;
     }
     if (typeof src.lowBpm === 'number' && src.lowBpm > 20 && src.lowBpm < 80) {
       target.lowBpm = src.lowBpm;

@@ -8,6 +8,8 @@ struct Tile {
   @Param @Require value: string;
   @Param simulated: boolean = false;
   @Param warn: boolean = false;
+  /** Simulated tiles are tappable: they force that signal abnormal (demo). */
+  @Event onTap: () => void = () => {};
 
   build() {
     Column({ space: 1 }) {
@@ -28,6 +30,8 @@ struct Tile {
     .justifyContent(FlexAlign.Center)
     .borderRadius(10)
     .backgroundColor(Theme.CARD)
+    .border({ width: this.simulated ? 1 : 0, color: Theme.WARN_DARK })
+    .onClick(() => this.onTap())
   }
 }
 
@@ -66,16 +70,26 @@ export struct VitalsPage {
         Tile({ label: 'Steps', value: `${this.ctrl.steps}` })
       }
       Row({ space: 4 }) {
-        Tile({ label: 'HRV', value: this.orDash(this.ctrl.hrvMs, ' ms'), simulated: true })
+        Tile({ label: 'HRV', value: this.orDash(this.ctrl.hrvMs, ' ms'), simulated: true,
+          warn: this.ctrl.hrvMs > 0 && this.ctrl.hrvMs < 20, onTap: () => {
+            this.ctrl.triggerAnomaly('hrv');
+          } })
         Tile({ label: 'SpO2', value: this.orDash(this.ctrl.spo2, '%'), simulated: true,
-          warn: this.ctrl.spo2 > 0 && this.ctrl.spo2 < 94 })
+          warn: this.ctrl.spo2 > 0 && this.ctrl.spo2 < 92, onTap: () => {
+            this.ctrl.triggerAnomaly('spo2');
+          } })
         Tile({ label: 'Breath', value: this.orDash(this.ctrl.breathingRate, '/min'), simulated: true })
       }
       Row({ space: 4 }) {
         Tile({ label: 'Rhythm', value: this.ctrl.irregularRhythm ? 'Irregular' : 'Regular', simulated: true,
-          warn: this.ctrl.irregularRhythm })
+          warn: this.ctrl.irregularRhythm, onTap: () => {
+            this.ctrl.triggerAnomaly('rhythm');
+          } })
         Tile({ label: 'Genotype', value: this.ctrl.genotype === 'UNKNOWN' ? '—' : this.ctrl.genotype })
       }
+      Text(this.ctrl.anomaly === 'none' ? 'Tap a sim tile to simulate' : `Simulating ${this.ctrl.anomaly} anomaly`)
+        .fontSize(8)
+        .fontColor(Theme.WARN)
     }
     .width('100%')
     .height('100%')

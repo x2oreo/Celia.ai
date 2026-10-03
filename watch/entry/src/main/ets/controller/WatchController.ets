@@ -16,6 +16,8 @@ import {
   MetricPayload,
   MetricType,
   RhythmAlertValues,
+  VitalSignal,
+  VitalsAlertValues,
   SosReason,
   SosValues,
   SymptomKind,
@@ -29,7 +31,7 @@ import { AlarmRules } from '../vitals/AlarmRules';
 import { ContextSensors } from '../vitals/ContextSensors';
 import { HeartRateSource } from '../vitals/HeartRateSource';
 import { BaseLimits, HrLimits, isStressed, limitsFor } from '../vitals/Limits';
-import { MOCKED_FIELDS, mockVitals } from '../vitals/MockedVitals';
+import { Anomaly, MOCKED_FIELDS, applyAnomaly, mockVitals, vitalAlertFor } from '../vitals/MockedVitals';
 import { MotionAnalyzer } from '../vitals/MotionAnalyzer';
 import { RecoveryTracker } from '../vitals/RecoveryTracker';
 import { RestingHr } from '../vitals/RestingHr';
@@ -47,7 +49,7 @@ import { SupabaseUploader } from '../sync/SupabaseUploader';
 export type SyncState = 'OFF' | 'OK' | 'PENDING' | 'ERROR';
 
 /** Which alert screen is up. */
-export type AlertKind = 'NONE' | 'HIGH' | 'LOW' | 'RHYTHM' | 'RECOVERY';
+export type AlertKind = 'NONE' | 'HIGH' | 'LOW' | 'RHYTHM' | 'RECOVERY' | 'HRV' | 'SPO2';
 
 /** Simulate-page override for the wearer's state. AUTO = motion sensor / scenario / sleep detector. */
 export type ActivityOverride = 'AUTO' | 'REST' | 'ACTIVE' | 'ASLEEP';
@@ -55,6 +57,9 @@ export type ActivityOverride = 'AUTO' | 'REST' | 'ACTIVE' | 'ASLEEP';
 const LIVE_EVERY_MS = 5000;
 const VITALS_EVERY_MS = 30000;
 const MOCK_EVERY_MS = 2000;
+/** How long a tapped anomaly (Vitals page) stays abnormal. */
+const ANOMALY_MS = 20000;
+const VITAL_ALERT_COOLDOWN_MS = 60000;
 const SYNC_EVERY_MS = 3000;
 const CONTEXT_EVERY_MS = 60000;
 /** Monitoring is continuous, so summaries are sent per window instead of per start/stop. */
@@ -125,6 +130,8 @@ export class WatchController {
   @Trace monitoringSec: number = 0;
   /** Fast-forward factor for demo scenarios (Settings). */
   @Trace demoSpeed: number = 4;
+  /** Signal currently forced abnormal from the Vitals page. */
+  @Trace anomaly: Anomaly = 'none';
 
   private ctx: common.UIAbilityContext | undefined = undefined;
   private cfg: AppConfigData = AppConfig.defaults();
@@ -150,6 +157,8 @@ export class WatchController {
   private lastLiveMs: number = 0;
   private lastVitalsMs: number = 0;
   private lastMockMs: number = 0;
+  private anomalyUntilMs: number = 0;
+  private lastVitalAlertMs: number = 0;
   private lastContextMs: number = 0;
   private lastSampleMs: number = 0;
   private monitoringSinceMs: number = 0;
@@ -178,6 +187,7 @@ export class WatchController {
     this.cfg = AppConfig.load(ctx);
     this.sourceKind = this.cfg.defaultSource;
     this.demoSpeed = this.cfg.demoSpeed;
+    this.alarm = new AlarmRules({ sustainSec: this.cfg.alertSustainSec, cooldownSec: 60 });
     this.genotype = this.cfg.genotype;
     this.base = {
       activeHigh: this.cfg.highBpm,
@@ -247,6 +257,18 @@ export class WatchController {
   cycleSource(): void {
     this.sourceKind = this.sourceKind === 'SENSOR' ? 'SIMULATED' : 'SENSOR';
     this.restart();
+  }
+
+  /** Vitals page: tap a simulated tile to push that signal abnormal for 20 s (demo of HRV/SpO2/rhythm alerts). */
+  triggerAnomaly(kind: Anomaly): void {
+    this.anomaly = kind;
+    this.anomalyUntilMs = Date.now() + ANOMALY_MS;
+    this.lastVitalAlertMs = 0;
+    this.lastMockMs = Date.now();
+    Logger.info(`anomaly: ${kind}`);
+    if (this.running && this.onWrist && this.bpm > 0) {
+      this.updateMockedVitals();
+    }
   }
 
   cycleDemoSpeed(): void {
@@ -598,7 +620,10 @@ export class WatchController {
 
   /** Simulated HRV / SpO2 / breathing / rhythm (Huawei measures them; watch apps can't read them yet). */
   private updateMockedVitals(): void {
-    const m = mockVitals(this.bpm, this.activity, Math.random);
+    if (this.anomaly !== 'none' && Date.now() > this.anomalyUntilMs) {
+      this.anomaly = 'none';
+    }
+    const m = applyAnomaly(mockVitals(this.bpm, this.activity, Math.random), this.anomaly, Math.random);
     this.hrvMs = m.hrvMs;
     this.spo2 = m.spo2;
     this.breathingRate = m.breathingRate;
@@ -610,6 +635,24 @@ export class WatchController {
       Logger.info('irregular rhythm (simulated)');
     }
     this.irregularRhythm = m.irregularRhythm;
+    const signal = vitalAlertFor(m, this.activity);
+    const now = Date.now();
+    if (signal !== undefined && now - this.lastVitalAlertMs >= VITAL_ALERT_COOLDOWN_MS) {
+      this.lastVitalAlertMs = now;
+      this.raiseVitalAlert(signal, signal === 'hrv' ? m.hrvMs : m.spo2, now);
+    }
+  }
+
+  private raiseVitalAlert(signal: VitalSignal, value: number, now: number): void {
+    const v: VitalsAlertValues = { signal: signal, value: value, activity: this.activity, mocked: true };
+    this.record('vitals_alert', v, now);
+    if (signal === 'hrv') {
+      this.showAlert('HRV', value, 'Simulated signal. Sit down and breathe slowly.');
+    } else {
+      this.showAlert('SPO2', value, 'Simulated signal. Sit up and breathe slowly.');
+    }
+    this.vibrate(1200);
+    Logger.info(`vitals alert: ${signal}`);
   }
 
   private vitalsSnapshot(): VitalsValues {

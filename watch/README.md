@@ -54,9 +54,12 @@ watch shows "Waiting for heart rate…".
 | Genotype, recently scanned risky drug | ✅ real (server) | `watch_context` row written by the phone app; polled every 60 s |
 | HRV | 🧪 simulated | Huawei watches measure it; watch apps can't read it yet |
 | Irregular rhythm | 🧪 simulated | ditto; simulated as "very fast HR without exertion" (≥ 170 at rest) |
+| Low HRV / low SpO2 alerts | 🧪 simulated input, real rule | HRV < 20 ms while not exercising, SpO2 < 92 % → `vitals_alert` + alert screen (`vitalAlertFor`) |
 | SpO2, breathing rate | 🧪 simulated | ditto |
 
-Simulated values are plausible for the current state and heart rate (`MockedVitals`), tagged **sim** on the watch,
+Simulated values are plausible for the current state and heart rate (`MockedVitals`), tagged **sim** on the watch
+(Home shows HRV next to bpm). **Tap a sim tile** on the Vitals page (HRV, SpO2, Rhythm) to push that signal abnormal
+for 20 s and see its alert. Heart-rate alerts need the limit crossed for `ALERT_SUSTAIN_SEC` (default 5 s),
 and listed in `payload.mocked` in the data. They show what the product does once Huawei opens these signals to
 watch apps.
 
@@ -124,6 +127,7 @@ What the demo shows is the part we can run on the emulator: our own monitoring l
 | `vitals` | every 30 s | every input above: `{ bpm, restingBpm, activity, stress, steps, hrvMs, spo2, breathingRate, irregularRhythm, highLimitBpm, lowLimitBpm, genotype, riskyDrug, mocked[] }` |
 | `hr_recovery` | 60 s after an exercise bout | `{ peakBpm, bpmAfter60s, dropBpm, slow }` |
 | `rhythm_alert` | irregular rhythm starts (simulated) | `{ bpm, activity, mocked: true }` |
+| `vitals_alert` | low HRV / low SpO2 (simulated input) | `{ signal: "hrv" \| "spo2", value, activity, mocked: true }` |
 | `sos` | SOS countdown ran out | `{ reason: "need_help" \| "fall", bpm, activity, lat?, lon?, accuracyM? }`. Location (WGS84) is fetched when the countdown starts (8 s timeout) and omitted if denied/unavailable |
 
 The watch also **reads** `watch_context` (`device_id`, `genotype`, `risky_drug`, `risky_drug_risk`, `risky_drug_at`).

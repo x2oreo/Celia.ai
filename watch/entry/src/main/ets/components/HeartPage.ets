@@ -119,13 +119,23 @@ export struct HeartPage {
           }
 
           Text(this.ctrl.bpm > 0 ? `${this.ctrl.bpm}` : '--')
-            .fontSize(64)
+            .fontSize(56)
             .fontWeight(FontWeight.Bolder)
             .fontColor(Theme.TEXT)
 
           Text(this.stateWord().length > 0 ? `bpm · ${this.stateWord()} · max ${this.ctrl.limitHigh}` : 'bpm')
             .fontSize(11)
             .fontColor(Theme.MUTED)
+
+          Row({ space: 4 }) {
+            Text('HRV').fontSize(11).fontColor(Theme.MUTED)
+            Text(this.ctrl.hrvMs > 0 ? `${this.ctrl.hrvMs} ms` : '—')
+              .fontSize(15)
+              .fontWeight(FontWeight.Bold)
+              .fontColor(this.ctrl.hrvMs > 0 && this.ctrl.hrvMs < 20 ? Theme.DANGER : Theme.TEXT)
+            Text('sim').fontSize(8).fontColor(Theme.WARN)
+          }
+          .margin({ top: 2 })
 
           Text(this.pillText())
             .fontSize(10)
@@ -134,7 +144,7 @@ export struct HeartPage {
             .padding({ left: 8, right: 8, top: 3, bottom: 3 })
             .borderRadius(10)
             .backgroundColor(Theme.CARD)
-            .margin({ top: 6 })
+            .margin({ top: 4 })
 
           if (this.ctrl.sourceKind === 'SIMULATED') {
             Text(`DEMO · ${this.ctrl.scenarioLabel}`).fontSize(9).fontColor(Theme.WARN).margin({ top: 2 })
