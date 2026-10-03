@@ -10,7 +10,9 @@ import { HistoryPage } from './HistoryPage';
 import { SettingsPage } from './SettingsPage';
 import { SosPage } from './SosPage';
 import { BystanderPage } from './BystanderPage';
-import { DoctorPrepPage } from './DoctorPrepPage';
+import { DoctorVisitsPage } from './DoctorVisitsPage';
+import { NewVisitPage } from './NewVisitPage';
+import { DoctorVisitPage } from './DoctorVisitPage';
 import { PharmacyCardPage } from './PharmacyCardPage';
 import { PrivacyPage } from './PrivacyPage';
 import { SymptomLogPage } from './SymptomLogPage';
@@ -20,7 +22,7 @@ import { ChatsPage } from './ChatsPage';
 import { AgentPage } from './AgentPage';
 import { ScanPage } from './ScanPage';
 import { LockScreen } from '../components/LockScreen';
-import { Routes, SosParam, TabIndex } from '../common/Routes';
+import { Routes, SosParam } from '../common/Routes';
 import { TabRequest } from '../common/TabRequest';
 import { LocalStore } from '../data/LocalStore';
 import { Profile } from '../model/Profile';
@@ -102,18 +104,20 @@ struct Index {
     this.navStack.pushPathByName(route, null);
   }
 
-  // The agent conversation lives on tab 0. It is in front when that tab is selected and nothing is pushed over it.
+  // The agent conversation is the stage page (Routes.AGENT_CHAT). It is in front when it is the top page.
   private chatInFront(): boolean {
-    return this.navStack.size() === 0 && TabRequest.current() === TabIndex.HOME;
+    const names: string[] = this.navStack.getAllPathName();
+    return names.length > 0 && names[names.length - 1] === Routes.AGENT_CHAT;
   }
 
-  // "Ask the agent" from anywhere: bring the conversation to the front. A running SOS stays where it is.
+  // "Ask the agent" from anywhere: bring the stage to the front (once). A running SOS stays where it is.
   private openChat(): void {
     if (this.chatInFront() || this.navStack.getAllPathName().includes(Routes.SOS)) {
       return;
     }
-    this.navStack.clear();
-    TabRequest.open(TabIndex.HOME);
+    if (this.navStack.popToName(Routes.AGENT_CHAT) < 0) {
+      this.navStack.pushPathByName(Routes.AGENT_CHAT, null);
+    }
   }
 
   // CRITICAL heart alert → wrist/phone alert + SOS countdown (unless one is running or in cooldown).
@@ -216,7 +220,11 @@ struct Index {
     } else if (name === Routes.BYSTANDER) {
       BystanderPage()
     } else if (name === Routes.DOCTOR_PREP) {
-      DoctorPrepPage()
+      DoctorVisitsPage()
+    } else if (name === Routes.DOCTOR_VISIT_NEW) {
+      NewVisitPage()
+    } else if (name === Routes.DOCTOR_VISIT) {
+      DoctorVisitPage()
     } else if (name === Routes.PHARMACY_CARD) {
       PharmacyCardPage()
     } else if (name === Routes.PRIVACY) {
@@ -250,7 +258,7 @@ struct Index {
       .backgroundColor($r('app.color.bg'))
       .navDestination(this.routeMap)
       .onNavBarStateChange((visible: boolean) => {
-        // The agent on tab 0 ends live voice while a pushed page covers the tabs.
+        // Lets the tabs know when a pushed page covers them.
         TabRequest.setCovered(!visible);
       })
 

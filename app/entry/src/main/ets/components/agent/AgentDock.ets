@@ -1,5 +1,6 @@
-// The bottom of the agent screen: the voice dock (scan, talk, end or type) and the chat bar (scan, input, send or
-// back to voice). Both only report taps; the page decides what they do.
+// The bottom of the agent stage (DESIGN.md §10.1a): the voice dock and the chat bar. Voice dock, idle: camera, coral
+// mic, "Aa" (type). Live: Mute, ink End, "Aa". Recording one question (tap-to-talk): cancel, ink send, "Aa".
+// Both only report taps; the page decides what they do.
 
 import { VoicePhase } from '../../voice/RealtimeSession';
 
@@ -19,41 +20,97 @@ export struct VoiceDock {
   };
 
   @Builder
-  dockSide(icon: Resource, a11y: Resource) {
+  sideIcon(icon: Resource, a11y: Resource, onTap: () => void) {
     Row() {
-      Image(icon).width(22).height(22).fillColor($r('app.color.ink'))
+      Image(icon).width(24).height(24).fillColor($r('app.color.ink'))
     }
     .width($r('app.float.dock_side'))
     .height($r('app.float.dock_side'))
     .justifyContent(FlexAlign.Center)
-    .borderRadius(26)
+    .borderRadius(30)
     .backgroundColor($r('app.color.surface'))
     .border({ width: 1, color: $r('app.color.border') })
+    .accessibilityGroup(true)
     .accessibilityText(a11y)
     .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.95 })
+    .onClick(onTap)
   }
 
-  // Coral mic to talk; outlined with a struck mic when muted; ink "send" while a tap-to-talk question records.
   @Builder
-  dockMic() {
+  sideWord(word: ResourceStr, a11y: Resource, on: boolean, onTap: () => void) {
     Row() {
-      Image(this.recording ? $r('app.media.ic_send') : (this.muted ? $r('app.media.ic_mic_off') :
-        $r('app.media.ic_mic')))
-        .width(30)
-        .height(30)
-        .fillColor(this.recording ? $r('app.color.chat_user_text') : (this.muted ? $r('app.color.ink') :
-          $r('app.color.on_accent')))
+      Text(word)
+        .fontSize($r('app.float.font_badge'))
+        .fontWeight(FontWeight.Bold)
+        .fontColor(on ? $r('app.color.chat_user_text') : $r('app.color.ink'))
+        .maxLines(1)
+    }
+    .width($r('app.float.dock_side'))
+    .height($r('app.float.dock_side'))
+    .justifyContent(FlexAlign.Center)
+    .borderRadius(30)
+    .backgroundColor(on ? $r('app.color.chat_user_bg') : $r('app.color.surface'))
+    .border({ width: on ? 0 : 1, color: $r('app.color.border') })
+    .accessibilityGroup(true)
+    .accessibilityText(a11y)
+    .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.95 })
+    .onClick(onTap)
+  }
+
+  // Idle: the coral mic. The microphone only opens on this tap (or a tap on the orb).
+  @Builder
+  micButton() {
+    Row() {
+      Image($r('app.media.ic_mic')).width(30).height(30).fillColor($r('app.color.on_accent'))
     }
     .width($r('app.float.dock_main'))
     .height($r('app.float.dock_main'))
     .justifyContent(FlexAlign.Center)
-    .borderRadius(36)
-    .backgroundColor(this.recording ? $r('app.color.chat_user_bg') : (this.muted ? $r('app.color.surface') :
-      $r('app.color.brand_accent')))
-    .border({ width: this.muted ? 1.5 : 0, color: $r('app.color.border_strong') })
-    .opacity(this.phase === 'CONNECTING' ? 0.6 : 1)
-    .accessibilityText(this.recording ? $r('app.string.a11y_send') : (this.muted ? $r('app.string.a11y_unmute') :
-      (this.phase === 'OFF' ? $r('app.string.a11y_mic') : $r('app.string.a11y_mute'))))
+    .borderRadius(40)
+    .backgroundColor($r('app.color.brand_accent'))
+    .accessibilityGroup(true)
+    .accessibilityText($r('app.string.a11y_mic'))
+    .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.95 })
+    .onClick(() => {
+      this.onMic();
+    })
+  }
+
+  // Live: End is ink, not red. Ending a conversation is not an emergency.
+  @Builder
+  endButton() {
+    Column({ space: 2 }) {
+      Image($r('app.media.ic_close')).width(20).height(20).fillColor($r('app.color.chat_user_text'))
+      Text($r('app.string.agent_end'))
+        .fontSize($r('app.float.font_badge'))
+        .fontWeight(FontWeight.Bold)
+        .fontColor($r('app.color.chat_user_text'))
+    }
+    .width($r('app.float.dock_main'))
+    .height($r('app.float.dock_main'))
+    .justifyContent(FlexAlign.Center)
+    .borderRadius(40)
+    .backgroundColor($r('app.color.chat_user_bg'))
+    .accessibilityGroup(true)
+    .accessibilityText($r('app.string.a11y_end'))
+    .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.95 })
+    .onClick(() => {
+      this.onEnd();
+    })
+  }
+
+  @Builder
+  sendButton() {
+    Row() {
+      Image($r('app.media.ic_send')).width(30).height(30).fillColor($r('app.color.chat_user_text'))
+    }
+    .width($r('app.float.dock_main'))
+    .height($r('app.float.dock_main'))
+    .justifyContent(FlexAlign.Center)
+    .borderRadius(40)
+    .backgroundColor($r('app.color.chat_user_bg'))
+    .accessibilityGroup(true)
+    .accessibilityText($r('app.string.a11y_send'))
     .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.95 })
     .onClick(() => {
       this.onMic();
@@ -62,28 +119,26 @@ export struct VoiceDock {
 
   build() {
     Row() {
-      Stack() {
-        this.dockSide($r('app.media.ic_camera'), $r('app.string.a11y_camera'))
-      }
-      .onClick(() => {
-        this.onScan();
-      })
-      this.dockMic()
-      if (this.active) {
-        Stack() {
-          this.dockSide($r('app.media.ic_close'), $r('app.string.a11y_end'))
-        }
-        .onClick(() => {
+      if (this.recording) {
+        this.sideIcon($r('app.media.ic_close'), $r('app.string.a11y_end'), () => {
           this.onEnd();
         })
+        this.sendButton()
+      } else if (this.active) {
+        this.sideWord(this.muted ? $r('app.string.agent_unmute') : $r('app.string.agent_mute'),
+          this.muted ? $r('app.string.a11y_unmute') : $r('app.string.a11y_mute'), this.muted, () => {
+            this.onMic();
+          })
+        this.endButton()
       } else {
-        Stack() {
-          this.dockSide($r('app.media.ic_keyboard'), $r('app.string.a11y_keyboard'))
-        }
-        .onClick(() => {
-          this.onKeyboard();
+        this.sideIcon($r('app.media.ic_scan'), $r('app.string.a11y_camera'), () => {
+          this.onScan();
         })
+        this.micButton()
       }
+      this.sideWord($r('app.string.agent_type'), $r('app.string.a11y_keyboard'), false, () => {
+        this.onKeyboard();
+      })
     }
     .width('100%')
     .justifyContent(FlexAlign.SpaceEvenly)

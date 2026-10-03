@@ -3,8 +3,9 @@
 // of the same thread. Speech, text and taps all go through AgentCore (SafetyGate first, then the model with
 // deterministic tools). Cards come from deterministic tool payloads, never from model text.
 //
-// AgentConversation is embedded in tab 0 (pages/HomePage.ets) and is the only conversation in the app.
-// AgentPage keeps Routes.AGENT_CHAT working for its callers: it hands the question over and shows tab 0.
+// AgentPage (Routes.AGENT_CHAT) is the agent stage: a full-screen page pushed from the orb in the tab bar, the
+// agent line on Today, or "Ask the agent" anywhere. AgentConversation is the only conversation in the app; its
+// history lives in AgentCore, so the stage can be closed and reopened without losing the thread.
 
 import { keepOnRestore } from '../model/Chat';
 import { common } from '@kit.AbilityKit';
@@ -21,15 +22,15 @@ import { VoiceInput } from '../voice/VoiceInput';
 import { VoiceOutput } from '../voice/VoiceOutput';
 import { RealtimeSession, RealtimeStatus, VoicePhase } from '../voice/RealtimeSession';
 import { SosController } from '../emergency/SosController';
-import { AskParam, Routes, SosParam, TabIndex } from '../common/Routes';
-import { TabRequest } from '../common/TabRequest';
+import { AskParam, Routes, SosParam } from '../common/Routes';
 import { Config } from '../common/Config';
 import { Logger } from '../common/Logger';
-import { StatusStrip } from '../components/Common';
+import { RoundIconButton, StatusStrip } from '../components/Common';
 import { ToolStep, ToolUi, toolArg } from '../components/AgentCards';
 import { stagePhase } from '../components/agent/AgentLogic';
 import { VoiceStage } from '../components/agent/VoiceStage';
-import { AgentMode, AgentThread, AgentWelcome, ChatItem } from '../components/agent/AgentThread';
+import { AgentCaptions, AgentMode, AgentThread, AgentWelcome, ChatItem } from '../components/agent/AgentThread';
+import { Brief, HomeBrief } from '../components/agent/HomeBrief';
 import { ChatBar, VoiceDock } from '../components/agent/AgentDock';
 
 const log: Logger = new Logger('AgentPage');
@@ -37,8 +38,13 @@ const log: Logger = new Logger('AgentPage');
 @ComponentV2
 export struct AgentConversation {
   @Consumer('navStack') navStack: NavPathStack = new NavPathStack();
-  @Param active: boolean = true;       // false while another tab or a pushed page is in front
-  @BuilderParam aboveDock: () => void = this.nothing;   // the home's quick-action row
+  @Param active: boolean = true;       // false while another page is in front of the stage
+  @Event onClose: () => void = () => {
+  };
+  @Local line: string = HomeBrief.latest().line;   // the agent's sentence, same as on Today
+  @Local showThread: boolean = false;  // voice mode: the full conversation instead of the live captions
+  @Local elapsed: number = 0;          // seconds since the voice session started
+  private clockTimer: number = -1;
   @Local mode: AgentMode = 'VOICE';
   @Local items: ChatItem[] = [];
   @Local draft: string = '';
@@ -121,6 +127,9 @@ export struct AgentConversation {
     this.offs.push(AgentPrompt.onAsk((q: string) => {
       this.send(q);
     }));
+    this.offs.push(HomeBrief.onChange((b: Brief) => {
+      this.line = b.line;
+    }));
     for (const q of AgentPrompt.drain()) {
       this.send(q);
     }
@@ -132,6 +141,42 @@ export struct AgentConversation {
     }
     this.offs = [];
     this.endVoice();
+    this.stopClock();
+  }
+
+  // "VOICE · 0:42": the clock runs while a voice session or a recording is on.
+  @Monitor('phase', 'recording')
+  onVoiceChange(m: IMonitor): void {
+    if (this.voiceActive()) {
+      if (this.clockTimer === -1) {
+        this.elapsed = 0;
+        this.clockTimer = setInterval((): void => {
+          this.elapsed++;
+        }, 1000);
+      }
+    } else {
+      this.stopClock();
+    }
+  }
+
+  private stopClock(): void {
+    if (this.clockTimer !== -1) {
+      clearInterval(this.clockTimer);
+      this.clockTimer = -1;
+    }
+  }
+
+  private elapsedText(): string {
+    const sec: number = this.elapsed % 60;
+    return `${Math.floor(this.elapsed / 60)}:${sec < 10 ? '0' : ''}${sec}`;
+  }
+
+  // Orb size: 168 until something is said, 120 above the captions, 84 above the full thread.
+  private orbDim(): number {
+    if (!this.hasThread()) {
+      return 168;
+    }
+    return this.showThread ? 84 : 120;
   }
 
   // Rebuilds the thread from the open chat. Restored chats carry display cards only (no confirm or SOS cards).
@@ -492,21 +537,129 @@ export struct AgentConversation {
   }
 
   @Builder
-  welcome() {
-    AgentWelcome({
-      mode: this.mode,
-      onStarter: (label: Resource) => {
-        this.send(this.str(label));
+  captions() {
+    AgentCaptions({
+      items: this.items,
+      userLive: this.userLive,
+      agentLive: this.agentLive,
+      liveTools: this.liveTools,
+      hearing: this.phase === 'HEARING',
+      busy: this.busy,
+      busyLabel: this.busyLabel,
+      resolved: this.resolved,
+      accepted: this.accepted,
+      sosClosedAt: this.sosClosedAt,
+      onSend: (text: string) => {
+        this.send(text);
+      },
+      onResolve: (actionId: string, accepted: boolean) => {
+        this.resolve(actionId, accepted);
+      },
+      onScan: () => {
+        this.pickAndScan();
+      },
+      onOpenSos: (a: UiAction) => {
+        this.openSos(a);
+      },
+      onPickCandidate: (c: ScanCandidate) => {
+        this.pickCandidate(c);
       }
     })
       .layoutWeight(1)
   }
 
   @Builder
-  nothing() {
+  welcome() {
+    AgentWelcome({
+      mode: this.mode,
+      line: this.line,
+      onStarter: (label: Resource) => {
+        this.send(this.str(label));
+      },
+      onOpen: (route: string) => {
+        this.navStack.pushPathByName(route, null);
+      }
+    })
+      .layoutWeight(1)
   }
 
-  // The embedded conversation is not destroyed on a tab switch: end live voice when it goes out of sight.
+  // Header: close (chevron down), then "VOICE · 0:42" while a session runs, else Chats and New chat.
+  @Builder
+  header() {
+    Row({ space: 8 }) {
+      RoundIconButton({
+        icon: $r('app.media.ic_chevron_left'),
+        angle: -90,
+        label: $r('app.string.a11y_close'),
+        onTap: () => {
+          this.onClose();
+        }
+      })
+      if (this.voiceActive()) {
+        Text($r('app.string.agent_voice_clock', this.elapsedText()))
+          .fontFamily('monospace')
+          .fontSize($r('app.float.font_micro'))
+          .fontWeight(FontWeight.Bold)
+          .letterSpacing(1.2)
+          .fontColor($r('app.color.ink_3'))
+          .textAlign(TextAlign.Center)
+          .layoutWeight(1)
+        Blank().width($r('app.float.chip_height'))
+      } else {
+        Blank()
+        Text($r('app.string.home_chats'))
+          .fontSize($r('app.float.font_button'))
+          .fontWeight(FontWeight.Bold)
+          .fontColor($r('app.color.ink'))
+          .height($r('app.float.chip_height'))
+          .padding({ left: 16, right: 16 })
+          .backgroundColor($r('app.color.surface'))
+          .border({ width: 1, color: $r('app.color.border') })
+          .borderRadius(22)
+          .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.95 })
+          .accessibilityText($r('app.string.a11y_chats'))
+          .onClick(() => {
+            this.navStack.pushPathByName(Routes.CHATS, null);
+          })
+        RoundIconButton({
+          icon: $r('app.media.ic_plus'),
+          label: $r('app.string.a11y_new_chat'),
+          onTap: () => {
+            this.showThread = false;
+            AgentCore.get().newChat();
+          }
+        })
+      }
+    }
+    .width('100%')
+    .height(56)
+    .padding({ left: 16, right: 16 })
+  }
+
+  // "Show conversation" / "Hide conversation": captions and the full thread are two views of the same turns.
+  @Builder
+  threadToggle() {
+    Row({ space: 6 }) {
+      Image($r('app.media.ic_chevron_left'))
+        .width(14)
+        .height(14)
+        .fillColor($r('app.color.ink_2'))
+        .rotate({ angle: this.showThread ? -90 : 90 })
+      Text(this.showThread ? $r('app.string.agent_hide_thread') : $r('app.string.agent_show_thread'))
+        .fontSize($r('app.float.font_small'))
+        .fontWeight(600)
+        .fontColor($r('app.color.ink_2'))
+    }
+    .height($r('app.float.chip_height'))
+    .padding({ left: 16, right: 16 })
+    .accessibilityGroup(true)
+    .onClick(() => {
+      this.showThread = !this.showThread;
+      this.toBottom();
+    })
+  }
+
+  // A page pushed over the stage, or the stage being left: end live voice. The microphone never stays open unseen.
   @Monitor('active')
   onActiveChange(m: IMonitor): void {
     if (!this.active && (this.voiceActive() || RealtimeSession.get().getStatus() === 'CONNECTING')) {
@@ -516,6 +669,7 @@ export struct AgentConversation {
 
   build() {
     Column() {
+      this.header()
       if (this.micBlocked && this.mode === 'VOICE') {
         StatusStrip({
           kind: 'ERROR',
@@ -536,7 +690,7 @@ export struct AgentConversation {
           phase: this.stage(),
           level: this.level,
           muted: this.muted,
-          compact: this.hasThread(),
+          dim: this.orbDim(),
           full: this.immersive(),
           label: this.stageLabel(),
           onOrbTap: () => {
@@ -548,12 +702,16 @@ export struct AgentConversation {
           .layoutWeight(this.immersive() ? 1 : 0)
       }
       if (!this.immersive()) {
-        if (this.hasThread()) {
+        if (!this.hasThread()) {
+          this.welcome()
+        } else if (this.mode === 'CHAT' || this.showThread) {
           this.thread()
         } else {
-          this.welcome()
+          this.captions()
         }
-        this.aboveDock()
+        if (this.mode === 'VOICE' && this.hasThread()) {
+          this.threadToggle()
+        }
       }
       if (this.mode === 'VOICE') {
         VoiceDock({
@@ -594,29 +752,38 @@ export struct AgentConversation {
     }
     .width('100%')
     .height('100%')
+    .backgroundColor($r('app.color.bg'))
   }
 }
 
-// Routes.AGENT_CHAT, kept for its callers (Medicines "ask", Chats). A see-through destination that hands the
-// question to the one conversation, then clears the stack and shows tab 0.
+// Routes.AGENT_CHAT: the agent stage. Opened with an AskParam it sends that question straight away.
 @ComponentV2
 export struct AgentPage {
   @Consumer('navStack') navStack: NavPathStack = new NavPathStack();
+  @Local shown: boolean = true;
 
   build() {
     NavDestination() {
+      AgentConversation({
+        active: this.shown,
+        onClose: () => {
+          this.navStack.pop();
+        }
+      })
     }
     .hideTitleBar(true)
-    .mode(NavDestinationMode.DIALOG)
+    .backgroundColor($r('app.color.bg'))
+    .onShown(() => {
+      this.shown = true;
+    })
+    .onHidden(() => {
+      this.shown = false;
+    })
     .onReady((ctx: NavDestinationContext) => {
       const p: Object | undefined = ctx.pathInfo.param as Object | undefined;
       if (p instanceof AskParam) {
         AgentPrompt.ask(p.question);
       }
-      setTimeout((): void => {
-        this.navStack.clear(false);
-        TabRequest.open(TabIndex.HOME);
-      }, 0);
     })
   }
 }

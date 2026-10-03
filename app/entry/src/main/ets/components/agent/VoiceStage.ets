@@ -1,40 +1,39 @@
-// Voice stage: the orb and what it is doing (DESIGN.md §6.6a). Full size until something is said, then it steps back
-// above the conversation. While a session is live and nothing has been said it takes the whole height (`full`). The page owns the voice state and decides what a tap on the orb does.
+// Voice stage: the orb and what it is doing (DESIGN.md §6.6a, §10.1a screens 02 and 03). 168 until something is
+// said, 120 above the captions, 84 above the full thread. While a session is live and nothing has been said it takes
+// the whole height (`full`). The page owns the voice state and decides what a tap on the orb does.
 
 import { Config } from '../../common/Config';
 import { VoicePhase } from '../../voice/RealtimeSession';
 import { SourceBadge } from '../Common';
 import { VoiceOrb } from '../VoiceOrb';
 
-const ORB_DIM: number = 168;
-const ORB_DIM_COMPACT: number = 84;
-const STAGE_OPEN: number = 264;      // orb at full size, nothing said yet
-const STAGE_COMPACT: number = 124;   // orb at half size above the conversation
 const STAGE_MS: number = 320;
+const ROOM: number = 1.3;   // stage height per orb size: room for the halo
 
 @ComponentV2
 export struct VoiceStage {
   @Param phase: VoicePhase = 'OFF';
   @Param level: number = 0;
   @Param muted: boolean = false;
-  @Param compact: boolean = false;     // a thread exists: the orb steps back
+  @Param dim: number = 168;
   @Param full: boolean = false;        // live session, nothing said yet: the stage fills the screen
   @Param label: ResourceStr = '';
   @Event onOrbTap: () => void = () => {
   };
 
+  // Neutral for the user's voice, coral for the agent: the same family as the orb's halo.
+  private dotColor(): Resource {
+    return this.phase === 'HEARING' || this.phase === 'LISTENING' ? $r('app.color.ink_4') :
+      $r('app.color.brand_accent');
+  }
+
   build() {
     Column() {
       Stack() {
-        VoiceOrb({
-          dim: this.compact ? ORB_DIM_COMPACT : ORB_DIM,
-          phase: this.phase,
-          level: this.level,
-          muted: this.muted
-        })
+        VoiceOrb({ dim: this.dim, phase: this.phase, level: this.level, muted: this.muted })
       }
       .width('100%')
-      .height(this.compact ? STAGE_COMPACT : STAGE_OPEN)
+      .height(this.dim * ROOM)
       .animation({ duration: STAGE_MS, curve: Curve.EaseInOut })
       .accessibilityGroup(true)
       .accessibilityText($r('app.string.a11y_orb'))
@@ -42,13 +41,19 @@ export struct VoiceStage {
         this.onOrbTap();
       })
 
-      Text(this.label)
-        .fontSize(this.compact ? $r('app.float.font_badge') : $r('app.float.font_title_3'))
-        .fontWeight(FontWeight.Bold)
-        .fontColor(this.compact ? $r('app.color.ink_3') : $r('app.color.ink'))
-        .maxLines(1)
-        .textOverflow({ overflow: TextOverflow.Ellipsis })
-        .padding({ left: 20, right: 20 })
+      Row({ space: 8 }) {
+        if (this.phase !== 'OFF' && !this.muted) {
+          Circle().width(8).height(8).fill(this.dotColor())
+        }
+        Text(this.label)
+          .fontSize($r('app.float.font_button'))
+          .fontWeight(FontWeight.Bold)
+          .fontColor(this.muted ? $r('app.color.ink_3') : $r('app.color.brand_text'))
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+      }
+      .padding({ left: 20, right: 20 })
+      .accessibilityGroup(true)
 
       if (Config.DEMO_VOICE_INPUT) {
         SourceBadge({ label: $r('app.string.demo_voice_badge') })
@@ -58,6 +63,6 @@ export struct VoiceStage {
     .width('100%')
     .height(this.full ? '100%' : 'auto')
     .justifyContent(FlexAlign.Center)
-    .padding({ bottom: 12 })
+    .padding({ bottom: 8 })
   }
 }
