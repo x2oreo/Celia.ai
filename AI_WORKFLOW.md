@@ -248,3 +248,45 @@ connected and is working correctly with the AI"
 Realtime, and Celia intents. A parallel Claude Code session is redesigning the UI on the same branch; the two
 sessions coordinated file ownership by message.
 
+
+### 2026-10-03 (cont.) — UI redesign to the design system (Kaloyan, with Claude Code)
+
+**Goal.** The app was built before the design system existed. This session brought every phone screen in line
+with `docs/design/DESIGN.md` and the three design screenshots (B1–B6), and built the two home-screen cards.
+
+**How the model worked**
+- Plan mode first: two read-only sub-agents inventoried the UI layer and the product docs, the model read the
+  design screenshots itself, and a gap table and phased plan were approved before any edit.
+- Six phases, one or two commits each, ordered by demo value so the app stayed shippable after every phase:
+  tokens → shared components → navigation, home and chat → Medicines and scan → check-in, SOS, Heart and
+  Emergency → secondary screens and widgets → cleanup.
+- Every phase ran the terminal loop: `hvigorw assembleHap`, `hdc install` of the unsigned HAP, `uitest uiInput`
+  taps and `snapshot_display` screenshots, which the model compared with the design screenshots.
+- Form Kit was checked in Context7 (FormExtensionAbility, `form_config.json`, `postCardAction`, `updateForm`)
+  before the widget code was written.
+
+**What changed**
+- Tokens: warm palette, ink scale, risk tint/text/border, full type scale, light and dark. The old colour names
+  were remapped first so nothing broke mid-migration, then removed.
+- Components: ink / secondary / quiet / danger buttons, risk shape and badge (Unknown is a dashed circle with
+  "?"), orb avatar, heart-rate ring, chips, strips, typing dots, verdict card with the risk header band.
+- Structure: four tabs (Agent = home, Medicines, Heart, Emergency). The chat is a pushed page. A WARN heart alert
+  opens the agent's check-in as a bottom sheet.
+- Widgets: "Can I take this?" (2×2) and Medical alert (2×4), fed by a snapshot the app writes.
+
+**Safety decisions kept from before**
+- Verdict colour and word still come only from the deterministic verdict; the chat card is built from the tool
+  payload, not from model text.
+- A CRITICAL heart alert still goes straight to the SOS countdown. Only WARN alerts use the check-in sheet. The
+  design shows the sheet for a 165 bpm reading; changing that escalation path is a medical-safety decision and
+  was left to the team.
+
+**Verified on the emulator:** home, chat with an inline verdict, Medicines, check result, Heart, Emergency,
+Settings, Bystander, the check-in sheet, the SOS countdown, and a card tap opening the scanner. 104 unit tests pass.
+
+**Not verified:** how the two cards render on the home screen (they are registered, but adding one needs a manual
+long-press), dark mode on a device, and the largest font size.
+
+**Two sessions, one branch.** A second Claude Code session was rebuilding the voice chat at the same time. The
+sessions agreed file ownership by message and staged explicit paths only. One commit of this session still
+picked up the other session's new strings from the shared `string.json`; nothing was lost.
