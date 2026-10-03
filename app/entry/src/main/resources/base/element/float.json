@@ -61,10 +61,6 @@
       "value": "60fp"
     },
     {
-      "name": "font_hero",
-      "value": "56fp"
-    },
-    {
       "name": "font_title_1",
       "value": "28fp"
     },
@@ -151,6 +147,18 @@
     {
       "name": "avatar_tab",
       "value": "24vp"
+    },
+    {
+      "name": "avatar_hero",
+      "value": "168vp"
+    },
+    {
+      "name": "dock_side",
+      "value": "52vp"
+    },
+    {
+      "name": "dock_main",
+      "value": "72vp"
     }
   ]
 }

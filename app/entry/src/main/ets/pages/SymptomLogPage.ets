@@ -126,7 +126,7 @@ export struct SymptomLogPage {
             }
             .width('100%')
             .padding(16)
-            .backgroundColor($r('app.color.risk_known_soft'))
+            .backgroundColor($r('app.color.risk_known_tint'))
             .borderRadius($r('app.float.radius_m'))
           }
 

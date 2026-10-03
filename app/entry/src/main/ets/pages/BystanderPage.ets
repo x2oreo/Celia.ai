@@ -125,7 +125,7 @@ export struct BystanderPage {
               Circle()
                 .width(this.beat ? 150 : 128)
                 .height(this.beat ? 150 : 128)
-                .fill(this.running ? $r('app.color.card_fixed_alert') : $r('app.color.risk_known_soft'))
+                .fill(this.running ? $r('app.color.card_fixed_alert') : $r('app.color.risk_known_tint'))
                 .animation({ duration: 120, curve: Curve.EaseOut })
               Text(this.running ? `${this.count}` : 'CPR')
                 .fontSize($r('app.float.font_title_1'))
@@ -177,7 +177,7 @@ export struct BystanderPage {
             .width('100%')
             .alignItems(HorizontalAlign.Start)
             .padding(16)
-            .backgroundColor($r('app.color.risk_known_soft'))
+            .backgroundColor($r('app.color.risk_known_tint'))
             .borderRadius($r('app.float.radius_m'))
           }
         }
