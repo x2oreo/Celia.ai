@@ -12,6 +12,8 @@ export interface SummaryInput {
   flagged: string[];
   heartAlerts: number;
   symptoms: number;
+  visitFor: string[];       // fixed purpose titles of the visit plan ("Infection"), never the patient's own words
+  avoid: string[];          // known-risk medicine names the plan flags for this visit
 }
 
 // The summary must never reassure about a medicine, give doses or tell anyone to start/stop something: the
@@ -42,6 +44,8 @@ export function parseInput(b: Record<string, unknown>): SummaryInput | undefined
     flagged: lines(b.flagged),
     heartAlerts: count(b.heartAlerts),
     symptoms: count(b.symptoms),
+    visitFor: lines(b.visitFor),
+    avoid: lines(b.avoid),
   };
 }
 

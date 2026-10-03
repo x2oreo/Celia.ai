@@ -16,6 +16,7 @@ import {
   flaggedChecks, heartEvents, questions, ReportItem, Specialty, specialtyName, symptomEvents, watchOuts,
   WATCH_OUTS_ALL
 } from './DoctorPrep';
+import { AvoidDrug, PlanGroup } from './VisitPlan';
 
 export const REPORT_VERSION: number = 1;
 const WINDOW_DAYS: number = 90;
@@ -61,6 +62,47 @@ export interface ReportSummary {
   symptoms: number;
 }
 
+export interface ReportAvoidDrug {
+  name: string;
+  risk: string;         // RiskLevel (deterministic, curated list)
+}
+
+export interface ReportAvoidGroup {
+  title: string;        // fixed purpose title, e.g. "Infection"
+  likely: string;
+  avoid: ReportAvoidDrug[];
+  options: string[];    // NOT_LISTED medicines of the same use
+}
+
+// The visit this report was made for (doctor/VisitPlan.ets). Absent on reports made before visits existed.
+export interface ReportVisit {
+  doctor: string;
+  reason: string;       // the patient's own words
+  groups: ReportAvoidGroup[];
+  aiSummary: string;    // checked AI summary, '' when none; shown labelled
+}
+
+export function reportVisit(doctor: string, reason: string, plan: PlanGroup[], aiSummary: string): ReportVisit {
+  const v: ReportVisit = {
+    doctor: doctor,
+    reason: reason,
+    groups: plan.filter((g: PlanGroup) => g.avoid.length > 0 || g.options.length > 0).map((g: PlanGroup) => {
+      const rg: ReportAvoidGroup = {
+        title: g.title,
+        likely: g.likely,
+        avoid: g.avoid.map((a: AvoidDrug) => {
+          const d: ReportAvoidDrug = { name: a.name, risk: a.risk };
+          return d;
+        }),
+        options: g.options
+      };
+      return rg;
+    }),
+    aiSummary: aiSummary
+  };
+  return v;
+}
+
 export interface ReportPayload {
   v: number;
   generatedAt: number;
@@ -79,6 +121,7 @@ export interface ReportPayload {
   doses: ReportDoses;
   watchOuts: string[];
   questions: string[];
+  visit?: ReportVisit;
 }
 
 function isRisk(risk: string): boolean {
@@ -103,7 +146,8 @@ export function doseAdherence(reminders: DoseReminder[], logs: DoseLog[], now: n
 }
 
 export function buildReport(p: Profile, meds: Medication[], scans: ScanRecord[], events: AppEvent[],
-  s: Specialty, resting: DailyResting[], reminders: DoseReminder[], doseLogs: DoseLog[], now: number): ReportPayload {
+  s: Specialty, resting: DailyResting[], reminders: DoseReminder[], doseLogs: DoseLog[], now: number,
+  visit?: ReportVisit): ReportPayload {
   const since: number = now - WINDOW_DAYS * DAY_MS;
   const reportMeds: ReportMed[] = meds.map((m: Medication) => {
     const v: DrugVerdict = DrugChecker.get().checkSync(m.ingredient !== '' ? m.ingredient : m.name);
@@ -151,5 +195,8 @@ export function buildReport(p: Profile, meds: Medication[], scans: ScanRecord[],
     watchOuts: watchOuts(s).concat(WATCH_OUTS_ALL),
     questions: questions(s, flagged.length > 0)
   };
+  if (visit !== undefined) {
+    payload.visit = visit;
+  }
   return payload;
 }

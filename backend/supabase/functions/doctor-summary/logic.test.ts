@@ -27,4 +27,8 @@ Deno.test('input is clipped and typed', () => {
   const s = parseInput({ specialty: 'GP', medicines: 'Nadolol — not listed\n\nKlacid — known risk', heartAlerts: '3' });
   assertEquals(s?.medicines, ['Nadolol — not listed', 'Klacid — known risk']);
   assertEquals(s?.heartAlerts, 3);
+  assertEquals(s?.visitFor, []);
+  const v = parseInput({ specialty: 'Dentist', visitFor: 'Pain\nInfection', avoid: ['Clarithromycin', 7] });
+  assertEquals(v?.visitFor, ['Pain', 'Infection']);
+  assertEquals(v?.avoid, ['Clarithromycin']);
 });

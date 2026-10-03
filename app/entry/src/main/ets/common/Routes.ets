@@ -7,7 +7,9 @@ export class Routes {
   static readonly CHECK_RESULT: string = 'checkResult';   // param: CheckParam
   static readonly HISTORY: string = 'history';
   static readonly SETTINGS: string = 'settings';
-  static readonly DOCTOR_PREP: string = 'doctorPrep';
+  static readonly DOCTOR_PREP: string = 'doctorPrep';     // the doctor visits gallery; param: DoctorPrepParam | null
+  static readonly DOCTOR_VISIT_NEW: string = 'doctorVisitNew';   // param: DoctorPrepParam | null
+  static readonly DOCTOR_VISIT: string = 'doctorVisit';   // param: VisitParam
   static readonly SOS: string = 'sos';                     // param: SosParam
   static readonly BYSTANDER: string = 'bystander';
   static readonly PHARMACY_CARD: string = 'pharmacyCard';
@@ -31,7 +33,16 @@ export class TabIndex {
   static readonly EMERGENCY: number = 3;
 }
 
-// Opens doctor prep on this specialty (doctor/DoctorPrep Specialty), e.g. from the agent's tile.
+// Opens one saved doctor visit (doctor/VisitStore DoctorVisit.id).
+export class VisitParam {
+  id: number;
+
+  constructor(id: number) {
+    this.id = id;
+  }
+}
+
+// Starts a new doctor visit on this specialty (doctor/DoctorPrep Specialty), e.g. from the agent's tile.
 export class DoctorPrepParam {
   specialty: string;
 

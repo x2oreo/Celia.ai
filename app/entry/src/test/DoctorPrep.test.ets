@@ -6,6 +6,11 @@ import { ScanRecord } from '../main/ets/model/ScanRecord';
 import { AppEvent } from '../main/ets/model/AppEvent';
 import { beatIntervalMs } from '../main/ets/bystander/Metronome';
 import { parseSummary, summaryFields } from '../main/ets/doctor/DoctorSummary';
+import {
+  AvoidDrug, cautionNames, guessPurposes, knownNames, PlanGroup, visitPlan, visitText
+} from '../main/ets/doctor/VisitPlan';
+import { DoctorVisit, parseVisits } from '../main/ets/doctor/VisitStore';
+import { ReportVisit, reportVisit } from '../main/ets/doctor/ReportPayload';
 
 function profile(): Profile {
   const p: Profile = { condition: 'LQTS', genotype: 'LQT1', hasIcd: false, notes: 'Allergic to penicillin',
@@ -44,6 +49,88 @@ export default function doctorPrepTest() {
       expect(parseSummary('oops').result).assertEqual('REJECTED');
       const ok: string = '{"summary":"LQT1 patient on nadolol; one flagged antibiotic in the last 90 days."}';
       expect(parseSummary(ok).result).assertEqual('OK');
+    });
+  });
+
+  describe('DoctorVisits', () => {
+    it('guessesThePurposeFromTheReason', 0, () => {
+      expect(guessPurposes('Sore throat and fever for three days')).assertDeepEquals(['INFECTION', 'PAIN']);
+      expect(guessPurposes('I keep throwing up').includes('NAUSEA')).assertTrue();
+      expect(guessPurposes('routine check-up')).assertDeepEquals(['CHECKUP']);
+      // matched at the start of a word only: "year" is not "ear", "scold" is not "cold"
+      expect(guessPurposes('same as last year, do not scold me').length).assertEqual(0);
+      expect(guessPurposes('').length).assertEqual(0);
+    });
+
+    it('infectionPlanFlagsMacrolidesAndOffersUnlistedAntibiotics', 0, () => {
+      const plan: PlanGroup[] = visitPlan('sinus infection', 'GP');
+      expect(plan[0].purpose).assertEqual('INFECTION');
+      expect(plan[0].fromReason).assertTrue();
+      const names: string[] = plan[0].avoid.map((a: AvoidDrug) => a.name);
+      expect(names.includes('Clarithromycin')).assertTrue();
+      expect(names.includes('Ciprofloxacin')).assertTrue();
+      expect(names.includes('Amoxicillin')).assertFalse();
+      expect(plan[0].options.includes('Amoxicillin')).assertTrue();
+      // worst first, and nothing "not listed" is ever in the avoid list
+      expect(plan[0].avoid[0].risk).assertEqual('KNOWN_RISK');
+      for (const g of plan) {
+        expect(g.avoid.some((a: AvoidDrug) => a.risk === 'NOT_LISTED')).assertFalse();
+      }
+    });
+
+    it('fallsBackToWhatTheDoctorUsuallyPrescribes', 0, () => {
+      const plan: PlanGroup[] = visitPlan('', 'PSYCHIATRIST');
+      expect(plan.map((g: PlanGroup) => g.purpose)).assertDeepEquals(['MOOD', 'SLEEP']);
+      expect(plan[0].fromReason).assertFalse();
+      expect(knownNames(plan).includes('Citalopram')).assertTrue();
+      expect(knownNames(plan).includes('Sertraline')).assertFalse();
+      expect(cautionNames(plan).includes('Sertraline')).assertTrue();
+      expect(visitPlan('toothache', 'DENTIST').length <= 4).assertTrue();
+    });
+
+    it('visitTextLeadsWithReasonAndAvoidList', 0, () => {
+      const plan: PlanGroup[] = visitPlan('tooth extraction', 'DENTIST');
+      const text: string = visitText('DENTIST', 'Dr Nowak', 'Tooth extraction', plan,
+        buildBrief(profile(), [], [], [], 'DENTIST', NOW), NOW);
+      expect(text.includes('Dr Nowak')).assertTrue();
+      expect(text.indexOf('REASON FOR THE VISIT') < text.indexOf('PLEASE DO NOT PRESCRIBE')).assertTrue();
+      expect(text.indexOf('PLEASE DO NOT PRESCRIBE') < text.indexOf('CURRENT MEDICINES')).assertTrue();
+      expect(text.includes('Ondansetron')).assertTrue();
+    });
+
+    it('storedVisitsAreValidated', 0, () => {
+      const raw: string = JSON.stringify([
+        { id: 5, specialty: 'DENTIST', doctor: 'Dr A', reason: 'toothache', createdAt: 5, summary: '', sharedAt: 0 },
+        { id: 9, specialty: 'GP', doctor: 7, reason: 'x', createdAt: 9 },
+        { id: 9, specialty: 'GP', reason: 'duplicate id', createdAt: 10 },
+        { id: 3, specialty: 'WIZARD', reason: 'x', createdAt: 3 },
+        'nonsense', null
+      ]);
+      const visits: DoctorVisit[] = parseVisits(raw);
+      expect(visits.length).assertEqual(2);
+      expect(visits[0].id).assertEqual(9);        // newest first
+      expect(visits[0].doctor).assertEqual('');
+      expect(visits[0].sharedAt).assertEqual(0);
+      expect(parseVisits('oops').length).assertEqual(0);
+      expect(parseVisits('{"a":1}').length).assertEqual(0);
+    });
+
+    it('summarySendsPurposeTitlesNotTheReason', 0, () => {
+      const reason: string = 'Sore throat since my sister visited';
+      const plan: PlanGroup[] = visitPlan(reason, 'GP');
+      const fields: Record<string, string> = summaryFields(buildBrief(profile(), [], [], [], 'GP', NOW), 'GP',
+        'LQT1', plan);
+      const all: string = Object.keys(fields).map((k: string) => fields[k]).join(' ');
+      expect(all.includes('sister')).assertFalse();
+      expect(fields['visitFor'].includes('Infection')).assertTrue();
+      expect(fields['avoid'].includes('Clarithromycin')).assertTrue();
+    });
+
+    it('reportCarriesTheVisit', 0, () => {
+      const v: ReportVisit = reportVisit('Dr Nowak', 'sinus infection', visitPlan('sinus infection', 'GP'), '');
+      expect(v.reason).assertEqual('sinus infection');
+      expect(v.groups[0].title).assertEqual('Infection');
+      expect(v.groups[0].avoid[0].risk).assertEqual('KNOWN_RISK');
     });
   });
 

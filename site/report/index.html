@@ -12,7 +12,8 @@
 <!--
   Doctor report viewer for the Celia app (F-31), design: docs/design/DESIGN.md §10.2a "Web report".
   Link: /report/#<id>.<key>. End-to-end encrypted on the patient's phone; the Supabase `share` function stores only
-  ciphertext and deletes it after 48 hours. Built from deterministic on-device data (doctor/ReportPayload.ets), no AI.
+  ciphertext and deletes it after 48 hours. Built from deterministic on-device data (doctor/ReportPayload.ets). The
+  only model text is the optional visit summary, shown in its own labelled box.
 -->
 <link rel="stylesheet" href="../assets/celia.css">
 <style>
@@ -43,6 +44,26 @@
   }
   .pill.soon { background: var(--possible-tint); color: var(--possible-text); }
   .pill svg { width: 14px; height: 14px; }
+
+  .visit { margin-bottom: 14px; display: grid; gap: 12px; }
+  .why { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-l); padding: 16px 18px; display: grid; gap: 6px; }
+  .why .t-label { color: var(--ink-3); }
+  .why p { margin: 0; font-weight: 600; color: var(--ink); }
+  .avoid { background: var(--surface); border: 1.5px solid var(--known); border-radius: var(--r-ml); overflow: hidden; break-inside: avoid; }
+  .avoid-head { background: var(--known-tint); color: var(--known-text); padding: 12px 16px; display: flex; align-items: center; gap: 10px; }
+  .avoid-head svg { width: 30px; height: 30px; flex: none; }
+  .avoid-head b { display: block; font-size: 17px; line-height: 22px; font-weight: 800; }
+  .avoid-head span { font-size: 13px; line-height: 16px; }
+  .avoid-body { padding: 14px 16px 16px; display: grid; gap: 14px; }
+  .avoid-body h3 { margin: 0 0 6px; color: var(--ink-3); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { background: var(--surface-alt); color: var(--ink); border-radius: 15px; padding: 5px 11px; font-weight: 700; font-size: 14px; line-height: 20px; }
+  .avoid-body .rule { border-top: 1px solid var(--divider); padding-top: 12px; display: grid; gap: 4px; }
+  .avoid-body .rule b { color: var(--ink); }
+  .avoid-body .rule p { margin: 0; color: var(--ink-2); font-size: 14px; line-height: 20px; }
+  .ai { background: var(--surface-alt); border-radius: var(--r-ml); padding: 14px 16px; display: grid; gap: 6px; }
+  .ai .mono-label { font: 700 11px/1 var(--mono); letter-spacing: 0.06em; color: var(--ink-3); text-transform: uppercase; }
+  .ai p { margin: 0; color: var(--ink); }
 
   .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 14px; }
   @media (max-width: 560px) { .tiles { grid-template-columns: repeat(2, 1fr); } }
@@ -244,6 +265,79 @@
     return out;
   }
 
+  // The visit this report was made for: the patient's reason, then what not to prescribe (fixed rules over the QT
+  // list, built on the phone). Untrusted like the rest: only strings reach the page, as text.
+  function str(v, max) { return typeof v === 'string' ? v.slice(0, max) : ''; }
+  function visitBlock(v, specialtyName) {
+    if (!v || typeof v !== 'object') { return null; }
+    var groups = (Array.isArray(v.groups) ? v.groups : []).slice(0, 6).map(function (g) {
+      var avoid = (g && Array.isArray(g.avoid) ? g.avoid : []).slice(0, 40).map(function (a) {
+        return { name: str(a && a.name, 40), risk: str(a && a.risk, 20) };
+      }).filter(function (a) { return a.name; });
+      return {
+        title: str(g && g.title, 40),
+        known: avoid.filter(function (a) { return a.risk === 'KNOWN_RISK'; }),
+        caution: avoid.filter(function (a) { return a.risk !== 'KNOWN_RISK'; }),
+        options: (g && Array.isArray(g.options) ? g.options : []).slice(0, 20).map(function (o) { return str(o, 40); }).filter(Boolean)
+      };
+    }).filter(function (g) { return g.title; });
+    var box = el('div', 'visit');
+    box.setAttribute('data-reveal', '');
+    var reason = str(v.reason, 300);
+    if (reason) {
+      var why = el('div', 'why');
+      why.appendChild(el('span', 't-label', 'Reason for the visit, in the patient’s words'));
+      why.appendChild(el('p', '', reason));
+      box.appendChild(why);
+    }
+    var known = groups.filter(function (g) { return g.known.length > 0; });
+    var caution = [];
+    groups.forEach(function (g) { g.caution.forEach(function (a) { if (caution.indexOf(a.name) < 0) { caution.push(a.name); } }); });
+    var options = groups.filter(function (g) { return g.options.length > 0; });
+    if (known.length > 0 || caution.length > 0) {
+      var card = el('section', 'avoid');
+      var head = el('div', 'avoid-head');
+      head.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + RISK.KNOWN_RISK.shape + '</svg>';
+      var ht = el('div');
+      ht.appendChild(el('b', '', 'Please don’t prescribe'));
+      ht.appendChild(el('span', '', 'On the known-risk QT list · likely choices for this ' + specialtyName.toLowerCase() + ' visit'));
+      head.appendChild(ht);
+      card.appendChild(head);
+      var body = el('div', 'avoid-body');
+      known.forEach(function (g) {
+        var grp = el('div');
+        grp.appendChild(el('h3', 't-label', g.title));
+        var chips = el('div', 'chips');
+        g.known.forEach(function (a) { chips.appendChild(el('span', 'chip', a.name)); });
+        grp.appendChild(chips);
+        body.appendChild(grp);
+      });
+      if (caution.length > 0) {
+        var c = el('div', 'rule');
+        c.appendChild(el('b', '', 'Check first · possible or conditional QT risk'));
+        c.appendChild(el('p', '', caution.join(', ')));
+        body.appendChild(c);
+      }
+      if (options.length > 0) {
+        var o = el('div', 'rule');
+        o.appendChild(el('b', '', 'Not on the QT lists'));
+        options.forEach(function (g) { o.appendChild(el('p', '', g.title + ': ' + g.options.join(', '))); });
+        o.appendChild(el('p', 't-caption', 'Not listed doesn’t guarantee safety. The choice is the doctor’s.'));
+        body.appendChild(o);
+      }
+      card.appendChild(body);
+      box.appendChild(card);
+    }
+    var ai = str(v.aiSummary, 600);
+    if (ai) {
+      var a = el('div', 'ai');
+      a.appendChild(el('span', 'mono-label', 'AI summary · written by a model from the facts below'));
+      a.appendChild(el('p', '', ai));
+      box.appendChild(a);
+    }
+    return box.childNodes.length > 0 ? box : null;
+  }
+
   function render(r, expiresAt) {
     r.resting = cleanResting(r.resting);
     var root = $('report');
@@ -266,6 +360,9 @@
     head.appendChild(meta);
     if (p.notes) { head.appendChild(el('div', 't-body-sm', 'Notes: ' + p.notes)); }
     root.appendChild(head);
+
+    var visit = visitBlock(r.visit, String(r.specialtyName || 'doctor'));
+    if (visit) { root.appendChild(visit); }
 
     var tiles = el('div', 'tiles');
     tiles.setAttribute('data-reveal', '');

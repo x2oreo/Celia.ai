@@ -755,6 +755,38 @@ The tap-to-talk fallback is also untested end to end.
 - **Not validated:** nothing was looked at on the emulator (it was in use by parallel sessions). The enzyme data is
   a curated subset from public tables and still needs a pharmacist's check.
 
+### 2026-10-04 (early) — Kaloyan + Claude Code: doctor visits as a history of pages (branch `kaloyan/agent-home`)
+
+- **Goal:** the owner described the doctor screen he wanted instead of the single brief with specialty chips: a
+  gallery of the doctors you have seen, one page each; a new visit asks for the kind of doctor and why you are
+  going, guesses what the visit is about, and the page tells the doctor what not to prescribe, summary first,
+  depth below, Share at the top.
+- **What the AI did:** read DESIGN.md and the v2 screens first, then split the work into fixed logic and screens.
+  `doctor/VisitPlan.ets` (new, pure): the reason is matched against keyword lists (13 purposes), each purpose maps
+  to drug classes, and the medicines and their risk level come from the bundled QT dataset. No model takes part in
+  the guess or in the avoid list. `doctor/VisitStore.ets` keeps the visits on the phone (validated on read).
+  Three pages replace `DoctorPrepPage`: `DoctorVisitsPage` (gallery), `NewVisitPage` (live guess while typing),
+  `DoctorVisitPage` (at a glance → don't prescribe → AI summary → folded brief). The encrypted web report
+  (`site/report`) shows the reason and the same avoid card at the top. The AI summary now also gets the plan's
+  purpose titles and known-risk names, never the reason the user typed. DESIGN.md §10.1a "07" rewritten first.
+- **Human decisions:** the page layout and order came from the owner's description. The AI chose to keep the guess
+  rule-based instead of asking the model (works offline, testable, nothing typed leaves the phone) and to put Share
+  in the header as the one exception to the pinned-action rule.
+- **Validated:** 248 phone tests green (7 new in `DoctorPrep.test.ets`: guess, plan, text, stored visits, summary
+  fields, report), 3 `doctor-summary` backend tests, HAP build. On the emulator: the empty gallery, the new-visit
+  form with the dentist tile and a starter chip ("Toothache" → Pain, Procedure, Infection, 13 flagged), the visit
+  page down to the AI summary (returned by the deployed backend).
+- **Not validated:** the folded "In depth" rows, the gallery with saved cards, delete, Share and Copy link on the
+  new page, and the web report's new block in a browser (script syntax-checked only): the shared emulator was
+  taken by another session's voice test. The `doctor-summary` function is not redeployed, so the deployed one
+  ignores the two new fields. The keyword lists and class mapping are the AI's draft and need a clinician's
+  read, like the dataset. `pages/DoctorPrepPage.ets` is no longer routed but was left in the tree because another
+  session had uncommitted edits in it.
+- **Lessons:** the first draft passed the visit into `@Builder` functions as an argument; the summary would never
+  have appeared after loading (arguments are passed by value, the lesson T3 wrote down yesterday). Reading the
+  workflow log before writing the page caught it before the first build.
+
+
 ### 2026-10-04 (early morning) — Kaloyan + Claude Code: the owner's v2 design applied; integrator re-check (branch `kaloyan/agent-home`)
 - **Asked:** apply the owner's Claude Design v2 screens, the "Dawn" silk orb, Lucide icons, and move the orb to the
   bottom of the agent stage. A second session (the integrator) re-checks the result.

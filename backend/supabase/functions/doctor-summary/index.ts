@@ -1,6 +1,7 @@
 // POST /functions/v1/doctor-summary — a 2-3 sentence summary at the top of the doctor brief (T13, F-31).
 // The brief itself is deterministic and complete without this. The model only condenses what the app sends:
-// specialty, genotype, the brief's medicine lines with their risk words, interactions, flagged checks and counts.
+// specialty, genotype, the brief's medicine lines with their risk words, interactions, flagged checks, counts, and
+// the visit plan's fixed purpose titles and known-risk medicine names.
 // Never the patient's name, notes, contacts or symptom notes (the app leaves those out). The reply is checked
 // (logic.ts: length, no reassurance, no doses) and dropped when it fails; the app checks it again.
 // Request: SummaryInput as JSON strings/arrays. Response: { summary } or { summary: '', dropped: true }.
@@ -10,7 +11,9 @@ import { checkSummary, parseInput, SummaryInput } from './logic.ts';
 
 const PROMPT = `You help a patient with long QT syndrome brief a doctor. Write 2 or 3 short, factual sentences for
 the doctor named in the input, using ONLY the facts given: genotype, current medicines and their QT-risk words,
-interactions, medicines the patient was offered and flagged, and the counts of heart alerts and symptoms.
+interactions, medicines the patient was offered and flagged, the counts of heart alerts and symptoms, and, when
+given, what the visit is likely about and the known-risk medicines flagged for it. Lead with what matters for this
+visit: the medicine groups to avoid. Name at most four medicines.
 Hard rules: never call any medicine safe, harmless or without risk; keep every risk word exactly as given; no doses;
 never tell anyone to start or stop a medicine; no diagnosis; no greetings. Plain English, under 400 characters.`;
 
@@ -31,6 +34,8 @@ function userText(i: SummaryInput): string {
     block('Offered and flagged (last 90 days)', i.flagged),
     `Heart alerts (90 days): ${i.heartAlerts}`,
     `Symptoms logged (90 days): ${i.symptoms}`,
+    block('This visit is likely about', i.visitFor),
+    block('Known-risk medicines flagged for this visit (the word "known risk" is final)', i.avoid),
   ].join('\n');
 }
 
