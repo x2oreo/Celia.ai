@@ -76,3 +76,14 @@ what it produced, how we validated it.
 - **Validated:** all migrations applied in order on a local Postgres 17 (except `pg_net`, which is Supabase-only);
   the views were checked with test rows: wear state, offline detection, empty names and unknown symptom kinds
   filtered out, simulated rows labelled.
+
+### 2026-10-03 — Mark + Claude Code: using watch doses and "How do you feel?" answers
+- **Asked:** make the watch's "Took nadolol" taps and symptom answers useful beyond a log.
+- **Produced:** migration `…250000_watch_insights.sql`: `watch_daily_summary` (per-day doses, symptoms, alerts,
+  resting HR) and `watch_insights` (fixed rules with fixed texts: symptom within 24 h of a QT-risk drug, fainting,
+  repeated symptoms, no dose logged in 26 h). The `sos` function now adds the last watch dose and any symptom from
+  the last hour to the SMS and call. `docs/team/watch-data-for-phone.md` hands the phone/agent wiring to Georgi
+  and Kaloyan; the missed-dose nudge was handed to the watch session as a spec.
+- **Validated:** all migrations on a local Postgres 17 with test rows (each insight fires once, `fine` answers and
+  old symptoms are ignored, wording checked); 10 Deno tests for the SOS message pass (3 new) and `deno check` passes.
+- **Not yet validated:** the new SOS text over real Twilio; the views on Supabase (migration not pushed yet).
