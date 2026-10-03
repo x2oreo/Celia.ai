@@ -131,6 +131,27 @@ Next wave after the P0 core. Full tasks with acceptance criteria, verification a
 | F-33 | Watch buzz on risky drug check | T15 | Mark |
 | F-34 | Settings screen | T16 | Georgi |
 
+### Creative wave (F-35..F-47)
+
+Daily-companion and HarmonyOS-native features. Tasks T18..T30 in [`TASKS.md`](TASKS.md) (Phase E). Emu: ✅ runs on
+the emulator · ⚠️ verify early / real device, with a labelled fallback.
+
+| ID | Feature | Kit | Emu | Task | Owner |
+|---|---|---|---|---|---|
+| F-35 | Live View: SOS countdown with "I'm OK", live HR, last check on lock screen | Live View Kit (notification fallback) | ⚠️ | T18 | Georgi · Kaloyan |
+| F-36 | Box barcode scan (EAN / GS1 DataMatrix → GTIN → ingredient) | Scan Kit | ✅ photo | T19 | Mark · Georgi |
+| F-37 | More Celia intents: log symptom, add med, pharmacy card, read card, take dose | Intents Kit | ⚠️ | T20 | Kaloyan |
+| F-38 | Medication reminders that fire with the app closed; Taken / Snooze; missed doses in report | reminderAgentManager | ✅ | T21 | Georgi · Mark |
+| F-39 | Genotype trigger coach (LQT1 exertion/swim, LQT2 no sudden sounds, LQT3 rest/sleep) | static data | ✅ | T22 | Kaloyan · Georgi |
+| F-40 | Travel & pharmacy mode: auto country number + card language; pharmacy card in local language | Location Kit | ✅ sim | T23 | Georgi |
+| F-41 | Bystander mode: 3 steps, call, CPR metronome 110/min, ICD note | vibrator, Form Kit | ✅ | T24 | Georgi |
+| F-42 | Read emergency card aloud (P2) | Core Speech Kit TTS | ⚠️ | T25 | Kaloyan |
+| F-43 | Nearest hospital / pharmacy / AED (P2) | Map Kit + Site Kit | ⚠️ | T26 | Mark |
+| F-44 | Symptom diary by text or voice, structured + validated, HR window attached | `/agent` tool, validator | ✅ | T27 | Kaloyan · Georgi |
+| F-45 | Locked data, open card: biometric/PIN gate, encrypted RDB, card always readable | User Authentication Kit, ArkData | ✅ | T28 | Mark · Georgi |
+| F-46 | Privacy ledger: "What left my phone" (field names, never values) | NetworkKit wrapper | ✅ | T29 | Kaloyan |
+| F-47 | Accessible & calm UI: large text, screen reader, haptics not sudden sounds, one-hand | ArkUI accessibility | ✅ | T30 | Georgi |
+
 ## 5. Robustness & quality (scored under "Technical execution")
 
 - Agent rules from ARCHITECTURE: verdict = `DrugChecker`; validate every reply; emergency keywords bypass the LLM;
@@ -152,6 +173,9 @@ Next wave after the P0 core. Full tasks with acceptance criteria, verification a
 5. Robustness: model returns garbage → deterministic fallback (F-03, tests in repo).
 6. Close: on-device data, open platform, condition packs next.
 
+Optional beat if F-36 / F-41 are done: scan the box barcode instead of the photo in beat 2, or show bystander
+mode opened from the lock-screen widget after beat 4.
+
 ## 7. Build order
 
 Follows the checkpoints in [`PLAN.md`](PLAN.md): T+2h skeleton on emulator + Supabase + agent "hello" → T+6h
@@ -164,5 +188,5 @@ T+20h docs (`AI_WORKFLOW.md`, `AI_FEATURES.md`) + submission.
 Collected during brainstorming; **not planned**. Pull one in only after the P0 freeze-check, and add it to IDEA /
 ARCHITECTURE first.
 
-Barcode scan (Scan Kit) · bystander mode with CPR metronome · AED finder · sick-day / travel modes · beta-blocker reminders · QTc log · genotype-specific tips · privacy ledger ·
-family screening leaflet.
+Sick-day electrolyte guard (vomiting / diarrhoea → low K/Mg warning) · caregiver on a second device · NFC card
+tag · QTc log · family screening leaflet.

@@ -47,6 +47,34 @@ app runs fully offline (deterministic drug check, emergency card).
    ```
 4. `app/scripts/run.sh` now finds `entry-default-signed.hap` and installs it.
 
+## How to verify each feature (emulator)
+
+Everything below runs on the emulator with no backend and no watch. Heart data is **simulated** and labelled so.
+
+| Feature | How to check |
+|---|---|
+| Onboarding (F-01) | Fresh install → 4 steps (genotype + ICD → medicines → contacts → country). Restart: data is still there (encrypted RDB). |
+| Drug check (F-05, F-07, F-20, F-21) | Medicines → type `Klacid`, `Zofran 8 mg`, `Сумамед`, `ondansetrom` (typo) or `xyz` → verdict card; "How we know" shows each step. |
+| Interactions (F-19) | Add `Cipralex` to my medicines, then check `ondansetron` (adds up) or `clarithromycin` (CYP3A4). |
+| Barcode (F-36) | Medicines → Scan (camera or album), or type a demo code: `2000000000015` (clarithromycin), `2000000000091` (paracetamol). Demo codes use GS1 prefix 200 — not real products. |
+| History, dashboard (F-23, F-24) | Home shows meds by risk, interactions and recent checks; Medicines → Check history (filters). |
+| Heart + alerts (F-09, F-32) | Heart → Simulation controls → `lqt2 startle tachy`, `lqt3 night brady`, `lqt1 exercise`, `irregular rhythm`, `watch disconnect`. |
+| SOS (F-27, F-28, F-35) | A CRITICAL alert (e.g. `lqt2 startle tachy`) opens the 30 s "Are you OK?" countdown → "I'm OK" or let it run → call / share message / call contacts. Settings → Test SOS runs a 10 s test marked TEST. 10-min cooldown for automatic SOS. |
+| Emergency card (F-08, F-26, F-29, F-30) | Emergency tab: country number (e.g. Bulgaria 150, Poland 999), English card, offline QR. (UI is English-only for now; card translations for 12 more languages are kept in `common/CardStrings.ets` for later.) |
+| Help guide (F-41) | Emergency → Help guide: 3 steps + CPR metronome 110/min (haptic). Also reachable from the lock screen. |
+| Pharmacy card (F-40) | Home → More → Pharmacy card (English for now). |
+| Doctor prep (F-31) | Home → Doctor visit prep → pick the specialist → share / copy. No AI: built from your own data. |
+| Reminders (F-38) | Medicines → Medicine reminders. See ARCHITECTURE: system reminders need an AGC quota; the in-app fallback notifies while the app runs. |
+| Symptom log (F-44, manual) | Home → More → Symptom log; fainting / chest pain shows an SOS button. Appears in the doctor brief. |
+| Privacy, app lock (F-45, F-46) | Settings → What left my phone: ledger of outbound requests (empty when offline). App lock needs a screen lock (PIN) on the device. |
+
+Unit tests: `app/scripts/test.sh` — 57 tests (drug data + checker, interactions, alarm rules, SOS state machine and
+message, doctor brief, GS1, emergency numbers, card text completeness, dose schedule, privacy guard).
+
+Optional online drug check: create a Supabase project, run `backend/supabase/migrations/0001_drugs.sql` and
+`backend/supabase/seed.sql` (regenerate with `python3 data/export_seed.py`), deploy `functions/drug-check`, and put
+the URL + anon key in `app/entry/src/main/ets/common/LocalConfig.ets`. Without it the app is fully offline.
+
 ## AI usage
 
 How AI tools were used, and which pre-existing components are reused: [`AI_WORKFLOW.md`](AI_WORKFLOW.md).
@@ -54,3 +82,8 @@ How AI tools were used, and which pre-existing components are reused: [`AI_WORKF
 **Pre-existing / third-party components (Challenge Rules §4):** DevEco Studio's Empty Ability template
 (hvigor files, `EntryAbility` skeleton, Hypium test harness) and the `@ohos/hypium` / `@ohos/hamock` test libraries.
 App code, data and prompts are written in this repo.
+
+**Data sources:** drug risk categories follow the public CredibleMeds QTdrugs lists (crediblemeds.org); brand names
+from the Polish (URPL) and Bulgarian (BDA) medicine registers; emergency numbers from the EU 112 pages and national
+regulators; CPR guidance from ERC / AHA public guidelines; genotype triggers from Schwartz et al. (Circulation 2001)
+and the HRS/EHRA/APHRS 2013 consensus. The bundled list is a curated demo subset — not a medical device.
