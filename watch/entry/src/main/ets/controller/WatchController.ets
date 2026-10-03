@@ -41,6 +41,7 @@ import { isAsleep } from '../vitals/SleepDetector';
 import { MemoryOutboxStore, MetricOutbox } from '../sync/MetricOutbox';
 import { PatientContext, PatientContextClient } from '../sync/PatientContextClient';
 import { PreferencesOutboxStore } from '../sync/PreferencesOutboxStore';
+import { Fix, currentFix } from '../sync/SosLocation';
 import { SupabaseUploader } from '../sync/SupabaseUploader';
 
 export type SyncState = 'OFF' | 'OK' | 'PENDING' | 'ERROR';
@@ -161,6 +162,7 @@ export class WatchController {
   private scenarioFallDone: boolean = false;
   private sosStartMs: number = 0;
   private sosReason: SosReason = 'need_help';
+  private sosFix: Fix | undefined = undefined;
   private tickTimer: number = -1;
   private syncTimer: number = -1;
   private syncing: boolean = false;
@@ -168,6 +170,7 @@ export class WatchController {
   private visible: boolean = false;
   private healthPermission: boolean = false;
   private motionPermission: boolean = false;
+  private locationPermission: boolean = false;
   private ready: Promise<void> = Promise.resolve();
 
   init(ctx: common.UIAbilityContext): void {
@@ -714,6 +717,13 @@ export class WatchController {
     this.sosReason = reason;
     this.sosStartMs = Date.now();
     this.sosCountdown = SOS_COUNTDOWN_SEC;
+    this.sosFix = undefined;
+    if (this.locationPermission) {
+      currentFix().then((f: Fix | undefined) => {
+        this.sosFix = f;
+        Logger.info(f !== undefined ? `SOS location fix, accuracy ${f.accuracyM} m` : 'SOS without location');
+      });
+    }
     this.vibrate(1000);
     Logger.info(`SOS countdown started: ${reason}`);
   }
@@ -730,6 +740,11 @@ export class WatchController {
     this.sosCountdown = 0;
     // The phone app / agent picks this row up and runs the emergency flow (ICE contacts, 112 prompt).
     const v: SosValues = { reason: this.sosReason, bpm: this.bpm, activity: this.activity };
+    if (this.sosFix !== undefined) {
+      v.lat = this.sosFix.lat;
+      v.lon = this.sosFix.lon;
+      v.accuracyM = this.sosFix.accuracyM;
+    }
     this.record('sos', v, now);
     this.sosSent = true;
     this.vibrate(3000);
@@ -825,17 +840,20 @@ export class WatchController {
     });
   }
 
-  /** Heart rate + step counter in one dialog. Either may be denied; the app degrades per signal. */
+  /** Heart rate, steps and SOS location in one flow. Each may be denied; the app degrades per signal. */
   private async requestPermissions(): Promise<void> {
     if (this.ctx === undefined) {
       return;
     }
-    const perms: Permissions[] = ['ohos.permission.READ_HEALTH_DATA', 'ohos.permission.ACTIVITY_MOTION'];
+    // Location is only used for SOS rows. LOCATION must be requested together with APPROXIMATELY_LOCATION.
+    const perms: Permissions[] = ['ohos.permission.READ_HEALTH_DATA', 'ohos.permission.ACTIVITY_MOTION',
+      'ohos.permission.APPROXIMATELY_LOCATION', 'ohos.permission.LOCATION'];
     try {
       const atManager = abilityAccessCtrl.createAtManager();
       const res = await atManager.requestPermissionsFromUser(this.ctx, perms);
       this.healthPermission = res.authResults.length > 0 && res.authResults[0] === 0;
       this.motionPermission = res.authResults.length > 1 && res.authResults[1] === 0;
+      this.locationPermission = res.authResults.length > 2 && res.authResults[2] === 0;
     } catch (e) {
       const err = e as BusinessError;
       Logger.warn(`permission request failed: ${err.code}`);

@@ -17,6 +17,10 @@
       "value": "Counts steps to tell exercise from rest for your heart-rate limits."
     },
     {
+      "name": "location_reason",
+      "value": "Adds your location to an SOS so your emergency contacts can find you."
+    },
+    {
       "name": "health_reason",
       "value": "Reads your heart rate to warn you about rhythm-related risks."
     }

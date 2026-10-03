@@ -124,7 +124,7 @@ What the demo shows is the part we can run on the emulator: our own monitoring l
 | `vitals` | every 30 s | every input above: `{ bpm, restingBpm, activity, stress, steps, hrvMs, spo2, breathingRate, irregularRhythm, highLimitBpm, lowLimitBpm, genotype, riskyDrug, mocked[] }` |
 | `hr_recovery` | 60 s after an exercise bout | `{ peakBpm, bpmAfter60s, dropBpm, slow }` |
 | `rhythm_alert` | irregular rhythm starts (simulated) | `{ bpm, activity, mocked: true }` |
-| `sos` | SOS countdown ran out | `{ reason: "need_help" \| "fall", bpm, activity }` |
+| `sos` | SOS countdown ran out | `{ reason: "need_help" \| "fall", bpm, activity, lat?, lon?, accuracyM? }`. Location (WGS84) is fetched when the countdown starts (8 s timeout) and omitted if denied/unavailable |
 
 The watch also **reads** `watch_context` (`device_id`, `genotype`, `risky_drug`, `risky_drug_risk`, `risky_drug_at`).
 The phone app upserts it after onboarding and after each drug check that returns a QT-risk verdict:

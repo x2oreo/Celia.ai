@@ -106,6 +106,10 @@ export interface SosValues {
   reason: SosReason;
   bpm: number;
   activity: Activity;
+  /** WGS84 position at SOS time; omitted when location is denied or unavailable. */
+  lat?: number;
+  lon?: number;
+  accuracyM?: number;
 }
 
 /** Irregular rhythm flag. Simulated until watch apps can access Huawei's rhythm detection. */
