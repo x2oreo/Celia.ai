@@ -1,6 +1,6 @@
 // Sign up / log in (Workstream B1), pushed from Welcome and from Settings → Account with an AuthParam.
-// After sign-in: a profile on the phone (restored from the account or set up before) → straight into the app;
-// none → onboarding.
+// After sign-in from Welcome: a profile on the phone (restored from the account) → straight into the app; none →
+// onboarding. From anywhere else it returns to the page that opened it.
 
 import { AuthMode, AuthParam, Routes } from '../common/Routes';
 import { LocalStore } from '../data/LocalStore';
@@ -18,10 +18,11 @@ export struct AuthPage {
       this.navStack.pop();
       return;
     }
-    const names: string[] = this.navStack.getAllPathName();
-    const fromSettings: boolean = names.includes(Routes.ACCOUNT);
+    // Opened from inside the app (Account, Pair watch, onboarding): go back there. Only the first-launch flow
+    // (Welcome underneath) decides between the app and onboarding.
+    const fromWelcome: boolean = this.navStack.getAllPathName().includes(Routes.WELCOME);
     const profile: Profile | undefined = await LocalStore.get().getProfile();
-    if (fromSettings) {
+    if (!fromWelcome) {
       this.navStack.pop();
     } else if (profile !== undefined) {
       this.navStack.clear();

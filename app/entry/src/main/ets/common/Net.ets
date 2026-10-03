@@ -21,8 +21,32 @@ export class NetTarget {
   }
 }
 
+// The signed-in user's access token, provided by account/Session.ets (Net cannot import Session: Session uses
+// AuthClient, which uses Net). '' when signed out or when the stored token has expired (offline): the request then
+// goes with the public key alone, which still reads the shared demo watch.
+let userBearer: () => string = () => '';
+
+export function setUserBearer(provider: () => string): void {
+  userBearer = provider;
+}
+
 export function backendTarget(): NetTarget {
   return new NetTarget(Config.hasBackend() ? Config.BACKEND_URL : '', Config.SUPABASE_ANON_KEY);
+}
+
+// Database reads and writes (`/rest/v1/…`) on the accounts project carry the signed-in user's JWT, so row-level
+// security can tell whose watch is asking (migration 20261004100200). Edge Functions (`/functions/v1/…`, the AI
+// paths) never get it: the token names the user, and those requests stay anonymous.
+export function sendsUserToken(path: string, base: string, accountsBase: string): boolean {
+  return path.startsWith('/rest/v1/') && base.length > 0 && base === accountsBase;
+}
+
+function withUser(target: NetTarget, path: string): NetTarget {
+  if (target.bearer.length > 0 || !sendsUserToken(path, target.base, Config.SHARE_BACKEND_URL)) {
+    return target;
+  }
+  const token: string = userBearer();
+  return token.length > 0 ? new NetTarget(target.base, target.key, token) : target;
 }
 
 export function shareTarget(): NetTarget {
@@ -103,7 +127,7 @@ async function sendJson(method: http.RequestMethod, path: string, fields: Record
   try {
     const options: http.HttpRequestOptions = {
       method: method,
-      header: jsonHeaders(target, prefer),
+      header: jsonHeaders(withUser(target, path), prefer),
       extraData: body,
       connectTimeout: timeoutMs,
       readTimeout: timeoutMs
@@ -135,7 +159,7 @@ export async function getJson(path: string, timeoutMs: number, ledger: boolean =
   try {
     const options: http.HttpRequestOptions = {
       method: http.RequestMethod.GET,
-      header: authHeaders(target),
+      header: authHeaders(withUser(target, path)),
       connectTimeout: timeoutMs,
       readTimeout: timeoutMs
     };

@@ -7,6 +7,7 @@
 // The emergency card and medicine check never wait for any of this.
 
 import { Listeners } from '../common/Listeners';
+import { setUserBearer } from '../common/Net';
 import { Logger } from '../common/Logger';
 import { LocalStore, StoreTopic } from '../data/LocalStore';
 import { Profile } from '../model/Profile';
@@ -196,6 +197,8 @@ export class Session {
   }
 
   private static async doLoad(): Promise<void> {
+    setUserBearer(() => Session.current !== undefined && !isExpired(Session.current, Date.now()) ?
+      Session.current.accessToken : '');
     const raw: string = await LocalStore.get().getSetting(SESSION_KEY, '');
     Session.current = parseStoredSession(raw);
     await Session.loadName();
