@@ -147,7 +147,7 @@
    build both, install the watch, pair it again from the phone (it receives its secret), then apply
    `20261004100300`. Retest: watch uploads, watch context (genotype / risky drug badge), SOS, demo RPC.
    Do not apply 100300 before the watch build that sends the header.
-5. Rollback for 100200/100300: re-create the old anon policies (they are listed at the top of each file).
+5. Rollback for 100200/100300: re-create the old anon policies from 20261003150000 (watch_metrics), 20261003180000 (watch_context), 20261003230000 (resting_day_sim) and 20261003200000 (emergency_contacts insert).
 
 ## Coordinator actions
 - Apply `backend/supabase/migrations/20261004100000_profiles_auth.sql` (after Georgi's OK).
