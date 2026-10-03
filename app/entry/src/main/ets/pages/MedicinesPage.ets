@@ -1,4 +1,5 @@
-// Medicines tab (design B4): search-first check, recently checked chips, my medicines as a two-column grid.
+// Medicines tab (design B4): header, search-first check, quick links (reminders, check history) seen without
+// scrolling, recently checked chips, my medicines as a two-column grid.
 
 import { AskParam, CheckParam, Routes } from '../common/Routes';
 import { DrugChecker } from '../drugs/DrugChecker';
@@ -10,7 +11,10 @@ import { RiskLevel } from '../model/DrugVerdict';
 import { AddMedForm } from '../components/AddMedForm';
 import { MedicineDetailSheet } from '../components/MedicineDetailSheet';
 import { medSubtitle } from '../drugs/MedFacts';
-import { EmptyCard, NavRow, PageTitle, RiskBadge, SectionHeader, StatusChip } from '../components/Common';
+import {
+  EmptyCard, QuickReplyChip, resText, RiskBadge, ScreenHeader, SectionHeader, StatusChip
+} from '../components/Common';
+import { RiskUi } from '../common/RiskUi';
 
 export function medRisk(m: Medication): RiskLevel {
   const e: DrugEntry | undefined = DrugChecker.get().entry(m.ingredient) ?? DrugChecker.get().resolve(m.name);
@@ -71,6 +75,12 @@ export struct MedicinesPage {
   private label(s: ScanRecord): string {
     const t: string = /^[0-9]{8,14}$/.test(s.query) && s.ingredient !== '' ? s.ingredient : s.query;
     return t.length > 0 ? t.charAt(0).toUpperCase() + t.slice(1) : t;
+  }
+
+  // "Cipralex. Known risk. Depression and anxiety. 10 mg": the verdict by its word.
+  private spoken(m: Medication): string {
+    const parts: string[] = [m.name, resText(this.getUIContext(), RiskUi.label(medRisk(m))), medSubtitle(m), m.dose];
+    return parts.filter((p: string) => p !== '').join('. ');
   }
 
   @Builder
@@ -170,7 +180,8 @@ export struct MedicinesPage {
     .border({ width: 1, color: $r('app.color.border') })
     .borderRadius($r('app.float.radius_ml'))
     .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.98 })
-    .accessibilityText(`${m.name}. ${medSubtitle(m)}`)
+    .accessibilityGroup(true)
+    .accessibilityText(this.spoken(m))
     .onClick(() => {
       this.detail = m;
       this.showDetail = true;
@@ -193,6 +204,7 @@ export struct MedicinesPage {
     .border({ width: 2, color: $r('app.color.border_strong'), style: BorderStyle.Dashed })
     .borderRadius($r('app.float.radius_ml'))
     .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.98 })
+    .accessibilityGroup(true)
     .onClick(() => {
       this.showAdd = true;
     })
@@ -201,7 +213,7 @@ export struct MedicinesPage {
   build() {
     Scroll() {
       Column({ space: 12 }) {
-        PageTitle({ title: $r('app.string.medicines_title') })
+        ScreenHeader({ title: $r('app.string.medicines_title'), back: false })
 
         // Search-first check + scan
         Row({ space: 10 }) {
@@ -247,6 +259,25 @@ export struct MedicinesPage {
         }
         .width('100%')
 
+        // Quick links: reminders used to sit under the grid.
+        Row({ space: 8 }) {
+          QuickReplyChip({
+            label: $r('app.string.meds_link_reminders'),
+            icon: $r('app.media.ic_bell'),
+            onTap: () => {
+              this.navStack.pushPathByName(Routes.REMINDERS, null);
+            }
+          })
+          QuickReplyChip({
+            label: $r('app.string.meds_link_history'),
+            icon: $r('app.media.ic_history'),
+            onTap: () => {
+              this.navStack.pushPathByName(Routes.HISTORY, null);
+            }
+          })
+        }
+        .width('100%')
+
         if (this.recent.length > 0) {
           SectionHeader({
             title: $r('app.string.meds_recent'),
@@ -274,7 +305,9 @@ export struct MedicinesPage {
           .align(Alignment.Start)
         }
 
-        SectionHeader({ title: this.meds.length > 0 ? `My medicines · ${this.meds.length}` : $r('app.string.meds_mine') })
+        SectionHeader({
+          title: this.meds.length > 0 ? $r('app.string.meds_mine_count', this.meds.length) : $r('app.string.meds_mine')
+        })
         if (this.meds.length === 0) {
           EmptyCard({
             message: $r('app.string.meds_empty'),
@@ -297,15 +330,6 @@ export struct MedicinesPage {
           .width('100%')
         }
 
-        NavRow({
-          icon: $r('app.media.ic_bell'),
-          title: $r('app.string.rem_title'),
-          subtitle: $r('app.string.rem_subtitle'),
-          onTap: () => {
-            this.navStack.pushPathByName(Routes.REMINDERS, null);
-          }
-        })
-          .margin({ top: 8 })
       }
       .padding({ left: $r('app.float.space_screen'), right: $r('app.float.space_screen'), bottom: 24 })
       .width('100%')
