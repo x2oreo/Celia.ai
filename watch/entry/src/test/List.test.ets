@@ -1,3 +1,4 @@
+import heartRulesTest from './HeartRules.test';
 import syncEngineTest from './SyncEngine.test';
 import pairingFlowTest from './PairingFlow.test';
 import sosFlowTest from './SosFlow.test';
@@ -28,4 +29,5 @@ export default function testsuite() {
   sosFlowTest();
   pairingFlowTest();
   syncEngineTest();
+  heartRulesTest();
 }

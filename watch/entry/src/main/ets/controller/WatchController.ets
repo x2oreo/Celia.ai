@@ -8,16 +8,10 @@ import {
   Activity,
   FallResponse,
   Genotype,
-  HrAlertValues,
-  HrLiveValues,
-  HrRecoveryValues,
   HrSourceKind,
   MedicationTakenValues,
   MetricPayload,
   MetricType,
-  RhythmAlertValues,
-  VitalSignal,
-  VitalsAlertValues,
   SosReason,
   SosValues,
   SymptomKind,
@@ -27,27 +21,13 @@ import {
   makeRow,
   sourceForKind
 } from '../model/WatchMetric';
-import { AlarmRules } from '../vitals/AlarmRules';
 import { ContextSensors } from '../vitals/ContextSensors';
 import { HeartRateSource } from '../vitals/HeartRateSource';
-import { BaseLimits, HrLimits, isStressed, limitsFor } from '../vitals/Limits';
-import {
-  ANOMALY_RAMP_MS,
-  ANOMALY_SUSTAIN_MS,
-  ANOMALY_TOTAL_MS,
-  Anomaly,
-  MOCKED_FIELDS,
-  anomalyProgress,
-  applyAnomaly,
-  mockVitals,
-  vitalAlertFor
-} from '../vitals/MockedVitals';
+import { BaseLimits, HrLimits, limitsFor } from '../vitals/Limits';
+import { ANOMALY_RAMP_MS, Anomaly, MOCKED_FIELDS } from '../vitals/MockedVitals';
 import { MotionAnalyzer } from '../vitals/MotionAnalyzer';
-import { RecoveryTracker } from '../vitals/RecoveryTracker';
-import { RestingHr } from '../vitals/RestingHr';
 import { SCENARIOS, stateAt } from '../vitals/Scenarios';
 import { SensorHeartRateSource } from '../vitals/SensorHeartRateSource';
-import { SessionStats } from '../vitals/SessionStats';
 import { SimulatedHeartRateSource } from '../vitals/SimulatedHeartRateSource';
 import { isAsleep } from '../vitals/SleepDetector';
 import { MetricOutbox } from '../sync/MetricOutbox';
@@ -70,25 +50,16 @@ import { Fix, currentFix } from '../sync/SosLocation';
 import { FallRecord, FallTick, SosFlow } from './SosFlow';
 import { PairScreen, PairState, PairingFlow } from './PairingFlow';
 import { OUTBOX_CAPACITY, SyncEngine, SyncState } from './SyncEngine';
+import { AlertKind, HeartRules, Reading, RulesHost } from './HeartRules';
 import { SupabaseUploader } from '../sync/SupabaseUploader';
-import { shortDrugName } from '../vitals/DrugBadge';
-
-/** Which alert screen is up. */
-export type AlertKind = 'NONE' | 'HIGH' | 'LOW' | 'RHYTHM' | 'RECOVERY' | 'HRV' | 'SPO2';
 
 /** Simulate-page override for the wearer's state. AUTO = motion sensor / scenario / sleep detector. */
 export type ActivityOverride = 'AUTO' | 'REST' | 'ACTIVE' | 'ASLEEP';
 
-const LIVE_EVERY_MS = 5000;
-const VITALS_EVERY_MS = 30000;
-const MOCK_EVERY_MS = 1000;
-const VITAL_ALERT_COOLDOWN_MS = 60000;
 /** Refresh rate of simulated vitals while a tapped anomaly ramps, so the drift looks smooth. */
 const ANOMALY_FRAME_MS = 250;
 const SYNC_EVERY_MS = 3000;
 const CONTEXT_EVERY_MS = 60000;
-/** Monitoring is continuous, so summaries are sent per window instead of per start/stop. */
-const SUMMARY_WINDOW_MS = 5 * 60 * 1000;
 /**
  * Heart-rate sensors (and the emulator's virtual one) may report only when the value changes, so the last reading
  * stays valid this long; after that we show "waiting" and stop evaluating.
@@ -108,7 +79,7 @@ const NOT_WORN = 'Watch not worn';
  * 24/7 data comes from the system's own HR history via Health Service Kit. See watch/README.md.)
  */
 @ObservedV2
-export class WatchController {
+export class WatchController implements RulesHost {
   @Trace bpm: number = 0;
   @Trace running: boolean = false;
   @Trace sourceKind: HrSourceKind = 'SENSOR';
@@ -121,15 +92,7 @@ export class WatchController {
   @Trace limitReason: string = '';
   @Trace genotype: Genotype = 'UNKNOWN';
   @Trace riskyDrug: string = '';
-  @Trace restingBpm: number = 65;
-  @Trace restingMeasured: boolean = false;
-  @Trace stress: boolean = false;
   @Trace steps: number = 0;
-  @Trace hrvMs: number = 0;
-  @Trace spo2: number = 0;
-  @Trace breathingRate: number = 0;
-  @Trace irregularRhythm: boolean = false;
-  @Trace lastRecovery: string = '';
   @Trace alertKind: AlertKind = 'NONE';
   @Trace alertBpm: number = 0;
   @Trace alertActivity: Activity = 'UNKNOWN';
@@ -148,8 +111,6 @@ export class WatchController {
   @Trace demoSpeed: number = 4;
   /** DEMO_MODE: scripted heart-rate scenarios available in Settings. */
   @Trace demoMode: boolean = false;
-  /** Signal currently forced abnormal from the Vitals page. */
-  @Trace anomaly: Anomaly = 'none';
   /** Demo: 16 simulated days of resting HR with the last 2 elevated (missed beta-blocker), on the server. */
   @Trace betaBlockerMissed: boolean = false;
   /** "Did you take nadolol?" glance (missed-dose nudge). */
@@ -172,22 +133,10 @@ export class WatchController {
   private simSource: SimulatedHeartRateSource | undefined = undefined;
   private sensors: ContextSensors = new ContextSensors();
   private motion: MotionAnalyzer = new MotionAnalyzer();
-  private alarm: AlarmRules = new AlarmRules(AlarmRules.defaultTiming());
-  private resting: RestingHr = new RestingHr(65);
-  private recovery: RecoveryTracker = new RecoveryTracker();
-  private window: SessionStats = new SessionStats();
-  private windowStartMs: number = 0;
   private sync: SyncEngine = new SyncEngine();
   private contextClient: PatientContextClient | undefined = undefined;
   private demoRpc: DemoRpcClient | undefined = undefined;
   private pairing: PairingFlow = new PairingFlow();
-  private lastLiveMs: number = 0;
-  private lastVitalsMs: number = 0;
-  private lastMockMs: number = 0;
-  private anomalyStartMs: number = 0;
-  private lastVitalAlertMs: number = 0;
-  /** When HRV/SpO2 first went past its threshold; -1 = not past it. Same sustain rule as heart rate. */
-  private vitalLowSinceMs: number = -1;
   private anomalyTimer: number = -1;
   private lastContextMs: number = 0;
   private lastSampleMs: number = 0;
@@ -198,6 +147,7 @@ export class WatchController {
   private simSteps: number = 0;
   private scenarioFallDone: boolean = false;
   private sos: SosFlow = new SosFlow();
+  private rules: HeartRules = new HeartRules(this, Math.random);
   private tickTimer: number = -1;
   private syncTimer: number = -1;
   private visible: boolean = false;
@@ -218,7 +168,6 @@ export class WatchController {
     this.demoMode = this.cfg.demoMode;
     this.sourceKind = this.demoMode ? this.cfg.defaultSource : 'SENSOR';
     this.demoSpeed = this.cfg.demoSpeed;
-    this.alarm = new AlarmRules({ sustainSec: this.cfg.alertSustainSec, cooldownSec: 60 });
     this.genotype = this.cfg.genotype;
     this.base = {
       activeHigh: this.cfg.highBpm,
@@ -227,8 +176,7 @@ export class WatchController {
       awakeLow: this.cfg.lowBpm,
       sleepLow: this.cfg.sleepLowBpm
     };
-    this.resting = new RestingHr(this.cfg.restingBpm);
-    this.restingBpm = this.cfg.restingBpm;
+    this.rules.configure(this.cfg.alertSustainSec, this.cfg.restingBpm);
     this.applyLimits();
     let outbox: MetricOutbox | undefined = undefined;
     try {
@@ -311,6 +259,43 @@ export class WatchController {
     return this.sync.pending;
   }
 
+  get restingBpm(): number {
+    return this.rules.restingBpm;
+  }
+
+  get restingMeasured(): boolean {
+    return this.rules.restingMeasured;
+  }
+
+  get stress(): boolean {
+    return this.rules.stress;
+  }
+
+  get hrvMs(): number {
+    return this.rules.hrvMs;
+  }
+
+  get spo2(): number {
+    return this.rules.spo2;
+  }
+
+  get breathingRate(): number {
+    return this.rules.breathingRate;
+  }
+
+  get irregularRhythm(): boolean {
+    return this.rules.irregularRhythm;
+  }
+
+  get lastRecovery(): string {
+    return this.rules.lastRecovery;
+  }
+
+  /** Signal currently forced abnormal from the Vitals page. */
+  get anomaly(): Anomaly {
+    return this.rules.anomaly;
+  }
+
   get scenarioLabel(): string {
     return SCENARIOS[this.scenarioIdx].label;
   }
@@ -362,20 +347,17 @@ export class WatchController {
    * recover. The alert fires through the threshold rule with a 1 s demo sustain, ~3 s after the tap.
    */
   triggerAnomaly(kind: Anomaly): void {
-    this.anomaly = kind;
-    this.anomalyStartMs = Date.now();
-    this.lastVitalAlertMs = 0;
-    this.vitalLowSinceMs = -1;
+    this.rules.startAnomaly(kind, Date.now());
     Logger.info(`anomaly: ${kind}`);
     if (this.anomalyTimer >= 0) {
       clearInterval(this.anomalyTimer);
     }
     this.anomalyTimer = setInterval(() => {
       if (this.running && this.onWrist && this.bpm > 0) {
-        this.updateMockedVitals();
+        this.rules.updateMockedVitals(this.bpm, this.activity, Date.now());
       }
       // Frames only during the ramp (+ sustain); the 1 s tick takes over afterwards.
-      if (Date.now() - this.anomalyStartMs > ANOMALY_RAMP_MS + ANOMALY_SUSTAIN_MS + 1000) {
+      if (!this.rules.anomalyRamping(Date.now(), ANOMALY_RAMP_MS)) {
         clearInterval(this.anomalyTimer);
         this.anomalyTimer = -1;
       }
@@ -568,18 +550,11 @@ export class WatchController {
       this.sourceKind = 'SIMULATED';
     }
     const now = Date.now();
-    this.alarm.reset();
+    this.rules.start(now);
     this.bpm = 0;
-    this.irregularRhythm = false;
-    this.lastLiveMs = 0;
-    this.lastVitalsMs = now;
-    this.lastMockMs = 0;
     this.lastSampleMs = now;
-    this.windowStartMs = now;
     this.stillSinceMs = -1;
-    this.window = new SessionStats();
     this.motion = new MotionAnalyzer();
-    this.recovery = new RecoveryTracker();
     this.scenarioFallDone = false;
     this.running = true;
     this.source = this.createSource(this.sourceKind);
@@ -708,7 +683,7 @@ export class WatchController {
       this.simSteps += SIM_STEPS_PER_SEC;
       this.steps += SIM_STEPS_PER_SEC;
     }
-    if (now - this.windowStartMs >= SUMMARY_WINDOW_MS) {
+    if (this.rules.windowDue(now)) {
       this.flushWindow(now);
     }
     if (now - this.lastContextMs >= CONTEXT_EVERY_MS) {
@@ -738,89 +713,19 @@ export class WatchController {
   }
 
   private processReading(now: number): void {
-    const t = this.logicNow(now);
-    this.window.add(this.bpm, now);
-    this.resting.add(this.bpm, t, this.activity);
-    this.restingBpm = this.resting.value;
-    this.restingMeasured = this.resting.measured;
-    if (now - this.lastMockMs >= MOCK_EVERY_MS) {
-      this.lastMockMs = now;
-      this.updateMockedVitals();
-    }
-    this.stress = isStressed(this.bpm, this.restingBpm, this.activity, this.hrvMs);
-    if (now - this.lastLiveMs >= LIVE_EVERY_MS) {
-      this.lastLiveMs = now;
-      const live: HrLiveValues = { bpm: this.bpm, activity: this.activity };
-      if (this.hrvMs > 0) {
-        live.hrvMs = this.hrvMs;
-      }
-      live.irregular = this.irregularRhythm;
-      this.record('hr_live', live, now);
-    }
-    if (now - this.lastVitalsMs >= VITALS_EVERY_MS) {
-      this.lastVitalsMs = now;
-      this.record('vitals', this.vitalsSnapshot(), now);
-    }
-    const rec = this.recovery.add(this.bpm, t, this.activity);
-    if (rec !== undefined) {
-      this.onRecovery(rec, now);
-    }
-    const alert = this.alarm.evaluate(this.bpm, t,
-      { high: this.limitHigh, low: this.limitLow, reason: this.limitReason }, this.activity);
-    if (alert !== undefined) {
-      this.raiseAlert(alert, now);
-    }
+    const r: Reading = {
+      nowMs: now,
+      logicMs: this.logicNow(now),
+      bpm: this.bpm,
+      activity: this.activity,
+      limits: { high: this.limitHigh, low: this.limitLow, reason: this.limitReason },
+      riskyDrug: this.riskyDrug
+    };
+    this.rules.process(r);
   }
 
-  /** Simulated HRV / SpO2 / breathing / rhythm (Huawei measures them; watch apps can't read them yet). */
-  private updateMockedVitals(): void {
-    const elapsed = Date.now() - this.anomalyStartMs;
-    if (this.anomaly !== 'none' && elapsed >= ANOMALY_TOTAL_MS) {
-      this.anomaly = 'none';
-    }
-    const m = applyAnomaly(mockVitals(this.bpm, this.activity, Math.random), this.anomaly,
-      this.anomaly === 'none' ? 0 : anomalyProgress(elapsed), Math.random);
-    this.hrvMs = m.hrvMs;
-    this.spo2 = m.spo2;
-    this.breathingRate = m.breathingRate;
-    if (m.irregularRhythm && !this.irregularRhythm) {
-      const v: RhythmAlertValues = { bpm: this.bpm, activity: this.activity, mocked: true };
-      this.record('rhythm_alert', v, Date.now());
-      this.showAlert('RHYTHM', this.bpm, 'Simulated signal. Sit down now.');
-      this.vibrate(1500);
-      Logger.info('irregular rhythm (simulated)');
-    }
-    this.irregularRhythm = m.irregularRhythm;
-    const signal = vitalAlertFor(m, this.activity);
-    const now = Date.now();
-    if (signal === undefined) {
-      this.vitalLowSinceMs = -1;
-      return;
-    }
-    if (this.vitalLowSinceMs < 0) {
-      this.vitalLowSinceMs = now;
-    }
-    const sustainMs = this.anomaly !== 'none' ? ANOMALY_SUSTAIN_MS : this.cfg.alertSustainSec * 1000;
-    const sustained = now - this.vitalLowSinceMs >= sustainMs;
-    if (sustained && now - this.lastVitalAlertMs >= VITAL_ALERT_COOLDOWN_MS) {
-      this.lastVitalAlertMs = now;
-      this.raiseVitalAlert(signal, signal === 'hrv' ? m.hrvMs : m.spo2, now);
-    }
-  }
-
-  private raiseVitalAlert(signal: VitalSignal, value: number, now: number): void {
-    const v: VitalsAlertValues = { signal: signal, value: value, activity: this.activity, mocked: true };
-    this.record('vitals_alert', v, now);
-    if (signal === 'hrv') {
-      this.showAlert('HRV', value, 'Simulated signal. Sit down and breathe slowly.');
-    } else {
-      this.showAlert('SPO2', value, 'Simulated signal. Sit up and breathe slowly.');
-    }
-    this.vibrate(1200);
-    Logger.info(`vitals alert: ${signal}`);
-  }
-
-  private vitalsSnapshot(): VitalsValues {
+  /** RulesHost: the `vitals` row, every input in one snapshot. */
+  vitalsSnapshot(): VitalsValues {
     const v: VitalsValues = {
       bpm: this.bpm,
       restingBpm: this.restingBpm,
@@ -838,17 +743,6 @@ export class WatchController {
       mocked: MOCKED_FIELDS
     };
     return v;
-  }
-
-  private onRecovery(rec: HrRecoveryValues, now: number): void {
-    this.record('hr_recovery', rec, now);
-    this.lastRecovery = `${rec.peakBpm}→${rec.bpmAfter60s} (−${rec.dropBpm})${rec.slow ? ' slow' : ''}`;
-    if (rec.slow) {
-      this.showAlert('RECOVERY', rec.bpmAfter60s,
-        `Only −${rec.dropBpm} bpm in 1 min after exercise. Rest and tell your doctor.`);
-      this.vibrate(800);
-    }
-    Logger.info(`recovery: ${this.lastRecovery}`);
   }
 
   private tickScenarioFall(): void {
@@ -966,7 +860,8 @@ export class WatchController {
 
   // ---- Alerts & drug verdict -----------------------------------------------------------------------------------
 
-  private showAlert(kind: AlertKind, bpm: number, detail: string): void {
+  /** RulesHost: show an alert screen (and its notification). */
+  showAlert(kind: AlertKind, bpm: number, detail: string): void {
     // Never cover an active fall or SOS flow with a heart-rate alert.
     if (this.fallCountdown > 0 || this.sosCountdown > 0) {
       return;
@@ -1023,7 +918,7 @@ export class WatchController {
       return;
     }
     this.onWrist = worn;
-    this.alarm.reset();
+    this.rules.resetAlarm();
     this.statusText = worn ? '' : NOT_WORN;
     const v: WearStateValues = { onWrist: worn };
     this.record('wear_state', v, Date.now());
@@ -1034,12 +929,7 @@ export class WatchController {
 
   /** Window summary as an `hr_session` row, then start a new window. */
   private flushWindow(nowMs: number): void {
-    const summary = this.window.summary();
-    if (summary !== undefined) {
-      this.record('hr_session', summary, nowMs);
-    }
-    this.window = new SessionStats();
-    this.windowStartMs = nowMs;
+    this.rules.flushWindow(nowMs);
   }
 
   private onSourceError(msg: string): void {
@@ -1053,25 +943,13 @@ export class WatchController {
     }
   }
 
-  private raiseAlert(alert: HrAlertValues, tsMs: number): void {
-    // A lowered high limit says which drug lowered it (the reason alone only says "drug").
-    const why = alert.direction === 'high' && this.riskyDrug.length > 0 ?
-      `lowered for ${shortDrugName(this.riskyDrug)}` : this.limitReason;
-    this.showAlert(alert.direction === 'high' ? 'HIGH' : 'LOW', alert.bpm, `Limit ${alert.limitBpm} · ${why}`);
-    this.record('hr_alert', alert, tsMs);
-    if (alert.direction === 'low' && alert.activity === 'ASLEEP') {
-      this.vibrate(400);
-    } else {
-      this.vibrate(1200);
-    }
-    Logger.info(`alert: ${this.alertText}`);
-  }
-
-  private record(type: MetricType, payload: MetricPayload, tsMs: number): void {
+  /** RulesHost: queue a row for upload. */
+  record(type: MetricType, payload: MetricPayload, tsMs: number): void {
     this.sync.record(makeRow(this.cfg.deviceId, type, payload, tsMs, sourceForKind(this.sourceKind)));
   }
 
-  private vibrate(durationMs: number): void {
+  /** RulesHost: vibrate with the alarm usage. */
+  vibrate(durationMs: number): void {
     const effect: vibrator.VibrateTime = { type: 'time', duration: durationMs };
     const attr: vibrator.VibrateAttribute = { id: 0, usage: 'alarm' };
     vibrator.startVibration(effect, attr).catch((err: BusinessError) => {
