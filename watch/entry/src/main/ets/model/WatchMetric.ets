@@ -4,7 +4,7 @@
  */
 
 export type MetricType = 'hr_live' | 'hr_session' | 'hr_alert' | 'symptom' | 'medication_taken' | 'fall_detected' |
-  'wear_state' | 'vitals' | 'hr_recovery' | 'rhythm_alert';
+  'wear_state' | 'vitals' | 'hr_recovery' | 'rhythm_alert' | 'sos';
 
 /** Where the heart rate came from. `simulated` must always be labelled as demo data in the UI. */
 export type MetricSource = 'watch' | 'simulated';
@@ -18,9 +18,12 @@ export type Activity = 'REST' | 'ACTIVE' | 'ASLEEP' | 'UNKNOWN';
 
 export type Genotype = 'LQT1' | 'LQT2' | 'LQT3' | 'UNKNOWN';
 
-export type FallResponse = 'ok' | 'no_response';
+export type FallResponse = 'ok' | 'need_help' | 'no_response';
 
-export type SymptomKind = 'palpitations' | 'dizziness' | 'fainting' | 'other';
+export type SosReason = 'need_help' | 'fall';
+
+/** Check-in answers ('fine' included so 'no symptoms' after an alert is recorded too). */
+export type SymptomKind = 'fine' | 'palpitations' | 'dizziness' | 'fainting' | 'other';
 
 export interface HrLiveValues {
   bpm: number;
@@ -95,6 +98,16 @@ export interface HrRecoveryValues {
   slow: boolean;
 }
 
+/**
+ * The SOS countdown ran out (user asked for help, or didn't answer after a fall). The phone app / agent reacts to
+ * this row: notify emergency contacts and offer to call 112. The watch itself does not dial.
+ */
+export interface SosValues {
+  reason: SosReason;
+  bpm: number;
+  activity: Activity;
+}
+
 /** Irregular rhythm flag. Simulated until watch apps can access Huawei's rhythm detection. */
 export interface RhythmAlertValues {
   bpm: number;
@@ -103,7 +116,7 @@ export interface RhythmAlertValues {
 }
 
 export type MetricPayload = HrLiveValues | HrSessionValues | HrAlertValues | SymptomValues | MedicationTakenValues |
-  FallValues | WearStateValues | VitalsValues | HrRecoveryValues | RhythmAlertValues;
+  FallValues | WearStateValues | VitalsValues | HrRecoveryValues | RhythmAlertValues | SosValues;
 
 /** One row as stored in Supabase (snake_case to match the table columns). */
 export interface MetricRow {

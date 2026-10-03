@@ -16,6 +16,8 @@ import {
   MetricPayload,
   MetricType,
   RhythmAlertValues,
+  SosReason,
+  SosValues,
   SymptomKind,
   SymptomValues,
   VitalsValues,
@@ -43,6 +45,9 @@ import { SupabaseUploader } from '../sync/SupabaseUploader';
 
 export type SyncState = 'OFF' | 'OK' | 'PENDING' | 'ERROR';
 
+/** Which alert screen is up. */
+export type AlertKind = 'NONE' | 'HIGH' | 'LOW' | 'RHYTHM' | 'RECOVERY';
+
 /** Simulate-page override for the wearer's state. AUTO = motion sensor / scenario / sleep detector. */
 export type ActivityOverride = 'AUTO' | 'REST' | 'ACTIVE' | 'ASLEEP';
 
@@ -60,6 +65,8 @@ const SUMMARY_WINDOW_MS = 5 * 60 * 1000;
 const READING_VALID_MS = 30000;
 /** How long the wearer has to answer "Are you OK?" after a fall. */
 const FALL_COUNTDOWN_SEC = 30;
+/** SOS countdown before the emergency row is sent; Cancel stops it. */
+const SOS_COUNTDOWN_SEC = 10;
 /** Simulated cadence while active in demo scenarios (steps per second). */
 const SIM_STEPS_PER_SEC = 2;
 const BATCH = 50;
@@ -95,10 +102,20 @@ export class WatchController {
   @Trace breathingRate: number = 0;
   @Trace irregularRhythm: boolean = false;
   @Trace lastRecovery: string = '';
+  @Trace alertKind: AlertKind = 'NONE';
+  @Trace alertBpm: number = 0;
+  @Trace alertActivity: Activity = 'UNKNOWN';
+  /** Detail line for the alert screen (limit, recovery numbers). */
   @Trace alertText: string = '';
+  /** "How do you feel?" screen. */
+  @Trace checkInOpen: boolean = false;
+  @Trace sosCountdown: number = 0;
+  @Trace sosSent: boolean = false;
+  /** Drug-verdict glance: shown once when a new risky drug arrives. */
+  @Trace verdictDrug: string = '';
+  @Trace riskyDrugRisk: string = '';
   /** Seconds left to answer "Are you OK?"; 0 = no fall in progress. */
   @Trace fallCountdown: number = 0;
-  @Trace emergencyText: string = '';
   @Trace statusText: string = '';
   @Trace syncState: SyncState = 'OFF';
   @Trace pending: number = 0;
@@ -138,6 +155,8 @@ export class WatchController {
   private fallStartMs: number = 0;
   private fallBpm: number = 0;
   private scenarioFallDone: boolean = false;
+  private sosStartMs: number = 0;
+  private sosReason: SosReason = 'need_help';
   private tickTimer: number = -1;
   private syncTimer: number = -1;
   private syncing: boolean = false;
@@ -248,8 +267,11 @@ export class WatchController {
 
   /** Demo stand-in for the phone app's drug scan: toggles a recent known-risk drug. */
   toggleRiskyDrug(): void {
-    this.riskyDrug = this.riskyDrug.length > 0 ? '' : 'Clarithromycin';
-    this.applyLimits();
+    if (this.riskyDrug.length > 0) {
+      this.setRiskyDrug('', '');
+    } else {
+      this.setRiskyDrug('Clarithromycin', 'KNOWN_RISK');
+    }
   }
 
   cycleGenotype(): void {
@@ -260,19 +282,46 @@ export class WatchController {
 
   // ---- User responses ------------------------------------------------------------------------------------------
 
-  dismissAlert(): void {
-    this.alertText = '';
-  }
-
-  /** "I'm OK" during the fall countdown. */
-  confirmOk(): void {
+  /** "I'm OK" on an alert or fall screen: close it and ask how they feel. */
+  imOk(): void {
     if (this.fallCountdown > 0) {
       this.finishFall('ok');
     }
+    this.alertKind = 'NONE';
+    this.checkInOpen = true;
   }
 
-  dismissEmergency(): void {
-    this.emergencyText = '';
+  /** "Need help" on an alert or fall screen: start the SOS countdown. */
+  needHelp(): void {
+    if (this.fallCountdown > 0) {
+      this.finishFall('need_help');
+      this.startSos('fall');
+    } else {
+      this.startSos('need_help');
+    }
+    this.alertKind = 'NONE';
+  }
+
+  checkIn(kind: SymptomKind): void {
+    this.logSymptom(kind);
+    this.checkInOpen = false;
+  }
+
+  closeCheckIn(): void {
+    this.checkInOpen = false;
+  }
+
+  cancelSos(): void {
+    this.sosCountdown = 0;
+    Logger.info('SOS cancelled');
+  }
+
+  dismissSosSent(): void {
+    this.sosSent = false;
+  }
+
+  dismissVerdict(): void {
+    this.verdictDrug = '';
   }
 
   logSymptom(kind: SymptomKind): void {
@@ -479,6 +528,7 @@ export class WatchController {
       this.refreshContext();
     }
     this.tickFall(now);
+    this.tickSos(now);
     this.tickScenarioFall();
     if (!this.onWrist) {
       this.bpm = 0;
@@ -533,7 +583,7 @@ export class WatchController {
     if (m.irregularRhythm && !this.irregularRhythm) {
       const v: RhythmAlertValues = { bpm: this.bpm, activity: this.activity, mocked: true };
       this.record('rhythm_alert', v, Date.now());
-      this.alertText = `Irregular rhythm at ${this.bpm} bpm (simulated signal). Sit down now.`;
+      this.showAlert('RHYTHM', this.bpm, 'Simulated signal. Sit down now.');
       this.vibrate(1500);
       Logger.info('irregular rhythm (simulated)');
     }
@@ -564,7 +614,8 @@ export class WatchController {
     this.record('hr_recovery', rec, now);
     this.lastRecovery = `${rec.peakBpm}→${rec.bpmAfter60s} (−${rec.dropBpm})${rec.slow ? ' slow' : ''}`;
     if (rec.slow) {
-      this.alertText = `Slow heart-rate recovery: −${rec.dropBpm} bpm in 1 min. Rest and tell your doctor.`;
+      this.showAlert('RECOVERY', rec.bpmAfter60s,
+        `Only −${rec.dropBpm} bpm in 1 min after exercise. Rest and tell your doctor.`);
       this.vibrate(800);
     }
     Logger.info(`recovery: ${this.lastRecovery}`);
@@ -589,8 +640,7 @@ export class WatchController {
         return;
       }
       this.genotype = c.genotype;
-      this.riskyDrug = c.riskyDrug;
-      this.applyLimits();
+      this.setRiskyDrug(c.riskyDrug, c.riskyDrugRisk);
     });
   }
 
@@ -600,8 +650,8 @@ export class WatchController {
     if (this.fallCountdown > 0) {
       return;
     }
-    this.alertText = '';
-    this.emergencyText = '';
+    this.alertKind = 'NONE';
+    this.checkInOpen = false;
     this.fallBpm = this.bpm;
     this.fallStartMs = Date.now();
     this.fallCountdown = FALL_COUNTDOWN_SEC;
@@ -616,6 +666,7 @@ export class WatchController {
     const left = FALL_COUNTDOWN_SEC - Math.floor((now - this.fallStartMs) / 1000);
     if (left <= 0) {
       this.finishFall('no_response');
+      this.startSos('fall');
     } else {
       this.fallCountdown = left;
       if (left % 5 === 0) {
@@ -632,12 +683,62 @@ export class WatchController {
     };
     this.record('fall_detected', v, this.fallStartMs);
     this.fallCountdown = 0;
-    if (response === 'no_response') {
-      // The phone app / agent picks this row up and runs the emergency flow (ICE contacts, 112 prompt).
-      this.emergencyText = 'No response. Emergency alert sent to your phone.';
-      this.vibrate(3000);
-    }
     Logger.info(`fall finished: ${response}`);
+  }
+
+  // ---- SOS -----------------------------------------------------------------------------------------------------
+
+  private startSos(reason: SosReason): void {
+    if (this.sosCountdown > 0) {
+      return;
+    }
+    this.sosReason = reason;
+    this.sosStartMs = Date.now();
+    this.sosCountdown = SOS_COUNTDOWN_SEC;
+    this.vibrate(1000);
+    Logger.info(`SOS countdown started: ${reason}`);
+  }
+
+  private tickSos(now: number): void {
+    if (this.sosCountdown <= 0) {
+      return;
+    }
+    const left = SOS_COUNTDOWN_SEC - Math.floor((now - this.sosStartMs) / 1000);
+    if (left > 0) {
+      this.sosCountdown = left;
+      return;
+    }
+    this.sosCountdown = 0;
+    // The phone app / agent picks this row up and runs the emergency flow (ICE contacts, 112 prompt).
+    const v: SosValues = { reason: this.sosReason, bpm: this.bpm, activity: this.activity };
+    this.record('sos', v, now);
+    this.sosSent = true;
+    this.vibrate(3000);
+    Logger.info('SOS sent');
+  }
+
+  // ---- Alerts & drug verdict -----------------------------------------------------------------------------------
+
+  private showAlert(kind: AlertKind, bpm: number, detail: string): void {
+    // Never cover an active fall or SOS flow with a heart-rate alert.
+    if (this.fallCountdown > 0 || this.sosCountdown > 0) {
+      return;
+    }
+    this.alertKind = kind;
+    this.alertBpm = bpm;
+    this.alertActivity = this.activity;
+    this.alertText = detail;
+    this.checkInOpen = false;
+  }
+
+  /** New risky drug from the phone (or Simulate) → limits change and the verdict glance pops up once. */
+  private setRiskyDrug(name: string, risk: string): void {
+    if (name.length > 0 && name !== this.riskyDrug) {
+      this.verdictDrug = name;
+    }
+    this.riskyDrug = name;
+    this.riskyDrugRisk = risk;
+    this.applyLimits();
   }
 
   // ---- Wear state --------------------------------------------------------------------------------------------
@@ -678,10 +779,14 @@ export class WatchController {
   }
 
   private raiseAlert(alert: HrAlertValues, tsMs: number): void {
-    const kind = alert.direction === 'high' ? 'High' : 'Low';
-    this.alertText = `${kind} heart rate ${alert.bpm} (${this.limitReason} limit ${alert.limitBpm})`;
+    this.showAlert(alert.direction === 'high' ? 'HIGH' : 'LOW', alert.bpm,
+      `Limit ${alert.limitBpm} · ${this.limitReason}`);
     this.record('hr_alert', alert, tsMs);
-    this.vibrate(1200);
+    if (alert.direction === 'low' && alert.activity === 'ASLEEP') {
+      this.vibrate(400);
+    } else {
+      this.vibrate(1200);
+    }
     Logger.info(`alert: ${this.alertText}`);
   }
 
