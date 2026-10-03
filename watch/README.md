@@ -23,7 +23,7 @@ always labelled as demo data.
 
 | Source | Where it runs | Metric `source` |
 |---|---|---|
-| Demo data (scenarios: Resting, LQT1 exercise, LQT2 startle, LQT3 night) | anywhere | `simulated` |
+| Demo data (scenarios: Resting, Normal workout, LQT1 exercise, LQT2 startle, LQT3 night, Faint) | anywhere | `simulated` |
 | **Watch sensor** (default; `sensor.SensorId.HEART_RATE`, needs READ_HEALTH_DATA) | real watch, or the emulator's virtual HR sensor; falls back to demo if there is no sensor/permission | `watch` |
 
 ### Driving the sensor on the emulator
@@ -32,6 +32,19 @@ Emulator toolbar → **⋯ (more)** → **Virtual sensors** → **Heart rate**: 
 same `sensor.on(HEART_RATE)` code as a real watch. Drag above 140 and hold for 10 s to trigger the high-HR alert,
 below 45 for the low one. The last reading counts for 30 s (sensors may report only on change); after that the
 watch shows "Waiting for heart rate…".
+
+## Context: activity, falls, wear (beyond heart rate)
+
+PPG heart rate can't show QT, so the watch adds context that matters for LQTS:
+
+| Signal | Source | Used for |
+|---|---|---|
+| **Rest vs. active** | accelerometer (`MotionAnalyzer`: std-dev of \|a\| over 4 s); scenario; Simulate page | Stricter high limit **at rest** (default 120) than during activity (140): a racing heart without exertion is the LQT2 pattern, high HR while exercising is the LQT1 one |
+| **Fall / faint** | accelerometer: impact > 2.5 g, then lying still 1–4 s later; *Faint* scenario; Simulate page | "Are you OK?" with a 30 s countdown and vibration. *I'm OK* → `fall_detected{response:"ok"}`. No answer → `fall_detected{response:"no_response"}` + SOS screen; the phone app/agent runs the emergency flow from that row |
+| **Watch on wrist** | `WEAR_DETECTION` sensor (not on the emulator); Simulate page | No HR alarms while off the wrist; `wear_state` rows so the dashboard can tell "not worn" from "no data" |
+
+The emulator has an accelerometer (rest/active works from it) but no wear sensor. **Simulate page** (4th page):
+*Fall*, *Take watch off / Put watch on*, *Activity: auto → rest → active*.
 
 ## Always-on monitoring
 
@@ -53,13 +66,15 @@ What the demo shows is the part we can run on the emulator: our own monitoring l
 
 | `type` | When | `payload` |
 |---|---|---|
-| `hr_live` | every 5 s while monitoring | `{ bpm }` |
-| `hr_alert` | HR outside limits for ≥ 10 s (60 s cooldown) | `{ bpm, limitBpm, direction, sustainedSec }` |
+| `hr_live` | every 5 s while monitoring | `{ bpm, activity }` |
+| `hr_alert` | HR outside the current limit for ≥ 10 s (60 s cooldown) | `{ bpm, limitBpm, direction, sustainedSec, activity }` |
 | `hr_session` | every 5 min, and when the app is left | `{ avgBpm, maxBpm, minBpm, durationSec, samples }` |
 | `symptom` | "I feel unwell" buttons | `{ kind, bpm }` |
 | `medication_taken` | "Took nadolol" | `{ name }` |
+| `fall_detected` | after a fall, when answered or after 30 s | `{ bpm, response: "ok" \| "no_response", responseSec }` |
+| `wear_state` | watch put on / taken off | `{ onWrist }` |
 
-Contract: `entry/src/main/ets/model/WatchMetric.ets`. Table + RLS: `backend/supabase/migrations/*_watch_metrics.sql`.
+Contract: `entry/src/main/ets/model/WatchMetric.ets`. Table + RLS: `backend/supabase/migrations/` (run all files in order).
 
 Phone app reads (anon key headers `apikey` + `Authorization: Bearer`):
 ```
@@ -69,7 +84,8 @@ GET {SUPABASE_URL}/rest/v1/watch_metrics?device_id=eq.demo-watch-1&type=eq.hr_al
 
 ## Setup
 
-1. Supabase: run the migration in the SQL editor (or `supabase db push`).
+1. Supabase: run every file in `backend/supabase/migrations/` in order, in the SQL editor (or `supabase db push`).
+   A row type the database doesn't know is rejected; the app then drops just that row so the queue keeps moving.
 2. Fill in `watch/.env` (copy `watch/.env.example` if it's missing): `SUPABASE_URL`, `SUPABASE_ANON_KEY`,
    optionally `WATCH_DEVICE_ID`. `.env` is git-ignored. Each build (`entry/hvigorfile.ts`) writes it into the bundled
    `rawfile/config.json` (also git-ignored), so **rebuild after editing `.env`**. Without it the app works offline
@@ -83,7 +99,7 @@ GET {SUPABASE_URL}/rest/v1/watch_metrics?device_id=eq.demo-watch-1&type=eq.hr_al
 cd watch && source env.sh
 ohpm install
 hvigorw --mode module -p module=entry@default -p product=default assembleHap --no-daemon
-hvigorw test -p module=entry -p coverage=false --no-daemon     # 16 local unit tests
+hvigorw test -p module=entry -p coverage=false --no-daemon     # 26 local unit tests
 cat entry/.test/default/intermediates/test/coverage_data/test_result.txt
 
 # Wearable emulator (image: HarmonyOS 6.1.1 wearable)
