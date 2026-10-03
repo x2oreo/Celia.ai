@@ -13,6 +13,11 @@ export class SimulatedHeartRateSource implements HeartRateSource {
     this.scenario = findScenario(scenarioId);
   }
 
+  /** Seconds since start, so the controller can read the scenario's activity and fall at the same point. */
+  get elapsedSec(): number {
+    return (Date.now() - this.startedAt) / 1000;
+  }
+
   start(onSample: SampleCallback, onError: ErrorCallback): void {
     this.stop();
     this.startedAt = Date.now();

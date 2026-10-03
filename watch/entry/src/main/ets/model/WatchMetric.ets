@@ -3,7 +3,8 @@
  * Small, computed values only. The watch never uploads raw sensor streams.
  */
 
-export type MetricType = 'hr_live' | 'hr_session' | 'hr_alert' | 'symptom' | 'medication_taken';
+export type MetricType = 'hr_live' | 'hr_session' | 'hr_alert' | 'symptom' | 'medication_taken' | 'fall_detected' |
+  'wear_state';
 
 /** Where the heart rate came from. `simulated` must always be labelled as demo data in the UI. */
 export type MetricSource = 'watch' | 'simulated';
@@ -12,10 +13,16 @@ export type HrSourceKind = 'SENSOR' | 'SIMULATED';
 
 export type AlertDirection = 'high' | 'low';
 
+/** What the wearer is doing, from motion. UNKNOWN when there is no motion data. */
+export type Activity = 'REST' | 'ACTIVE' | 'UNKNOWN';
+
+export type FallResponse = 'ok' | 'no_response';
+
 export type SymptomKind = 'palpitations' | 'dizziness' | 'fainting' | 'other';
 
 export interface HrLiveValues {
   bpm: number;
+  activity: Activity;
 }
 
 export interface HrSessionValues {
@@ -31,6 +38,7 @@ export interface HrAlertValues {
   limitBpm: number;
   direction: AlertDirection;
   sustainedSec: number;
+  activity: Activity;
 }
 
 export interface SymptomValues {
@@ -43,7 +51,20 @@ export interface MedicationTakenValues {
   name: string;
 }
 
-export type MetricPayload = HrLiveValues | HrSessionValues | HrAlertValues | SymptomValues | MedicationTakenValues;
+/** Hard impact followed by stillness (possible faint), and whether the wearer answered "I'm OK". */
+export interface FallValues {
+  /** Heart rate at the moment of the fall, 0 if unknown. */
+  bpm: number;
+  response: FallResponse;
+  responseSec: number;
+}
+
+export interface WearStateValues {
+  onWrist: boolean;
+}
+
+export type MetricPayload = HrLiveValues | HrSessionValues | HrAlertValues | SymptomValues | MedicationTakenValues |
+  FallValues | WearStateValues;
 
 /** One row as stored in Supabase (snake_case to match the table columns). */
 export interface MetricRow {

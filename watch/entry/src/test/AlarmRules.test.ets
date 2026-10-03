@@ -1,16 +1,17 @@
 import { describe, it, expect } from '@ohos/hypium';
 import { AlarmRules } from '../main/ets/vitals/AlarmRules';
-import { HrAlertValues } from '../main/ets/model/WatchMetric';
+import { Activity, HrAlertValues } from '../main/ets/model/WatchMetric';
 
 function rules(): AlarmRules {
-  return new AlarmRules({ highBpm: 140, lowBpm: 45, sustainSec: 10, cooldownSec: 60 });
+  return new AlarmRules({ highBpm: 140, restHighBpm: 120, lowBpm: 45, sustainSec: 10, cooldownSec: 60 });
 }
 
 /** Feeds one sample per second from `startSec` for `seconds`, returns the alerts raised. */
-function feed(r: AlarmRules, bpm: number, startSec: number, seconds: number): HrAlertValues[] {
+function feed(r: AlarmRules, bpm: number, startSec: number, seconds: number,
+  activity: Activity = 'UNKNOWN'): HrAlertValues[] {
   const out: HrAlertValues[] = [];
   for (let s = startSec; s < startSec + seconds; s++) {
-    const a = r.evaluate(bpm, s * 1000);
+    const a = r.evaluate(bpm, s * 1000, activity);
     if (a !== undefined) {
       out.push(a);
     }
@@ -48,6 +49,17 @@ export default function alarmRulesTest() {
       const alerts = feed(rules(), 38, 0, 15);
       expect(alerts.length).assertEqual(1);
       expect(alerts[0].direction).assertEqual('low');
+    });
+
+    it('uses the stricter limit at rest (LQT2 pattern)', 0, () => {
+      const alerts = feed(rules(), 130, 0, 15, 'REST');
+      expect(alerts.length).assertEqual(1);
+      expect(alerts[0].limitBpm).assertEqual(120);
+      expect(alerts[0].activity).assertEqual('REST');
+    });
+
+    it('allows the same HR during activity', 0, () => {
+      expect(feed(rules(), 130, 0, 30, 'ACTIVE').length).assertEqual(0);
     });
 
     it('resets the timer when HR returns to range', 0, () => {

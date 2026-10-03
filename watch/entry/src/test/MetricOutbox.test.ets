@@ -3,7 +3,7 @@ import { MemoryOutboxStore, MetricOutbox } from '../main/ets/sync/MetricOutbox';
 import { HrLiveValues, MetricRow, SymptomValues, makeRow } from '../main/ets/model/WatchMetric';
 
 function live(bpm: number): MetricRow {
-  const v: HrLiveValues = { bpm: bpm };
+  const v: HrLiveValues = { bpm: bpm, activity: 'REST' };
   return makeRow('dev', 'hr_live', v, 0, 'simulated');
 }
 
