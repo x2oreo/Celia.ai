@@ -183,7 +183,7 @@ drug tables); the LLM key is an Edge Function secret. Timeouts: app 20 s → fal
 | Card QR (F-30) | ArkUI `QRCode` | `pages/EmergencyPage.ets` | ✅ |
 | SOS message (F-28) | `@kit.ShareKit` system share sheet | `common/Share.ets` | ✅ — direct SMS needs `SEND_MESSAGES` (system apps only), so the user sends via SMS/messenger/e-mail |
 | Live View (F-35) | `@kit.LiveViewKit` | `emergency/LiveStatus.ets` | ⚠️ needs scenario approval in AGC; falls back to an ongoing notification (used on the emulator) |
-| Box barcode (F-36) | `@kit.ScanKit` (system scan UI, album allowed) | `drugs/BarcodeService.ets`, `drugs/Gs1.ets` | ✅ parsing + demo GTINs (GS1 prefix 200, not real products); typing the number also works |
+| Box barcode (F-36) | `@kit.ScanKit` (system scan UI, album allowed) | `drugs/BarcodeService.ets`, `drugs/Gs1.ets`, `drugs/GtinCatalog.ets`, `rawfile/gtin_pl.json` | ✅ real Polish boxes offline (URPL register, ≈68k packs, loads in ~80 ms); other countries via on-device "teach this barcode"; demo GTINs (prefix 200) kept |
 | Dose reminders (F-38) | `@kit.BackgroundTasksKit` reminderAgentManager | `reminders/ReminderService.ets` | ⚠️ system refuses with 1700002 until the agent-reminder quota is granted in AGC; fallback: in-app notification while the app runs + Today view |
 | Read card aloud (F-42) | `@kit.CoreSpeechKit` textToSpeech | — | ⏸ deferred (AI/voice — out of scope for the non-AI build) |
 | Nearby ER / AED (F-43) | `@kit.MapKit` + Site Kit | — | ⏸ deferred (needs an AGC Map key) |

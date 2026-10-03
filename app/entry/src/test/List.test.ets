@@ -4,6 +4,7 @@ import alarmRulesTest from './AlarmRules.test';
 import sosControllerTest from './SosController.test';
 import doctorPrepTest from './DoctorPrep.test';
 import utilsTest from './Utils.test';
+import boxCatalogTest from './BoxCatalog.test';
 
 export default function testsuite() {
   contractSmokeTest();
@@ -12,4 +13,5 @@ export default function testsuite() {
   sosControllerTest();
   doctorPrepTest();
   utilsTest();
+  boxCatalogTest();
 }

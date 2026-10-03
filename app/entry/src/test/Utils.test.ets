@@ -1,5 +1,5 @@
 import { describe, it, expect } from '@ohos/hypium';
-import { gtinCheckDigitOk, lookupGtin, parseGs1 } from '../main/ets/drugs/Gs1';
+import { gtinCheckDigitOk, lookupDemoGtin, parseGs1 } from '../main/ets/drugs/Gs1';
 import { forbiddenFields } from '../main/ets/privacy/Ledger';
 import { DoseLog, DoseReminder, doseStatus, dayKey } from '../main/ets/reminders/DoseSchedule';
 import { emergencyFor } from '../main/ets/common/EmergencyNumbers';
@@ -37,8 +37,8 @@ export default function utilsTest() {
     });
 
     it('demoGtinResolves', 0, () => {
-      const e = lookupGtin('2000000000046');
-      expect(e !== undefined && e.ingredient === 'ondansetron').assertTrue();
+      const e = lookupDemoGtin('2000000000046');
+      expect(e !== undefined && e.ingredients === 'ondansetron').assertTrue();
     });
   });
 

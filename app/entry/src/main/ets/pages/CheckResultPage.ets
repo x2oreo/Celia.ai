@@ -4,8 +4,10 @@ import { CheckParam } from '../common/Routes';
 import { CheckOutcome, CheckService } from '../drugs/CheckService';
 import { LocalStore } from '../data/LocalStore';
 import { Medication } from '../model/Medication';
+import { BoxInfo } from '../model/BoxInfo';
 import { Genotype, Profile } from '../model/Profile';
 import { VerdictCard } from '../components/VerdictCard';
+import { MedicineInfoCard } from '../components/MedicineInfoCard';
 import { PrimaryButton, SecondaryButton } from '../components/Common';
 import { Logger } from '../common/Logger';
 import { toast } from '../common/Toast';
@@ -27,7 +29,9 @@ export struct CheckResultPage {
       const result: CheckOutcome = param.log ? await CheckService.run(param.query, param.via ?? 'TEXT') :
         await CheckService.peek(param.query);
       const meds: Medication[] = await LocalStore.get().listMeds();
-      this.alreadyMine = meds.some((m: Medication) => m.ingredient === result.verdict.ingredient);
+      const key: string = result.verdict.ingredient !== '' ? result.verdict.ingredient :
+        (result.box?.ingredients ?? '');
+      this.alreadyMine = key !== '' && meds.some((m: Medication) => m.ingredient === key);
       this.outcome = result;
     } catch (e) {
       log.error(`check failed: ${JSON.stringify(e)}`);
@@ -39,7 +43,11 @@ export struct CheckResultPage {
     if (this.outcome === undefined) {
       return;
     }
-    await LocalStore.get().addMed(this.outcome.verdict.query, this.outcome.verdict.ingredient, '');
+    // From a box: keep the brand as the name and the strength as the dose.
+    const box: BoxInfo | undefined = this.outcome.box;
+    const ingredient: string = this.outcome.verdict.ingredient !== '' ? this.outcome.verdict.ingredient :
+      (box?.ingredients ?? '');
+    await LocalStore.get().addMed(box?.brand ?? this.outcome.verdict.query, ingredient, box?.strength ?? '');
     this.alreadyMine = true;
     toast(this.getUIContext(), $r('app.string.meds_added'));
   }
@@ -57,7 +65,15 @@ export struct CheckResultPage {
             LoadingProgress().width(40).height(40).margin({ top: 80 })
           } else {
             VerdictCard({ verdict: this.outcome.verdict, combo: this.outcome.combo, genotype: this.genotype })
-            if (this.outcome.verdict.ingredient !== '' && !this.alreadyMine) {
+            if (this.outcome.box !== undefined) {
+              MedicineInfoCard({
+                box: this.outcome.box,
+                onForgotten: () => {
+                  this.navStack.pop();
+                }
+              })
+            }
+            if ((this.outcome.verdict.ingredient !== '' || this.outcome.box !== undefined) && !this.alreadyMine) {
               SecondaryButton({
                 label: $r('app.string.check_add_to_mine'),
                 icon: $r('app.media.ic_plus'),

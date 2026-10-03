@@ -3,6 +3,7 @@ import { window } from '@kit.ArkUI';
 import { Logger } from '../common/Logger';
 import { LocalStore } from '../data/LocalStore';
 import { AppLock } from '../common/AppLock';
+import { GtinCatalog } from '../drugs/GtinCatalog';
 
 const log: Logger = new Logger('EntryAbility');
 
@@ -15,6 +16,7 @@ export default class EntryAbility extends UIAbility {
       log.warn(`setColorMode failed: ${JSON.stringify(e)}`);
     }
     LocalStore.get().init(this.context).then(() => AppLock.init());
+    GtinCatalog.get().init(this.context);
     log.info('onCreate');
   }
 

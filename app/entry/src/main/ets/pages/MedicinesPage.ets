@@ -9,7 +9,7 @@ import { RiskLevel } from '../model/DrugVerdict';
 import { AddMedForm } from '../components/AddMedForm';
 import { NavRow, PageTitle, PrimaryButton, RiskBadge, SecondaryButton, SectionHeader } from '../components/Common';
 import { BarcodeResult, scanBox } from '../drugs/BarcodeService';
-import { toast } from '../common/Toast';
+import { TeachBoxForm } from '../components/TeachBoxForm';
 
 export function medRisk(m: Medication): RiskLevel {
   const e: DrugEntry | undefined = DrugChecker.get().entry(m.ingredient) ?? DrugChecker.get().resolve(m.name);
@@ -22,6 +22,8 @@ export struct MedicinesPage {
   @Local query: string = '';
   @Local meds: Medication[] = [];
   @Local showAdd: boolean = false;
+  @Local teachGtin: string = '';
+  @Local showTeach: boolean = false;
   private unsubscribe: () => void = () => {
   };
 
@@ -55,10 +57,12 @@ export struct MedicinesPage {
     if (r === undefined) {
       return;
     }
-    if (r.entry !== undefined) {
+    if (r.box !== undefined) {
       this.navStack.pushPathByName(Routes.CHECK_RESULT, new CheckParam(r.gtin, true, 'BARCODE'));
     } else if (r.gtin !== '') {
-      toast(this.getUIContext(), $r('app.string.scan_unknown_box'));
+      // A real product code we don't know yet (e.g. a Bulgarian box): teach it once.
+      this.teachGtin = r.gtin;
+      this.showTeach = true;
     } else {
       // Not a product code (e.g. a QR with text): check the text itself.
       this.navStack.pushPathByName(Routes.CHECK_RESULT, new CheckParam(r.raw, true, 'BARCODE'));
@@ -81,6 +85,17 @@ export struct MedicinesPage {
     .padding(20)
     .width('100%')
     .alignItems(HorizontalAlign.Start)
+  }
+
+  @Builder
+  teachSheet() {
+    TeachBoxForm({
+      gtin: this.teachGtin,
+      onSaved: (gtin: string) => {
+        this.showTeach = false;
+        this.navStack.pushPathByName(Routes.CHECK_RESULT, new CheckParam(gtin, true, 'BARCODE'));
+      }
+    })
   }
 
   @Builder
@@ -234,6 +249,13 @@ export struct MedicinesPage {
       showClose: true,
       onDisappear: () => {
         this.showAdd = false;
+      }
+    })
+    .bindSheet(this.showTeach, this.teachSheet(), {
+      detents: [SheetSize.MEDIUM, SheetSize.LARGE],
+      showClose: true,
+      onDisappear: () => {
+        this.showTeach = false;
       }
     })
   }

@@ -803,6 +803,50 @@
     {
       "name": "privacy_lock_unavailable",
       "value": "Set a screen lock (PIN) on your phone first."
+    },
+    {
+      "name": "teach_title",
+      "value": "New box — teach Celia once"
+    },
+    {
+      "name": "teach_body",
+      "value": "We don't have this barcode yet (only Polish boxes are built in). Type the medicine name printed on the box and we will remember it for next time."
+    },
+    {
+      "name": "teach_name_hint",
+      "value": "Name on the box, e.g. Analgin or Sumamed"
+    },
+    {
+      "name": "teach_strength_hint",
+      "value": "Strength (optional), e.g. 500 mg"
+    },
+    {
+      "name": "teach_unrecognised",
+      "value": "Not in our QT list — it will be checked as unknown"
+    },
+    {
+      "name": "teach_save",
+      "value": "Save and check"
+    },
+    {
+      "name": "teach_privacy",
+      "value": "Saved only on this phone."
+    },
+    {
+      "name": "info_title",
+      "value": "About this medicine"
+    },
+    {
+      "name": "info_leaflet",
+      "value": "Open the patient leaflet (Polish, PDF)"
+    },
+    {
+      "name": "info_forget",
+      "value": "Forget this barcode"
+    },
+    {
+      "name": "info_forgotten",
+      "value": "Barcode forgotten"
     }
   ]
 }

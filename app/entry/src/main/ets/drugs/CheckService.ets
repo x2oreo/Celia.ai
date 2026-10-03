@@ -8,16 +8,33 @@ import { LocalStore } from '../data/LocalStore';
 import { DrugChecker } from './DrugChecker';
 import { Listener, Listeners } from '../common/Listeners';
 import { BarcodeResult, resolveBarcode } from './BarcodeService';
+import { BoxInfo } from '../model/BoxInfo';
 import { checkOnline } from './DrugCheckClient';
 
 export class CheckOutcome {
   verdict: DrugVerdict;
   combo: ComboVerdict;
+  box: BoxInfo | undefined;   // set when the query was a box barcode we know
 
-  constructor(verdict: DrugVerdict, combo: ComboVerdict) {
+  constructor(verdict: DrugVerdict, combo: ComboVerdict, box: BoxInfo | undefined = undefined) {
     this.verdict = verdict;
     this.combo = combo;
+    this.box = box;
   }
+}
+
+export class Resolved {
+  verdict: DrugVerdict;
+  box: BoxInfo | undefined;
+
+  constructor(verdict: DrugVerdict, box: BoxInfo | undefined) {
+    this.verdict = verdict;
+    this.box = box;
+  }
+}
+
+export function boxLabel(box: BoxInfo): string {
+  return box.strength.length > 0 ? `${box.brand} ${box.strength}` : box.brand;
 }
 
 export class CheckService {
@@ -28,22 +45,34 @@ export class CheckService {
     return CheckService.riskyChecks.add(cb);
   }
 
-  // A typed or scanned barcode number is resolved to the ingredient first (F-36).
-  static async resolveQuery(query: string): Promise<DrugVerdict> {
+  // A typed or scanned barcode number is resolved to the box first (F-36): its ingredients are checked, and the
+  // box details travel with the outcome. Unknown barcodes are checked as typed (→ UNKNOWN_DRUG, never "safe").
+  static async resolveQuery(query: string): Promise<Resolved> {
     if (/^[0-9]{8,14}$/.test(query.trim())) {
-      const b: BarcodeResult = resolveBarcode(query);
-      if (b.entry !== undefined) {
-        const v: DrugVerdict = await DrugChecker.get().check(b.entry.ingredient);
-        v.query = b.entry.product;
-        return v;
+      const b: BarcodeResult = await resolveBarcode(query);
+      if (b.box !== undefined) {
+        return new Resolved(await CheckService.checkBox(b.box), b.box);
       }
     }
     const offline: DrugVerdict = await DrugChecker.get().check(query);
-    return offline.risk === 'UNKNOWN_DRUG' ? checkOnline(query, offline) : offline;
+    return new Resolved(offline.risk === 'UNKNOWN_DRUG' ? await checkOnline(query, offline) : offline, undefined);
+  }
+
+  private static async checkBox(box: BoxInfo): Promise<DrugVerdict> {
+    const offline: DrugVerdict = await DrugChecker.get().check(box.ingredients);
+    const v: DrugVerdict = offline.risk === 'UNKNOWN_DRUG' ? await checkOnline(box.ingredients, offline) : offline;
+    v.query = boxLabel(box);
+    if (v.risk === 'UNKNOWN_DRUG') {
+      // We know the box, just not (all of) its ingredients — say so precisely.
+      v.reason = `We know this box, but ${box.ingredients} is not in our QT list yet, so we cannot say it is ` +
+        'safe. Ask your pharmacist before taking it.';
+    }
+    return v;
   }
 
   static async run(query: string, via: ScanVia): Promise<CheckOutcome> {
-    const verdict: DrugVerdict = await CheckService.resolveQuery(query);
+    const resolved: Resolved = await CheckService.resolveQuery(query);
+    const verdict: DrugVerdict = resolved.verdict;
     const meds: Medication[] = await LocalStore.get().listMeds();
     const combo: ComboVerdict = DrugChecker.get().checkCombo(verdict, meds);
     const record: ScanRecord = {
@@ -58,7 +87,7 @@ export class CheckService {
     await LocalStore.get().logScan(record);
     await LocalStore.get().logEvent('DRUG_CHECK',
       JSON.stringify(record));
-    const outcome: CheckOutcome = new CheckOutcome(verdict, combo);
+    const outcome: CheckOutcome = new CheckOutcome(verdict, combo, resolved.box);
     if (verdict.risk === 'KNOWN_RISK' || combo.kind !== 'NONE') {
       CheckService.riskyChecks.emit(outcome);
     }
@@ -67,8 +96,8 @@ export class CheckService {
 
   // Re-evaluate without logging (e.g. opening an entry from history).
   static async peek(query: string): Promise<CheckOutcome> {
-    const verdict: DrugVerdict = await CheckService.resolveQuery(query);
+    const resolved: Resolved = await CheckService.resolveQuery(query);
     const meds: Medication[] = await LocalStore.get().listMeds();
-    return new CheckOutcome(verdict, DrugChecker.get().checkCombo(verdict, meds));
+    return new CheckOutcome(resolved.verdict, DrugChecker.get().checkCombo(resolved.verdict, meds), resolved.box);
   }
 }
