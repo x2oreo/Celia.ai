@@ -7,14 +7,18 @@ import {
   Activity,
   FallResponse,
   FallValues,
+  Genotype,
   HrAlertValues,
   HrLiveValues,
+  HrRecoveryValues,
   HrSourceKind,
   MedicationTakenValues,
   MetricPayload,
   MetricType,
+  RhythmAlertValues,
   SymptomKind,
   SymptomValues,
+  VitalsValues,
   WearStateValues,
   makeRow,
   sourceForKind
@@ -22,22 +26,31 @@ import {
 import { AlarmRules } from '../vitals/AlarmRules';
 import { ContextSensors } from '../vitals/ContextSensors';
 import { HeartRateSource } from '../vitals/HeartRateSource';
+import { BaseLimits, HrLimits, isStressed, limitsFor } from '../vitals/Limits';
+import { MOCKED_FIELDS, mockVitals } from '../vitals/MockedVitals';
 import { MotionAnalyzer } from '../vitals/MotionAnalyzer';
-import { SCENARIOS, activeAt } from '../vitals/Scenarios';
+import { RecoveryTracker } from '../vitals/RecoveryTracker';
+import { RestingHr } from '../vitals/RestingHr';
+import { SCENARIOS, stateAt } from '../vitals/Scenarios';
 import { SensorHeartRateSource } from '../vitals/SensorHeartRateSource';
 import { SessionStats } from '../vitals/SessionStats';
 import { SimulatedHeartRateSource } from '../vitals/SimulatedHeartRateSource';
+import { isAsleep } from '../vitals/SleepDetector';
 import { MemoryOutboxStore, MetricOutbox } from '../sync/MetricOutbox';
+import { PatientContext, PatientContextClient } from '../sync/PatientContextClient';
 import { PreferencesOutboxStore } from '../sync/PreferencesOutboxStore';
 import { SupabaseUploader } from '../sync/SupabaseUploader';
 
 export type SyncState = 'OFF' | 'OK' | 'PENDING' | 'ERROR';
 
-/** Simulate-page override for activity. AUTO = use motion sensor or scenario. */
-export type ActivityOverride = 'AUTO' | 'REST' | 'ACTIVE';
+/** Simulate-page override for the wearer's state. AUTO = motion sensor / scenario / sleep detector. */
+export type ActivityOverride = 'AUTO' | 'REST' | 'ACTIVE' | 'ASLEEP';
 
 const LIVE_EVERY_MS = 5000;
+const VITALS_EVERY_MS = 30000;
+const MOCK_EVERY_MS = 5000;
 const SYNC_EVERY_MS = 3000;
+const CONTEXT_EVERY_MS = 60000;
 /** Monitoring is continuous, so summaries are sent per window instead of per start/stop. */
 const SUMMARY_WINDOW_MS = 5 * 60 * 1000;
 /**
@@ -47,6 +60,8 @@ const SUMMARY_WINDOW_MS = 5 * 60 * 1000;
 const READING_VALID_MS = 30000;
 /** How long the wearer has to answer "Are you OK?" after a fall. */
 const FALL_COUNTDOWN_SEC = 30;
+/** Simulated cadence while active in demo scenarios (steps per second). */
+const SIM_STEPS_PER_SEC = 2;
 const BATCH = 50;
 const WAITING = 'Waiting for heart rate…';
 const NOT_WORN = 'Watch not worn';
@@ -66,6 +81,20 @@ export class WatchController {
   @Trace activity: Activity = 'UNKNOWN';
   @Trace activityOverride: ActivityOverride = 'AUTO';
   @Trace onWrist: boolean = true;
+  @Trace limitHigh: number = 120;
+  @Trace limitLow: number = 45;
+  @Trace limitReason: string = '';
+  @Trace genotype: Genotype = 'UNKNOWN';
+  @Trace riskyDrug: string = '';
+  @Trace restingBpm: number = 65;
+  @Trace restingMeasured: boolean = false;
+  @Trace stress: boolean = false;
+  @Trace steps: number = 0;
+  @Trace hrvMs: number = 0;
+  @Trace spo2: number = 0;
+  @Trace breathingRate: number = 0;
+  @Trace irregularRhythm: boolean = false;
+  @Trace lastRecovery: string = '';
   @Trace alertText: string = '';
   /** Seconds left to answer "Are you OK?"; 0 = no fall in progress. */
   @Trace fallCountdown: number = 0;
@@ -74,24 +103,38 @@ export class WatchController {
   @Trace syncState: SyncState = 'OFF';
   @Trace pending: number = 0;
   @Trace monitoringSec: number = 0;
-  @Trace highBpm: number = 140;
-  @Trace restHighBpm: number = 120;
-  @Trace lowBpm: number = 45;
 
   private ctx: common.UIAbilityContext | undefined = undefined;
   private cfg: AppConfigData = AppConfig.defaults();
+  private base: BaseLimits = {
+    activeHigh: 140,
+    restHigh: 120,
+    sleepHigh: 100,
+    awakeLow: 45,
+    sleepLow: 40
+  };
   private source: HeartRateSource | undefined = undefined;
   private simSource: SimulatedHeartRateSource | undefined = undefined;
-  private context: ContextSensors = new ContextSensors();
+  private sensors: ContextSensors = new ContextSensors();
   private motion: MotionAnalyzer = new MotionAnalyzer();
-  private alarm: AlarmRules = new AlarmRules(AlarmRules.defaultConfig(140, 120, 45));
+  private alarm: AlarmRules = new AlarmRules(AlarmRules.defaultTiming());
+  private resting: RestingHr = new RestingHr(65);
+  private recovery: RecoveryTracker = new RecoveryTracker();
   private window: SessionStats = new SessionStats();
   private windowStartMs: number = 0;
   private outbox: MetricOutbox = new MetricOutbox(new MemoryOutboxStore(), 500);
   private uploader: SupabaseUploader | undefined = undefined;
+  private contextClient: PatientContextClient | undefined = undefined;
   private lastLiveMs: number = 0;
+  private lastVitalsMs: number = 0;
+  private lastMockMs: number = 0;
+  private lastContextMs: number = 0;
   private lastSampleMs: number = 0;
   private monitoringSinceMs: number = 0;
+  private stillSinceMs: number = -1;
+  private motionAvailable: boolean = false;
+  private sensorStepsBase: number = -1;
+  private simSteps: number = 0;
   private fallStartMs: number = 0;
   private fallBpm: number = 0;
   private scenarioFallDone: boolean = false;
@@ -101,16 +144,24 @@ export class WatchController {
   private batchSize: number = BATCH;
   private visible: boolean = false;
   private healthPermission: boolean = false;
+  private motionPermission: boolean = false;
   private ready: Promise<void> = Promise.resolve();
 
   init(ctx: common.UIAbilityContext): void {
     this.ctx = ctx;
     this.cfg = AppConfig.load(ctx);
     this.sourceKind = this.cfg.defaultSource;
-    this.highBpm = this.cfg.highBpm;
-    this.restHighBpm = this.cfg.restHighBpm;
-    this.lowBpm = this.cfg.lowBpm;
-    this.alarm = new AlarmRules(AlarmRules.defaultConfig(this.cfg.highBpm, this.cfg.restHighBpm, this.cfg.lowBpm));
+    this.genotype = this.cfg.genotype;
+    this.base = {
+      activeHigh: this.cfg.highBpm,
+      restHigh: this.cfg.restHighBpm,
+      sleepHigh: this.cfg.sleepHighBpm,
+      awakeLow: this.cfg.lowBpm,
+      sleepLow: this.cfg.sleepLowBpm
+    };
+    this.resting = new RestingHr(this.cfg.restingBpm);
+    this.restingBpm = this.cfg.restingBpm;
+    this.applyLimits();
     try {
       this.outbox = new MetricOutbox(new PreferencesOutboxStore(ctx), 500);
     } catch (e) {
@@ -119,16 +170,16 @@ export class WatchController {
     this.pending = this.outbox.size;
     if (AppConfig.canUpload(this.cfg)) {
       this.uploader = new SupabaseUploader(this.cfg.supabaseUrl, this.cfg.supabaseAnonKey);
+      this.contextClient = new PatientContextClient(this.cfg.supabaseUrl, this.cfg.supabaseAnonKey,
+        this.cfg.deviceId);
       this.syncState = this.pending > 0 ? 'PENDING' : 'OK';
     }
     this.syncTimer = setInterval(() => {
       this.syncNow();
     }, SYNC_EVERY_MS);
     this.monitoringSinceMs = Date.now();
-    // Ask for the HR permission once, up front, so the dialog doesn't interrupt a running monitor.
-    this.ready = this.ensureHealthPermission().then((granted: boolean) => {
-      this.healthPermission = granted;
-    });
+    // Ask for permissions once, up front, so the dialog doesn't interrupt a running monitor.
+    this.ready = this.requestPermissions();
   }
 
   dispose(): void {
@@ -147,17 +198,13 @@ export class WatchController {
     return this.cfg.medicationName;
   }
 
-  /** The high limit that applies right now (stricter at rest). */
-  get currentHighBpm(): number {
-    return this.alarm.highLimitFor(this.activity);
-  }
-
-  /** App became visible: (re)start monitoring. */
+  /** App became visible: (re)start monitoring and refresh the patient context. */
   async resume(): Promise<void> {
     this.visible = true;
     await this.ready;
     if (this.visible) {
       this.startSource();
+      this.refreshContext();
     }
   }
 
@@ -185,9 +232,10 @@ export class WatchController {
   // ---- Simulate page -------------------------------------------------------------------------------------------
 
   cycleActivityOverride(): void {
-    const order: ActivityOverride[] = ['AUTO', 'REST', 'ACTIVE'];
+    const order: ActivityOverride[] = ['AUTO', 'REST', 'ACTIVE', 'ASLEEP'];
     this.activityOverride = order[(order.indexOf(this.activityOverride) + 1) % order.length];
-    this.activity = this.currentActivity();
+    this.activity = this.currentActivity(Date.now());
+    this.applyLimits();
   }
 
   simulateFall(): void {
@@ -196,6 +244,18 @@ export class WatchController {
 
   toggleWorn(): void {
     this.setWorn(!this.onWrist);
+  }
+
+  /** Demo stand-in for the phone app's drug scan: toggles a recent known-risk drug. */
+  toggleRiskyDrug(): void {
+    this.riskyDrug = this.riskyDrug.length > 0 ? '' : 'Clarithromycin';
+    this.applyLimits();
+  }
+
+  cycleGenotype(): void {
+    const order: Genotype[] = ['UNKNOWN', 'LQT1', 'LQT2', 'LQT3'];
+    this.genotype = order[(order.indexOf(this.genotype) + 1) % order.length];
+    this.applyLimits();
   }
 
   // ---- User responses ------------------------------------------------------------------------------------------
@@ -271,13 +331,19 @@ export class WatchController {
     if (this.sourceKind === 'SENSOR' && !this.sensorUsable()) {
       this.sourceKind = 'SIMULATED';
     }
+    const now = Date.now();
     this.alarm.reset();
     this.bpm = 0;
+    this.irregularRhythm = false;
     this.lastLiveMs = 0;
-    this.lastSampleMs = Date.now();
-    this.windowStartMs = Date.now();
+    this.lastVitalsMs = now;
+    this.lastMockMs = 0;
+    this.lastSampleMs = now;
+    this.windowStartMs = now;
+    this.stillSinceMs = -1;
     this.window = new SessionStats();
     this.motion = new MotionAnalyzer();
+    this.recovery = new RecoveryTracker();
     this.scenarioFallDone = false;
     this.running = true;
     this.source = this.createSource(this.sourceKind);
@@ -286,14 +352,17 @@ export class WatchController {
     }, (msg: string) => {
       this.onSourceError(msg);
     });
-    const started = this.context.start((x: number, y: number, z: number, tsMs: number) => {
+    const started = this.sensors.start((x: number, y: number, z: number, tsMs: number) => {
       this.onMotion(x, y, z, tsMs);
     }, (worn: boolean) => {
       this.setWorn(worn);
-    });
+    }, (total: number) => {
+      this.onSteps(total);
+    }, this.motionPermission);
     this.tickTimer = setInterval(() => {
       this.onTick();
     }, 1000);
+    this.motionAvailable = started.indexOf('motion') >= 0;
     Logger.info(`monitoring started, source=${this.sourceKind}, context=[${started.join(',')}]`);
   }
 
@@ -304,7 +373,7 @@ export class WatchController {
     this.source?.stop();
     this.source = undefined;
     this.simSource = undefined;
-    this.context.stop();
+    this.sensors.stop();
     if (this.tickTimer >= 0) {
       clearInterval(this.tickTimer);
       this.tickTimer = -1;
@@ -353,23 +422,61 @@ export class WatchController {
     }
   }
 
-  /** Priority: Simulate-page override → demo scenario → accelerometer. */
-  private currentActivity(): Activity {
+  /** The step counter reports a running total since boot; show steps since the app started. */
+  private onSteps(total: number): void {
+    if (this.sensorStepsBase < 0) {
+      this.sensorStepsBase = total;
+    }
+    this.steps = this.simSteps + total - this.sensorStepsBase;
+  }
+
+  /** Priority: Simulate-page override → demo scenario → accelerometer (+ sleep detector). */
+  private currentActivity(now: number): Activity {
     if (this.activityOverride !== 'AUTO') {
       return this.activityOverride;
     }
     if (this.simSource !== undefined) {
-      return activeAt(SCENARIOS[this.scenarioIdx], this.simSource.elapsedSec) ? 'ACTIVE' : 'REST';
+      return stateAt(SCENARIOS[this.scenarioIdx], this.simSource.elapsedSec);
     }
-    return this.motion.activity;
+    const moving = this.motionAvailable ? this.motion.activityAt(now) : 'UNKNOWN';
+    if (moving === 'REST') {
+      if (this.stillSinceMs < 0) {
+        this.stillSinceMs = now;
+      }
+      const asleep = isAsleep({
+        onWrist: this.onWrist,
+        stillSec: (now - this.stillSinceMs) / 1000,
+        bpm: this.bpm,
+        restingBpm: this.restingBpm,
+        hour: new Date(now).getHours()
+      });
+      return asleep ? 'ASLEEP' : 'REST';
+    }
+    this.stillSinceMs = -1;
+    return moving;
+  }
+
+  private applyLimits(): void {
+    const l: HrLimits = limitsFor(this.activity, this.genotype, this.riskyDrug.length > 0, this.base);
+    this.limitHigh = l.high;
+    this.limitLow = l.low;
+    this.limitReason = l.reason;
   }
 
   private onTick(): void {
     const now = Date.now();
     this.monitoringSec = Math.round((now - this.monitoringSinceMs) / 1000);
-    this.activity = this.currentActivity();
+    this.activity = this.currentActivity(now);
+    this.applyLimits();
+    if (this.simSource !== undefined && this.activity === 'ACTIVE') {
+      this.simSteps += SIM_STEPS_PER_SEC;
+      this.steps += SIM_STEPS_PER_SEC;
+    }
     if (now - this.windowStartMs >= SUMMARY_WINDOW_MS) {
       this.flushWindow(now);
+    }
+    if (now - this.lastContextMs >= CONTEXT_EVERY_MS) {
+      this.refreshContext();
     }
     this.tickFall(now);
     this.tickScenarioFall();
@@ -384,16 +491,83 @@ export class WatchController {
       }
       return;
     }
+    this.processReading(now);
+  }
+
+  private processReading(now: number): void {
     this.window.add(this.bpm, now);
+    this.resting.add(this.bpm, now, this.activity);
+    this.restingBpm = this.resting.value;
+    this.restingMeasured = this.resting.measured;
+    if (now - this.lastMockMs >= MOCK_EVERY_MS) {
+      this.lastMockMs = now;
+      this.updateMockedVitals();
+    }
+    this.stress = isStressed(this.bpm, this.restingBpm, this.activity, this.hrvMs);
     if (now - this.lastLiveMs >= LIVE_EVERY_MS) {
       this.lastLiveMs = now;
       const live: HrLiveValues = { bpm: this.bpm, activity: this.activity };
       this.record('hr_live', live, now);
     }
-    const alert = this.alarm.evaluate(this.bpm, now, this.activity);
+    if (now - this.lastVitalsMs >= VITALS_EVERY_MS) {
+      this.lastVitalsMs = now;
+      this.record('vitals', this.vitalsSnapshot(), now);
+    }
+    const rec = this.recovery.add(this.bpm, now, this.activity);
+    if (rec !== undefined) {
+      this.onRecovery(rec, now);
+    }
+    const alert = this.alarm.evaluate(this.bpm, now,
+      { high: this.limitHigh, low: this.limitLow, reason: this.limitReason }, this.activity);
     if (alert !== undefined) {
       this.raiseAlert(alert, now);
     }
+  }
+
+  /** Simulated HRV / SpO2 / breathing / rhythm (Huawei measures them; watch apps can't read them yet). */
+  private updateMockedVitals(): void {
+    const m = mockVitals(this.bpm, this.activity, Math.random);
+    this.hrvMs = m.hrvMs;
+    this.spo2 = m.spo2;
+    this.breathingRate = m.breathingRate;
+    if (m.irregularRhythm && !this.irregularRhythm) {
+      const v: RhythmAlertValues = { bpm: this.bpm, activity: this.activity, mocked: true };
+      this.record('rhythm_alert', v, Date.now());
+      this.alertText = `Irregular rhythm at ${this.bpm} bpm (simulated signal). Sit down now.`;
+      this.vibrate(1500);
+      Logger.info('irregular rhythm (simulated)');
+    }
+    this.irregularRhythm = m.irregularRhythm;
+  }
+
+  private vitalsSnapshot(): VitalsValues {
+    const v: VitalsValues = {
+      bpm: this.bpm,
+      restingBpm: this.restingBpm,
+      activity: this.activity,
+      stress: this.stress,
+      steps: this.steps,
+      hrvMs: this.hrvMs,
+      spo2: this.spo2,
+      breathingRate: this.breathingRate,
+      irregularRhythm: this.irregularRhythm,
+      highLimitBpm: this.limitHigh,
+      lowLimitBpm: this.limitLow,
+      genotype: this.genotype,
+      riskyDrug: this.riskyDrug,
+      mocked: MOCKED_FIELDS
+    };
+    return v;
+  }
+
+  private onRecovery(rec: HrRecoveryValues, now: number): void {
+    this.record('hr_recovery', rec, now);
+    this.lastRecovery = `${rec.peakBpm}→${rec.bpmAfter60s} (−${rec.dropBpm})${rec.slow ? ' slow' : ''}`;
+    if (rec.slow) {
+      this.alertText = `Slow heart-rate recovery: −${rec.dropBpm} bpm in 1 min. Rest and tell your doctor.`;
+      this.vibrate(800);
+    }
+    Logger.info(`recovery: ${this.lastRecovery}`);
   }
 
   private tickScenarioFall(): void {
@@ -403,6 +577,21 @@ export class WatchController {
       this.scenarioFallDone = true;
       this.startFall();
     }
+  }
+
+  private refreshContext(): void {
+    this.lastContextMs = Date.now();
+    if (this.contextClient === undefined) {
+      return;
+    }
+    this.contextClient.fetch().then((c: PatientContext | undefined) => {
+      if (c === undefined) {
+        return;
+      }
+      this.genotype = c.genotype;
+      this.riskyDrug = c.riskyDrug;
+      this.applyLimits();
+    });
   }
 
   // ---- Fall / faint ------------------------------------------------------------------------------------------
@@ -489,10 +678,8 @@ export class WatchController {
   }
 
   private raiseAlert(alert: HrAlertValues, tsMs: number): void {
-    const where = alert.activity === 'REST' ? ' at rest' : alert.activity === 'ACTIVE' ? ' during activity' : '';
-    this.alertText = alert.direction === 'high'
-      ? `High heart rate${where}: ${alert.bpm} (limit ${alert.limitBpm})`
-      : `Low heart rate${where}: ${alert.bpm} (limit ${alert.limitBpm})`;
+    const kind = alert.direction === 'high' ? 'High' : 'Low';
+    this.alertText = `${kind} heart rate ${alert.bpm} (${this.limitReason} limit ${alert.limitBpm})`;
     this.record('hr_alert', alert, tsMs);
     this.vibrate(1200);
     Logger.info(`alert: ${this.alertText}`);
@@ -514,19 +701,20 @@ export class WatchController {
     });
   }
 
-  private async ensureHealthPermission(): Promise<boolean> {
+  /** Heart rate + step counter in one dialog. Either may be denied; the app degrades per signal. */
+  private async requestPermissions(): Promise<void> {
     if (this.ctx === undefined) {
-      return false;
+      return;
     }
-    const perms: Permissions[] = ['ohos.permission.READ_HEALTH_DATA'];
+    const perms: Permissions[] = ['ohos.permission.READ_HEALTH_DATA', 'ohos.permission.ACTIVITY_MOTION'];
     try {
       const atManager = abilityAccessCtrl.createAtManager();
       const res = await atManager.requestPermissionsFromUser(this.ctx, perms);
-      return res.authResults.length > 0 && res.authResults[0] === 0;
+      this.healthPermission = res.authResults.length > 0 && res.authResults[0] === 0;
+      this.motionPermission = res.authResults.length > 1 && res.authResults[1] === 0;
     } catch (e) {
       const err = e as BusinessError;
       Logger.warn(`permission request failed: ${err.code}`);
-      return false;
     }
   }
 }

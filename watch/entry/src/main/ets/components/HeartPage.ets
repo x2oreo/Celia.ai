@@ -19,17 +19,12 @@ export struct HeartPage {
     return Theme.WARN;
   }
 
+  /** "bpm · LQT2 · rest · max 110": the limit that applies right now and why. */
   contextLabel(): string {
     if (!this.ctrl.onWrist) {
       return 'bpm';
     }
-    if (this.ctrl.activity === 'REST') {
-      return `bpm · at rest · limit ${this.ctrl.currentHighBpm}`;
-    }
-    if (this.ctrl.activity === 'ACTIVE') {
-      return `bpm · active · limit ${this.ctrl.currentHighBpm}`;
-    }
-    return 'bpm';
+    return `bpm · ${this.ctrl.limitReason} · max ${this.ctrl.limitHigh}`;
   }
 
   elapsed(): string {
@@ -87,6 +82,13 @@ export struct HeartPage {
       Text(this.contextLabel())
         .fontSize(12)
         .fontColor(Theme.MUTED)
+
+      if (this.ctrl.riskyDrug.length > 0) {
+        Text(`⚠ ${this.ctrl.riskyDrug}: QT risk`)
+          .fontSize(10)
+          .fontColor(Theme.WARN)
+          .maxLines(1)
+      }
 
       if (this.ctrl.statusText.length > 0) {
         Text(this.ctrl.statusText)

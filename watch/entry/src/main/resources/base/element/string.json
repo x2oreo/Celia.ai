@@ -13,6 +13,10 @@
       "value": "Celia Watch"
     },
     {
+      "name": "motion_reason",
+      "value": "Counts steps to tell exercise from rest for your heart-rate limits."
+    },
+    {
       "name": "health_reason",
       "value": "Reads your heart rate to warn you about rhythm-related risks."
     }

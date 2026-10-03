@@ -5,6 +5,16 @@ import { Theme } from './Theme';
 export struct AlertOverlay {
   @Param @Require ctrl: WatchController;
 
+  advice(): string {
+    if (this.ctrl.activity === 'ASLEEP') {
+      return 'Sit up slowly. If you feel faint, call for help.';
+    }
+    if (this.ctrl.activity === 'ACTIVE') {
+      return 'Stop exercising and sit down. If you feel faint, call for help.';
+    }
+    return 'Sit down and breathe slowly. If you feel faint, call for help.';
+  }
+
   build() {
     Column({ space: 6 }) {
       Text('!').fontSize(28).fontWeight(FontWeight.Bold).fontColor(Theme.TEXT)
@@ -14,7 +24,7 @@ export struct AlertOverlay {
         .fontColor(Theme.TEXT)
         .textAlign(TextAlign.Center)
         .width(160)
-      Text('Stop and rest. If you feel faint, call for help.')
+      Text(this.advice())
         .fontSize(11)
         .fontColor(Theme.TEXT)
         .opacity(0.85)

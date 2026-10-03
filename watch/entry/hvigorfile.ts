@@ -38,6 +38,10 @@ function writeConfigFromEnv(): void {
     medicationName: str('MEDICATION_NAME', 'nadolol'),
     highBpm: num('HIGH_BPM', 140),
     restHighBpm: num('REST_HIGH_BPM', 120),
+    sleepHighBpm: num('SLEEP_HIGH_BPM', 100),
+    sleepLowBpm: num('SLEEP_LOW_BPM', 40),
+    genotype: str('GENOTYPE', 'UNKNOWN'),
+    restingBpm: num('RESTING_BPM', 65),
     lowBpm: num('LOW_BPM', 45)
   };
   fs.mkdirSync(path.dirname(outPath), { recursive: true });

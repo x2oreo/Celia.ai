@@ -7,6 +7,7 @@ import { HeartPage } from '../components/HeartPage';
 import { LogPage } from '../components/LogPage';
 import { SettingsPage } from '../components/SettingsPage';
 import { SimulatePage } from '../components/SimulatePage';
+import { VitalsPage } from '../components/VitalsPage';
 import { Theme } from '../components/Theme';
 
 @Entry
@@ -34,6 +35,7 @@ struct Index {
     Stack() {
       Swiper() {
         HeartPage({ ctrl: this.ctrl })
+        VitalsPage({ ctrl: this.ctrl })
         LogPage({ ctrl: this.ctrl })
         SettingsPage({ ctrl: this.ctrl })
         SimulatePage({ ctrl: this.ctrl })

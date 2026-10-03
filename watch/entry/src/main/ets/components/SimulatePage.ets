@@ -1,9 +1,26 @@
 import { WatchController } from '../controller/WatchController';
 import { Theme } from './Theme';
 
+@ComponentV2
+struct SimButton {
+  @Param @Require label: string;
+  @Param highlight: boolean = false;
+  @Event onTap: () => void = () => {};
+
+  build() {
+    Button(this.label)
+      .fontSize(11)
+      .width(132)
+      .height(26)
+      .backgroundColor(this.highlight ? Theme.WARN : Theme.CARD)
+      .fontColor(this.highlight ? '#000000' : Theme.TEXT)
+      .onClick(() => this.onTap())
+  }
+}
+
 /**
- * Demo controls for things the emulator can't produce: a fall, putting the watch on/off, and forcing
- * rest/active. Everything recorded while simulating is still labelled with its real source.
+ * Demo controls for things the emulator can't produce: a fall, watch on/off, rest/active/asleep, genotype and a
+ * recently scanned risky drug (normally from the phone app via watch_context).
  */
 @ComponentV2
 export struct SimulatePage {
@@ -12,48 +29,38 @@ export struct SimulatePage {
   activityLabel(): string {
     switch (this.ctrl.activityOverride) {
       case 'REST':
-        return 'Activity: rest';
+        return 'State: rest';
       case 'ACTIVE':
-        return 'Activity: active';
+        return 'State: active';
+      case 'ASLEEP':
+        return 'State: asleep';
       default:
-        return 'Activity: auto';
+        return 'State: auto';
     }
   }
 
   build() {
-    Column({ space: 6 }) {
-      Text('Simulate').fontSize(13).fontColor(Theme.MUTED)
-      Button('Fall')
-        .fontSize(13)
-        .width(140)
-        .height(32)
-        .backgroundColor(Theme.WARN)
-        .fontColor('#000000')
-        .onClick(() => {
-          this.ctrl.simulateFall();
-        })
-      Button(this.ctrl.onWrist ? 'Take watch off' : 'Put watch on')
-        .fontSize(13)
-        .width(140)
-        .height(32)
-        .backgroundColor(Theme.CARD)
-        .fontColor(Theme.TEXT)
-        .onClick(() => {
-          this.ctrl.toggleWorn();
-        })
-      Button(this.activityLabel())
-        .fontSize(13)
-        .width(140)
-        .height(32)
-        .backgroundColor(Theme.CARD)
-        .fontColor(Theme.TEXT)
-        .onClick(() => {
-          this.ctrl.cycleActivityOverride();
-        })
+    Column({ space: 4 }) {
+      Text('Simulate').fontSize(11).fontColor(Theme.MUTED)
+      SimButton({ label: 'Fall', highlight: true, onTap: () => {
+        this.ctrl.simulateFall();
+      } })
+      SimButton({ label: this.ctrl.onWrist ? 'Take watch off' : 'Put watch on', onTap: () => {
+        this.ctrl.toggleWorn();
+      } })
+      SimButton({ label: this.activityLabel(), onTap: () => {
+        this.ctrl.cycleActivityOverride();
+      } })
+      SimButton({ label: `Genotype: ${this.ctrl.genotype === 'UNKNOWN' ? '—' : this.ctrl.genotype}`, onTap: () => {
+        this.ctrl.cycleGenotype();
+      } })
+      SimButton({ label: this.ctrl.riskyDrug.length > 0 ? 'Risky drug: on' : 'Risky drug: off', onTap: () => {
+        this.ctrl.toggleRiskyDrug();
+      } })
     }
     .width('100%')
     .height('100%')
-    .padding({ bottom: 10 })
+    .padding({ bottom: 8 })
     .justifyContent(FlexAlign.Center)
   }
 }

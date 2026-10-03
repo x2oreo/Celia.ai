@@ -1,6 +1,6 @@
 import { common } from '@kit.AbilityKit';
 import { util } from '@kit.ArkTS';
-import { HrSourceKind } from '../model/WatchMetric';
+import { Genotype, HrSourceKind } from '../model/WatchMetric';
 import { Logger } from './Logger';
 
 /**
@@ -16,10 +16,17 @@ export interface AppConfigData {
   deviceId: string;
   defaultSource: HrSourceKind;
   medicationName: string;
+  /** High limit while active. */
   highBpm: number;
   /** Stricter high limit while at rest. */
   restHighBpm: number;
+  sleepHighBpm: number;
   lowBpm: number;
+  sleepLowBpm: number;
+  /** Used until the phone app has written a genotype to watch_context. */
+  genotype: Genotype;
+  /** Resting-HR estimate until the watch has measured a resting minute. */
+  restingBpm: number;
 }
 
 export class AppConfig {
@@ -32,7 +39,11 @@ export class AppConfig {
       medicationName: 'nadolol',
       highBpm: 140,
       restHighBpm: 120,
-      lowBpm: 45
+      sleepHighBpm: 100,
+      lowBpm: 45,
+      sleepLowBpm: 40,
+      genotype: 'UNKNOWN',
+      restingBpm: 65
     };
     return cfg;
   }
@@ -77,6 +88,18 @@ export class AppConfig {
     }
     if (typeof src.restHighBpm === 'number' && src.restHighBpm > 60 && src.restHighBpm < 250) {
       target.restHighBpm = src.restHighBpm;
+    }
+    if (typeof src.sleepHighBpm === 'number' && src.sleepHighBpm > 50 && src.sleepHighBpm < 200) {
+      target.sleepHighBpm = src.sleepHighBpm;
+    }
+    if (typeof src.sleepLowBpm === 'number' && src.sleepLowBpm > 20 && src.sleepLowBpm < 80) {
+      target.sleepLowBpm = src.sleepLowBpm;
+    }
+    if (src.genotype === 'LQT1' || src.genotype === 'LQT2' || src.genotype === 'LQT3') {
+      target.genotype = src.genotype;
+    }
+    if (typeof src.restingBpm === 'number' && src.restingBpm > 30 && src.restingBpm < 120) {
+      target.restingBpm = src.restingBpm;
     }
     if (typeof src.lowBpm === 'number' && src.lowBpm > 20 && src.lowBpm < 80) {
       target.lowBpm = src.lowBpm;
