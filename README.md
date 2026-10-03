@@ -1,22 +1,22 @@
 # Celia.ai
 
-Agent-first heart-safety companion for people with Long QT syndrome — HarmonyOS (API 20+), HackYeah 2026 Huawei task.
+Agent-first heart-safety companion for people with Long QT syndrome - HarmonyOS (API 20+), HackYeah 2026 Huawei task.
 
 ## Team docs
-- [Product spec](docs/PRODUCT.md) — locked decisions, screens, feature catalogue, demo
-- [Idea](docs/IDEA.md) — what we build and why, MVP scope, demo story
-- [Architecture](docs/ARCHITECTURE.md) — big picture, ownership, shared contracts, API
-- [Plan](docs/PLAN.md) — checkpoints, mentor questions, submission checklist
-- [Tasks](docs/TASKS.md) — feature expansion (F-19..F-34) as implementable tasks
-- Per person: [Kaloyan — agent](docs/team/kaloyan-agent.md) · [Georgi — app](docs/team/georgi-app.md) · [Mark — data & watch](docs/team/mark-data-watch.md)
-- [Watch app](watch/README.md) — HarmonyOS wearable app (emulator), metrics → Supabase
-- [SOS backend](backend/supabase/functions/sos/README.md) — watch SOS → SMS + call to emergency contacts (Twilio)
+- [Product spec](docs/PRODUCT.md) - locked decisions, screens, feature catalogue, demo
+- [Idea](docs/IDEA.md) - what we build and why, MVP scope, demo story
+- [Architecture](docs/ARCHITECTURE.md) - big picture, ownership, shared contracts, API
+- [Plan](docs/PLAN.md) - checkpoints, mentor questions, submission checklist
+- [Tasks](docs/TASKS.md) - feature expansion (F-19..F-34) as implementable tasks
+- Per person: [Kaloyan - agent](docs/team/kaloyan-agent.md) · [Georgi - app](docs/team/georgi-app.md) · [Mark - data & watch](docs/team/mark-data-watch.md)
+- [Watch app](watch/README.md) - HarmonyOS wearable app (emulator), metrics → Supabase
+- [SOS backend](backend/supabase/functions/sos/README.md) - watch SOS → SMS + call to emergency contacts (Twilio)
 - Background: [task text](docs/hackathon/huawei-task.txt) · [condition research](docs/hackathon/conditions-research.md)
 
 ## Build & run
 
 Native HarmonyOS app: ArkTS + ArkUI, Stage model, **minimum and target API 20** (`6.0.0(20)`).
-Project lives in [`app/`](app) — open that folder in DevEco Studio 6.x.
+Project lives in [`app/`](app) - open that folder in DevEco Studio 6.x.
 
 ```bash
 source app/env.sh          # puts DevEco's hvigorw / ohpm / hdc on PATH (override DEVECO=... if installed elsewhere)
@@ -26,7 +26,7 @@ app/scripts/device.sh      # real phone: preflight (API level, signing, backend)
 ```
 
 On the first build `entry/hvigorfile.ts` creates `app/entry/src/main/ets/common/LocalConfig.ets` from
-`LocalConfig.example.ets`. That file is gitignored — put the backend URL / Supabase anon key there. Without it the
+`LocalConfig.example.ets`. That file is gitignored - put the backend URL / Supabase anon key there. Without it the
 app runs fully offline (deterministic drug check, emergency card).
 
 ### Signing
@@ -36,14 +36,14 @@ app runs fully offline (deterministic drug check, emergency card).
 1. DevEco Studio → File → Project Structure → Signing Configs → sign in with a Huawei ID →
    **Automatically generate signature** (works for the emulator and for a real device).
 2. DevEco writes local cert paths and encrypted passwords into `app/build-profile.json5`. **Never commit that hunk.**
-   Right after enabling signing, run once **from the repo root** (the file must already be tracked — it is, once
+   Right after enabling signing, run once **from the repo root** (the file must already be tracked - it is, once
    you've pulled `main`):
    ```bash
    git update-index --skip-worktree app/build-profile.json5
    ```
    (undo with `--no-skip-worktree` before you intentionally change that file). Certificates (`*.p12`, `*.cer`,
    `*.p7b`, `*.csr`) are gitignored and live outside the repo (`~/.ohos/config`).
-3. Safety net — enable the repo's pre-commit hook once per clone; it refuses commits that contain signing
+3. Safety net - enable the repo's pre-commit hook once per clone; it refuses commits that contain signing
    material, certificates, `LocalConfig.ets` or `.env` files:
    ```bash
    git config core.hooksPath .githooks
@@ -87,16 +87,16 @@ Everything below runs on the emulator with no backend and no watch. Heart data i
 | Screen-reader text | Verdicts are read by their word ("Known risk"), cards as one sentence, selected chips as selected. **In the code; not checked with the screen reader on.** |
 | Reduced motion | API 23+: follows the system "reduce animations" setting; API 20-22 have no such setting, so an animation scale of 0 is used instead. **Read path runs without errors; never seen switched on.** |
 | Medicine sheet, AI explanation | Medicines → tap a medicine: risk band, what it's for, interactions, brands. "Explain it in plain words" (backend only; hidden offline) shows an `AI SUMMARY`; replies that mention QT/arrhythmia/doses are dropped. |
-| Doctor summary (T13) | Opening a visit page fetches it once (backend only) and keeps it with the visit: 2–3 sentences from the brief's medicines, risk words, interactions, counts, and the visit plan's purpose titles and known-risk names — never name, notes, symptom notes or the reason you typed. Reassurance or doses → dropped; a retry button appears when it fails. |
+| Doctor summary (T13) | Opening a visit page fetches it once (backend only) and keeps it with the visit: 2–3 sentences from the brief's medicines, risk words, interactions, counts, and the visit plan's purpose titles and known-risk names - never name, notes, symptom notes or the reason you typed. Reassurance or doses → dropped; a retry button appears when it fails. |
 | Celia intents (F-11, T20) | `CheckDrugSafety`, `ShowEmergencyCard`, `LogSymptom`, `TakeDose`, `ShowPharmacyCard`, `AddMedication`, `ReadEmergencyCard` (`insight_intent.json`). Built and compiled; routing from Celia needs a real device with Celia/Xiaoyi. |
 | Widgets (F-12) | Home screen → add Celia "Check a medicine" (2×2) and "Medical alert" (2×4); Help this person opens the bystander guide. |
 | Watch context (T15) | With the cloud backend, a risky check writes `watch_context` (genotype, ingredient, risk) and the Celia watch shows the verdict glance within 60 s. |
-| Privacy, app lock (F-45, F-46) | Settings → What left my phone: every outbound request — drug check, agent, voice, vision, explanations, share links, live voice — with field names and size, never values; **Export the list**. App lock needs a screen lock (PIN) on the device. |
+| Privacy, app lock (F-45, F-46) | Settings → What left my phone: every outbound request - drug check, agent, voice, vision, explanations, share links, live voice - with field names and size, never values; **Export the list**. App lock needs a screen lock (PIN) on the device. |
 | Watch build + install | `watch/scripts/run.sh` with the `Huawei_Wearable` emulator running → screenshot in `watch/build/screenshot.jpeg` |
 | Watch internals split | `cd watch && source env.sh && hvigorw test -p module=entry -p coverage=false --no-daemon` → 88/88 (with the watch-secret patch) |
 | Accelerometer slows at rest | run the watch app, keep the emulator still 30 s, `hdc -t <watch> hilog \| grep CeliaWatch` → `accelerometer every 100 ms` |
 | Shared HTTP session | with `watch/.env` filled, tap *Fine* on the check-in page → row in `watch_metrics` for the device id |
-| Redaction before the AI summary | Unit tests `Redact` / `summarySendsRedactedAnswersOnly`: names of the patient, contacts, cardiologist, hospital, phone numbers, e-mails and links become `[removed]`; Privacy ledger shows `reason`, `worries` field names only. |
+| Redaction before the AI summary | Unit tests `Redact` / `summarySendsRedactedAnswersOnly`: names of the patient, contacts, cardiologist, hospital, phone numbers, e-mails and links become `[removed]` before a visit's reason or worries could be sent. The visit page sends neither: the AI summary gets the plan's purpose titles and known-risk names only. |
 | Feeling diary (B15) | Route `feeling` (agent home tile from Workstream A, or the "How are you feeling?" widget): pick a mood, optional note, Save → listed under RECENT. Low / Unwell offers "Log a symptom". |
 | Notifications per kind (B7) | Settings → notifications for Celia.ai: emergency is a separate loud category. Start an SOS countdown and pull down the panel: "SOS in N s" notification. Real phone: tap it to show I'm OK / Open (built, unverified on screen: emulator does not draw buttons). |
 | Dose "Taken" from the notification (B7) | Add a reminder; when it is due the notification has Taken / Open. Taken opens Celia on Reminders with the dose TAKEN. Emulator check: `hdc shell aa start -a EntryAbility -b com.celiaai.app --ps notifyAction DOSE_TAKEN --ps notifyKind DOSE_DUE --pi notifyId <2000+id%1000> --pi reminderId <id>` |
@@ -124,16 +124,16 @@ Everything below runs on the emulator with no backend and no watch. Heart data i
 | Responder from widget | Add the 2×4 Medical alert card → tap its text (built, unverified) |
 | No notification prompt on launch | Relaunch the app after onboarding: no notification dialog appears (it is asked only in onboarding step 7). |
 
-Unit tests: `app/scripts/test.sh` — **388 tests, 0 failures** (4 Oct 2026): drug data + checker, interactions, health metric rules and chart maths,
+Unit tests: `app/scripts/test.sh` - **389 tests, 0 failures** (4 Oct 2026): drug data + checker, interactions, health metric rules and chart maths,
 agent safety gate + validator + tool registry, offline agent, saved chats, alarm rules, SOS state machine and message,
 doctor brief + AI summary guard, report payload + share links, medicine info + AI reply guard, symptom tool, GS1,
 emergency numbers, card text + read-aloud privacy, dose schedule, travel, privacy guard + ledger, accounts + profile
 sync, onboarding, emergency details + responder + card payload v2 + NFC, notification kinds + watch SOS + Live View
 text + medical ID card, doctor visits + redaction + feeling diary. Tests never call the network
 (`Config.forceOffline`).
-Watch: `cd watch && source env.sh && hvigorw test -p module=entry -p coverage=false --no-daemon` — **88 tests, 0
+Watch: `cd watch && source env.sh && hvigorw test -p module=entry -p coverage=false --no-daemon` - **88 tests, 0
 failures**.
-Backend: `npx -y deno test --no-lock backend/supabase/functions/` — **75 tests, 0 failures** (labels, RxNav/openFDA
+Backend: `npx -y deno test --no-lock backend/supabase/functions/` - **75 tests, 0 failures** (labels, RxNav/openFDA
 tier 2, share, SOS message + Huawei Push sender, box identify, med-info and doctor-summary output guards).
 Accounts RLS: `backend/supabase/tests/run-rls.sh` (throw-away local Postgres) → ALL ACCOUNTS RLS CHECKS PASSED.
 
@@ -178,7 +178,7 @@ not. Everything below is optional and the phone lists each request in Settings �
 | OpenAI, via our Edge Functions or a direct WebSocket | Voice audio; a downscaled box photo | Live voice, cloud tap-to-talk, or a photo scan the on-device reader could not handle |
 | Supabase Storage | Card or doctor report, encrypted on the phone; the key stays in the link | You create a share link or card QR |
 | Supabase, SOS tables (our project) | Your emergency contacts' names and international phone numbers (at most 5) and your first name, for your paired watch; readable by nobody through the API, only by our `sos` function | Only after you switch on Settings → Account → "Let my watch alert my contacts" (off by default); switching it off deletes them |
-| Never uploaded in the clear | Without an account: name, phone numbers, contacts, notes | — |
+| Never uploaded in the clear | Without an account: name, phone numbers, contacts, notes | - |
 
 **With an account:** the `profiles` row is readable and writable only by your own login (row-level security
 `auth.uid() = user_id`; nothing for the public key). It is stored in our Supabase project. Delete it any time in
@@ -195,6 +195,6 @@ auth; the watch app has no ledger of its own.
 from the Polish (URPL) and Bulgarian (BDA) medicine registers; emergency numbers from the EU 112 pages and national
 regulators; CPR guidance from ERC / AHA public guidelines; genotype triggers from Schwartz et al. (Circulation 2001)
 and the HRS/EHRA/APHRS 2013 consensus. Box barcodes, product names, strengths, forms, availability categories and
-leaflet links come from the public Polish medicines register export (Rejestr Produktów Leczniczych, URPL —
+leaflet links come from the public Polish medicines register export (Rejestr Produktów Leczniczych, URPL -
 rejestrymedyczne.ezdrowie.gov.pl, snapshot date stored in `gtin_pl.json`); ATC group names from the WHO ATC index
-(whocc.no); GS1 country prefixes from the public GS1 prefix list. The bundled list is a curated demo subset — not a medical device.
+(whocc.no); GS1 country prefixes from the public GS1 prefix list. The bundled list is a curated demo subset - not a medical device.

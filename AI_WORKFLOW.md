@@ -9,7 +9,7 @@ How AI tools were used to build Celia.ai, as required by Challenge Rules §4. Ap
 | Claude Code (Claude Opus 5.5) | Research, architecture planning, code generation, tests, docs |
 | Context7 MCP | Up-to-date HarmonyOS docs (`/websites/developer_huawei_consumer_cn_doc_harmonyos-guides`) and OpenAI API docs (`/websites/developers_openai_api`) |
 | Project Agent Skills (`.claude/skills/`) | HarmonyOS/ArkTS rules, LQTS domain facts, Celia/HMAF integration, build loop |
-| OpenAI API (in the product) | Agent model behind `/agent` — see `AI_FEATURES.md` |
+| OpenAI API (in the product) | Agent model behind `/agent` - see `AI_FEATURES.md` |
 
 ## Pre-existing work
 
@@ -29,7 +29,7 @@ How AI tools were used to build Celia.ai, as required by Challenge Rules §4. Ap
 
 ## Sessions
 
-### 2026-10-03 — AI layer research, plan and first implementation (Kaloyan)
+### 2026-10-03 - AI layer research, plan and first implementation (Kaloyan)
 
 **Prompt (summary):** "Research how we built the AI in HeartBeat, brainstorm a voice-first agent at the centre of
 the app that works with the tools (medicine check, emergency card…), then plan and build the AI layer."
@@ -69,7 +69,7 @@ the app that works with the tools (medicine check, emergency card…), then plan
 - JavaScript `\b` doesn't work next to Polish letters, so the Polish patterns now use substrings.
 - The reassurance check would have replaced "your heart rate is fine". It is now scoped to medicine context.
 
-### 2026-10-03 (cont.) — voice, photo, Realtime, Intents (Kaloyan)
+### 2026-10-03 (cont.) - voice, photo, Realtime, Intents (Kaloyan)
 
 **Prompt (summary):** continue the approved plan.
 
@@ -101,9 +101,9 @@ the app that works with the tools (medicine check, emergency card…), then plan
   Celia intent routing.
 - No call has been made with a real OpenAI key yet; the backend needs to be deployed first.
 
-### 2026-10-03 (cont.) — model selection and first live calls (Kaloyan)
+### 2026-10-03 (cont.) - model selection and first live calls (Kaloyan)
 
-**Prompt:** "Research latest OpenAI models, pick best quality/cost — thinking of gpt-6.1-sol."
+**Prompt:** "Research latest OpenAI models, pick best quality/cost - thinking of gpt-6.1-sol."
 
 **How the model was chosen**
 1. Listed the models available to our key through `/v1/models`, and read the model guide and pricing through Context7.
@@ -127,7 +127,7 @@ the app that works with the tools (medicine check, emergency card…), then plan
 - The API key was pasted into the chat once. It is stored only in the gitignored `backend/supabase/functions/.env`
   and will be rotated after the event.
 
-### 2026-10-03 (cont.) — live eval of the AI layer (Kaloyan, with a Claude Code test agent)
+### 2026-10-03 (cont.) - live eval of the AI layer (Kaloyan, with a Claude Code test agent)
 
 **Prompt:** `docs/agent-test-prompt` → "Verify everything on `kaloyan/ai-layer` works, measure it, report back; ≤ $3."
 
@@ -165,7 +165,7 @@ the app that works with the tools (medicine check, emergency card…), then plan
 
 **Not tested:** device and emulator (`hdc list targets` was empty), Core Speech, and Celia intents on a device.
 
-### 2026-10-03 (cont.) — fixing what the live eval found (Kaloyan, with Claude Code)
+### 2026-10-03 (cont.) - fixing what the live eval found (Kaloyan, with Claude Code)
 
 **Prompt:** "plan out how to fix all and fix them"
 
@@ -189,7 +189,7 @@ the app that works with the tools (medicine check, emergency card…), then plan
 - Agent eval on the new prompt: 17/17, with no validator false positives. Realtime smoke: pass.
 - Total eval spend for the day: about $1.98 of the $3 cap.
 
-### 2026-10-03 (cont.) — merging the app from main and wiring the AI into it (Kaloyan, with Claude Code)
+### 2026-10-03 (cont.) - merging the app from main and wiring the AI into it (Kaloyan, with Claude Code)
 
 **Prompt:** "wait for one of the agents to finish … push. Then … get what there is in main … make sure everything is
 connected and is working correctly with the AI"
@@ -223,9 +223,9 @@ connected and is working correctly with the AI"
 - **Not verified:** the emulator, because no `hdc` target was connected; `LocalConfig.ets` has no backend URL, so the
   app runs in offline mode; and the Edge Functions are not yet redeployed with prompt `2026-10-03.2`.
 
-### 2026-10-03 (cont.) — testing on the emulator, driven by Claude Code (Kaloyan)
+### 2026-10-03 (cont.) - testing on the emulator, driven by Claude Code (Kaloyan)
 
-**Prompt:** "i started emulator in deveco studio — think how you can come to use it yourself and test things out"
+**Prompt:** "i started emulator in deveco studio - think how you can come to use it yourself and test things out"
 
 **How the agent drove the emulator**
 - UI: `hdc install` of the unsigned HAP, which the emulator accepts, then `uitest uiInput` (tap, type, swipe),
@@ -259,7 +259,7 @@ Realtime, and Celia intents. A parallel Claude Code session is redesigning the U
 sessions coordinated file ownership by message.
 
 
-### 2026-10-03 (cont.) — UI redesign to the design system (Kaloyan, with Claude Code)
+### 2026-10-03 (cont.) - UI redesign to the design system (Kaloyan, with Claude Code)
 
 **Goal.** The app was built before the design system existed. This session brought every phone screen in line
 with `docs/design/DESIGN.md` and the three design screenshots (B1–B6), and built the two home-screen cards.
@@ -301,7 +301,7 @@ long-press), dark mode on a device, and the largest font size.
 sessions agreed file ownership by message and staged explicit paths only. One commit of this session still
 picked up the other session's new strings from the shared `string.json`; nothing was lost.
 
-### 2026-10-03 (cont.) — voice-first conversation with the agent (Kaloyan, with Claude Code)
+### 2026-10-03 (cont.) - voice-first conversation with the agent (Kaloyan, with Claude Code)
 
 **Prompt (summary).** "Rework how the AI works in the UI. It should be a voice AI you talk to, with the chatbot as
 an option. Redesign the orb, show my message being written as I speak, and design all the tools beautifully in
@@ -341,7 +341,7 @@ current medicines". Fixed, with a test.
 live user transcript, the voice-level halos while the user speaks, barge-in and mute are untested on a device.
 The tap-to-talk fallback is also untested end to end.
 
-### 2026-10-03 — Mark + Claude Code: watch app
+### 2026-10-03 - Mark + Claude Code: watch app
 - **Asked:** build the watch part. Our GT 6 Pro should send metrics via the iPhone to a server that the phone app
   (DevEco Previewer) reads.
 - **Research (AI, verified against the installed SDK):** the lite wearable device definition
@@ -358,7 +358,7 @@ The tap-to-talk fallback is also untested end to end.
 - **Lessons:** HarmonyOS training data is stale. The SDK's own `.d.ts` and device-define files were the fastest
   ground truth. Emulator screens are ~233 vp wide, so the first UI was 2× too big; screenshots caught it.
 
-### 2026-10-03 — Mark + Claude Code: SOS backend (parallel session, branch `sos-backend`)
+### 2026-10-03 - Mark + Claude Code: SOS backend (parallel session, branch `sos-backend`)
 - **Asked:** when the watch's SOS countdown runs out, actually call and text the emergency contacts.
 - **Research (AI, verified in Context7 HarmonyOS guides):** `call.makeCall` only opens the dialer, and
   `sms.sendShortMessage` needs `SEND_MESSAGES`, which only system apps can get. So an app can't dial or text
@@ -372,7 +372,7 @@ The tap-to-talk fallback is also untested end to end.
 - **Worked in parallel** with the watch-app session in a separate git worktree (new files only), so neither
   session overwrote the other's work.
 
-### 2026-10-03 — Mark + Claude Code: missed beta-blocker check (branch `beta-blocker-check`)
+### 2026-10-03 - Mark + Claude Code: missed beta-blocker check (branch `beta-blocker-check`)
 - **Asked:** detect possibly missed beta-blocker doses from the watch's resting heart rate, plus a watch Simulate
   button to demo it.
 - **Design (AI, reviewed by Mark):** a fixed rule, no LLM. Baseline = median of up to 14 earlier days (at least 5);
@@ -390,7 +390,7 @@ The tap-to-talk fallback is also untested end to end.
 - **Worked in parallel** with the watch session: the watch button was handed over as a written spec instead of
   editing the same files, to avoid merge conflicts.
 
-### 2026-10-03 — Mark + Claude Code: watch data the phone was ignoring
+### 2026-10-03 - Mark + Claude Code: watch data the phone was ignoring
 - **Asked:** check what the watch sends that the phone doesn't use yet.
 - **Found (AI, from the code on main):** the phone's `WatchCloudSource` uses `vitals`, `sos`, `fall_detected`,
   `hr_recovery` and `vitals_alert`, but ignores `medication_taken`, `symptom` and `wear_state`.
@@ -401,7 +401,7 @@ The tap-to-talk fallback is also untested end to end.
   the views were checked with test rows: wear state, offline detection, empty names and unknown symptom kinds
   filtered out, simulated rows labelled.
 
-### 2026-10-03 — Mark + Claude Code: using watch doses and "How do you feel?" answers
+### 2026-10-03 - Mark + Claude Code: using watch doses and "How do you feel?" answers
 - **Asked:** make the watch's "Took nadolol" taps and symptom answers useful beyond a log.
 - **Produced:** migration `…250000_watch_insights.sql`: `watch_daily_summary` (per-day doses, symptoms, alerts,
   resting HR) and `watch_insights` (fixed rules with fixed texts: symptom within 24 h of a QT-risk drug, fainting,
@@ -412,7 +412,7 @@ The tap-to-talk fallback is also untested end to end.
   old symptoms are ignored, wording checked); 10 Deno tests for the SOS message pass (3 new) and `deno check` passes.
 - **Not yet validated:** the new SOS text over real Twilio; the views on Supabase (migration not pushed yet).
 
-### 2026-10-03 — Georgi + Claude Code: emergency-card link fallbacks and branch merges (branch `app_development`)
+### 2026-10-03 - Georgi + Claude Code: emergency-card link fallbacks and branch merges (branch `app_development`)
 - **Asked:** the card QR only opened on the laptop. Fix it for phone scans, add a visible link under the QR, make
   112 the main number on the card page, then merge `main` and `kaloyan/ai-layer` into the branch.
 - **Found (AI):** the QR pointed at the GitHub Pages viewer, which wasn't deployed yet (404).
@@ -431,7 +431,7 @@ The tap-to-talk fallback is also untested end to end.
   opened from the local server in the emulator browser.
 - **Not yet validated:** a real phone on the same Wi-Fi; the public viewer (needs Pages enabled on `main`).
 
-### 2026-10-03 — Georgi + Claude Code: chat history and new chats for the agent (branch `app_development`)
+### 2026-10-03 - Georgi + Claude Code: chat history and new chats for the agent (branch `app_development`)
 - **Asked:** save conversations with the agent, start a new chat with a button, switch between chats from the agent
   screen and Home, and let the user say "save this chat and start a new one".
 - **Plan (AI, approved by Georgi):** written with the planning skill before any code, in six tasks with checkpoints.
@@ -455,7 +455,7 @@ The tap-to-talk fallback is also untested end to end.
 - **Not yet validated:** the live-voice path for "new chat" (the realtime session keeps its own memory until it is
   restarted).
 
-### 2026-10-03 — Georgi + Claude Code: medicine info and a redesigned reminders page (branch `app_development`)
+### 2026-10-03 - Georgi + Claude Code: medicine info and a redesigned reminders page (branch `app_development`)
 - **Asked:** make the Medicine reminders page look better within the current colours and structure. Load info about
   each medicine (what it is, what's in it, what to know) so the cards say more than a name, and allow an OpenAI
   explanation on demand.
@@ -483,7 +483,7 @@ The tap-to-talk fallback is also untested end to end.
 - **Not yet validated:** emulator screenshots (skipped on purpose in this pass).
 
 
-### 2026-10-03 — Georgi + Claude Code: encrypted share links for the emergency card and doctor report (branch `app_development`)
+### 2026-10-03 - Georgi + Claude Code: encrypted share links for the emergency card and doctor report (branch `app_development`)
 - **Asked:** put the card QR and the doctor report on Supabase so both open from a link on any device, redesigned
   to the new design system.
 - **Research (AI, from Supabase docs):** Edge Functions rewrite `text/html` to `text/plain` and Storage serves
@@ -512,7 +512,7 @@ The tap-to-talk fallback is also untested end to end.
 - **Bugs found:** the local proxy dropped query strings (fixed in `dev-backend.ts`). The chart labels were
   unreadable at phone width (now drawn at the real width).
 
-### 2026-10-03 — Georgi + Claude Code: online check for any medicine, step 1 (branch `app_development`)
+### 2026-10-03 - Georgi + Claude Code: online check for any medicine, step 1 (branch `app_development`)
 - **Asked:** plan how scanning can recognise medicines outside our dataset online with AI, then build it.
 - **Plan (AI, choices made by Georgi):** a 10-task plan. Verdicts for medicines outside the curated list come from
   the FDA drug label using a fixed keyword rule, not from the LLM. Unknown barcodes go through a cache, then a public
@@ -540,7 +540,7 @@ The tap-to-talk fallback is also untested end to end.
 - **Rejected:** raising the app timeout to 9 s. Unit tests that hit the unreachable local backend timed out
   (3 extra failures), and the live path fits within 5 s.
 
-### 2026-10-03 — Georgi + Claude Code: everything on Supabase, so links work from any device (branch `app_development`)
+### 2026-10-03 - Georgi + Claude Code: everything on Supabase, so links work from any device (branch `app_development`)
 - **Asked:** make sharing and the AI work from any phone without the laptop, secure and working.
 - **Plan (AI, approved by Georgi):**
   - Sharing always goes to the deployed project (`Config.SHARE_BACKEND_URL`), independent of the AI backend.
@@ -566,7 +566,7 @@ The tap-to-talk fallback is also untested end to end.
   - `pg_net` is in the public schema.
   - Leaked-password protection is off.
 
-### 2026-10-03 — Georgi + Claude Code: identify any medicine box by barcode, online (branch `app_development`)
+### 2026-10-03 - Georgi + Claude Code: identify any medicine box by barcode, online (branch `app_development`)
 - **Asked:** finish the feature so that any medicine box can be identified, not only Polish ones, and make it as fast
   as possible.
 - **Research (AI, against the live APIs, timed):**
@@ -598,9 +598,9 @@ The tap-to-talk fallback is also untested end to end.
     |---|---|---|
     | US Tylenol, US Loratadine | identified (registry) | 2–3 s on first sight |
     | Spanish Aspirina C | aspirin + ascorbic acid | ~1.5 s |
-    | Spanish Depakine | valproate (via INN translation) | — |
+    | Spanish Depakine | valproate (via INN translation) | - |
     | Any repeat lookup | from cache | ~0.35 s |
-    | `1234` | rejected (400) | — |
+    | `1234` | rejected (400) | - |
 - **Bugs found and fixed:**
   - "sodium valproate" was checked as the word "sodium". Salts now map to the base ingredient, and a phrase RxNav
     knows is never split into words.
@@ -608,7 +608,7 @@ The tap-to-talk fallback is also untested end to end.
 - **Not done:** the box-photo fallback from the scan screen (the agent's photo scan still exists). Unknown boxes fall
   back to the teach form.
 
-### 2026-10-04 — Georgi + Claude Code: scanning a box showed nothing (branch `app_development`)
+### 2026-10-04 - Georgi + Claude Code: scanning a box showed nothing (branch `app_development`)
 - **Reported:** scanning a Nurofen box gave a click and no result.
 - **Found (hilog + code + backend logs):** the barcode was read (`Barcode: scanned 8`), but nothing appeared because
   1. `ScanPage` chained three `.bindSheet()` calls on one node. Only the last (teach) sheet was bound, so the
@@ -626,7 +626,7 @@ The tap-to-talk fallback is also untested end to end.
   rescan. UI not driven by the AI, at the user's request.
 
 
-### 2026-10-03 — Georgi + Claude Code: finish what the docs still promised, then a regression pass (branch `app_development`)
+### 2026-10-03 - Georgi + Claude Code: finish what the docs still promised, then a regression pass (branch `app_development`)
 - **Asked:** find everything the md docs specify that is not built, build it, then test that nothing else broke and
   report back.
 - **Plan (AI, approved by Georgi):** three read-only audits (app features, backend/site, docs vs code) → one plan
@@ -651,12 +651,12 @@ The tap-to-talk fallback is also untested end to end.
 - **Validated:** 188 Hypium + 59 Deno tests green, all functions type-check, strict ArkTS build clean; emulator
   screenshots of Home, medicine sheet, Emergency (found and fixed two bugs: stale card labels after a language switch,
   wrong "nothing is uploaded" hint); Playwright on the card viewer in pl/bg/de, light/dark.
-- **Not validated / lessons:** the rest of the emulator walk was stopped because the emulator was in use by hand —
+- **Not validated / lessons:** the rest of the emulator walk was stopped because the emulator was in use by hand -
   several sessions sharing one emulator needs a lock. Could not verify a Petal Maps link format (docs page body did
   not load), so nearby help uses the documented Google Maps URL instead of guessing. Translations written by AI need a
   native-speaker check.
 
-### 2026-10-03 — Kaloyan + Claude Code: get the phone app ready for a real Huawei device (branch `main`)
+### 2026-10-03 - Kaloyan + Claude Code: get the phone app ready for a real Huawei device (branch `main`)
 - **Asked:** put everything needed to run the app on a real phone into one file, check that it should work, push.
 - **Produced:** `docs/REAL_DEVICE.md` (phone requirements, signing, backend config, install, what to test on
   hardware, install errors); `app/scripts/device.sh` (preflight for phone / API level / signing / backend, then build
@@ -666,13 +666,13 @@ The tap-to-talk fallback is also untested end to end.
   all deployed edge functions respond and `drug-check` answers with the publishable key; `device.sh check` refuses
   correctly with no phone, no signing and a laptop-only backend.
 - **Not validated / lessons:** no phone and no signing identity were available, so the signed build and everything
-  hardware-only (camera, microphone, biometrics, Celia intents) is untested — listed in REAL_DEVICE.md §4. Found by
+  hardware-only (camera, microphone, biometrics, Celia intents) is untested - listed in REAL_DEVICE.md §4. Found by
   running instead of assuming: the build was broken on this laptop because `LocalConfig.ets` predated four template
   fields, and its backend pointed at `127.0.0.1`, which a phone cannot reach.
 
-### 2026-10-03 (evening) — Kaloyan + Claude Code: final-pass plan, honesty fixes, voice without a mic, Trends (branch `kaloyan/final-pass`)
+### 2026-10-03 (evening) - Kaloyan + Claude Code: final-pass plan, honesty fixes, voice without a mic, Trends (branch `kaloyan/final-pass`)
 - **Asked:** a long wish list for the last night (redesign around the agent, immersive orb, test voice with no
-  microphone, watch-data history, emergency responder view, auth, push, Live View, calling contacts, RLS...) —
+  microphone, watch-data history, emergency responder view, auth, push, Live View, calling contacts, RLS...) -
   research deeply, prioritise, split between Kaloyan and Georgi, then start.
 - **Plan (AI, approved by Kaloyan):** three read-only sweeps (phone app, watch + backend, docs/rules), then four
   questions (deadline Sun 11:00, two builders, real phone only at 08:00, no Twilio). Ranked by judging weight with
@@ -699,10 +699,10 @@ The tap-to-talk fallback is also untested end to end.
 - **Not validated / lessons:** the watch changes were built and unit-tested but not seen on the watch emulator (it
   was not running). `get_dose_status` and `get_trends` were not exercised by voice. Trends with real watch rows was
   not seen because the laptop's backend is the local proxy, which has no database. The first voice test failed with
-  "no voice session from backend" — the local proxy was simply not running; reading the log beat guessing. The new
+  "no voice session from backend" - the local proxy was simply not running; reading the log beat guessing. The new
   tool schemas only reach users after the `agent` and `realtime-session` functions are redeployed.
 
-### 2026-10-03 (night) — Kaloyan + Claude Code: Workstream A in three parallel agent sessions and one integrator (branch `kaloyan/agent-home`)
+### 2026-10-03 (night) - Kaloyan + Claude Code: Workstream A in three parallel agent sessions and one integrator (branch `kaloyan/agent-home`)
 - **Asked:** read the handoff brief (`docs/handoff/KALOYAN_agent_and_ui.md`), plan it as parallel agent work, run
   it, then a full sweep. The visual look was taken out of scope by the owner (done separately in Claude Design).
 - **How the work was split (AI plan, owner picked the options):** one integrator session wrote a brief per track
@@ -743,7 +743,7 @@ The tap-to-talk fallback is also untested end to end.
   settled it in one exchange. The tab-0 agent layout from T1 is being replaced by the owner's v2 design in another
   session, so the navigation rows in the README wait for that.
 
-### 2026-10-03 (night) — Kaloyan + Claude Code: interactions everywhere a medicine is handled (branch `kaloyan/agent-home`)
+### 2026-10-03 (night) - Kaloyan + Claude Code: interactions everywhere a medicine is handled (branch `kaloyan/agent-home`)
 
 - **Goal:** the owner asked whether a medicine that is "not listed" on its own is still caught when it raises the
   level of a QT drug the user takes (enzyme inhibition), and wanted it on every medicine surface.
@@ -759,7 +759,7 @@ The tap-to-talk fallback is also untested end to end.
 - **Not validated:** nothing was looked at on the emulator (it was in use by parallel sessions). The enzyme data is
   a curated subset from public tables and still needs a pharmacist's check.
 
-### 2026-10-04 (early) — Kaloyan + Claude Code: doctor visits as a history of pages (branch `kaloyan/agent-home`)
+### 2026-10-04 (early) - Kaloyan + Claude Code: doctor visits as a history of pages (branch `kaloyan/agent-home`)
 
 - **Goal:** the owner described the doctor screen he wanted instead of the single brief with specialty chips: a
   gallery of the doctors you have seen, one page each; a new visit asks for the kind of doctor and why you are
@@ -791,7 +791,7 @@ The tap-to-talk fallback is also untested end to end.
   workflow log before writing the page caught it before the first build.
 
 
-### 2026-10-04 (early morning) — Kaloyan + Claude Code: the owner's v2 design applied; integrator re-check (branch `kaloyan/agent-home`)
+### 2026-10-04 (early morning) - Kaloyan + Claude Code: the owner's v2 design applied; integrator re-check (branch `kaloyan/agent-home`)
 - **Asked:** apply the owner's Claude Design v2 screens, the "Dawn" silk orb, Lucide icons, and move the orb to the
   bottom of the agent stage. A second session (the integrator) re-checks the result.
 - **Produced (design session, commits `985cc79..6588a02`):** tab bar Today · Medicines · orb · Health · Emergency;
@@ -815,7 +815,7 @@ The tap-to-talk fallback is also untested end to end.
   In one typed turn the agent answered a symptom-log question and also re-opened the dentist brief from earlier in
   the chat; that needs an eval case before the prompt is called stable.
 
-### 2026-10-04 (morning) — Kaloyan + Claude Code: Health tab with every watch metric and one chart system (branch `kaloyan/agent-home`)
+### 2026-10-04 (morning) - Kaloyan + Claude Code: Health tab with every watch metric and one chart system (branch `kaloyan/agent-home`)
 
 - **Goal:** the owner wanted the Health tab to show all the useful watch data, not only heart rate, each graph
   opening a page with more detail and a small box that says in plain words whether the number is up or down and
@@ -843,7 +843,7 @@ The tap-to-talk fallback is also untested end to end.
   `scripts/emu.sh` lock and tapping only elements found by their text.
 
 
-### 2026-10-04 (morning) — Kaloyan + Claude Code: real watch data on the phone, with a Watch / Simulated switch (branch `kaloyan/agent-home`)
+### 2026-10-04 (morning) - Kaloyan + Claude Code: real watch data on the phone, with a Watch / Simulated switch (branch `kaloyan/agent-home`)
 
 - **Goal:** the owner saw only simulated numbers on the phone and wanted the real watch data, already uploaded to
   Supabase, pulled in and charted, with a way to switch between the two.
@@ -864,7 +864,7 @@ The tap-to-talk fallback is also untested end to end.
   phone on the local backend. `watch_vitals_daily` is still not deployed, so HRV, oxygen, breathing, sleep, steps and
   stress show "No data" in Watch mode.
 
-### 2026-10-03 — Georgi + Claude Code: platform research for Push, Live View, phone ↔ watch, HUAWEI ID (branch `georgi/b-research`)
+### 2026-10-03 - Georgi + Claude Code: platform research for Push, Live View, phone ↔ watch, HUAWEI ID (branch `georgi/b-research`)
 - **Asked:** research B12 (Push Kit), B13 (Live View + lock-screen medical ID), B17 (phone ↔ watch link), B18 (Account
   Kit) into `docs/research/*.md` so S4 / S1 can implement without re-researching; summarise the SOS voice path for
   B11 and ask for the Cardbeat reference before designing a conversational call. Docs only.
@@ -893,8 +893,8 @@ The tap-to-talk fallback is also untested end to end.
   doc (push token on the emulator outside China, `idToken` presence in the sign-in response, lock-screen widget
   placement on the emulator, what a tap on a locked-screen widget does, Supabase `.invalid` email acceptance).
 
-### 2026-10-04 — Georgi + Claude Code: watch internals, energy, background research (branch `georgi/b-watch`)
-- **Asked:** brief B16 — a build-and-install script for the watch, split `WatchController` (sensors, rules, SOS, sync,
+### 2026-10-04 - Georgi + Claude Code: watch internals, energy, background research (branch `georgi/b-watch`)
+- **Asked:** brief B16 - a build-and-install script for the watch, split `WatchController` (sensors, rules, SOS, sync,
   pairing) without behaviour change, energy (slower accelerometer at rest, outbox written once per sync, one reused
   HTTP client), background-monitoring research into `watch/README.md` with sources and a needs list.
 - **Produced:**
@@ -927,7 +927,7 @@ The tap-to-talk fallback is also untested end to end.
   (gitcode.com/openharmony/docs), the DevEco SDK declarations (`@hms.collaboration.rcp.d.ts`,
   `device-define/wearable-hmos.json`) and Huawei's Health Service Kit pages. All listed in `watch/README.md`.
 
-### 2026-10-03 — Georgi + Claude Code: doctor visits with questions (B6) and feeling diary (B15) (branch `georgi/b-doctor`)
+### 2026-10-03 - Georgi + Claude Code: doctor visits with questions (B6) and feeling diary (B15) (branch `georgi/b-doctor`)
 - **Asked:** saved doctor visits (specialty, date, reason, worries → deterministic brief → AI summary), names and
   contacts stripped from free text before it leaves the phone, request validation in `/doctor-summary` extended
   with the banned-word / dose rejection kept, agent tile still opening prep on a specialty; a "How are you feeling?"
@@ -966,7 +966,7 @@ The tap-to-talk fallback is also untested end to end.
   config, so the unsigned HAP is refused over another stream's signed install (9568332); I built once with the
   main checkout's local `build-profile.json5` and restored the file afterwards (not committed).
 
-### 2026-10-03 — Georgi + Claude Code: actionable notifications and an honest watch SOS (branch `georgi/b-notify-sos`)
+### 2026-10-03 - Georgi + Claude Code: actionable notifications and an honest watch SOS (branch `georgi/b-notify-sos`)
 - **Asked:** B7 (notification slots per kind, action buttons, taps open the right page) and B8 (a watch SOS must not
   start a second countdown; the SOS page says what was sent, to whom, and what still needs a tap; a "For first
   responders" button once the countdown ends).
@@ -987,7 +987,7 @@ The tap-to-talk fallback is also untested end to end.
   watch row end to end (the sent state was opened with a temporary, uncommitted hook calling the same controller and
   page path; the row → alert mapping is unit tested); notification taps from a cold start.
 
-### 2026-10-04 — Georgi + Claude Code: Live View, lock-screen medical ID and Push Kit (branch `georgi/b-notify-sos`)
+### 2026-10-04 - Georgi + Claude Code: Live View, lock-screen medical ID and Push Kit (branch `georgi/b-notify-sos`)
 - **Asked:** implement what S7's research says is possible without approvals; list the rest as blocked.
 - **Produced:**
   - `emergency/LiveStatus.ets` + pure `emergency/SosLiveText.ets`: one `startLiveView` with a countdown `timer`
@@ -1021,7 +1021,7 @@ The tap-to-talk fallback is also untested end to end.
   receiving a real push (no AGC project, no Chinese-mainland phone); the push send itself (no service-account key);
   token upload (S1's accounts and per-user JWT in `Net.ets` not merged yet).
 
-### 2026-10-04 — Georgi + Claude Code: accounts and profile backup (branch `georgi/b-accounts`)
+### 2026-10-04 - Georgi + Claude Code: accounts and profile backup (branch `georgi/b-accounts`)
 - **Asked:** brief B1 (sign up, log in, stay signed in offline) and B2 (profile saved under the account), plus the §8
   privacy docs. Supabase Auth over plain HTTPS, no supabase-js.
 - **Produced:**
@@ -1040,7 +1040,7 @@ The tap-to-talk fallback is also untested end to end.
     offline / 5xx / 429 keep the session, so an expired token offline still opens the app signed in.
   - `account/ProfileSync.ets`: last-write-wins on the document time (newer of `Profile.updatedAt` and the last
     medicine change), at sign-in, at launch and 3 s after a local edit; every run reads the account copy first.
-  - `common/Net.ets`: `NetTarget.bearer` and `authHeaders()` — the one place that puts the user's JWT in
+  - `common/Net.ets`: `NetTarget.bearer` and `authHeaders()` - the one place that puts the user's JWT in
     `Authorization` (the anon key stays in `apikey`); `accountTarget()`; `requestJson()` for nested JSON bodies.
   - `privacy/Ledger.ets`: `PersonalDataException` with exactly two named entries, `ACCOUNT_AUTH` (`/auth/v1/`,
     `email`) and `PROFILE_SYNC` (`/rest/v1/profiles`, the profile's personal fields). `FORBIDDEN_FIELDS` is unchanged;
@@ -1064,7 +1064,7 @@ The tap-to-talk fallback is also untested end to end.
   not available in this session; the encrypted RDB and `@kit.NetworkKit` http calls reuse the patterns already in
   `data/LocalStore.ets` and `common/Net.ets`.
 
-### 2026-10-04 — Georgi + Claude Code: SOS contacts under the account and RLS by account (B10, B9; branch `georgi/b-accounts`)
+### 2026-10-04 - Georgi + Claude Code: SOS contacts under the account and RLS by account (B10, B9; branch `georgi/b-accounts`)
 - **Asked:** B10 (contacts and first name reach the server with consent; show the dispatch status) and B9 (close the
   open RLS on watch data through the device ↔ account binding; give the watch its own secret).
 - **Produced:**
@@ -1099,14 +1099,14 @@ The tap-to-talk fallback is also untested end to end.
 - **Not validated:** nothing of B9/B10 against the live project (migrations not applied); the consent switch and SOS
   status signed in; a real SOS reaching contacts (no Twilio credentials: the server records `dry_run`).
 
-### 2026-10-04 — Georgi + Claude Code: configurable emergency profile and first-responder view (branch `georgi/b-emergency`)
+### 2026-10-04 - Georgi + Claude Code: configurable emergency profile and first-responder view (branch `georgi/b-emergency`)
 - **Asked:** brief B4 (configurable emergency profile, card, versioned share payload) and B5 (first-responder view with
   "do not give", "use instead", care notes, reachable from the Emergency tab, lock screen, alert widget and SOS).
 - **Produced:**
   - `LocalStore.parseStoredProfile`: defaults applied when a stored profile is read, so profiles saved before B4
     still load (lists default to `[]`, missing text stays absent, corrupt values fall back).
   - `emergency/Responder.ets` (pure): `doNotGive` (every Known-risk drug by class plus the avoid-in-congenital list;
-    antiemetics first, then "Stimulants and catecholamines — avoid unless life-saving"), `useInstead` (dataset
+    antiemetics first, then "Stimulants and catecholamines - avoid unless life-saving"), `useInstead` (dataset
     `alternatives[]` grouped by the option set, with the drugs and classes they replace), `careNotes` (lqts-domain
     emergency facts; ICD, beta-blocker and genotype trigger follow the profile), `ageYears`, `medRows`,
     `recentRiskyIntake` (72 h watch window).
@@ -1138,7 +1138,7 @@ The tap-to-talk fallback is also untested end to end.
   the lock-screen button with the app lock on (the emulator has no screen lock to enable it); "show on card"
   switches on the emulator (unit-tested only).
 
-### 2026-10-04 — Georgi + Claude Code: NFC handover of the emergency card, B14 (branch `georgi/b-emergency`)
+### 2026-10-04 - Georgi + Claude Code: NFC handover of the emergency card, B14 (branch `georgi/b-emergency`)
 - **Asked:** brief B14, write the card link as an NDEF URI record to a tag from a "Write to NFC tag" action next to the
   QR; guard on NFC availability; mark built, unverified.
 - **Produced:** `emergency/NfcCard.ets` (foreground `tag.on('readerMode')` for NDEF and NDEF-formatable tags, one
@@ -1150,11 +1150,11 @@ The tap-to-talk fallback is also untested end to end.
   else the in-link card (NTAG215/216, or refused when too long).
 - **Validated:** 4 unit tests (NDEF size layout, tag fit, error mapping). Emulator: the action is hidden because the
   emulator reports no `SystemCapability.Communication.NFC.Tag` (`emergency-nfc-guard-emulator.jpeg`).
-- **Not validated:** **built, unverified** — no real tag written, reader mode and the write path never ran. Known limit:
+- **Not validated:** **built, unverified** - no real tag written, reader mode and the write path never ran. Known limit:
   editing the card replaces the encrypted link, so a written tag must be written again (the UI says so).
 
-### 2026-10-03 — Georgi + Claude Code: 8-step onboarding (branch `georgi/b-onboarding`)
-- **Asked:** brief B3 — a simple onboarding that still gathers everything: welcome + consent, account, about you,
+### 2026-10-03 - Georgi + Claude Code: 8-step onboarding (branch `georgi/b-onboarding`)
+- **Asked:** brief B3 - a simple onboarding that still gathers everything: welcome + consent, account, about you,
   medicines, emergency contacts, emergency details, permissions, watch. Progress shown, Skip on optional steps,
   nothing lost when going back, under 2 minutes; move the launch-time notification ask into the permissions step.
 - **Produced:** `onboarding/OnboardingFlow.ets` (pure step rules and profile-draft helpers), `onboarding/Permissions.ets`
@@ -1178,7 +1178,7 @@ The tap-to-talk fallback is also untested end to end.
     (+ `onboarding-7a-notification-dialog.jpeg`).
 - **Found and fixed while testing:** the last step still said "Continue". `components/Common.ets` `PrimaryButton`
   passes its label to a by-value `@Builder`, which does not re-render when the label changes; the page now uses two
-  button instances. Every other caller of `PrimaryButton` with a changing label has the same bug (not fixed here —
+  button instances. Every other caller of `PrimaryButton` with a changing label has the same bug (not fixed here -
   Common.ets is Workstream A's; fix: pass `$$`-style by-reference params or rebuild the label in the struct).
 - **Not validated:** the account step and the emergency-details step run against S1's `AuthForm` and S2's
   `EmergencyDetailsForm` stubs; the real forms arrive at merge. The returning-user skip
@@ -1188,7 +1188,7 @@ The tap-to-talk fallback is also untested end to end.
   `notificationManager.isNotificationEnabled` / `requestEnableNotification(context)` (since 12),
   `UIContext.showDatePickerDialog` (since 11). `requestPermissionOnSetting` is API 21, so it is not used.
 
-### 2026-10-04 — Georgi + Claude Code: merging Workstream B into georgi/integration
+### 2026-10-04 - Georgi + Claude Code: merging Workstream B into georgi/integration
 - **Asked:** act as the Workstream B coordinator (`docs/handoff/B_PLAN.md` §1, §6): merge the seven streams, run the
   test suites and an emulator smoke test, fold the stream notes (`docs/workflow/b-*.md`) into the real docs.
 - **Produced:** seven streams merged in plan order (research, watch, doctor, notify-sos, accounts, emergency,
@@ -1205,3 +1205,38 @@ The tap-to-talk fallback is also untested end to end.
 - **Not validated:** anything needing the live migrations (sign up / log in against Supabase, B9/B10, push tokens):
   migrations `20261004100000`..`20261004100300` and `20261004110000` are not applied yet, and the `sos` and
   `doctor-summary` functions are not redeployed.
+
+### 2026-10-04 (night) - Kaloyan + Claude Code: Workstream B merged into the v2 app, live backend deployed (branch `kaloyan/agent-home`)
+
+- **Asked:** sort four sessions' uncommitted work into clean commits, merge Georgi's `georgi/integration`, make his
+  screens fit the v2 design and UX, fix the open issues his notes listed, and run his live Supabase checklist.
+- **What the AI did:** split the uncommitted tree into five commits (watch alert ack migration, interactions,
+  doctor visits, watch source, health metrics), each built and tested on its own in a clean worktree (245, 252, 252,
+  268 tests). Merged `georgi/integration` (12 conflicts). Both branches had built doctor visits; the owner chose ours
+  plus his extras, so his `VisitsPage` and `DoctorPrepPage` went and our visit gained his date and "what worries
+  me". `doctor-summary` accepts both field sets. The Emergency tab kept the v2 layout with his NFC and card details
+  ported in; the responder tile now opens his first-responder view and a Help guide row keeps the bystander steps.
+- **Fixed from the open issues:** the watch SOS page shows the server's real dispatch status (being alerted, sent,
+  partly, failed, test mode, no contacts, too soon, or "not confirmed" after a minute) instead of a fixed "not
+  alerted"; the emergency details form has "Notes for paramedics" and the responder view lists them; the SOS copy
+  no longer says contacts are alerted when nothing is sent; `PrimaryButton` labels re-render (a component instead of
+  a by-value `@Builder`).
+- **Found while testing on both emulators:** the onboarding account chips never switched the form to log-in (no
+  `@Monitor`); two coral buttons on the account, medicine and contact steps; date of birth asked twice; the welcome
+  orb clipped; a watch built with the demo id could not count as paired, so consent and SOS status stayed off; the
+  SOS status row never updated (by-value `@Builder` again) and asked before the session was read at cold start;
+  "1 contacts ready". All fixed and seen on the emulator.
+- **Live backend:** migrations `20261004100000`, `100100`, `110000`, `100200` and `100300` applied one by one after
+  `backend/supabase/tests/run-rls.sh` passed locally (history repaired per file, never `db push`); `watch_vitals_daily`
+  granted to `authenticated`; `sos` and `doctor-summary` redeployed. The model wrote "no visit reason was given" when
+  the reason was empty, so empty patient words are now left out of its prompt.
+- **Validated:** 389 phone tests, 88 watch tests, 75 backend tests, HAP builds. Emulators against the live project:
+  sign-up (Georgi had turned off "Confirm email"), 8-step onboarding signed in, profile backup, pairing the watch
+  (bound to the account), the watch receiving its secret and still uploading after `100300`, the consent switch
+  putting one contact on the server, a watch SOS reaching the phone page, the Health tab reading the watch's rows.
+- **Not validated:** contacts actually being texted (the database webhook secrets and Twilio are not set, so no
+  dispatch is recorded and the page says so); owner-only reads for a watch with its own id (the emulator watch uses
+  the public demo id); Push Kit; the feeling diary is reachable only from its widget. The phone started once on the
+  simulated source without the user picking it; not reproduced.
+- **Lessons:** another session's staged files rode along in one plain `git commit`; it was undone and redone with
+  `git commit -- <paths>`. Builder arguments by value bit three times in one night.
