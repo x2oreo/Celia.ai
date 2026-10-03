@@ -31,6 +31,7 @@
     { "name": "ntf_sos_whom_failed", "value": "Alerting your contacts failed. Call them yourself." },
     { "name": "ntf_sos_whom_dry_run", "value": "Test mode: the server recorded the SOS but sent no text or call. Call your contacts yourself." },
     { "name": "ntf_sos_whom_no_contacts", "value": "Nobody was alerted: your account has no emergency contacts." },
+    { "name": "ntf_sos_whom_unconfirmed", "value": "The server has not confirmed that your contacts were alerted. Call or message them yourself." },
     { "name": "ntf_sos_whom_skipped", "value": "Not sent again so soon after the previous SOS. Call your contacts yourself." },
     { "name": "ntf_sos_phone_what", "value": "Nothing has been sent yet. Your SOS message is ready below." },
     { "name": "ntf_sos_phone_whom", "value": "Nobody yet. Celia cannot call or text for you; the buttons below do it with your confirmation." },

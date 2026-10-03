@@ -23,6 +23,9 @@ import { LiveStatus } from '../emergency/LiveStatus';
 import { AgentCore } from '../agent/AgentCore';
 import { SosContacts, SosStatus, watchSosWhom, WatchSosWhom } from '../account/SosContacts';
 import { Session } from '../account/Session';
+import { Logger } from '../common/Logger';
+
+const log: Logger = new Logger('SosPage');
 
 @ComponentV2
 export struct SosPage {
@@ -83,17 +86,25 @@ export struct SosPage {
   // Watch SOS: the server alerts the contacts (with consent), so ask it what happened. The dispatch can land a few
   // seconds after the phone hears of the SOS: check again every 5 s, at most 12 times.
   private async checkWhom(): Promise<void> {
-    if (this.sentBy !== 'WATCH') {
+    // The route param can say "watch" before SosController does (push tap at cold start), so go by the trigger.
+    if (this.sentBy !== 'WATCH' && this.trigger !== 'WATCH') {
       return;
     }
+    await Session.load();   // opened from a push at cold start: the stored session may not be read yet
     const consent: boolean = await SosContacts.consent();
     const st: SosStatus | undefined = Session.isSignedIn() && consent ? await SosContacts.status() : undefined;
-    this.whom = watchSosWhom(Session.isSignedIn(), consent, st, this.sentAt);
+    this.whom = watchSosWhom(Session.isSignedIn(), consent, st, this.sentAt > 0 ? this.sentAt : Date.now());
+    log.info(`watch SOS whom: ${this.whom} (signed in ${Session.isSignedIn()}, consent ${consent}, ` +
+      `status ${st?.lastStatus ?? 'none'})`);
     this.whomTries++;
-    if (this.whom === 'PENDING' && this.whomTries < 12) {
-      this.whomTimer = setTimeout(() => {
-        this.checkWhom();
-      }, 5000);
+    if (this.whom === 'PENDING') {
+      if (this.whomTries < 12) {
+        this.whomTimer = setTimeout(() => {
+          this.checkWhom();
+        }, 5000);
+      } else {
+        this.whom = 'UNCONFIRMED';   // a minute without a dispatch: never claim it is still happening
+      }
     }
   }
 
@@ -113,6 +124,8 @@ export struct SosPage {
         return $r('app.string.ntf_sos_whom_no_contacts');
       case 'SKIPPED':
         return $r('app.string.ntf_sos_whom_skipped');
+      case 'UNCONFIRMED':
+        return $r('app.string.ntf_sos_whom_unconfirmed');
       default:
         return $r('app.string.ntf_sos_watch_whom');
     }
@@ -324,7 +337,7 @@ export struct SosPage {
     .width('100%')
   }
 
-  // What happened, in plain words (B8). Built from the controller state only — no model text.
+  // What happened, in plain words (B8). Built from the controller state only - no model text.
   @Builder
   status() {
     Column({ space: 12 }) {
@@ -333,7 +346,10 @@ export struct SosPage {
           $r('app.string.ntf_sos_watch_what', clock(this.sentAt)),
           this.watchLocation ? $r('app.string.ntf_sos_watch_loc') : $r('app.string.ntf_sos_watch_no_loc'))
         Divider().color($r('app.color.divider'))
-        this.statusRow($r('app.string.ntf_sos_label_whom'), this.whomText(), '')
+        // Keyed on `whom`: @Builder arguments are passed by value, so the row is rebuilt when the status changes.
+        ForEach([this.whom], (w: WatchSosWhom) => {
+          this.statusRow($r('app.string.ntf_sos_label_whom'), this.whomText(), '')
+        }, (w: WatchSosWhom) => `whom-${w}`)
       } else {
         this.statusRow($r('app.string.ntf_sos_label_what'), $r('app.string.ntf_sos_phone_what'), '')
         Divider().color($r('app.color.divider'))

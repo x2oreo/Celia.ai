@@ -258,7 +258,7 @@
     },
     {
       "name": "acc_sos_ready",
-      "value": "%d contacts ready for an SOS."
+      "value": "Contacts ready for an SOS: %d."
     },
     {
       "name": "acc_sos_none",

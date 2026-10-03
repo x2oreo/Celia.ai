@@ -158,7 +158,9 @@ export function parseSosStatus(body: string): SosStatus | undefined {
 //   OFF      not signed in, or the consent switch is off: nobody was alerted automatically
 //   PENDING  consent on, the server has not recorded a dispatch for this SOS yet
 //   SENT / PARTIAL / FAILED / DRY_RUN / NO_CONTACTS / SKIPPED  the server's dispatch for this SOS
-export type WatchSosWhom = 'OFF' | 'PENDING' | 'SENT' | 'PARTIAL' | 'FAILED' | 'DRY_RUN' | 'NO_CONTACTS' | 'SKIPPED';
+//   UNCONFIRMED  still PENDING after the page stopped asking: the server never recorded a dispatch
+export type WatchSosWhom = 'OFF' | 'PENDING' | 'SENT' | 'PARTIAL' | 'FAILED' | 'DRY_RUN' | 'NO_CONTACTS' | 'SKIPPED' |
+  'UNCONFIRMED';
 
 // A dispatch counts for this SOS when the server recorded it no earlier than a minute before the phone heard of it.
 const DISPATCH_SLACK_MS: number = 60000;
