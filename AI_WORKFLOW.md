@@ -649,3 +649,17 @@ The tap-to-talk fallback is also untested end to end.
   several sessions sharing one emulator needs a lock. Could not verify a Petal Maps link format (docs page body did
   not load), so nearby help uses the documented Google Maps URL instead of guessing. Translations written by AI need a
   native-speaker check.
+
+### 2026-10-03 — Kaloyan + Claude Code: get the phone app ready for a real Huawei device (branch `main`)
+- **Asked:** put everything needed to run the app on a real phone into one file, check that it should work, push.
+- **Produced:** `docs/REAL_DEVICE.md` (phone requirements, signing, backend config, install, what to test on
+  hardware, install errors); `app/scripts/device.sh` (preflight for phone / API level / signing / backend, then build
+  → install → launch → screenshot, with `-t <serial>` so phone and emulator can be attached together);
+  `entry/hvigorfile.ts` now adds template fields missing from an older gitignored `LocalConfig.ets`.
+- **Validated:** 206 Hypium + 68 Deno tests green; strict ArkTS build; install + launch on the emulator (API 24);
+  all deployed edge functions respond and `drug-check` answers with the publishable key; `device.sh check` refuses
+  correctly with no phone, no signing and a laptop-only backend.
+- **Not validated / lessons:** no phone and no signing identity were available, so the signed build and everything
+  hardware-only (camera, microphone, biometrics, Celia intents) is untested — listed in REAL_DEVICE.md §4. Found by
+  running instead of assuming: the build was broken on this laptop because `LocalConfig.ets` predated four template
+  fields, and its backend pointed at `127.0.0.1`, which a phone cannot reach.

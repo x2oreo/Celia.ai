@@ -22,6 +22,7 @@ Project lives in [`app/`](app) — open that folder in DevEco Studio 6.x.
 source app/env.sh          # puts DevEco's hvigorw / ohpm / hdc on PATH (override DEVECO=... if installed elsewhere)
 app/scripts/test.sh        # local unit tests (Hypium, no device needed); non-zero exit on failure
 app/scripts/run.sh         # build → install → launch → screenshot on a running emulator/device (needs signing)
+app/scripts/device.sh      # real phone: preflight (API level, signing, backend) → build → install → launch
 ```
 
 On the first build `entry/hvigorfile.ts` creates `app/entry/src/main/ets/common/LocalConfig.ets` from
@@ -48,6 +49,9 @@ app runs fully offline (deterministic drug check, emergency card).
    git config core.hooksPath .githooks
    ```
 4. `app/scripts/run.sh` now finds `entry-default-signed.hap` and installs it.
+
+Real phone (HarmonyOS 6.0+): step-by-step setup, what to test and install errors are in
+[docs/REAL_DEVICE.md](docs/REAL_DEVICE.md); `app/scripts/device.sh check` tells you what is still missing.
 
 ## How to verify each feature (emulator)
 
@@ -78,12 +82,12 @@ Everything below runs on the emulator with no backend and no watch. Heart data i
 | Watch context (T15) | With the cloud backend, a risky check writes `watch_context` (genotype, ingredient, risk) and the Celia watch shows the verdict glance within 60 s. |
 | Privacy, app lock (F-45, F-46) | Settings → What left my phone: every outbound request — drug check, agent, voice, vision, explanations, share links, live voice — with field names and size, never values; **Export the list**. App lock needs a screen lock (PIN) on the device. |
 
-Unit tests: `app/scripts/test.sh` — **188 tests, 0 failures** (3 Oct 2026): drug data + checker, interactions,
+Unit tests: `app/scripts/test.sh` — **206 tests, 0 failures** (3 Oct 2026): drug data + checker, interactions,
 agent safety gate + validator + tool registry, offline agent, saved chats, alarm rules, SOS state machine and message,
 doctor brief + AI summary guard, report payload + share links, medicine info + AI reply guard, symptom tool, GS1,
 emergency numbers, card text + read-aloud privacy, dose schedule, travel, privacy guard + ledger. Tests never call the
 network (`Config.forceOffline`).
-Backend: `npx -y deno test --no-lock backend/supabase/functions/` — **59 tests, 0 failures** (labels, RxNav/openFDA
+Backend: `npx -y deno test --no-lock backend/supabase/functions/` — **68 tests, 0 failures** (labels, RxNav/openFDA
 tier 2, share, SOS message, box identify, med-info and doctor-summary output guards).
 
 Optional online drug check: create a Supabase project, run `backend/supabase/migrations/0001_drugs.sql` and
