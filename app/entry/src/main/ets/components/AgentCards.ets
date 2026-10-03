@@ -156,6 +156,7 @@ export struct ToolStepRow {
     .backgroundColor($r('app.color.surface'))
     .border({ width: 1, color: $r('app.color.border') })
     .borderRadius(18)
+    .accessibilityGroup(true)
   }
 }
 
@@ -222,6 +223,7 @@ export struct ConfirmCard {
         .layoutWeight(1)
       }
       .width('100%')
+      .accessibilityGroup(true)
 
       if (this.risk !== undefined) {
         RiskBadge({ risk: this.risk, compact: true })
@@ -295,6 +297,7 @@ export struct MedsCard {
             .width('100%')
             .padding({ top: 10, bottom: 10 })
             .border({ width: { top: i === 0 ? 0 : 1 }, color: $r('app.color.divider') })
+            .accessibilityGroup(true)
           }, (m: MedLinePayload, i: number) => `${i}-${m.name}`)
         }
         .width('100%')
@@ -346,6 +349,8 @@ export struct AlternativesCard {
             .backgroundColor($r('app.color.surface'))
             .border({ width: 1, color: $r('app.color.border_strong') })
             .borderRadius(18)
+            .accessibilityGroup(true)
+            .accessibilityText(name)
           }, (name: string) => name)
         }
         if (this.alts.note !== '') {
@@ -392,6 +397,7 @@ export struct EmergencyNotice {
           .border({ width: 1.5, color: $r('app.color.danger') })
           .borderRadius(22)
           .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.97 })
+          .accessibilityText($r('app.string.agent_open_sos'))
           .onClick(() => this.onOpen())
       }
     }
@@ -435,6 +441,7 @@ export struct ActionTile {
     .border({ width: 1, color: $r('app.color.border') })
     .borderRadius($r('app.float.radius_ml'))
     .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.98 })
+    .accessibilityGroup(true)
     .onClick(() => this.onTap())
   }
 }
