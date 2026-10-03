@@ -109,6 +109,8 @@ How AI tools were used, and which pre-existing components are reused: [`AI_WORKF
 
 **Pre-existing / third-party components (Challenge Rules §4):** DevEco Studio's Empty Ability template
 (hvigor files, `EntryAbility` skeleton, Hypium test harness) and the `@ohos/hypium` / `@ohos/hamock` test libraries.
+Icons: Lucide (lucide.dev, ISC licence, `lucide-static` 1.51.0), strokes outlined to fills so ArkUI can tint them
+(`app/entry/src/main/resources/base/media/ic_*.svg`; the risk shapes `ic_risk_*` are our own).
 Hosting: Supabase (Edge Functions, Storage) and Vercel (static viewer pages in `site/`; they hold no data).
 Public APIs called by the `/drug-check` and `/box-identify` Edge Functions for medicines outside our data: NLM RxNav
 (name → ingredient, rxnav.nlm.nih.gov), openFDA drug labels (api.fda.gov, public domain), AEMPS CIMA (Spanish

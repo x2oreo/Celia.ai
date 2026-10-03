@@ -18,6 +18,8 @@ How AI tools were used to build Celia.ai, as required by Challenge Rules §4. Ap
   were copied. Everything in this repo was written fresh during the challenge.
 - DevEco Studio 6.1.1 project template (config files and default icons in `watch/`).
 - `@ohos/hypium` 1.0.29, `@ohos/hamock` 1.0.0 (test framework, ohpm).
+- Lucide icons (`lucide-static` 1.51.0, ISC licence): the phone app's `ic_*.svg` glyphs, strokes outlined to fills
+  with `oslllo-svg-fixer` so ArkUI `fillColor` can tint them. The risk shapes (`ic_risk_*`) are our own.
 - `@supabase/supabase-js` 2.x (npm, in the `sos` Edge Function), `@std/assert` 1.x (jsr, Deno tests).
 - Twilio Programmable Messaging + Voice REST API (external service for SOS SMS and calls; keys in Supabase secrets).
 
