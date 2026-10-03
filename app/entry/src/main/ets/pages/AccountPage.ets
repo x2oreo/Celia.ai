@@ -6,6 +6,7 @@ import { dateTime } from '../common/Format';
 import { toast } from '../common/Toast';
 import { LocalStore } from '../data/LocalStore';
 import { Session } from '../account/Session';
+import { PushToken } from '../account/PushToken';
 import { ProfileSync, SyncResult } from '../account/ProfileSync';
 import { DispatchStatus, SosContacts, SosStatus, SosSyncResult } from '../account/SosContacts';
 import { WatchPairing } from '../data/WatchPairing';
@@ -98,6 +99,7 @@ export struct AccountPage {
   }
 
   private async signOut(wipe: boolean): Promise<void> {
+    await PushToken.forget();   // the push_tokens row can only be deleted with the user's token
     await Session.signOut();
     if (wipe) {
       await LocalStore.get().clearAll();
@@ -137,6 +139,7 @@ export struct AccountPage {
       toast(this.getUIContext(), $r('app.string.acc_delete_failed'));
       return;
     }
+    await PushToken.forget();
     await Session.signOut();
     toast(this.getUIContext(), $r('app.string.acc_deleted_cloud'));
     this.refresh();

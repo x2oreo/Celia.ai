@@ -10,7 +10,22 @@ interface DeviceArgs {
 interface StartResponse {
   code: string;
   expires_at: string;
+  secret?: string | null;   // only in the first answer for this watch (backend migration 20261004100300)
 }
+
+const SECRET_RE: RegExp = /^[0-9a-f]{64}$/;
+
+/** The watch secret in a pairing_start answer, or '' when there is none (already issued, or an older server). */
+export function startSecret(body: string): string {
+  try {
+    const r = JSON.parse(body) as StartResponse;
+    return r !== null && typeof r.secret === 'string' && SECRET_RE.test(r.secret) ? r.secret : '';
+  } catch (e) {
+    return '';
+  }
+}
+
+export type SecretCallback = (secret: string) => void;
 
 interface StatusResponse {
   status: string;
@@ -48,9 +63,13 @@ export interface PairingApi {
 /** Watch ↔ phone pairing via Supabase RPCs (migration 20261003260000_watch_pairing.sql). */
 export class PairingClient implements PairingApi {
   private client: RestClient;
+  private onSecret: SecretCallback;
 
-  constructor(client: RestClient) {
+  /** `onSecret` stores a newly issued watch secret; the client starts sending it at once. */
+  constructor(client: RestClient, onSecret: SecretCallback = () => {
+  }) {
     this.client = client;
+    this.onSecret = onSecret;
   }
 
   /** Creates a fresh 6-digit code for this watch. */
@@ -58,6 +77,12 @@ export class PairingClient implements PairingApi {
     const res = await this.call('pairing_start', deviceId);
     if (!res.ok || res.value === undefined) {
       return fail<PairingCode>(res.error);
+    }
+    const secret = startSecret(res.value);
+    if (secret.length > 0) {
+      this.client.setWatchSecret(secret);
+      this.onSecret(secret);
+      Logger.info('watch secret received');
     }
     try {
       const body = JSON.parse(res.value) as StartResponse;

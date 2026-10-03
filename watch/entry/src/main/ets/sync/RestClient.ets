@@ -25,15 +25,27 @@ export class RestClient {
   private baseUrl: string;
   private anonKey: string;
   private session: rcp.Session | undefined = undefined;
+  // This watch's secret from pairing_start (backend migration 20261004100300). Sent as `x-watch-secret` so the
+  // server lets this watch, and only this watch, read its context and upload once it has paired.
+  private watchSecret: string = '';
 
   constructor(supabaseUrl: string, anonKey: string) {
     this.baseUrl = supabaseUrl;
     this.anonKey = anonKey;
   }
 
+  setWatchSecret(secret: string): void {
+    this.watchSecret = secret;
+  }
+
+  hasWatchSecret(): boolean {
+    return this.watchSecret.length > 0;
+  }
+
   /** `path` starts with "/", e.g. "/rest/v1/watch_metrics". `prefer` sets the PostgREST Prefer header. */
   async post(path: string, json: string, prefer: string): Promise<RestResponse> {
-    const headers: rcp.RequestHeaders = { 'content-type': 'application/json' };
+    const headers: rcp.RequestHeaders = this.headers();
+    headers['content-type'] = 'application/json';
     if (prefer.length > 0) {
       headers['prefer'] = prefer;
     }
@@ -41,7 +53,15 @@ export class RestClient {
   }
 
   async get(path: string): Promise<RestResponse> {
-    return this.send(new rcp.Request(this.baseUrl + path, 'GET'));
+    return this.send(new rcp.Request(this.baseUrl + path, 'GET', this.headers()));
+  }
+
+  private headers(): rcp.RequestHeaders {
+    const h: rcp.RequestHeaders = {};
+    if (this.watchSecret.length > 0) {
+      h['x-watch-secret'] = this.watchSecret;
+    }
+    return h;
   }
 
   private open(): rcp.Session {

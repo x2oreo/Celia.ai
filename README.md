@@ -59,7 +59,7 @@ Everything below runs on the emulator with no backend and no watch. Heart data i
 
 | Feature | How to check |
 |---|---|
-| Onboarding (F-01) | Fresh install → 4 steps (genotype + ICD → medicines → contacts → country). Restart: data is still there (encrypted RDB). |
+| Onboarding (F-01, B3) | Fresh install (`hdc uninstall com.celiaai.app`, then `app/scripts/run.sh`): 8 steps with a progress bar and "Step N of 8". Continue stays inactive until the consent box is ticked. Type a contact name, go Back and forward again: the text is still there. Skip on steps 2 and 4-8. Permissions step: each Allow opens the system dialog only when tapped. Finish lands on Home; relaunch does not show onboarding again. |
 | Drug check (F-05, F-07, F-20, F-21) | Medicines → type `Klacid`, `Zofran 8 mg`, `Сумамед`, `ondansetrom` (typo) or `xyz` → verdict card; "How we know" shows each step. |
 | Interactions (F-19) | Add `Cipralex` to my medicines, then check `ondansetron` (adds up) or `clarithromycin` (CYP3A4). |
 | Barcode (F-36) | Medicines → Scan (camera or album). Any Polish box resolves from the bundled register (≈68k packs), e.g. type `5909990331710` (Klacid) or `5909990296026` (Apap) → verdict + "About this medicine" (substance, strength, form, pack, Rx/OTC, ATC group, holder, leaflet). Unknown boxes (e.g. Bulgarian) open "teach this barcode"; the next scan resolves instantly. Demo codes `2000000000015`… still work. Regenerate the register with `python3 data/export_gtins.py`. |
@@ -81,14 +81,51 @@ Everything below runs on the emulator with no backend and no watch. Heart data i
 | Widgets (F-12) | Home screen → add Celia "Check a medicine" (2×2) and "Medical alert" (2×4); Help this person opens the bystander guide. |
 | Watch context (T15) | With the cloud backend, a risky check writes `watch_context` (genotype, ingredient, risk) and the Celia watch shows the verdict glance within 60 s. |
 | Privacy, app lock (F-45, F-46) | Settings → What left my phone: every outbound request — drug check, agent, voice, vision, explanations, share links, live voice — with field names and size, never values; **Export the list**. App lock needs a screen lock (PIN) on the device. |
+| Watch build + install | `watch/scripts/run.sh` with the `Huawei_Wearable` emulator running → screenshot in `watch/build/screenshot.jpeg` |
+| Watch internals split | `cd watch && source env.sh && hvigorw test -p module=entry -p coverage=false --no-daemon` → 88/88 (with the watch-secret patch) |
+| Accelerometer slows at rest | run the watch app, keep the emulator still 30 s, `hdc -t <watch> hilog \| grep CeliaWatch` → `accelerometer every 100 ms` |
+| Shared HTTP session | with `watch/.env` filled, tap *Fine* on the check-in page → row in `watch_metrics` for the device id |
+| Doctor visits (B6) | Heart → Doctor visit prep → My visits → Add a visit → pick Dentist, a date, a reason and a worry → Save. The brief opens with "This visit" and "What worries me". Back → the visit is listed under UPCOMING; tap it to reopen, bin icon → Delete. AI summary works with the deployed function; using reason/worries in it needs this branch's function deployed. |
+| Redaction before the AI summary | Unit tests `Redact` / `summarySendsRedactedAnswersOnly`: names of the patient, contacts, cardiologist, hospital, phone numbers, e-mails and links become `[removed]`; Privacy ledger shows `reason`, `worries` field names only. |
+| Feeling diary (B15) | Route `feeling` (agent home tile from Workstream A, or the "How are you feeling?" widget): pick a mood, optional note, Save → listed under RECENT. Low / Unwell offers "Log a symptom". |
+| Notifications per kind (B7) | Settings → notifications for Celia.ai: emergency is a separate loud category. Start an SOS countdown and pull down the panel: "SOS in N s" notification. Real phone: tap it to show I'm OK / Open (built, unverified on screen: emulator does not draw buttons). |
+| Dose "Taken" from the notification (B7) | Add a reminder; when it is due the notification has Taken / Open. Taken opens Celia on Reminders with the dose TAKEN. Emulator check: `hdc shell aa start -a EntryAbility -b com.celiaai.app --ps notifyAction DOSE_TAKEN --ps notifyKind DOSE_DUE --pi notifyId <2000+id%1000> --pi reminderId <id>` |
+| Watch SOS without a second countdown (B8) | Press SOS on the paired watch. The phone opens "Your watch sent an SOS" directly (no countdown): what was sent, to whom, what still needs a tap, plus For first responders. |
+| SOS page honesty (B8) | Let a phone SOS countdown run out: "Nothing has been sent yet … Nobody yet", then the call / share / contact / responder buttons. |
+| SOS Live View (B13) | Start an SOS countdown, pull down the panel / lock the screen: a live card "SOS in 00:25" ticking, red capsule. "I'm OK" → card "SOS cancelled". Works on the emulator; on a real phone needs Live View approval (built, unverified there). |
+| Lock-screen medical ID (B13) | Long-press the app icon → Widgets → "Medical ID (lock screen)". Shows condition, AVOID line, ICD, medicines; hidden card fields stay off; no contacts. Lock-screen placement: real phone only (built, unverified). |
+| Push: watch SOS to the phone (B12) | Built, unverified: needs an AGC project with Push Kit, the service-account key in Supabase secrets, B9's watch↔account binding and a Chinese-mainland phone. Emulator check of the tap: `hdc shell aa start -a EntryAbility -b com.celiaai.app --ps route sos --ps source watch --ps loc 1` → "Your watch sent an SOS". `hilog | grep PushToken` shows why no token. |
+| Welcome on first launch | Uninstall, `app/scripts/run.sh` → Welcome with Create an account / I already have an account / Set up without an account |
+| Sign up / log in (B1) | Welcome → Create an account → email + 8-char password → lands in onboarding (new) or the app (profile restored). Needs migration `20261004100000` and "Confirm email" off |
+| Stay signed in offline (B1) | Sign up, kill the app, turn the network off, reopen → main screen, Settings → Account shows the email |
+| Profile backup (B2) | Signed in, change the name in Settings → Account shows "Backed up …"; in Supabase `select updated_at from profiles` changes |
+| Restore on a new phone (B2) | Uninstall, reinstall, Welcome → I already have an account → log in → skips onboarding, profile and medicines back |
+| Delete cloud data | Settings → Account → Delete my data from my account → row gone, signed out, phone data kept |
+| SOS contacts with consent (B10) | Signed in + paired: Settings → Account → switch on → "2 contacts ready"; `select count(*) from emergency_contacts` matches; switch off → 0. Built, unverified until migrations 100100/100200 are applied |
+| SOS status | After a watch SOS, Account shows "Last SOS …: test mode, no text or call was sent" while Twilio is not configured |
+| Watch data only for its owner (B9) | `backend/supabase/tests/run-rls.sh` → ALL ACCOUNTS RLS CHECKS PASSED; on the emulators: paired + signed in shows the watch's heart rate, signed out shows nothing for it |
+| Ledger exceptions | Settings → Privacy → What left my phone → `/rest/v1/profiles` rows list field names with `exception: PROFILE_SYNC` |
+| Emergency details (B4) | Settings → Emergency details → fill blood type, allergies, cardiologist; Emergency tab → full card shows them in a fixed order; switch "Show on card" off → the field disappears from the card and the QR |
+| Old profiles load | `app/scripts/test.sh` → `StoredProfile.oldStoredProfileLoadsWithDefaults` |
+| Card payload v2 | Emergency tab → QR → open link: details shown; an old v1 link still opens (test `CardPayloadV2.oldV1LinksStillOpen`) |
+| First-responder view (B5) | Emergency tab → "For first responders": do not give, use instead, care notes, medicines, details, call buttons; works in airplane mode |
+| Responder from lock screen | Privacy → App lock on → background 5 min → lock screen → "For first responders" (built, unverified on the emulator) |
+| NFC card tag (B14) | Real phone with NFC: Emergency → Show card as QR → Write to NFC tag → hold an NTAG213+ sticker → tap the tag with another phone (built, unverified) |
+| Responder from widget | Add the 2×4 Medical alert card → tap its text (built, unverified) |
+| No notification prompt on launch | Relaunch the app after onboarding: no notification dialog appears (it is asked only in onboarding step 7). |
 
-Unit tests: `app/scripts/test.sh` — **211 tests, 0 failures** (3 Oct 2026): drug data + checker, interactions,
+Unit tests: `app/scripts/test.sh` — **329 tests, 0 failures** (4 Oct 2026): drug data + checker, interactions,
 agent safety gate + validator + tool registry, offline agent, saved chats, alarm rules, SOS state machine and message,
 doctor brief + AI summary guard, report payload + share links, medicine info + AI reply guard, symptom tool, GS1,
-emergency numbers, card text + read-aloud privacy, dose schedule, travel, privacy guard + ledger. Tests never call the
-network (`Config.forceOffline`).
-Backend: `npx -y deno test --no-lock backend/supabase/functions/` — **68 tests, 0 failures** (labels, RxNav/openFDA
-tier 2, share, SOS message, box identify, med-info and doctor-summary output guards).
+emergency numbers, card text + read-aloud privacy, dose schedule, travel, privacy guard + ledger, accounts + profile
+sync, onboarding, emergency details + responder + card payload v2 + NFC, notification kinds + watch SOS + Live View
+text + medical ID card, doctor visits + redaction + feeling diary. Tests never call the network
+(`Config.forceOffline`).
+Watch: `cd watch && source env.sh && hvigorw test -p module=entry -p coverage=false --no-daemon` — **88 tests, 0
+failures**.
+Backend: `npx -y deno test --no-lock backend/supabase/functions/` — **75 tests, 0 failures** (labels, RxNav/openFDA
+tier 2, share, SOS message + Huawei Push sender, box identify, med-info and doctor-summary output guards).
+Accounts RLS: `backend/supabase/tests/run-rls.sh` (throw-away local Postgres) → ALL ACCOUNTS RLS CHECKS PASSED.
 
 Optional online drug check: create a Supabase project, run `backend/supabase/migrations/0001_drugs.sql` and
 `backend/supabase/seed.sql` (regenerate with `python3 data/export_seed.py`), deploy `functions/drug-check`, and put
@@ -100,6 +137,8 @@ How AI tools were used, and which pre-existing components are reused: [`AI_WORKF
 
 **Pre-existing / third-party components (Challenge Rules §4):** DevEco Studio's Empty Ability template
 (hvigor files, `EntryAbility` skeleton, Hypium test harness) and the `@ohos/hypium` / `@ohos/hamock` test libraries.
+`npm:jose@5` signs the Huawei Push Kit service-account JWT in the `sos` Edge Function; Twilio (SOS SMS and calls)
+and Huawei Push Kit are external services called from that function.
 Hosting: Supabase (Edge Functions, Storage) and Vercel (static viewer pages in `site/`; they hold no data).
 Public APIs called by the `/drug-check` and `/box-identify` Edge Functions for medicines outside our data: NLM RxNav
 (name → ingredient, rxnav.nlm.nih.gov), openFDA drug labels (api.fda.gov, public domain), AEMPS CIMA (Spanish

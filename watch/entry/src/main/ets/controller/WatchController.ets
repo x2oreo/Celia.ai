@@ -28,7 +28,7 @@ import { MetricOutbox } from '../sync/MetricOutbox';
 import { PatientContext, PatientContextClient } from '../sync/PatientContextClient';
 import { PreferencesOutboxStore } from '../sync/PreferencesOutboxStore';
 import { DemoRpcClient } from '../sync/DemoRpcClient';
-import { deviceIdFor } from '../sync/DeviceIdStore';
+import { deviceIdFor, saveWatchSecret, watchSecretFor } from '../sync/DeviceIdStore';
 import { PairingClient } from '../sync/PairingClient';
 import { DoseStore } from '../sync/DoseStore';
 import {
@@ -179,10 +179,11 @@ export class WatchController implements RulesHost {
     if (AppConfig.canUpload(this.cfg)) {
       // One HTTP session for every Supabase call (energy: shared connections, fewer TLS handshakes).
       const client = new RestClient(this.cfg.supabaseUrl, this.cfg.supabaseAnonKey);
+      client.setWatchSecret(watchSecretFor(ctx));   // B9: proves this watch to the server once it has paired
       this.sync.configure(outbox, new SupabaseUploader(client));
       this.contextClient = new PatientContextClient(client, this.cfg.deviceId);
       this.demoRpc = new DemoRpcClient(client);
-      this.pairing.configure(new PairingClient(client), () => {
+      this.pairing.configure(new PairingClient(client, (secret: string) => saveWatchSecret(ctx, secret)), () => {
         this.vibrate(400);
       });
     } else {

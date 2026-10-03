@@ -34,3 +34,29 @@ export function deviceIdFor(ctx: common.Context, override: string): string {
     return util.generateRandomUUID(false);
   }
 }
+
+const SECRET_KEY = 'watch_secret';
+
+/** The secret pairing_start gave this watch ('' until it first pairs). Kept next to the device id. */
+export function watchSecretFor(ctx: common.Context): string {
+  try {
+    const opts: preferences.Options = { name: 'celia_watch' };
+    return preferences.getPreferencesSync(ctx, opts).getSync(SECRET_KEY, '') as string;
+  } catch (e) {
+    Logger.warn(`watch secret storage unavailable: ${(e as BusinessError).code}`);
+    return '';
+  }
+}
+
+export function saveWatchSecret(ctx: common.Context, secret: string): void {
+  try {
+    const opts: preferences.Options = { name: 'celia_watch' };
+    const prefs = preferences.getPreferencesSync(ctx, opts);
+    prefs.putSync(SECRET_KEY, secret);
+    prefs.flush().catch((err: BusinessError) => {
+      Logger.warn(`watch secret flush failed: ${err.code}`);
+    });
+  } catch (e) {
+    Logger.warn(`watch secret not saved: ${(e as BusinessError).code}`);
+  }
+}
