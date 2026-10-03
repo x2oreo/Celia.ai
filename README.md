@@ -7,6 +7,7 @@ Agent-first heart-safety companion for people with Long QT syndrome — HarmonyO
 - [Idea](docs/IDEA.md) — what we build and why, MVP scope, demo story
 - [Architecture](docs/ARCHITECTURE.md) — big picture, ownership, shared contracts, API
 - [Plan](docs/PLAN.md) — checkpoints, mentor questions, submission checklist
+- [Tasks](docs/TASKS.md) — feature expansion (F-19..F-34) as implementable tasks
 - Per person: [Kaloyan — agent](docs/team/kaloyan-agent.md) · [Georgie — app](docs/team/georgie-app.md) · [Mark — data & watch](docs/team/mark-data-watch.md)
 - Background: [task text](docs/hackathon/huawei-task.txt) · [condition research](docs/hackathon/conditions-research.md)
 

@@ -108,6 +108,29 @@ Priorities from [`IDEA.md`](IDEA.md). **P0** must work in the demo · **P1** str
 | F-17 | Caregiver tablet: distributed alert / app continuation | Georgi |
 | F-18 | Brugada/CPVT condition pack (data + 1 rule) | Mark |
 
+### Feature expansion (F-19..F-34)
+
+Next wave after the P0 core. Full tasks with acceptance criteria, verification and dependencies: [`TASKS.md`](TASKS.md). Pull in after the P0 freeze-check.
+
+| ID | Feature | Task | Owner |
+|---|---|---|---|
+| F-19 | Combo check vs my meds (additive QT, CYP3A4/2D6) — deterministic | T1 | Mark · Kaloyan |
+| F-20 | Curated safer alternatives on the verdict card | T2 | Mark |
+| F-21 | Lookup trace + confidence ("How we know") | T3 | Mark |
+| F-22 | Bulgarian + Polish brand-name aliases | T4 | Mark |
+| F-23 | Scan history timeline | T5 | Georgi · Mark |
+| F-24 | Dashboard (meds by risk, recent checks, combo warnings, live HR) | T6 | Georgi |
+| F-25 | Saved chat conversations | T7 | Kaloyan · Georgi |
+| F-26 | Country emergency numbers | T8 | Georgi |
+| F-27 | SOS escalation: alert → "I'm OK" countdown → auto SOS | T9 | Kaloyan · Mark |
+| F-28 | SOS fan-out to ICE contacts + GPS + 10-min cooldown + test SOS | T10 | Mark · Georgi |
+| F-29 | Emergency card in 13 languages (static, no LLM) | T11 | Georgi |
+| F-30 | QR on the card + opt-in share link | T12 | Georgi |
+| F-31 | Doctor Prep by specialty (extends F-14) | T13 | Kaloyan · Georgi |
+| F-32 | Rich vitals: HRV, RR, stress, sleep, irregular rhythm | T14 | Mark |
+| F-33 | Watch buzz on risky drug check | T15 | Mark |
+| F-34 | Settings screen | T16 | Georgi |
+
 ## 5. Robustness & quality (scored under "Technical execution")
 
 - Agent rules from ARCHITECTURE: verdict = `DrugChecker`; validate every reply; emergency keywords bypass the LLM;
@@ -141,7 +164,5 @@ T+20h docs (`AI_WORKFLOW.md`, `AI_FEATURES.md`) + submission.
 Collected during brainstorming; **not planned**. Pull one in only after the P0 freeze-check, and add it to IDEA /
 ARCHITECTURE first.
 
-Barcode scan (Scan Kit) · combo check vs my meds (≥2 QT drugs, CYP3A4 inhibitors) · SOS countdown with "I'm OK" ·
-bystander mode with CPR metronome · AED finder · local emergency number by country · offline QR on the card ·
-sick-day / travel modes · beta-blocker reminders · QTc log · genotype-specific tips · privacy ledger ·
+Barcode scan (Scan Kit) · bystander mode with CPR metronome · AED finder · sick-day / travel modes · beta-blocker reminders · QTc log · genotype-specific tips · privacy ledger ·
 family screening leaflet.

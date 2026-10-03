@@ -174,6 +174,35 @@ drug tables); the LLM key is an Edge Function secret. Timeouts: app 20 s → fal
 | Local DB | `@kit.ArkData` RDB | `data/` | ✅ |
 | Notifications / call | `@kit.NotificationKit`, `call` | emergency | ✅ / partial |
 | Voice (stretch) | `@kit.CoreSpeechKit` | agent | ⚠️ check English support |
+| SOS location (F-28) | `@kit.LocationKit` | `emergency/` | ⚠️ simulated location on emulator |
+| Card QR (F-30) | ArkUI `QRCode` | emergency | ✅ |
+| SOS SMS (F-28) | Telephony `sms` / SMS composer Want | `emergency/` | ⚠️ verify — direct send likely system-only |
+
+## Proposed contracts — feature expansion (F-19..F-34)
+
+**Proposed, not final** — confirm with the owner, then move into "Shared contracts" and `model/`. Tasks:
+[`TASKS.md`](TASKS.md).
+
+```ts
+// model/DrugVerdict.ets (additions, Mark)
+export type ComboKind = 'NONE' | 'ADDITIVE_QT' | 'CYP_INTERACTION';
+export interface ComboVerdict { kind: ComboKind; drugs: string[]; enzyme: string; reason: string; }
+export interface LookupStep { step: string; matched: boolean; detail: string; }  // 'BUNDLED_EXACT' | 'ALIAS' | 'ONLINE' ...
+// DrugVerdict gains: confidence: number; trace: LookupStep[]; alternatives: string[]; combo?: ComboVerdict
+
+// model/ScanRecord.ets (Mark + Georgi)
+export interface ScanRecord { id: number; ts: number; via: 'CHAT' | 'TEXT' | 'PHOTO' | 'INTENT'; verdict: DrugVerdict; }
+
+// model/Vitals.ets (additions, Mark) — all optional, SimulatedSource fills all
+// VitalsSample gains: hrv?, rrMs?, restingHr?, stress?, asleep?, irregular?, steps?
+// AlertKind gains: 'IRREGULAR_RHYTHM' | 'HRV_DROP'; VitalsAlert gains severity: 'INFO' | 'WARN' | 'CRITICAL'
+
+// model/SosEvent.ets (Kaloyan + Mark)
+export interface SosEvent { ts: number; trigger: 'VITALS' | 'BUTTON' | 'KEYWORD'; test: boolean;
+  lat: number; lon: number; results: string; }   // results = JSON per contact/channel
+
+// model/Profile.ets (additions) — Profile.country: string (ISO2); Contact.email: string ('' if none)
+```
 
 ## Conventions
 
