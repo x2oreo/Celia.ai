@@ -30,7 +30,6 @@ import { pulse } from '../common/Haptics';
 import { VitalsService } from '../vitals/VitalsService';
 import { WearNotifier } from '../vitals/WearNotifier';
 import { SosController } from '../emergency/SosController';
-import { askNotificationPermission } from '../common/Notify';
 import { AppLock } from '../common/AppLock';
 import { ReminderService } from '../reminders/ReminderService';
 import { BetaBlockerWatch } from '../vitals/BetaBlockerWatch';
@@ -84,7 +83,6 @@ struct Index {
     AgentPrompt.onOpenChat(() => this.openChat());
     RouteRequest.onOpen((route: string) => this.openRoute(route));
     this.openRoute(RouteRequest.take());
-    askNotificationPermission(this.getUIContext().getHostContext() as common.UIAbilityContext);
     TravelService.detect();   // only with location already allowed; never asks
     AppLock.onLockChange((locked: boolean) => {
       this.locked = locked;
