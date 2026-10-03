@@ -24,6 +24,7 @@ export class VitalsService {
   private samples: Listeners<VitalsSample> = new Listeners<VitalsSample>();
   private alerts: Listeners<VitalsAlert> = new Listeners<VitalsAlert>();
   private answers: Listeners<string> = new Listeners<string>();
+  private silenceReported: boolean = false;
   private source: VitalsSourceKind | undefined = undefined;
   private rules: AlarmRules = new AlarmRules('UNKNOWN');
   private timer: number = -1;
@@ -151,10 +152,13 @@ export class VitalsService {
     this.ingest(s);
   }
 
+  // One "no data from the watch" alert per gap: it fires again only after samples came back in between
+  // (it used to repeat every minute while the watch app was paused).
   private checkSilence(now: number): void {
-    if (now - this.lastSampleTs > SILENCE_MS) {
+    if (now - this.lastSampleTs > SILENCE_MS && !this.silenceReported) {
       const a: VitalsAlert | undefined = this.rules.disconnected(now);
       if (a !== undefined) {
+        this.silenceReported = true;
         this.fire(a);
       }
     }
@@ -163,6 +167,7 @@ export class VitalsService {
   // One sample from any source: history for the chart, listeners, per-sample alarm rules.
   private ingest(s: VitalsSample): void {
     this.lastSampleTs = Date.now();
+    this.silenceReported = false;
     this.recent.push(s);
     if (this.recent.length > KEEP_SAMPLES) {
       this.recent.shift();

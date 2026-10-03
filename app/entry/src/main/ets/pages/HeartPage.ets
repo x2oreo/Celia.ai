@@ -22,6 +22,30 @@ export function severityColor(a: VitalsAlert): Resource {
   }
 }
 
+// One stat in the Heart card (resting HR, HRV, rhythm). @Param, so it redraws with every new sample.
+@ComponentV2
+struct StatTile {
+  @Param label: Resource = $r('app.string.heart_rhythm');
+  @Param value: string = '--';
+
+  build() {
+    Column({ space: 2 }) {
+      Text(this.value)
+        .fontSize($r('app.float.font_subtitle'))
+        .fontWeight(FontWeight.Bold)
+        .fontColor($r('app.color.ink'))
+      Text(this.label)
+        .fontSize($r('app.float.font_caption'))
+        .fontColor($r('app.color.ink_3'))
+    }
+    .layoutWeight(1)
+    .alignItems(HorizontalAlign.Start)
+    .padding(12)
+    .backgroundColor($r('app.color.surface_alt'))
+    .borderRadius($r('app.float.radius_s'))
+  }
+}
+
 @ComponentV2
 export struct HeartPage {
   @Consumer('navStack') navStack: NavPathStack = new NavPathStack();
@@ -77,23 +101,6 @@ export struct HeartPage {
     return (resting && bpm >= 120) || bpm < 45 ? 'ELEVATED' : 'CALM';
   }
 
-  @Builder
-  stat(label: Resource, value: string) {
-    Column({ space: 2 }) {
-      Text(value)
-        .fontSize($r('app.float.font_subtitle'))
-        .fontWeight(FontWeight.Bold)
-        .fontColor($r('app.color.ink'))
-      Text(label)
-        .fontSize($r('app.float.font_caption'))
-        .fontColor($r('app.color.ink_3'))
-    }
-    .layoutWeight(1)
-    .alignItems(HorizontalAlign.Start)
-    .padding(12)
-    .backgroundColor($r('app.color.surface_alt'))
-    .borderRadius($r('app.float.radius_s'))
-  }
 
   // Alert row: out-of-range chip (risk tint + shape + value) and the plain-English message.
   @Builder
@@ -160,11 +167,14 @@ export struct HeartPage {
             .fontColor($r('app.color.ink_3'))
           HrChart({ hrs: this.hrs, chartWidth: this.chartWidth, chartHeight: 96 })
           Row({ space: 8 }) {
-            this.stat($r('app.string.heart_resting_hr'),
-              this.latest?.restingHr === undefined ? '--' : `${this.latest?.restingHr}`)
-            this.stat($r('app.string.heart_hrv'), this.latest?.hrv === undefined ? '--' :
-              `${Math.round(this.latest?.hrv ?? 0)} ms`)
-            this.stat($r('app.string.heart_rhythm'), this.latest?.irregular === true ? 'Irregular' : 'Regular')
+            // A component, not a @Builder: a @Builder with plain arguments draws once and never sees new samples
+            // (the tiles stayed at '--' while the ring above updated).
+            StatTile({ label: $r('app.string.heart_resting_hr'),
+              value: this.latest?.restingHr === undefined ? '--' : `${this.latest?.restingHr}` })
+            StatTile({ label: $r('app.string.heart_hrv'), value: this.latest?.hrv === undefined ? '--' :
+              `${Math.round(this.latest?.hrv ?? 0)} ms` })
+            StatTile({ label: $r('app.string.heart_rhythm'),
+              value: this.latest === undefined ? '--' : this.latest.irregular === true ? 'Irregular' : 'Regular' })
           }
           .width('100%')
           Text($r('app.string.heart_only_hr'))
