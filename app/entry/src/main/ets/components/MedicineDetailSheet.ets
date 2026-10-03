@@ -9,6 +9,8 @@ import { Medication } from '../model/Medication';
 import { MedFacts, medFacts } from '../drugs/MedFacts';
 import { MedAiInfo, MedAiOutcome, MedAiResult, MedInfoClient } from '../drugs/MedInfoClient';
 import { Motion } from '../common/Motion';
+import { IntakeCard } from './IntakeCard';
+import { riskToLog } from '../drugs/DrugIntake';
 import { InkButton, QuietButton, RiskBadge, RiskShape, SecondaryButton, SourceBadge, TypingDots } from './Common';
 
 type AiState = 'IDLE' | 'LOADING' | MedAiResult;
@@ -375,6 +377,13 @@ export struct MedicineDetailSheet {
         // No backend and nothing cached: no button that can only fail.
         if (MedInfoClient.available() || this.ai !== undefined) {
           this.aiBlock()
+        }
+        // Taking one of my medicines that has a QT risk (or clashes with another of mine) can be logged for the watch.
+        if (riskToLog(this.facts.risk, this.facts.interactions.length > 0) !== '') {
+          IntakeCard({
+            name: this.facts.ingredient !== '' ? this.facts.ingredient : this.facts.name,
+            risk: riskToLog(this.facts.risk, this.facts.interactions.length > 0)
+          })
         }
         Row({ space: 10 }) {
           InkButton({

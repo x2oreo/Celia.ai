@@ -1923,6 +1923,50 @@
     {
       "name": "checkin_answered_watch_ok",
       "value": "You answered on your watch: I'm OK"
+    },
+    {
+      "name": "intake_title",
+      "value": "Already took it?"
+    },
+    {
+      "name": "intake_body",
+      "value": "Log it so your watch keeps a closer eye on your heart for the next 3 days. This doesn't mean it's safe for you."
+    },
+    {
+      "name": "intake_button",
+      "value": "I took it"
+    },
+    {
+      "name": "intake_confirm_title",
+      "value": "Log %s as taken now?"
+    },
+    {
+      "name": "intake_confirm_body",
+      "value": "Your watch will lower its heart-rate limits for 3 days, and you'll be asked how you feel if your heart rate rises. Ask your doctor or pharmacist about this medicine today."
+    },
+    {
+      "name": "intake_confirm_yes",
+      "value": "Log it"
+    },
+    {
+      "name": "intake_confirm_no",
+      "value": "Cancel"
+    },
+    {
+      "name": "intake_done",
+      "value": "Logged as taken at %s"
+    },
+    {
+      "name": "intake_watching",
+      "value": "Your watch is watching more closely until %s."
+    },
+    {
+      "name": "intake_not_synced",
+      "value": "Logged on this phone, but your watch couldn't be reached. Try again when you're online."
+    },
+    {
+      "name": "intake_retry",
+      "value": "Send to watch"
     }
   ]
 }

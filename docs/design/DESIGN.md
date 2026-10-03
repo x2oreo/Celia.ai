@@ -461,6 +461,12 @@ In ArkUI, use `animateTo` / `.animation()` with `Curve.EaseInOut` and `iteration
 - **Onboarding**: progress segments in `brand`, orb 96 on step 1, `title-1` per step, primary `Continue`.
 - **Doctor report**: specialty chips (6.3), sections as `surface` cards with bullets, primary `Share`, secondary `Copy`.
 - **Medicines empty**: dashed empty card "No medicines yet. Add one or scan a box." + primary `Add a medicine`.
+- **I took it** (`components/IntakeCard.ets`; Check result under the verdict card, and the medicine detail sheet above
+  its actions; only for Known / Possible / Conditional risk or a risky combination): a `surface` card: "Already took it?" in `headline`, one `body-sm` line in `ink-3` that says the watch
+  will watch more closely and that this doesn't mean it's safe, and an ink `I took it` (pill icon). Tapping asks
+  first (system dialog: "Log X as taken now?", Cancel / Log it). After logging: check icon + "Logged as taken at
+  HH:MM" in `body` medium and "Your watch is watching more closely until …" in `ink-3`; if the watch couldn't be
+  reached, the 6.7 error strip with `Send to watch`. Never a risk colour on this card: logging is not a verdict.
 - **Pair watch** (Settings → Pair watch): when paired, a `surface` card with a check icon, "Paired with watch
   {first 8 chars of the id}" (`body` bold), "Since …" in `ink-3` and a secondary `Unpair`. Below it, always, the code
   card: one `body` intro line, two `body-sm` steps in `ink-3`, a 56 vp `surface-alt` input centred in `title-2`, the

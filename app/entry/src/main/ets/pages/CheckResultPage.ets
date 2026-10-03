@@ -13,6 +13,8 @@ import { Logger } from '../common/Logger';
 import { toast } from '../common/Toast';
 import { AgentPrompt } from '../agent/AgentPrompt';
 import { DrugVerdict } from '../model/DrugVerdict';
+import { intakeName, intakeRisk } from '../drugs/DrugIntake';
+import { IntakeCard } from '../components/IntakeCard';
 
 const log: Logger = new Logger('CheckResult');
 
@@ -106,6 +108,10 @@ export struct CheckResultPage {
               .backgroundColor($r('app.color.surface'))
               .border({ width: 1, color: $r('app.color.border') })
               .borderRadius($r('app.float.radius_l'))
+
+              if (intakeRisk(this.outcome) !== '') {
+                IntakeCard({ name: intakeName(this.outcome), risk: intakeRisk(this.outcome) })
+              }
 
               if (this.outcome.box !== undefined) {
                 MedicineInfoCard({
