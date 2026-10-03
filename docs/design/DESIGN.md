@@ -550,6 +550,30 @@ the browser; the page itself never sees anything until the key in the link's `#`
   40 ms stagger, at most 5 groups; buttons scale 0.97 on press (120 ms ease-out). Nothing loops. With
   `prefers-reduced-motion`, opacity only.
 
+### 10.2b Landing page (`site/index.html`)
+
+The public page about the product. It is a web page, not an app screen, so it may use web-only effects that the app
+cannot (blur, canvas, scroll-linked motion). It must still read as Celia: same tokens, orb, risk language and voice.
+
+- **Rhythm of surfaces**: warm dark (`#120E0D`, from 2.2) for the hero, agent and closing; true black for the watch;
+  `bg` / `surface_alt` for medicines, emergency and report. Coral light (orb glow, radial washes) is the only
+  decoration. Risk colours still appear only on risk badges and emergencies.
+- **Signature**: the heartbeat field. A canvas behind the hero orb: a dot grid that a coral pulse ring sweeps through
+  on a lub-dub rhythm (~1.1 s), and that bends away from the cursor. It is a ripple, never an ECG trace.
+- **Type**: Figtree (self-hosted) as the stand-in for HarmonyOS Sans. Headlines reveal word by word (blur 10 px →
+  0, rise 0.4em, 60 ms stagger); the context statement fills word by word as you scroll.
+- **Storytelling**: the medicine check is a pinned phone (desktop) whose screen moves through Type → Scan → Photo →
+  Verdict as the steps scroll past. The agent conversation plays once when it enters view (live words, tool steps,
+  then the answer), with the orb label stating each state.
+- **Interaction**: floating nav pill that changes theme over dark sections and slides an indicator to the active
+  link; 3D tilt that follows the cursor on the hero phone and the emergency card; cursor spotlight on cards; the
+  emergency card switches through the 13 card languages from `site/card/data.js`; a CPR metronome at 110 / min.
+- **Data**: the medicine marquee lists real entries from the dataset with their risk shape. Example numbers in the
+  report are labelled `SIMULATED`.
+- **Motion**: Lenis smooth scroll + GSAP ScrollTrigger, both self-hosted (CSP is `'self'`). Entrances ease out
+  (`cubic-bezier(0.23, 1, 0.32, 1)`), 600–900 ms; loops only where they mean something (heartbeat, orb, scan line,
+  metronome). `prefers-reduced-motion`: no smooth scroll, no scrub, no loops, everything visible.
+
 ### 10.3 Still open
 
 - Persona name for the agent (UI says "the agent").

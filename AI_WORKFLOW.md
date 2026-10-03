@@ -20,6 +20,9 @@ How AI tools were used to build Celia.ai, as required by Challenge Rules §4. Ap
 - `@ohos/hypium` 1.0.29, `@ohos/hamock` 1.0.0 (test framework, ohpm).
 - `@supabase/supabase-js` 2.x (npm, in the `sos` Edge Function), `@std/assert` 1.x (jsr, Deno tests).
 - Twilio Programmable Messaging + Voice REST API (external service for SOS SMS and calls; keys in Supabase secrets).
+- Figtree variable font (SIL OFL 1.1, Fontsource build), self-hosted in `site/assets/fonts/` for the landing page.
+- GSAP 3.13 + ScrollTrigger (GSAP standard no-charge licence) and Lenis 1.3 (MIT), self-hosted in
+  `site/assets/vendor/` for the landing page's scroll animations and smooth scrolling.
 
 ## Sessions
 

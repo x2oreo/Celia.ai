@@ -101,6 +101,8 @@ How AI tools were used, and which pre-existing components are reused: [`AI_WORKF
 **Pre-existing / third-party components (Challenge Rules §4):** DevEco Studio's Empty Ability template
 (hvigor files, `EntryAbility` skeleton, Hypium test harness) and the `@ohos/hypium` / `@ohos/hamock` test libraries.
 Hosting: Supabase (Edge Functions, Storage) and Vercel (static viewer pages in `site/`; they hold no data).
+The landing page (`site/index.html`) self-hosts the Figtree font (SIL Open Font License 1.1, via Fontsource),
+GSAP 3.13 + ScrollTrigger (GSAP standard no-charge licence) and Lenis 1.3 (MIT) in `site/assets/vendor/`.
 Public APIs called by the `/drug-check` and `/box-identify` Edge Functions for medicines outside our data: NLM RxNav
 (name → ingredient, rxnav.nlm.nih.gov), openFDA drug labels (api.fda.gov, public domain), AEMPS CIMA (Spanish
 medicines register, cima.aemps.es), UPCitemdb (free trial API) and Open Food / Products / Beauty Facts (ODbL). Only a
