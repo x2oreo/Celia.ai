@@ -14,8 +14,6 @@ export interface AppConfigData {
   supabaseAnonKey: string;
   /** Identifies this watch in watch_metrics.device_id. The phone app filters by it. */
   deviceId: string;
-  /** Mac BLE bridge base URL. From the emulator the Mac host is usually http://10.0.2.2:8787. */
-  bridgeUrl: string;
   defaultSource: HrSourceKind;
   medicationName: string;
   highBpm: number;
@@ -28,7 +26,6 @@ export class AppConfig {
       supabaseUrl: '',
       supabaseAnonKey: '',
       deviceId: 'demo-watch-1',
-      bridgeUrl: 'http://10.0.2.2:8787',
       defaultSource: 'SIMULATED',
       medicationName: 'nadolol',
       highBpm: 140,
@@ -66,10 +63,7 @@ export class AppConfig {
     if (typeof src.deviceId === 'string' && src.deviceId.length >= 3) {
       target.deviceId = src.deviceId;
     }
-    if (typeof src.bridgeUrl === 'string' && src.bridgeUrl.length > 0) {
-      target.bridgeUrl = src.bridgeUrl.replace(new RegExp('/+$'), '');
-    }
-    if (src.defaultSource === 'SENSOR' || src.defaultSource === 'SIMULATED' || src.defaultSource === 'BRIDGE') {
+    if (src.defaultSource === 'SENSOR' || src.defaultSource === 'SIMULATED') {
       target.defaultSource = src.defaultSource;
     }
     if (typeof src.medicationName === 'string' && src.medicationName.length > 0) {

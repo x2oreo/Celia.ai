@@ -16,7 +16,6 @@ import {
   sourceForKind
 } from '../model/WatchMetric';
 import { AlarmRules } from '../vitals/AlarmRules';
-import { BridgeHeartRateSource } from '../vitals/BridgeHeartRateSource';
 import { HeartRateSource } from '../vitals/HeartRateSource';
 import { SCENARIOS } from '../vitals/Scenarios';
 import { SensorHeartRateSource } from '../vitals/SensorHeartRateSource';
@@ -31,7 +30,6 @@ export type SyncState = 'OFF' | 'OK' | 'PENDING' | 'ERROR';
 const LIVE_EVERY_MS = 5000;
 const SYNC_EVERY_MS = 3000;
 const BATCH = 50;
-const SOURCE_ORDER: HrSourceKind[] = ['SIMULATED', 'SENSOR', 'BRIDGE'];
 
 /** All watch state and behaviour. The UI only renders it and forwards taps. */
 @ObservedV2
@@ -143,10 +141,9 @@ export class WatchController {
     }
   }
 
-  /** Cycles Simulated → Sensor → Bridge. Restarts the session if one is running. */
+  /** Toggles demo data ↔ watch sensor. Restarts the session if one is running. */
   async cycleSource(): Promise<void> {
-    const idx = SOURCE_ORDER.indexOf(this.sourceKind);
-    this.sourceKind = SOURCE_ORDER[(idx + 1) % SOURCE_ORDER.length];
+    this.sourceKind = this.sourceKind === 'SIMULATED' ? 'SENSOR' : 'SIMULATED';
     this.statusText = '';
     await this.restartIfRunning();
   }
@@ -204,9 +201,6 @@ export class WatchController {
   private createSource(kind: HrSourceKind): HeartRateSource {
     if (kind === 'SENSOR') {
       return new SensorHeartRateSource();
-    }
-    if (kind === 'BRIDGE') {
-      return new BridgeHeartRateSource(this.cfg.bridgeUrl);
     }
     return new SimulatedHeartRateSource(SCENARIOS[this.scenarioIdx].id);
   }

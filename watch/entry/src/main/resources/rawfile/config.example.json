@@ -2,7 +2,6 @@
   "supabaseUrl": "https://YOUR-PROJECT.supabase.co",
   "supabaseAnonKey": "YOUR-ANON-KEY",
   "deviceId": "demo-watch-1",
-  "bridgeUrl": "http://10.0.2.2:8787",
   "defaultSource": "SIMULATED",
   "medicationName": "nadolol",
   "highBpm": 140,

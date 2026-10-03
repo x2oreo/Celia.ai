@@ -9,18 +9,12 @@ export struct HeartPage {
     if (this.ctrl.sourceKind === 'SENSOR') {
       return 'WATCH SENSOR';
     }
-    if (this.ctrl.sourceKind === 'BRIDGE') {
-      return 'GT 6 PRO LIVE';
-    }
     return `DEMO · ${this.ctrl.scenarioLabel}`;
   }
 
   sourceColor(): string {
     if (this.ctrl.sourceKind === 'SENSOR') {
       return Theme.OK;
-    }
-    if (this.ctrl.sourceKind === 'BRIDGE') {
-      return Theme.INFO;
     }
     return Theme.WARN;
   }

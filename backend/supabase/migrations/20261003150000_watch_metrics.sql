@@ -11,7 +11,7 @@ create table if not exists public.watch_metrics (
   type        text        not null check (type in ('hr_live', 'hr_session', 'hr_alert', 'symptom', 'medication_taken')),
   payload     jsonb       not null default '{}'::jsonb check (jsonb_typeof(payload) = 'object'),
   recorded_at timestamptz not null,
-  source      text        not null check (source in ('watch', 'simulated', 'bridge')),
+  source      text        not null check (source in ('watch', 'simulated')),
   created_at  timestamptz not null default now()
 );
 

@@ -38,9 +38,9 @@ Answers:
 
 - T0: Condition = LQTS only for build; Brugada/CPVT = slide. Verdicts deterministic. Backend = Supabase EU.
 - Mark: GT 6 Pro (lite wearable) has no network API and we only have iPhones → watch app is an **ArkTS wearable app on
-  the wearable emulator** (`watch/`), uploading metrics to Supabase `watch_metrics`; real GT 6 Pro HR via BLE
-  broadcast → Mac bridge (`tools/hr-bridge`). Vitals metrics (numbers + device id, no personal data) now go to the
-  backend; phone app reads `watch_metrics_latest`. Team: confirm this is OK vs. the on-device-only data rule.
+  the wearable emulator** (`watch/`, scripted HR scenarios), uploading metrics to Supabase `watch_metrics`. Vitals
+  metrics (numbers + device id, no personal data) now go to the backend; phone app reads `watch_metrics_latest`.
+  Team: confirm this is OK vs. the on-device-only data rule.
 -
 
 ## Submission checklist (HackTribe + task deliverables)

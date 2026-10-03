@@ -9,9 +9,6 @@ export struct SettingsPage {
     if (this.ctrl.sourceKind === 'SENSOR') {
       return 'Watch sensor';
     }
-    if (this.ctrl.sourceKind === 'BRIDGE') {
-      return 'GT 6 Pro (Mac)';
-    }
     return 'Demo data';
   }
 

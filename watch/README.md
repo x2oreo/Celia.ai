@@ -6,30 +6,25 @@ reads them.
 
 ```
  heart-rate source ──► AlarmRules ──► alert overlay + vibration
-  (sensor | demo |  ─► SessionStats
-   GT 6 Pro bridge)  ─► MetricOutbox (Preferences) ──► SupabaseUploader ──► watch_metrics ──► phone app
+  (sensor | demo)  ─► SessionStats
+                    ─► MetricOutbox (Preferences) ──► SupabaseUploader ──► watch_metrics ──► phone app
 ```
 
-## Why this is an ArkTS wearable app, not a GT 6 Pro app
+## Why an ArkTS wearable app on the emulator
 
 The Huawei Watch GT series runs *lite wearable* apps (JS). We checked the HarmonyOS 6.1.1 SDK: the lite wearable
-device definition has **no network capability** (no NetStack syscap, no `fetch`/`http`), and the only way off the
-watch is Wear Engine P2P to a companion phone app with Huawei approval. With iPhones only, a GT app can't reach our
-server. So:
+device definition has **no network capability** (no NetStack syscap, no `fetch`/`http`), so a GT app can't reach our
+server (and with iPhones only, Wear Engine P2P to a phone app isn't an option either). The watch app is therefore a
+full HarmonyOS **wearable** app (API 20+, like Watch 5 / Watch Ultimate) that talks HTTPS to Supabase itself, and we
+run it on the **wearable emulator**. The emulator has no heart-rate sensor, so the demo uses scripted scenarios,
+always labelled as demo data.
 
-- The **watch app** is a full HarmonyOS **wearable** app (API 20+), running on the wearable emulator.
-- **Real GT 6 Pro data** comes in through `tools/hr-bridge`: the GT 6 Pro broadcasts heart rate over standard BLE
-  during a workout ("Share heart rate"), a Mac script reads it, and the emulator app polls it (source
-  "GT 6 Pro (Mac)"). Latency is about 1–2 s.
-- Without the watch, the **demo** source plays scripted LQTS scenarios. Demo data is always labelled.
-
-## Heart-rate sources (Settings page, tap to cycle)
+## Heart-rate sources (Settings page, tap to switch)
 
 | Source | Where it runs | Metric `source` |
 |---|---|---|
 | Demo data (scenarios: Resting, LQT1 exercise, LQT2 startle, LQT3 night) | anywhere | `simulated` |
 | Watch sensor (`sensor.SensorId.HEART_RATE`, needs READ_HEALTH_DATA) | real full-HarmonyOS watch; falls back to demo on the emulator | `watch` |
-| GT 6 Pro (Mac) via `tools/hr-bridge` | emulator + Mac + GT 6 Pro in a workout | `bridge` |
 
 ## Metrics sent (`watch_metrics` table)
 
@@ -76,19 +71,8 @@ hdc shell aa start -a EntryAbility -b ai.celia.watch
 hdc hilog | grep CeliaWatch
 ```
 
-## Real GT 6 Pro heart rate
-
-```bash
-cd tools/hr-bridge
-python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
-.venv/bin/python hr_bridge.py          # or --fake to test without the watch
-```
-On the watch: start a workout with **Share heart rate** enabled (workout settings). In the app: Settings → Source →
-"GT 6 Pro (Mac)". The emulator reaches the Mac at `http://10.0.2.2:8787`; if that fails, run
-`hdc rport tcp:8787 tcp:8787` and set `"bridgeUrl": "http://127.0.0.1:8787"` in `config.json`.
-
 ## Limits (be honest in the demo)
 
 - No QT/QTc and no ECG: PPG heart rate can't measure QT. Alerts are "heart rate outside your limits", not diagnosis.
-- The emulator has no HR sensor; real data needs the bridge (workout running, Mac nearby).
+- The emulator has no HR sensor: heart rate on the emulator is scripted demo data.
 - Hackathon auth: shared anon key + device id. Production needs device tokens and per-user RLS.

@@ -6,9 +6,9 @@
 export type MetricType = 'hr_live' | 'hr_session' | 'hr_alert' | 'symptom' | 'medication_taken';
 
 /** Where the heart rate came from. `simulated` must always be labelled as demo data in the UI. */
-export type MetricSource = 'watch' | 'simulated' | 'bridge';
+export type MetricSource = 'watch' | 'simulated';
 
-export type HrSourceKind = 'SENSOR' | 'SIMULATED' | 'BRIDGE';
+export type HrSourceKind = 'SENSOR' | 'SIMULATED';
 
 export type AlertDirection = 'high' | 'low';
 
@@ -56,13 +56,7 @@ export interface MetricRow {
 }
 
 export function sourceForKind(kind: HrSourceKind): MetricSource {
-  if (kind === 'SENSOR') {
-    return 'watch';
-  }
-  if (kind === 'BRIDGE') {
-    return 'bridge';
-  }
-  return 'simulated';
+  return kind === 'SENSOR' ? 'watch' : 'simulated';
 }
 
 export function makeRow(deviceId: string, type: MetricType, payload: MetricPayload, tsMs: number,
