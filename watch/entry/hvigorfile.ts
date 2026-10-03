@@ -44,6 +44,7 @@ function writeConfigFromEnv(): void {
     restingBpm: num('RESTING_BPM', 65),
     demoSpeed: num('DEMO_SPEED', 4),
     alertSustainSec: num('ALERT_SUSTAIN_SEC', 5),
+    demoMode: str('DEMO_MODE', 'false').toLowerCase() === 'true',
     medReminderTime: env.has('MED_REMINDER_TIME') ? str('MED_REMINDER_TIME', '') : '08:00',
     lowBpm: num('LOW_BPM', 45)
   };

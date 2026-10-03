@@ -30,28 +30,32 @@ export struct SettingsPage {
 
   build() {
     Column({ space: 6 }) {
-      SettingRow({
-        label: 'Source (tap to change)',
-        value: this.sourceName(),
-        onTap: () => {
-          this.ctrl.cycleSource();
+      if (!this.ctrl.demoMode) {
+        SettingRow({ label: 'Heart rate', value: 'Watch sensor' })
+      } else {
+        SettingRow({
+          label: 'Source (tap to change)',
+          value: this.sourceName(),
+          onTap: () => {
+            this.ctrl.cycleSource();
+          }
+        })
+        if (this.ctrl.sourceKind === 'SIMULATED') {
+          SettingRow({
+            label: 'Scenario (tap to change)',
+            value: this.ctrl.scenarioLabel,
+            onTap: () => {
+              this.ctrl.cycleScenario();
+            }
+          })
+          SettingRow({
+            label: 'Demo speed',
+            value: `${this.ctrl.demoSpeed}×`,
+            onTap: () => {
+              this.ctrl.cycleDemoSpeed();
+            }
+          })
         }
-      })
-      if (this.ctrl.sourceKind === 'SIMULATED') {
-        SettingRow({
-          label: 'Scenario (tap to change)',
-          value: this.ctrl.scenarioLabel,
-          onTap: () => {
-            this.ctrl.cycleScenario();
-          }
-        })
-        SettingRow({
-          label: 'Demo speed',
-          value: `${this.ctrl.demoSpeed}×`,
-          onTap: () => {
-            this.ctrl.cycleDemoSpeed();
-          }
-        })
       }
       Text(`Now: ${this.ctrl.limitLow}–${this.ctrl.limitHigh} bpm (${this.ctrl.limitReason})`)
         .fontSize(10)

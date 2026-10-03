@@ -33,6 +33,8 @@ export interface AppConfigData {
   alertSustainSec: number;
   /** Daily medication reminder "HH:MM"; empty = off. */
   medReminderTime: string;
+  /** Scripted demo heart rate (Settings: source, scenarios, speed). Off = real sensor only. */
+  demoMode: boolean;
 }
 
 export class AppConfig {
@@ -52,7 +54,8 @@ export class AppConfig {
       restingBpm: 65,
       demoSpeed: 4,
       alertSustainSec: 5,
-      medReminderTime: '08:00'
+      medReminderTime: '08:00',
+      demoMode: false
     };
     return cfg;
   }
@@ -115,6 +118,9 @@ export class AppConfig {
     }
     if (typeof src.alertSustainSec === 'number' && src.alertSustainSec >= 1 && src.alertSustainSec <= 60) {
       target.alertSustainSec = src.alertSustainSec;
+    }
+    if (typeof src.demoMode === 'boolean') {
+      target.demoMode = src.demoMode;
     }
     if (typeof src.medReminderTime === 'string') {
       target.medReminderTime = src.medReminderTime;

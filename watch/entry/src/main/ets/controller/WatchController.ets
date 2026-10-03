@@ -142,6 +142,8 @@ export class WatchController {
   @Trace monitoringSec: number = 0;
   /** Fast-forward factor for demo scenarios (Settings). */
   @Trace demoSpeed: number = 4;
+  /** DEMO_MODE: scripted heart-rate scenarios available in Settings. */
+  @Trace demoMode: boolean = false;
   /** Signal currently forced abnormal from the Vitals page. */
   @Trace anomaly: Anomaly = 'none';
   /** Demo: 16 simulated days of resting HR with the last 2 elevated (missed beta-blocker), on the server. */
@@ -204,7 +206,8 @@ export class WatchController {
   init(ctx: common.UIAbilityContext): void {
     this.ctx = ctx;
     this.cfg = AppConfig.load(ctx);
-    this.sourceKind = this.cfg.defaultSource;
+    this.demoMode = this.cfg.demoMode;
+    this.sourceKind = this.demoMode ? this.cfg.defaultSource : 'SENSOR';
     this.demoSpeed = this.cfg.demoSpeed;
     this.alarm = new AlarmRules({ sustainSec: this.cfg.alertSustainSec, cooldownSec: 60 });
     this.genotype = this.cfg.genotype;
@@ -277,6 +280,9 @@ export class WatchController {
 
   /** Toggles watch sensor ↔ demo data. */
   cycleSource(): void {
+    if (!this.demoMode) {
+      return;
+    }
     this.sourceKind = this.sourceKind === 'SENSOR' ? 'SIMULATED' : 'SENSOR';
     this.restart();
   }
@@ -469,7 +475,8 @@ export class WatchController {
     if (this.running) {
       return;
     }
-    if (this.sourceKind === 'SENSOR' && !this.sensorUsable()) {
+    // Without DEMO_MODE the watch never switches to scripted data: it shows why there is no reading instead.
+    if (this.sourceKind === 'SENSOR' && !this.sensorUsable() && this.demoMode) {
       this.sourceKind = 'SIMULATED';
     }
     const now = Date.now();
@@ -940,7 +947,7 @@ export class WatchController {
 
   private onSourceError(msg: string): void {
     this.statusText = msg;
-    if (this.sourceKind === 'SENSOR') {
+    if (this.sourceKind === 'SENSOR' && this.demoMode) {
       // Sensor failed at runtime: keep monitoring on scripted data, clearly labelled.
       this.stopSource();
       this.sourceKind = 'SIMULATED';
