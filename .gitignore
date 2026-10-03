@@ -30,3 +30,5 @@
 
 # Watch app runtime config (Supabase URL/key)
 watch/entry/src/main/resources/rawfile/config.json
+__pycache__/
+.venv/
