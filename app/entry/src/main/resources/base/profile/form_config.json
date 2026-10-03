@@ -1,0 +1,38 @@
+{
+  "forms": [
+    {
+      "name": "check",
+      "displayName": "$string:widget_check_name",
+      "description": "$string:widget_check_desc",
+      "src": "./ets/widget/pages/CheckCard.ets",
+      "uiSyntax": "arkts",
+      "window": {
+        "designWidth": 720,
+        "autoDesignWidth": true
+      },
+      "colorMode": "auto",
+      "isDefault": true,
+      "updateEnabled": false,
+      "defaultDimension": "2*2",
+      "supportDimensions": ["2*2"],
+      "isDynamic": true
+    },
+    {
+      "name": "alert",
+      "displayName": "$string:widget_alert_name",
+      "description": "$string:widget_alert_desc",
+      "src": "./ets/widget/pages/AlertCard.ets",
+      "uiSyntax": "arkts",
+      "window": {
+        "designWidth": 720,
+        "autoDesignWidth": true
+      },
+      "colorMode": "auto",
+      "isDefault": false,
+      "updateEnabled": false,
+      "defaultDimension": "2*4",
+      "supportDimensions": ["2*4"],
+      "isDynamic": true
+    }
+  ]
+}

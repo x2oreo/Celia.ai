@@ -1363,6 +1363,34 @@
     {
       "name": "agent_card_title",
       "value": "Emergency card"
+    },
+    {
+      "name": "widget_check_name",
+      "value": "Can I take this?"
+    },
+    {
+      "name": "widget_check_desc",
+      "value": "Scan or type a medicine to check it against the QT list."
+    },
+    {
+      "name": "widget_alert_name",
+      "value": "Medical alert"
+    },
+    {
+      "name": "widget_alert_desc",
+      "value": "Your condition, medicines and emergency call, readable by anyone."
+    },
+    {
+      "name": "widget_brand",
+      "value": "Celia.ai"
+    },
+    {
+      "name": "widget_scan_or_type",
+      "value": "Scan or type"
+    },
+    {
+      "name": "widget_open_card",
+      "value": "Open emergency card"
     }
   ]
 }

@@ -31,6 +31,7 @@ import { AgentCore, QUICK_REPLY_OK, QUICK_REPLY_UNWELL } from '../agent/AgentCor
 import { CheckInSheet } from '../components/CheckInSheet';
 import { clock } from '../common/Format';
 import { AgentPrompt } from '../agent/AgentPrompt';
+import { RouteRequest } from '../common/RouteRequest';
 import { AgentReply, EmergencyPayload, UiAction } from '../model/AgentTypes';
 
 @Entry
@@ -52,6 +53,8 @@ struct Index {
     VitalsService.get().onAlert((a: VitalsAlert) => this.onAlert(a));
     AgentCore.get().onProactive((r: AgentReply) => this.onAgentProactive(r));
     AgentPrompt.onOpenChat(() => this.openChat());
+    RouteRequest.onOpen((route: string) => this.openRoute(route));
+    this.openRoute(RouteRequest.take());
     askNotificationPermission(this.getUIContext().getHostContext() as common.UIAbilityContext);
     AppLock.onLockChange((locked: boolean) => {
       this.locked = locked;
@@ -68,6 +71,18 @@ struct Index {
     if (profile === undefined) {
       this.navStack.pushPathByName(Routes.ONBOARDING, null, false);
     }
+  }
+
+  // A home-screen card asked for a page (e.g. Scan). Opened once, on top of the tabs.
+  private openRoute(route: string): void {
+    if (route === '') {
+      return;
+    }
+    const names: string[] = this.navStack.getAllPathName();
+    if (names.length > 0 && names[names.length - 1] === route) {
+      return;
+    }
+    this.navStack.pushPathByName(route, null);
   }
 
   // "Ask the agent" from anywhere: bring the chat page to the front (once).
