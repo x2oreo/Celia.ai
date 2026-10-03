@@ -10,6 +10,21 @@ reads them.
                     ─► MetricOutbox (Preferences) ──► SupabaseUploader ──► watch_metrics ──► phone app
 ```
 
+### Code map (`entry/src/main/ets/controller/`)
+
+`WatchController` is the one object the screens read and call (unchanged API: fields + methods). It owns the
+screen state (alerts, check-in, nudges, limits) and the 1 s tick, and delegates to five units:
+
+| Unit | Does | Tested with |
+|---|---|---|
+| `SensorHub` | HR source (sensor or scenario), accelerometer → rest/active + falls, wear sensor, steps, accelerometer rate | `AccelRate`, `MotionAnalyzer` tests |
+| `HeartRules` | per reading: resting HR, stress, simulated vitals and their alerts, recovery, limit alarm, `hr_live` / `vitals` / `hr_session` cadence; talks back through `RulesHost` | fake host, fixed random |
+| `SosFlow` | fall "Are you OK?" 30 s → SOS 10 s → `sos` row → delivered | fake clock |
+| `SyncEngine` | outbox → uploader, batches of 50, row-by-row after a 400, one storage write per sync | fake uploader |
+| `PairingFlow` | 6-digit code, countdown, `pairing_status` every 2 s | fake `PairingApi` |
+
+All Supabase calls go through one `sync/RestClient` (a reused Remote Communication Kit session).
+
 ## Why an ArkTS wearable app on the emulator
 
 The Huawei Watch GT series runs *lite wearable* apps (JS). We checked the HarmonyOS 6.1.1 SDK: the lite wearable
@@ -131,16 +146,87 @@ The emulator has an accelerometer (rest/active works from it) but no wear sensor
 There is no Start button. Monitoring starts when the app opens and runs while it is on screen; leaving the app
 pauses it, closes the current summary window and pushes the queue; coming back resumes it.
 
-**How 24/7 tracking works on a real watch (pitch):** HarmonyOS freezes apps shortly after they leave the screen, and
-none of the continuous-task types (data transfer, audio, location, Bluetooth, multi-device, VoIP, task keeping)
-covers heart-rate monitoring. The system checks that a declared task is real, so faking one gets the app suspended.
-The watch **system** already measures heart rate around the clock (Huawei Health continuous HR). The production
-design is therefore:
-1. **Health Service Kit** reads the system's continuous HR history (needs Huawei approval for health data).
-2. The app syncs it **on open and on a schedule** (deferred background tasks), using the same outbox → Supabase path.
-3. **Live alarms** come from the system's own HR alarm, which the phone app subscribes to via Wear Engine.
+### Energy (what the app does while it runs)
 
-What the demo shows is the part we can run on the emulator: our own monitoring loop, alert rules and upload path.
+| Cost | Before | Now |
+|---|---|---|
+| Accelerometer | 25 Hz always | 25 Hz while moving; **10 Hz after 30 s at rest or asleep**; back to 25 Hz on the first sample > 0.3 g away from 1 g or when the state turns active (`vitals/AccelRate.ets`). A fall from standing starts with free fall, which 10 Hz still sees, so the impact is sampled at 25 Hz (unit test). Sensors clamp the interval to their own min/max sample period; a smaller interval costs more power [S1] |
+| Outbox storage | Preferences rewritten + flushed on every row (≥ 1 per 5 s, more during alerts) | written **once per sync** (every 3 s while visible, on pause, right after an SOS row); at most the last 3 s of rows are lost if the process dies between syncs |
+| HTTP | new Network Kit `HttpRequest` per call (single-use by design: "Each httpRequest corresponds to an HTTP request task and cannot be reused" [S2]) | **one Remote Communication Kit session** for uploads, context polls and RPCs: shared connection pool and TLS sessions (`rcp.createSession`, since API 11, `SystemCapability.Collaboration.RemoteCommunication` is in the SDK's `wearable-hmos.json` device definition) |
+| Timers | 1 s tick, 3 s upload, 60 s context poll, only while visible | unchanged |
+
+### Background monitoring on a real watch: research
+
+**Question:** can a third-party wearable app keep reading heart rate and raising alarms after it leaves the screen,
+and what would it need?
+
+**Findings** (sources at the end of this section):
+
+1. **Apps are suspended in the background.** "Typically, the application process is suspended after the application
+   runs in the background for a while … After being suspended, the application process cannot use software resources
+   (such as common events and timers) or hardware resources (such as CPU, network, GPS, and Bluetooth)." Only the
+   constrained background task types keep it alive [B1].
+2. **No continuous-task mode covers health monitoring.** The modes are `dataTransfer`, `audioPlayback`,
+   `audioRecording`, `location`, `bluetoothInteraction`, `multiDeviceConnection`, `wifiInteraction` (system apps),
+   `voip`, `taskKeeping`, and from API 22 `avPlaybackAndRecord` / `specialScenarioProcessing` (the latter phones,
+   tablets and PCs only) [B2].
+3. **Declaring a mode we don't use gets the app suspended.** "If an application requests a continuous task but does
+   not carry out the relevant service, the system imposes restrictions … the application will be suspended when it
+   returns to the background", and the same for a service that doesn't match the type [B2]. So "location" or
+   "audioPlayback" as a keep-alive trick is not an option (and would fail store review).
+4. **`taskKeeping`** ("computing tasks") is the only generic mode: from API 21 it works on non-PC devices only with the
+   restricted ACL permission `ohos.permission.KEEP_BACKGROUND_RUNNING_SYSTEM`; on API 20 and earlier it is PC/2-in-1
+   only [B2]. Our minimum is API 20, so it would also need a runtime guard (`backgroundTaskManager.isModeSupported`,
+   API 21 [B3]). ACL permissions are granted by Huawei per app on request.
+5. **A continuous task needs** `ohos.permission.KEEP_BACKGROUND_RUNNING`, the mode under `backgroundModes` in
+   `module.json5`, and `startBackgroundRunning(context, mode, wantAgent)`; it shows a notification, and the user can
+   end it by removing that notification. API 20 allows one task per UIAbility [B2].
+6. **Deferred tasks** (`WorkSchedulerExtensionAbility`) can sync history on a schedule, not monitor: at most 10 tasks,
+   minimum interval 2 h for an *active* app (up to 48 h, or never, for rarely used apps), 2 min per run [B4].
+7. **Health Service Kit** (the system's own all-day heart-rate data) "provides a platform for ecosystem apps to access
+   users' health and fitness data based on users' HUAWEI ID and authorization"; access is applied for in AppGallery
+   Connect, restricted scopes such as heart rate and blood oxygen are **manually reviewed**, and the kit is
+   "available only in the Chinese mainland" [H1][H2]. The HarmonyOS atomic-service page lists phones and tablets
+   and says it is not supported on the emulator [H1]; the HMS page lists WATCH 3/4 on HarmonyOS 3.0+ [H2]. We could
+   not load the current HarmonyOS-app guide page to confirm wearable support for API 20+ — **unverified**.
+8. **Already works without approval:** system reminders (`reminderAgentManager`) fire while the app is frozen or
+   closed (verified on the emulator, see *Notifications and reminders*); the sensor and alarm logic runs while the
+   app is on screen.
+
+**Recommended production design** (unchanged in spirit, now with the constraints):
+1. Foreground: our own loop, rules and upload, as today (the energy changes above apply).
+2. Background: the **system** keeps measuring HR all day; the app reads that history through **Health Service Kit**
+   on open and from a deferred task (≥ 2 h), and uploads it through the same outbox.
+3. Live alarms while the app is closed: the system's own HR alarms, forwarded to the phone by Wear Engine
+   (to confirm in `docs/research/phone-watch-link.md`, stream S7).
+4. Only if Huawei grants the ACL: a `taskKeeping` continuous task during an explicit "monitor me now" session
+   (e.g. after a risky drug), shown as a notification, ended by the user.
+
+**Needs:**
+- AppGallery Connect project for `ai.celia.watch`, signed with a release profile.
+- Health Service Kit application (developer qualifications, heart-rate / SpO2 scopes → manual review); account in
+  the Chinese mainland region, or a decision to ship there first.
+- Confirmation from Huawei that Health Service Kit reads all-day HR on HarmonyOS 6 wearables (API 20+).
+- Optional: ACL `ohos.permission.KEEP_BACKGROUND_RUNNING_SYSTEM` request with a medical justification, a
+  `backgroundModes: ["taskKeeping"]` declaration and `KEEP_BACKGROUND_RUNNING`.
+- Wear Engine access (phone side) for live system alarms.
+- A real HarmonyOS watch for every item above (the emulator has no HR sensor, wear sensor or Health app).
+
+**Sources** (read 2026-10-04):
+- [B1] OpenHarmony docs, *Background Tasks overview*,
+  `en/application-dev/task-management/background-task-overview.md` (gitcode.com/openharmony/docs)
+- [B2] same repo, *Continuous Task (ArkTS)*, `en/application-dev/task-management/continuous-task.md`
+- [B3] same repo, `en/application-dev/reference/apis-backgroundtasks-kit/js-apis-resourceschedule-backgroundTaskManager.md`
+- [B4] same repo, *Deferred Task*, `en/application-dev/task-management/work-scheduler.md`
+- [S1] same repo, `en/application-dev/device/sensor/sensor-guidelines.md` and
+  `reference/apis-sensor-service-kit/js-apis-sensor.md` (`Options.interval`)
+- [S2] same repo, `en/application-dev/reference/apis-network-kit/js-apis-http.md`
+- [H1] Huawei, *Health Service Kit — About This Kit* (atomic services),
+  https://developer.huawei.com/consumer/en/doc/atomic-guides/health-service-kit-ability-as
+- [H2] Huawei, *Introduction to Health Service Kit*,
+  https://developer.huawei.com/consumer/en/doc/HMSCore-Guides/description-0000001558389985
+- Remote Communication Kit: the DevEco SDK's `hms/ets/api/@hms.collaboration.rcp.d.ts` and
+  `hms/ets/api/device-define/wearable-hmos.json`
 
 ## Metrics sent (`watch_metrics` table)
 
@@ -188,16 +274,23 @@ GET {SUPABASE_URL}/rest/v1/watch_metrics?device_id=eq.demo-watch-1&type=eq.hr_al
 
 ## Build, test, run (terminal)
 
+One command (build → install on the wearable → launch → screenshot; picks the wearable target by device type, so the
+phone emulator can stay connected; `WATCH_TARGET=<serial>` to choose, `--no-build` to reinstall):
+```bash
+watch/scripts/run.sh [screenshot.jpeg]
+```
+
+By hand:
 ```bash
 cd watch && source env.sh
 ohpm install
 hvigorw --mode module -p module=entry@default -p product=default assembleHap --no-daemon
-hvigorw test -p module=entry -p coverage=false --no-daemon     # 43 local unit tests
+hvigorw test -p module=entry -p coverage=false --no-daemon     # 87 local unit tests
 cat entry/.test/default/intermediates/test/coverage_data/test_result.txt
 
 # Wearable emulator (image: HarmonyOS 6.1.1 wearable)
 EMU=/Applications/DevEco-Studio.app/Contents/tools/emulator/Emulator
-$EMU -create CeliaWatch -deviceType wearable -osVersion "HarmonyOS 6.1.1(24)"   # once
+$EMU -create CeliaWatch -deviceType wearable -osVersion "HarmonyOS 6.1.1(24)"   # once (the team machine uses Huawei_Wearable)
 $EMU -start CeliaWatch
 hdc install -r entry/build/default/outputs/default/entry-default-unsigned.hap   # -signed.hap once signing is set up
 hdc shell aa start -a EntryAbility -b ai.celia.watch

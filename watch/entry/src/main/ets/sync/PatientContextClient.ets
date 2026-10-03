@@ -1,7 +1,6 @@
-import { http } from '@kit.NetworkKit';
-import { BusinessError } from '@kit.BasicServicesKit';
 import { Genotype } from '../model/WatchMetric';
 import { Logger } from '../common/Logger';
+import { RestClient } from './RestClient';
 
 /** Row of `watch_context`, written by the phone app (profile + drug scans). */
 interface ContextRow {
@@ -29,30 +28,27 @@ function toGenotype(s: string): Genotype {
 
 /** Polls `GET /rest/v1/watch_context?device_id=eq.X` so the watch knows the genotype and recent risky drugs. */
 export class PatientContextClient {
-  private url: string;
-  private anonKey: string;
+  private client: RestClient;
+  private path: string;
 
-  constructor(supabaseUrl: string, anonKey: string, deviceId: string) {
-    this.url = `${supabaseUrl}/rest/v1/watch_context?device_id=eq.${encodeURIComponent(deviceId)}&select=*`;
-    this.anonKey = anonKey;
+  constructor(client: RestClient, deviceId: string) {
+    this.client = client;
+    this.path = `/rest/v1/watch_context?device_id=eq.${encodeURIComponent(deviceId)}&select=*`;
   }
 
   /** Undefined when the request fails or no row exists (keep the previous context). */
   async fetch(): Promise<PatientContext | undefined> {
-    const req = http.createHttp();
+    const resp = await this.client.get(this.path);
+    if (resp.status === 0) {
+      Logger.warn(`context fetch failed: ${resp.body}`);
+      return undefined;
+    }
+    if (resp.status !== 200) {
+      Logger.warn(`context HTTP ${resp.status}`);
+      return undefined;
+    }
     try {
-      const resp = await req.request(this.url, {
-        method: http.RequestMethod.GET,
-        header: { 'apikey': this.anonKey, 'Authorization': `Bearer ${this.anonKey}` },
-        connectTimeout: 5000,
-        readTimeout: 5000,
-        expectDataType: http.HttpDataType.STRING
-      });
-      if (resp.responseCode !== 200) {
-        Logger.warn(`context HTTP ${resp.responseCode}`);
-        return undefined;
-      }
-      const rows = JSON.parse(resp.result as string) as ContextRow[];
+      const rows = JSON.parse(resp.body) as ContextRow[];
       if (!Array.isArray(rows) || rows.length === 0) {
         return undefined;
       }
@@ -68,10 +64,8 @@ export class PatientContextClient {
       };
       return ctx;
     } catch (e) {
-      Logger.warn(`context fetch failed: ${(e as BusinessError).code}`);
+      Logger.warn('context fetch failed: bad JSON');
       return undefined;
-    } finally {
-      req.destroy();
     }
   }
 }
