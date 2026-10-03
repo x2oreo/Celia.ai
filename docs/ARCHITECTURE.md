@@ -70,6 +70,10 @@ Celia.ai/
 │     │  ├─ data/            # Mark: LocalStore (RDB), migrations
 │     │  ├─ common/          # EventBus, Logger, Config
 │     │  ├─ insightintents/  # Kaloyan
+│     │  ├─ emergency/       # SOS, Live View status, card speaker, nearby (F-27..F-43)
+│     │  ├─ reminders/       # dose reminders (F-38)
+│     │  ├─ bystander/       # bystander mode + CPR metronome (F-41)
+│     │  ├─ privacy/         # privacy ledger (F-46)
 │     │  └─ widget/          # Georgie (Form Kit)
 │     ├─ resources/rawfile/drugs.json   # bundled drug list (generated from data/)
 │     └─ module.json5
@@ -174,15 +178,67 @@ key is an Edge Function secret. Timeouts: app 20 s per step → fallback.
 
 | Capability | Kit | Where | Runs on emulator? |
 |---|---|---|---|
-| Watch HR / alarms / notifications | `@kit.WearEngine` | `vitals/WearEngineSource.ets` | ❌ real phone + watch (SimulatedSource on emulator) |
+| Watch HR / alarms / notifications | `@kit.WearEngine` | `vitals/VitalsService.ets`, `vitals/WearNotifier.ets` | ❌ not wired yet — `SimulatedSource` (labelled SIMULATED); wrist alerts fall back to phone notification + haptic |
 | On-device OCR of medicine boxes | `@kit.CoreVisionKit` (+ `/vision-extract` names-only fallback) | `drugs/OcrService.ets`, `agent/MedicineScanFlow.ets` | ⚠️ verify early |
 | System assistant entry | Intents Kit (`@kit.AbilityKit`) | `insightintents/` | ⚠️ verify early |
 | Agent-to-agent (stretch) | `@kit.AgentFrameworkKit` | `agentextability/` | ⚠️ ask mentors |
-| Home widget | Form Kit | `widget/` | ✅ |
-| Local DB | `@kit.ArkData` RDB | `data/` | ✅ |
-| Notifications / call | `@kit.NotificationKit`, `call` | emergency | ✅ / partial |
+| Home widget | Form Kit | `widget/` | ⏸ not built yet |
+| Online drug check (optional) | `@kit.NetworkKit` → Supabase `/drug-check` | `drugs/DrugCheckClient.ets`, `common/Net.ets`, `backend/supabase/` | ✅ offline-first; only for names the bundle does not know, logged in the privacy ledger |
+| Local DB | `@kit.ArkData` RDB (`encrypt: true`) | `data/LocalStore.ets` | ✅ verified |
+| Notifications / call | `@kit.NotificationKit`, `call.makeCall` (dialer) | `common/Notify.ets`, `common/Dialer.ets` | ✅ verified |
 | Voice (push-to-talk) | `@kit.CoreSpeechKit` + `@kit.AudioKit` (cloud STT/TTS fallback) | `voice/` | ⚠️ Core Speech en-US unverified; cloud path works anywhere with network |
 | Voice (hands-free) | OpenAI Realtime over `@kit.NetworkKit` WebSocket + AudioKit | `voice/RealtimeSession.ets` | ✅ needs network + mic |
+| SOS location (F-28) | `@kit.LocationKit` | `emergency/SosService.ets` | ⚠️ permission flow verified; emulator has no fix → message says "location unknown" |
+| Card QR (F-30) | ArkUI `QRCode` | `pages/EmergencyPage.ets` | ✅ |
+| SOS message (F-28) | `@kit.ShareKit` system share sheet | `common/Share.ets` | ✅ — direct SMS needs `SEND_MESSAGES` (system apps only), so the user sends via SMS/messenger/e-mail |
+| Live View (F-35) | `@kit.LiveViewKit` | `emergency/LiveStatus.ets` | ⚠️ needs scenario approval in AGC; falls back to an ongoing notification (used on the emulator) |
+| Box barcode (F-36) | `@kit.ScanKit` (system scan UI, album allowed) | `drugs/BarcodeService.ets`, `drugs/Gs1.ets` | ✅ parsing + demo GTINs (GS1 prefix 200, not real products); typing the number also works |
+| Dose reminders (F-38) | `@kit.BackgroundTasksKit` reminderAgentManager | `reminders/ReminderService.ets` | ⚠️ system refuses with 1700002 until the agent-reminder quota is granted in AGC; fallback: in-app notification while the app runs + Today view |
+| Read card aloud (F-42) | `@kit.CoreSpeechKit` textToSpeech | — | ⏸ deferred (AI/voice — out of scope for the non-AI build) |
+| Nearby ER / AED (F-43) | `@kit.MapKit` + Site Kit | — | ⏸ deferred (needs an AGC Map key) |
+| App lock (F-45) | `@kit.UserAuthenticationKit` | `common/AppLock.ets`, `components/LockScreen.ets` | ⚠️ needs a screen lock on the device; without one the switch stays off (no lock-out) |
+
+## Proposed contracts — feature expansion (F-19..F-34)
+
+**Proposed, not final** — confirm with the owner, then move into "Shared contracts" and `model/`. Tasks:
+[`TASKS.md`](TASKS.md).
+
+```ts
+// model/DrugVerdict.ets (additions, Mark)
+export type ComboKind = 'NONE' | 'ADDITIVE_QT' | 'CYP_INTERACTION';
+export interface ComboVerdict { kind: ComboKind; drugs: string[]; enzyme: string; reason: string; }
+export interface LookupStep { step: string; matched: boolean; detail: string; }  // 'BUNDLED_EXACT' | 'ALIAS' | 'ONLINE' ...
+// DrugVerdict gains: confidence: number; trace: LookupStep[]; alternatives: string[]; combo?: ComboVerdict
+
+// model/ScanRecord.ets (Mark + Georgi)
+export interface ScanRecord { id: number; ts: number; via: 'CHAT' | 'TEXT' | 'PHOTO' | 'INTENT'; verdict: DrugVerdict; }
+
+// model/Vitals.ets (additions, Mark) — all optional, SimulatedSource fills all
+// VitalsSample gains: hrv?, rrMs?, restingHr?, stress?, asleep?, irregular?, steps?
+// AlertKind gains: 'IRREGULAR_RHYTHM' | 'HRV_DROP'; VitalsAlert gains severity: 'INFO' | 'WARN' | 'CRITICAL'
+
+// model/SosEvent.ets (Kaloyan + Mark)
+export interface SosEvent { ts: number; trigger: 'VITALS' | 'BUTTON' | 'KEYWORD'; test: boolean;
+  lat: number; lon: number; results: string; }   // results = JSON per contact/channel
+
+// model/Profile.ets (additions) — Profile.country: string (ISO2); Contact.email: string ('' if none)
+
+// model/GtinEntry.ets (F-36, Mark)
+export interface GtinEntry { gtin: string; product: string; ingredient: string; country: string; source: string; }
+
+// model/DoseReminder.ets (F-38)
+export type DoseStatus = 'DUE' | 'TAKEN' | 'SNOOZED' | 'MISSED';
+export interface DoseReminder { id: number; medId: number; hour: number; minute: number; reminderId: number; }
+export interface DoseLog { ts: number; medId: number; status: DoseStatus; }
+
+// model/SymptomEntry.ets (F-44) — produced by the LLM, validated; invalid → raw text only
+export type Symptom = 'DIZZINESS' | 'PALPITATIONS' | 'FAINTING' | 'CHEST_PAIN' | 'SHORTNESS_OF_BREATH' | 'OTHER';
+export interface SymptomEntry { ts: number; symptom: Symptom; activity: string; severity: number; note: string;
+  hrMin: number; hrMax: number; }   // severity 1..5; HR window ±10 min, -1 if no data
+
+// model/LedgerEntry.ets (F-46) — field NAMES only, never values
+export interface LedgerEntry { ts: number; endpoint: string; fields: string[]; bytes: number; }
+```
 
 ## Conventions
 

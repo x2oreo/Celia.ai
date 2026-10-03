@@ -1,15 +1,96 @@
 {
   "color": [
-    { "name": "start_window_background", "value": "#000000" },
-
-    { "name": "brand_accent", "value": "#FF6369" },
-    { "name": "brand_accent_soft", "value": "#3B1416" },
-    { "name": "on_accent", "value": "#FFFFFF" },
-
-    { "name": "risk_known", "value": "#F97066" },
-    { "name": "risk_possible", "value": "#FDB022" },
-    { "name": "risk_conditional", "value": "#FAC515" },
-    { "name": "risk_not_listed", "value": "#32D583" },
-    { "name": "risk_unknown", "value": "#98A2B3" }
+    {
+      "name": "start_window_background",
+      "value": "#000000"
+    },
+    {
+      "name": "brand_accent",
+      "value": "#FF6369"
+    },
+    {
+      "name": "brand_accent_soft",
+      "value": "#3B1416"
+    },
+    {
+      "name": "on_accent",
+      "value": "#FFFFFF"
+    },
+    {
+      "name": "risk_known",
+      "value": "#F97066"
+    },
+    {
+      "name": "risk_possible",
+      "value": "#FDB022"
+    },
+    {
+      "name": "risk_conditional",
+      "value": "#FAC515"
+    },
+    {
+      "name": "risk_not_listed",
+      "value": "#32D583"
+    },
+    {
+      "name": "risk_unknown",
+      "value": "#98A2B3"
+    },
+    {
+      "name": "page_bg",
+      "value": "#000000"
+    },
+    {
+      "name": "card_bg",
+      "value": "#1C1C1E"
+    },
+    {
+      "name": "card_bg_pressed",
+      "value": "#2C2C2E"
+    },
+    {
+      "name": "divider",
+      "value": "#2C2C2E"
+    },
+    {
+      "name": "field_bg",
+      "value": "#2C2C2E"
+    },
+    {
+      "name": "risk_known_soft",
+      "value": "#3A1714"
+    },
+    {
+      "name": "risk_possible_soft",
+      "value": "#3A2A0B"
+    },
+    {
+      "name": "risk_conditional_soft",
+      "value": "#36300A"
+    },
+    {
+      "name": "risk_not_listed_soft",
+      "value": "#0E2A1C"
+    },
+    {
+      "name": "risk_unknown_soft",
+      "value": "#26282C"
+    },
+    {
+      "name": "sim_badge",
+      "value": "#B692F6"
+    },
+    {
+      "name": "sim_badge_soft",
+      "value": "#2A1D4A"
+    },
+    {
+      "name": "emergency_card_bg",
+      "value": "#FFFFFF"
+    },
+    {
+      "name": "emergency_header",
+      "value": "#D92D20"
+    }
   ]
 }

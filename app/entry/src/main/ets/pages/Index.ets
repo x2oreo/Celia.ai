@@ -1,19 +1,51 @@
-// App root: Navigation + NavPathStack hosting the bottom tabs. Full-screen flows (onboarding, verdict detail,
-// emergency mode) are pushed as NavDestinations by route name — see common/Routes.ets.
+// App root: Navigation + NavPathStack hosting the bottom tabs. Full-screen flows (onboarding, check result,
+// history, SOS, …) are pushed as NavDestinations by route name — see common/Routes.ets.
 
+import { common } from '@kit.AbilityKit';
 import { MainTabs } from '../components/MainTabs';
 import { OnboardingPage } from './OnboardingPage';
-import { Routes } from '../common/Routes';
+import { CheckResultPage } from './CheckResultPage';
+import { HistoryPage } from './HistoryPage';
+import { SettingsPage } from './SettingsPage';
+import { SosPage } from './SosPage';
+import { BystanderPage } from './BystanderPage';
+import { DoctorPrepPage } from './DoctorPrepPage';
+import { PharmacyCardPage } from './PharmacyCardPage';
+import { PrivacyPage } from './PrivacyPage';
+import { SymptomLogPage } from './SymptomLogPage';
+import { RemindersPage } from './RemindersPage';
+import { LockScreen } from '../components/LockScreen';
+import { Routes, SosParam } from '../common/Routes';
 import { LocalStore } from '../data/LocalStore';
 import { Profile } from '../model/Profile';
+import { VitalsAlert } from '../model/Vitals';
+import { VitalsService } from '../vitals/VitalsService';
+import { WearNotifier } from '../vitals/WearNotifier';
+import { SosController } from '../emergency/SosController';
+import { askNotificationPermission } from '../common/Notify';
+import { AppLock } from '../common/AppLock';
+import { ReminderService } from '../reminders/ReminderService';
 
 @Entry
 @ComponentV2
 struct Index {
   @Provider('navStack') navStack: NavPathStack = new NavPathStack();
+  @Local locked: boolean = false;
 
   aboutToAppear(): void {
     this.showOnboardingIfNeeded();
+    VitalsService.get().start('SIMULATED');
+    WearNotifier.start();
+    VitalsService.get().onAlert((a: VitalsAlert) => this.onAlert(a));
+    askNotificationPermission(this.getUIContext().getHostContext() as common.UIAbilityContext);
+    AppLock.onLockChange((locked: boolean) => {
+      this.locked = locked;
+    });
+    this.locked = AppLock.isLocked();
+    ReminderService.handleLaunch();
+    setInterval(() => {
+      ReminderService.checkDue(Date.now());
+    }, 30000);
   }
 
   private async showOnboardingIfNeeded(): Promise<void> {
@@ -23,19 +55,65 @@ struct Index {
     }
   }
 
+  // CRITICAL heart alert → wrist/phone alert + SOS countdown (unless one is running or in cooldown).
+  private onAlert(a: VitalsAlert): void {
+    WearNotifier.vitalsAlert(a);
+    if (a.severity !== 'CRITICAL' || !SosController.get().canAutoStart(Date.now())) {
+      return;
+    }
+    const reason: string = a.hr > 0 ? `heart rate ${Math.round(a.hr)} — ${a.kind.toLowerCase().replace(/_/g, ' ')}` :
+      a.kind.toLowerCase().replace(/_/g, ' ');
+    this.navStack.pushPathByName(Routes.SOS, new SosParam(false, reason, true));
+  }
+
   @Builder
   routeMap(name: string, param: Object) {
     if (name === Routes.ONBOARDING) {
       OnboardingPage()
+    } else if (name === Routes.CHECK_RESULT) {
+      CheckResultPage()
+    } else if (name === Routes.HISTORY) {
+      HistoryPage()
+    } else if (name === Routes.SETTINGS) {
+      SettingsPage()
+    } else if (name === Routes.SOS) {
+      SosPage()
+    } else if (name === Routes.BYSTANDER) {
+      BystanderPage()
+    } else if (name === Routes.DOCTOR_PREP) {
+      DoctorPrepPage()
+    } else if (name === Routes.PHARMACY_CARD) {
+      PharmacyCardPage()
+    } else if (name === Routes.PRIVACY) {
+      PrivacyPage()
+    } else if (name === Routes.SYMPTOM_LOG) {
+      SymptomLogPage()
+    } else if (name === Routes.REMINDERS) {
+      RemindersPage()
     }
   }
 
   build() {
-    Navigation(this.navStack) {
-      MainTabs()
+    Stack() {
+      Navigation(this.navStack) {
+        MainTabs()
+      }
+      .hideTitleBar(true)
+      .mode(NavigationMode.Stack)
+      .backgroundColor($r('app.color.page_bg'))
+      .navDestination(this.routeMap)
+
+      // App lock (F-45): covers private data; the emergency card and bystander help stay reachable from it.
+      if (this.locked) {
+        LockScreen({
+          onEmergency: () => {
+            AppLock.allowEmergency();
+            this.navStack.pushPathByName(Routes.BYSTANDER, null);
+          }
+        })
+      }
     }
-    .hideTitleBar(true)
-    .mode(NavigationMode.Stack)
-    .navDestination(this.routeMap)
+    .width('100%')
+    .height('100%')
   }
 }

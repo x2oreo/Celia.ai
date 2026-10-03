@@ -35,7 +35,7 @@ export default function contractSmokeTest() {
     });
 
     it('unrecognisedTokenBlocksNotListed', 0, async () => {
-      const v: DrugVerdict = await DrugChecker.get().check('Paracetamol + azithromycin');
+      const v: DrugVerdict = await DrugChecker.get().check('Paracetamol + xyzzyqq');
       expect(v.risk).assertEqual('UNKNOWN_DRUG');
     });
 
