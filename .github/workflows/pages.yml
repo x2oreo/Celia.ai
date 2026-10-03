@@ -1,0 +1,47 @@
+# Publishes the emergency-card viewer (site/card + site/assets) to GitHub Pages: https://x2oreo.github.io/Celia.ai/card/
+# so old in-link card QRs keep working. data.js is regenerated from the app sources so the viewer never drifts from
+# the app's card text. The doctor report (site/report) is served only from Vercel, which adds the CSP and
+# no-referrer headers from site/vercel.json — GitHub Pages cannot set headers, so it never publishes the report.
+name: Card viewer (GitHub Pages)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'site/**'
+      - 'data/export_card_site.py'
+      - 'app/entry/src/main/ets/common/CardStrings.ets'
+      - 'app/entry/src/main/ets/common/EmergencyNumbers.ets'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Generate card data from app sources
+        run: python3 data/export_card_site.py
+      - name: Stage the card viewer only
+        run: mkdir -p _pages && cp -R site/card site/assets _pages/
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _pages
+      - id: deployment
+        uses: actions/deploy-pages@v4

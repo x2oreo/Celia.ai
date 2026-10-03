@@ -15,6 +15,9 @@ Mobile-first, agent-focused: Celia (Huawei's system assistant, 小艺/Xiaoyi) at
 - HarmonyOS knowledge in training data is thin and stale (Java/FA-model/HarmonyOS 2-3 era). Before writing
   HarmonyOS code, load the relevant skill and verify APIs via Context7
   (`/websites/developer_huawei_consumer_cn_doc_harmonyos-guides`, `..._harmonyos-references`).
+- Before any UI or design decision (screens, components, colours, type, spacing, motion, copy), read
+  `docs/design/DESIGN.md` and follow it. Use its tokens and the resource names in `resources/base/element/*.json`, and
+  do not hard-code new colours or sizes. If something isn't covered, extend DESIGN.md first and then build it.
 - Write strict ArkTS from the start (no `any`, untyped object literals, destructuring, index signatures).
 - Do not port React/Android/Flutter patterns (no fetch/axios-by-default, no Android manifests, no hooks).
 - Build/verify through the terminal loop in `harmonyos-build-deploy` (hvigorw → hdc install → screenshot).
@@ -42,5 +45,7 @@ Mobile-first, agent-focused: Celia (Huawei's system assistant, 小艺/Xiaoyi) at
 | `harmonyos-app-model` | Project config, abilities, permissions |
 | `harmonyos-build-deploy` | Build, sign, install, logs, tests, release .hap |
 | `harmonyos-kits` | System kits catalog |
+
+Design system: `docs/design/DESIGN.md` (tokens, risk language, components, motion, voice).
 
 Reference docs: `docs/hackathon/` (official task text, Challenge Rules, condition research).

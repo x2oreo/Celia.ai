@@ -7,12 +7,34 @@ import { LocalConfig } from './LocalConfig';
 export class Config {
   static readonly BACKEND_URL: string = LocalConfig.BACKEND_URL;
   static readonly SUPABASE_ANON_KEY: string = LocalConfig.SUPABASE_ANON_KEY;
+  // Encrypted share links always go to the deployed Supabase project, even when the AI backend is a local dev server.
+  // The key is the project's public client key (from LocalConfig; falls back to SUPABASE_ANON_KEY).
+  static readonly SHARE_BACKEND_URL: string =
+    LocalConfig.SHARE_BACKEND_URL.length > 0 ? LocalConfig.SHARE_BACKEND_URL : 'https://jxiggumhircfuhianmel.supabase.co';
+  static readonly SHARE_ANON_KEY: string =
+    LocalConfig.SHARE_ANON_KEY.length > 0 ? LocalConfig.SHARE_ANON_KEY : LocalConfig.SUPABASE_ANON_KEY;
+  // Static viewer pages for encrypted share links (Vercel; Supabase cannot serve HTML). Ends with '/'.
+  static readonly SHARE_VIEWER_URL: string =
+    LocalConfig.SHARE_VIEWER_URL.length > 0 ? LocalConfig.SHARE_VIEWER_URL : 'https://celia-share.vercel.app/';
   static readonly AGENT_TIMEOUT_MS: number = 20000;
-  static readonly DRUG_CHECK_TIMEOUT_MS: number = 5000;
+  static readonly DRUG_CHECK_TIMEOUT_MS: number = 5000;   // FDA-label path measured 0.3-3.1 s; on timeout the offline verdict stands
   // Watch paired with this phone. Hackathon: one demo watch (watch/.env WATCH_DEVICE_ID).
   static readonly WATCH_DEVICE_ID: string = 'demo-watch-1';
 
+  // Test seam: unit tests run the deterministic offline paths whatever the developer's LocalConfig says.
+  private static offline: boolean = false;
+
+  static forceOffline(on: boolean): void {
+    Config.offline = on;
+  }
+
   static hasBackend(): boolean {
-    return Config.BACKEND_URL.length > 0 && Config.SUPABASE_ANON_KEY.length > 0;
+    return !Config.offline && Config.BACKEND_URL.length > 0 && Config.SUPABASE_ANON_KEY.length > 0;
+  }
+
+  // Watch data lives in the Supabase database. The local dev backend (backend/eval/dev-backend.ts on 127.0.0.1)
+  // only serves the AI functions, so with it the phone keeps its labelled simulated vitals.
+  static hasWatchCloud(): boolean {
+    return Config.hasBackend() && !/^https?:\/\/(127\.0\.0\.1|localhost)(:|\/|$)/.test(Config.BACKEND_URL);
   }
 }

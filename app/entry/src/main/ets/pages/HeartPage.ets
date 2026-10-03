@@ -1,11 +1,15 @@
-// Heart tab: live heart rate, sparkline, extra vitals, recent alerts, simulation controls (clearly labelled).
+// Heart tab (DESIGN.md §10.2): ring hero, trend line, extra vitals, recent alerts, links to the symptom log and
+// doctor report, and the demo controls (clearly labelled). Heart rate only, never QT.
 
 import { VitalsAlert, VitalsSample } from '../model/Vitals';
 import { VitalsService } from '../vitals/VitalsService';
 import { SCENARIOS, ScenarioName } from '../vitals/SimulatedSource';
 import { clock } from '../common/Format';
 import { HrChart } from '../components/HrChart';
-import { PageTitle, SectionHeader } from '../components/Common';
+import { NavRow, PageTitle, QuickReplyChip, RiskShape, SectionHeader } from '../components/Common';
+import { HrRing, HrZone } from '../components/HrRing';
+import { Routes } from '../common/Routes';
+import { LengthMetrics } from '@kit.ArkUI';
 
 export function severityColor(a: VitalsAlert): Resource {
   switch (a.severity) {
@@ -20,6 +24,7 @@ export function severityColor(a: VitalsAlert): Resource {
 
 @ComponentV2
 export struct HeartPage {
+  @Consumer('navStack') navStack: NavPathStack = new NavPathStack();
   @Local latest: VitalsSample | undefined = undefined;
   @Local hrs: number[] = [];
   @Local alerts: VitalsAlert[] = [];
@@ -53,14 +58,23 @@ export struct HeartPage {
     this.offAlert();
   }
 
-  private stateLabel(): Resource {
+  private caption(): Resource {
     if (this.latest === undefined) {
-      return $r('app.string.heart_waiting');
+      return $r('app.string.home_bpm_waiting');
     }
     if (this.latest.asleep === true) {
-      return $r('app.string.heart_asleep');
+      return $r('app.string.home_bpm_asleep');
     }
-    return (this.latest.steps ?? 0) > 60 ? $r('app.string.heart_active') : $r('app.string.heart_resting');
+    return (this.latest.steps ?? 0) > 60 ? $r('app.string.home_bpm_active') : $r('app.string.home_bpm_resting');
+  }
+
+  private zone(): HrZone {
+    const bpm: number = this.latest?.hr ?? 0;
+    if (bpm <= 0 || this.latest?.asleep === true) {
+      return 'CALM';
+    }
+    const resting: boolean = (this.latest?.steps ?? 0) <= 60;
+    return (resting && bpm >= 120) || bpm < 45 ? 'ELEVATED' : 'CALM';
   }
 
   @Builder
@@ -69,84 +83,83 @@ export struct HeartPage {
       Text(value)
         .fontSize($r('app.float.font_subtitle'))
         .fontWeight(FontWeight.Bold)
-        .fontColor($r('sys.color.font_primary'))
+        .fontColor($r('app.color.ink'))
       Text(label)
         .fontSize($r('app.float.font_caption'))
-        .fontColor($r('sys.color.font_secondary'))
+        .fontColor($r('app.color.ink_3'))
     }
     .layoutWeight(1)
     .alignItems(HorizontalAlign.Start)
+    .padding(12)
+    .backgroundColor($r('app.color.surface_alt'))
+    .borderRadius($r('app.float.radius_s'))
   }
 
+  // Alert row: out-of-range chip (risk tint + shape + value) and the plain-English message.
   @Builder
   alertRow(a: VitalsAlert) {
-    Row({ space: 12 }) {
-      Column()
-        .width(4)
-        .height('100%')
-        .backgroundColor(severityColor(a))
-        .borderRadius(2)
-      Column({ space: 4 }) {
-        Text(`${clock(a.ts)} · ${a.hr > 0 ? `${a.hr} bpm` : '—'}`)
+    Column({ space: 8 }) {
+      Row({ space: 8 }) {
+        Row({ space: 6 }) {
+          RiskShape({ risk: a.severity === 'CRITICAL' ? 'KNOWN_RISK' : (a.severity === 'WARN' ? 'POSSIBLE_RISK' :
+            'UNKNOWN_DRUG'), dim: 18 })
+          Text(a.hr > 0 ? `${Math.round(a.hr)} bpm` : '—')
+            .fontSize($r('app.float.font_badge'))
+            .fontWeight(FontWeight.Bold)
+            .fontColor(a.severity === 'CRITICAL' ? $r('app.color.risk_known_text') : (a.severity === 'WARN' ?
+              $r('app.color.risk_possible_text') : $r('app.color.risk_unknown_text')))
+        }
+        .height(32)
+        .padding({ left: 8, right: 12 })
+        .borderRadius(16)
+        .backgroundColor(a.severity === 'CRITICAL' ? $r('app.color.risk_known_tint') : (a.severity === 'WARN' ?
+          $r('app.color.risk_possible_tint') : $r('app.color.risk_unknown_tint')))
+        .border({
+          width: 1,
+          color: a.severity === 'CRITICAL' ? $r('app.color.risk_known_border') : (a.severity === 'WARN' ?
+            $r('app.color.risk_possible_border') : $r('app.color.risk_unknown_border'))
+        })
+        Blank()
+        Text(clock(a.ts))
           .fontSize($r('app.float.font_caption'))
-          .fontColor(severityColor(a))
-          .fontWeight(FontWeight.Medium)
-        Text(a.message)
-          .fontSize($r('app.float.font_small'))
-          .fontColor($r('sys.color.font_primary'))
+          .fontColor($r('app.color.ink_3'))
       }
-      .alignItems(HorizontalAlign.Start)
-      .layoutWeight(1)
+      .width('100%')
+      Text(a.message)
+        .fontSize($r('app.float.font_small'))
+        .fontColor($r('app.color.ink_2'))
+        .width('100%')
     }
     .width('100%')
-    .height('auto')
     .padding(14)
-    .backgroundColor($r('app.color.card_bg'))
+    .backgroundColor($r('app.color.surface'))
+    .border({ width: 1, color: $r('app.color.border') })
     .borderRadius($r('app.float.radius_m'))
   }
 
   build() {
     Scroll() {
       Column({ space: 12 }) {
-        Row() {
-          PageTitle({ title: $r('app.string.heart_title'), subtitle: $r('app.string.heart_subtitle') })
-            .layoutWeight(1)
-          // WATCH = real sensor data from the Celia watch; SIMULATED = scripted data (phone or watch demo).
-          Text(this.latest?.source === 'WATCH' ? $r('app.string.heart_watch') : $r('app.string.heart_simulated'))
+        PageTitle({ title: $r('app.string.heart_title') })
+
+        HrRing({
+          bpm: this.latest?.hr ?? 0,
+          caption: this.caption(),
+          zone: this.zone(),
+          live: this.latest !== undefined,
+          simulated: this.latest?.source !== 'WATCH',
+          dim: 216
+        })
+          .margin({ top: 4, bottom: 8 })
+
+        // Trend + extra vitals
+        Column({ space: 12 }) {
+          Text($r('app.string.heart_trend'))
             .fontSize($r('app.float.font_caption'))
             .fontWeight(FontWeight.Bold)
-            .fontColor(this.latest?.source === 'WATCH' ? $r('app.color.on_accent') : $r('app.color.sim_badge'))
-            .padding({ left: 10, right: 10, top: 4, bottom: 4 })
-            .backgroundColor(this.latest?.source === 'WATCH' ? $r('app.color.brand_accent') : $r('app.color.sim_badge_soft'))
-            .borderRadius(100)
-        }
-        .width('100%')
-
-        // Live heart rate
-        Column({ space: 12 }) {
+            .fontColor($r('app.color.ink_3'))
+          HrChart({ hrs: this.hrs, chartWidth: this.chartWidth, chartHeight: 96 })
           Row({ space: 8 }) {
-            Image($r('app.media.ic_tab_heart'))
-              .width(28)
-              .height(28)
-              .fillColor($r('app.color.brand_accent'))
-            Text(this.latest === undefined ? '--' : `${this.latest.hr}`)
-              .fontSize($r('app.float.font_hero'))
-              .fontWeight(FontWeight.Bold)
-              .fontColor($r('sys.color.font_primary'))
-              .fontFeature('"tnum" on')
-            Text('bpm')
-              .fontSize($r('app.float.font_body'))
-              .fontColor($r('sys.color.font_secondary'))
-              .margin({ top: 18 })
-            Blank()
-            Text(this.stateLabel())
-              .fontSize($r('app.float.font_small'))
-              .fontColor($r('sys.color.font_secondary'))
-          }
-          .width('100%')
-          .alignItems(VerticalAlign.Center)
-          HrChart({ hrs: this.hrs, chartWidth: this.chartWidth, chartHeight: 110 })
-          Row() {
             this.stat($r('app.string.heart_resting_hr'),
               this.latest?.restingHr === undefined ? '--' : `${this.latest?.restingHr}`)
             this.stat($r('app.string.heart_hrv'), this.latest?.hrv === undefined ? '--' :
@@ -154,23 +167,29 @@ export struct HeartPage {
             this.stat($r('app.string.heart_rhythm'), this.latest?.irregular === true ? 'Irregular' : 'Regular')
           }
           .width('100%')
+          Text($r('app.string.heart_only_hr'))
+            .fontSize($r('app.float.font_micro'))
+            .fontColor($r('app.color.ink_4'))
         }
         .width('100%')
-        .padding(20)
-        .backgroundColor($r('app.color.card_bg'))
+        .alignItems(HorizontalAlign.Start)
+        .padding(16)
+        .backgroundColor($r('app.color.surface'))
+        .border({ width: 1, color: $r('app.color.border') })
         .borderRadius($r('app.float.radius_l'))
         .onAreaChange((oldArea: Area, newArea: Area) => {
-          this.chartWidth = Math.max(100, (newArea.width as number) - 40);
+          this.chartWidth = Math.max(100, (newArea.width as number) - 34);
         })
 
         SectionHeader({ title: $r('app.string.heart_alerts') })
         if (this.alerts.length === 0) {
           Text($r('app.string.heart_no_alerts'))
-            .fontSize($r('app.float.font_body'))
-            .fontColor($r('sys.color.font_secondary'))
+            .fontSize($r('app.float.font_small'))
+            .fontColor($r('app.color.ink_3'))
             .width('100%')
-            .padding(20)
-            .backgroundColor($r('app.color.card_bg'))
+            .padding(16)
+            .backgroundColor($r('app.color.surface'))
+            .border({ width: 1, color: $r('app.color.border') })
             .borderRadius($r('app.float.radius_m'))
         } else {
           ForEach(this.alerts.slice(0, 6), (a: VitalsAlert) => {
@@ -178,56 +197,75 @@ export struct HeartPage {
           }, (a: VitalsAlert) => `${a.ts}-${a.kind}`)
         }
 
-        // Simulation controls — only for the phone's own simulated source (the watch has its own Simulate page).
+        NavRow({
+          icon: $r('app.media.ic_tab_heart'),
+          title: $r('app.string.sym_title'),
+          subtitle: $r('app.string.sym_subtitle'),
+          onTap: () => {
+            this.navStack.pushPathByName(Routes.SYMPTOM_LOG, null);
+          }
+        })
+          .margin({ top: 8 })
+        NavRow({
+          icon: $r('app.media.ic_doctor'),
+          title: $r('app.string.home_doctor'),
+          onTap: () => {
+            this.navStack.pushPathByName(Routes.DOCTOR_PREP, null);
+          }
+        })
+
+        // Demo controls — only for the phone's own simulated source (the watch has its own Simulate page).
         if (VitalsService.get().sourceKind() !== 'WATCH') {
-        Column({ space: 10 }) {
+        Column({ space: 12 }) {
           Row() {
             Text($r('app.string.heart_sim_controls'))
               .fontSize($r('app.float.font_small'))
-              .fontColor($r('app.color.sim_badge'))
+              .fontWeight(FontWeight.Medium)
+              .fontColor($r('app.color.ink_3'))
               .layoutWeight(1)
             Image($r('app.media.ic_chevron_right'))
               .width(16)
               .height(16)
-              .fillColor($r('app.color.sim_badge'))
+              .fillColor($r('app.color.ink_4'))
               .rotate({ angle: this.showSim ? 90 : 0 })
+              .animation({ duration: 180, curve: Curve.EaseOut })
           }
           .width('100%')
+          .height($r('app.float.chip_height'))
+          .accessibilityGroup(true)
+          .accessibilityDescription(this.showSim ? 'Expanded' : 'Collapsed')
           .onClick(() => {
             this.showSim = !this.showSim;
           })
           if (this.showSim) {
-            Flex({ wrap: FlexWrap.Wrap }) {
+            Flex({ wrap: FlexWrap.Wrap, space: { main: LengthMetrics.vp(8), cross: LengthMetrics.vp(8) } }) {
               ForEach(SCENARIOS, (name: ScenarioName) => {
-                Text(name.replace(/_/g, ' '))
-                  .fontSize($r('app.float.font_small'))
-                  .fontColor(this.scenario === name ? $r('app.color.on_accent') : $r('app.color.sim_badge'))
-                  .padding({ left: 12, right: 12, top: 8, bottom: 8 })
-                  .margin({ right: 8, bottom: 8 })
-                  .backgroundColor(this.scenario === name ? $r('app.color.sim_badge') : $r('app.color.sim_badge_soft'))
-                  .borderRadius(100)
-                  .onClick(() => {
+                QuickReplyChip({
+                  label: name.replace(/_/g, ' '),
+                  chipStyle: this.scenario === name ? 'SELECTED' : 'DEFAULT',
+                  onTap: () => {
                     this.scenario = name;
                     VitalsService.get().runScenario(name);
-                  })
+                  }
+                })
               }, (name: ScenarioName) => name)
             }
             .width('100%')
           }
         }
         .width('100%')
-        .padding(16)
-        .backgroundColor($r('app.color.card_bg'))
+        .padding({ left: 16, right: 16, top: 4, bottom: this.showSim ? 16 : 4 })
+        .border({ width: 1, color: $r('app.color.border'), style: BorderStyle.Dashed })
         .borderRadius($r('app.float.radius_m'))
         }
       }
-      .padding({ left: 16, right: 16, bottom: 24 })
+      .padding({ left: $r('app.float.space_screen'), right: $r('app.float.space_screen'), bottom: 24 })
       .width('100%')
     }
     .width('100%')
     .height('100%')
     .align(Alignment.Top)
     .scrollBar(BarState.Off)
-    .backgroundColor($r('app.color.page_bg'))
+    .backgroundColor($r('app.color.bg'))
   }
 }

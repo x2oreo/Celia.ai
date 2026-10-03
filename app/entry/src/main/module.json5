@@ -33,6 +33,21 @@
         ]
       }
     ],
+    "extensionAbilities": [
+      {
+        "name": "EntryFormAbility",
+        "srcEntry": "./ets/entryformability/EntryFormAbility.ets",
+        "label": "$string:widget_check_name",
+        "description": "$string:widget_check_desc",
+        "type": "form",
+        "metadata": [
+          {
+            "name": "ohos.extension.form",
+            "resource": "$profile:form_config"
+          }
+        ]
+      }
+    ],
     "requestPermissions": [
       {
         "name": "ohos.permission.INTERNET"
@@ -55,6 +70,14 @@
         "name": "ohos.permission.LOCATION",
         "reason": "$string:perm_location_reason",
         "usedScene": { "abilities": ["EntryAbility"], "when": "inuse" }
+      },
+      {
+        "name": "ohos.permission.MICROPHONE",
+        "reason": "$string:mic_reason",
+        "usedScene": {
+          "abilities": ["EntryAbility"],
+          "when": "inuse"
+        }
       }
     ]
   }

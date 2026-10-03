@@ -49,3 +49,12 @@ export function doseStatus(r: DoseReminder, logs: DoseLog[], now: number): DoseS
 export function timeLabel(r: DoseReminder): string {
   return `${r.hour < 10 ? '0' : ''}${r.hour}:${r.minute < 10 ? '0' : ''}${r.minute}`;
 }
+
+// The dose a "I took my medicine" (Celia TakeDose intent, notification button) refers to: the one due now, else the
+// earliest missed one today. Never an upcoming dose — that would log a dose before it is due.
+export function nextDoseToTake(reminders: DoseReminder[], logs: DoseLog[], now: number): DoseReminder | undefined {
+  const sorted: DoseReminder[] = reminders.slice().sort((a: DoseReminder, b: DoseReminder) =>
+    (a.hour * 60 + a.minute) - (b.hour * 60 + b.minute));
+  const due: DoseReminder | undefined = sorted.find((r: DoseReminder) => doseStatus(r, logs, now) === 'DUE');
+  return due ?? sorted.find((r: DoseReminder) => doseStatus(r, logs, now) === 'MISSED');
+}

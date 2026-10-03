@@ -4,11 +4,15 @@ import { CheckParam } from '../common/Routes';
 import { CheckOutcome, CheckService } from '../drugs/CheckService';
 import { LocalStore } from '../data/LocalStore';
 import { Medication } from '../model/Medication';
+import { BoxInfo } from '../model/BoxInfo';
 import { Genotype, Profile } from '../model/Profile';
 import { VerdictCard } from '../components/VerdictCard';
-import { PrimaryButton, SecondaryButton } from '../components/Common';
+import { MedicineInfoCard } from '../components/MedicineInfoCard';
+import { BackHeader, QuietButton, SecondaryButton, StatusStrip, TypingDots } from '../components/Common';
 import { Logger } from '../common/Logger';
 import { toast } from '../common/Toast';
+import { AgentPrompt } from '../agent/AgentPrompt';
+import { DrugVerdict } from '../model/DrugVerdict';
 
 const log: Logger = new Logger('CheckResult');
 
@@ -27,7 +31,9 @@ export struct CheckResultPage {
       const result: CheckOutcome = param.log ? await CheckService.run(param.query, param.via ?? 'TEXT') :
         await CheckService.peek(param.query);
       const meds: Medication[] = await LocalStore.get().listMeds();
-      this.alreadyMine = meds.some((m: Medication) => m.ingredient === result.verdict.ingredient);
+      const key: string = result.verdict.ingredient !== '' ? result.verdict.ingredient :
+        (result.box?.ingredients ?? '');
+      this.alreadyMine = key !== '' && meds.some((m: Medication) => m.ingredient === key);
       this.outcome = result;
     } catch (e) {
       log.error(`check failed: ${JSON.stringify(e)}`);
@@ -39,57 +45,105 @@ export struct CheckResultPage {
     if (this.outcome === undefined) {
       return;
     }
-    await LocalStore.get().addMed(this.outcome.verdict.query, this.outcome.verdict.ingredient, '');
+    // From a box: keep the brand as the name and the strength as the dose.
+    const box: BoxInfo | undefined = this.outcome.box;
+    const ingredient: string = this.outcome.verdict.ingredient !== '' ? this.outcome.verdict.ingredient :
+      (box?.ingredients ?? '');
+    await LocalStore.get().addMed(box?.brand ?? this.outcome.verdict.query, ingredient, box?.strength ?? '');
     this.alreadyMine = true;
     toast(this.getUIContext(), $r('app.string.meds_added'));
   }
 
+  // Hand the checked medicine to the agent: back to the tabs, chat opened, question already sent.
+  private askCelia(): void {
+    if (this.outcome === undefined) {
+      return;
+    }
+    const v: DrugVerdict = this.outcome.verdict;
+    this.navStack.clear();
+    AgentPrompt.ask(`I was offered ${v.query}. Is it safe for me, and what should I ask my doctor?`);
+  }
+
   build() {
     NavDestination() {
-      Scroll() {
-        Column({ space: 16 }) {
-          if (this.failed) {
-            Text($r('app.string.error_generic'))
-              .fontSize($r('app.float.font_body'))
-              .fontColor($r('sys.color.font_secondary'))
-              .padding(24)
-          } else if (this.outcome === undefined) {
-            LoadingProgress().width(40).height(40).margin({ top: 80 })
-          } else {
-            VerdictCard({ verdict: this.outcome.verdict, combo: this.outcome.combo, genotype: this.genotype })
-            if (this.outcome.verdict.ingredient !== '' && !this.alreadyMine) {
-              SecondaryButton({
-                label: $r('app.string.check_add_to_mine'),
-                icon: $r('app.media.ic_plus'),
+      Column() {
+        BackHeader({
+          title: $r('app.string.check_title'),
+          onBack: () => {
+            this.navStack.pop();
+          }
+        })
+        Scroll() {
+          Column({ space: 12 }) {
+            if (this.failed) {
+              StatusStrip({
+                kind: 'ERROR',
+                label: $r('app.string.check_failed'),
+                action: $r('app.string.check_retry'),
+                onAction: () => {
+                  this.navStack.pop();
+                }
+              })
+            } else if (this.outcome === undefined) {
+              TypingDots({ label: $r('app.string.agent_thinking') })
+                .margin({ top: 80 })
+            } else {
+              Column() {
+                VerdictCard({
+                  verdict: this.outcome.verdict,
+                  combo: this.outcome.combo,
+                  genotype: this.genotype,
+                  variant: 'SHEET',
+                  actionLabel: (this.outcome.verdict.ingredient !== '' || this.outcome.box !== undefined) &&
+                    !this.alreadyMine ?
+                    $r('app.string.check_add_to_mine') : '',
+                  onAction: () => {
+                    this.addToMine();
+                  }
+                })
+              }
+              .padding(16)
+              .backgroundColor($r('app.color.surface'))
+              .border({ width: 1, color: $r('app.color.border') })
+              .borderRadius($r('app.float.radius_l'))
+
+              if (this.outcome.box !== undefined) {
+                MedicineInfoCard({
+                  box: this.outcome.box,
+                  onForgotten: () => {
+                    this.navStack.pop();
+                  }
+                })
+              }
+
+              QuietButton({
+                label: $r('app.string.agent_ask_about'),
                 onTap: () => {
-                  this.addToMine();
+                  this.askCelia();
+                }
+              })
+              SecondaryButton({
+                label: $r('app.string.check_another'),
+                icon: $r('app.media.ic_search'),
+                onTap: () => {
+                  this.navStack.pop();
                 }
               })
             }
-            PrimaryButton({
-              label: $r('app.string.check_another'),
-              icon: $r('app.media.ic_search'),
-              onTap: () => {
-                this.navStack.pop();
-              }
-            })
-            Text($r('app.string.disclaimer'))
-              .fontSize($r('app.float.font_caption'))
-              .fontColor($r('sys.color.font_tertiary'))
-              .textAlign(TextAlign.Center)
-              .width('100%')
           }
+          .padding({ left: $r('app.float.space_screen'), right: $r('app.float.space_screen'), bottom: 24 })
+          .width('100%')
         }
-        .padding(16)
+        .layoutWeight(1)
         .width('100%')
+        .align(Alignment.Top)
+        .scrollBar(BarState.Off)
       }
       .width('100%')
       .height('100%')
-      .align(Alignment.Top)
-      .backgroundColor($r('app.color.page_bg'))
     }
-    .title($r('app.string.check_title'))
-    .backgroundColor($r('app.color.page_bg'))
+    .hideTitleBar(true)
+    .backgroundColor($r('app.color.bg'))
     .onReady((ctx: NavDestinationContext) => {
       const param: CheckParam = ctx.pathInfo.param as CheckParam;
       this.load(param);

@@ -8,7 +8,7 @@ Agent-first heart-safety companion for people with Long QT syndrome — HarmonyO
 - [Architecture](docs/ARCHITECTURE.md) — big picture, ownership, shared contracts, API
 - [Plan](docs/PLAN.md) — checkpoints, mentor questions, submission checklist
 - [Tasks](docs/TASKS.md) — feature expansion (F-19..F-34) as implementable tasks
-- Per person: [Kaloyan — agent](docs/team/kaloyan-agent.md) · [Georgie — app](docs/team/georgie-app.md) · [Mark — data & watch](docs/team/mark-data-watch.md)
+- Per person: [Kaloyan — agent](docs/team/kaloyan-agent.md) · [Georgi — app](docs/team/georgi-app.md) · [Mark — data & watch](docs/team/mark-data-watch.md)
 - [Watch app](watch/README.md) — HarmonyOS wearable app (emulator), metrics → Supabase
 - [SOS backend](backend/supabase/functions/sos/README.md) — watch SOS → SMS + call to emergency contacts (Twilio)
 - Background: [task text](docs/hackathon/huawei-task.txt) · [condition research](docs/hackathon/conditions-research.md)
@@ -58,20 +58,33 @@ Everything below runs on the emulator with no backend and no watch. Heart data i
 | Onboarding (F-01) | Fresh install → 4 steps (genotype + ICD → medicines → contacts → country). Restart: data is still there (encrypted RDB). |
 | Drug check (F-05, F-07, F-20, F-21) | Medicines → type `Klacid`, `Zofran 8 mg`, `Сумамед`, `ondansetrom` (typo) or `xyz` → verdict card; "How we know" shows each step. |
 | Interactions (F-19) | Add `Cipralex` to my medicines, then check `ondansetron` (adds up) or `clarithromycin` (CYP3A4). |
-| Barcode (F-36) | Medicines → Scan (camera or album), or type a demo code: `2000000000015` (clarithromycin), `2000000000091` (paracetamol). Demo codes use GS1 prefix 200 — not real products. |
+| Barcode (F-36) | Medicines → Scan (camera or album). Any Polish box resolves from the bundled register (≈68k packs), e.g. type `5909990331710` (Klacid) or `5909990296026` (Apap) → verdict + "About this medicine" (substance, strength, form, pack, Rx/OTC, ATC group, holder, leaflet). Unknown boxes (e.g. Bulgarian) open "teach this barcode"; the next scan resolves instantly. Demo codes `2000000000015`… still work. Regenerate the register with `python3 data/export_gtins.py`. |
 | History, dashboard (F-23, F-24) | Home shows meds by risk, interactions and recent checks; Medicines → Check history (filters). |
 | Heart + alerts (F-09, F-32) | Heart → Simulation controls → `lqt2 startle tachy`, `lqt3 night brady`, `lqt1 exercise`, `irregular rhythm`, `watch disconnect`. |
 | SOS (F-27, F-28, F-35) | A CRITICAL alert (e.g. `lqt2 startle tachy`) opens the 30 s "Are you OK?" countdown → "I'm OK" or let it run → call / share message / call contacts. Settings → Test SOS runs a 10 s test marked TEST. 10-min cooldown for automatic SOS. |
-| Emergency card (F-08, F-26, F-29, F-30) | Emergency tab: country number (e.g. Bulgaria 150, Poland 999), English card, offline QR. (UI is English-only for now; card translations for 12 more languages are kept in `common/CardStrings.ets` for later.) |
+| Emergency card (F-08, F-26, F-29, F-30) | Emergency tab → Show card as QR code. With a backend, the card is encrypted on the phone and uploaded to the `share` function; the QR is a short link (`/card/#<id>.<key>`) that any phone camera opens as the formatted card in the reader's language (13 languages), with 112 first. "Remove this link" revokes it. Offline/no backend: the QR carries the whole card (legacy link). Celia's own scanner opens both kinds inside the app. |
 | Help guide (F-41) | Emergency → Help guide: 3 steps + CPR metronome 110/min (haptic). Also reachable from the lock screen. |
-| Pharmacy card (F-40) | Home → More → Pharmacy card (English for now). |
-| Doctor prep (F-31) | Home → Doctor visit prep → pick the specialist → share / copy. No AI: built from your own data. |
+| Pharmacy card, travel (F-40, T23) | Emergency → Pharmacy card: in the language of the country you're in, with English below. With location allowed, being in another country than Settings shows "You're in …" on Home (country found on the phone; nothing uploaded). |
+| Doctor prep (F-31) | Home → Doctor visit prep → pick the specialist → **Send report link**: an encrypted web report (meds with risk badges, interactions, flagged checks, 30-day resting HR chart, alerts/SOS/symptoms timeline, doses, watch-outs, questions) that opens on any phone or computer and can be printed to PDF; the link stops working after 48 h. Share/copy as text still works. No AI: built from your own data. |
 | Reminders (F-38) | Medicines → Medicine reminders. See ARCHITECTURE: system reminders need an AGC quota; the in-app fallback notifies while the app runs. |
-| Symptom log (F-44, manual) | Home → More → Symptom log; fainting / chest pain shows an SOS button. Appears in the doctor brief. |
-| Privacy, app lock (F-45, F-46) | Settings → What left my phone: ledger of outbound requests (empty when offline). App lock needs a screen lock (PIN) on the device. |
+| Symptom log (F-44, T27) | Home → More → Symptom log; fainting / chest pain shows an SOS button. Or tell the agent "I felt dizzy after the alarm" (backend): it calls `log_symptom`; red flags start the SOS countdown by rule, not by the model. Appears in the doctor brief. |
+| Card language, read aloud (T11, T25) | Emergency → pick one of 13 card languages (saved) → **Read the card aloud**: only the medical part, never name or contacts (on-device English voice, cloud `/speak` otherwise; hidden with neither). |
+| Nearby help (T26 fallback) | Emergency → Nearby help → Hospital / Pharmacy / Defibrillator: a map search around the phone (map app or browser; the app sends no location). The in-app map needs a Map Kit key. |
+| Agent chat, saved chats (F-02, T7) | Agent → ask "Can I take Klacid?" (works offline with the deterministic agent). Header: Chats (history) and New chat. Chats → long press → Rename / Delete. "new chat" / "start over" work offline. |
+| Medicine sheet, AI explanation | Medicines → tap a medicine: risk band, what it's for, interactions, brands. "Explain it in plain words" (backend only; hidden offline) shows an `AI SUMMARY`; replies that mention QT/arrhythmia/doses are dropped. |
+| Doctor summary (T13) | Doctor visit prep → **Summarise for the doctor** (backend only): 2–3 sentences from the brief's medicines, risk words, interactions and counts — never name, notes or symptom notes. Reassurance or doses → dropped. |
+| Celia intents (F-11, T20) | `CheckDrugSafety`, `ShowEmergencyCard`, `LogSymptom`, `TakeDose`, `ShowPharmacyCard`, `AddMedication`, `ReadEmergencyCard` (`insight_intent.json`). Built and compiled; routing from Celia needs a real device with Celia/Xiaoyi. |
+| Widgets (F-12) | Home screen → add Celia "Check a medicine" (2×2) and "Medical alert" (2×4); Help this person opens the bystander guide. |
+| Watch context (T15) | With the cloud backend, a risky check writes `watch_context` (genotype, ingredient, risk) and the Celia watch shows the verdict glance within 60 s. |
+| Privacy, app lock (F-45, F-46) | Settings → What left my phone: every outbound request — drug check, agent, voice, vision, explanations, share links, live voice — with field names and size, never values; **Export the list**. App lock needs a screen lock (PIN) on the device. |
 
-Unit tests: `app/scripts/test.sh` — 57 tests (drug data + checker, interactions, alarm rules, SOS state machine and
-message, doctor brief, GS1, emergency numbers, card text completeness, dose schedule, privacy guard).
+Unit tests: `app/scripts/test.sh` — **188 tests, 0 failures** (3 Oct 2026): drug data + checker, interactions,
+agent safety gate + validator + tool registry, offline agent, saved chats, alarm rules, SOS state machine and message,
+doctor brief + AI summary guard, report payload + share links, medicine info + AI reply guard, symptom tool, GS1,
+emergency numbers, card text + read-aloud privacy, dose schedule, travel, privacy guard + ledger. Tests never call the
+network (`Config.forceOffline`).
+Backend: `npx -y deno test --no-lock backend/supabase/functions/` — **59 tests, 0 failures** (labels, RxNav/openFDA
+tier 2, share, SOS message, box identify, med-info and doctor-summary output guards).
 
 Optional online drug check: create a Supabase project, run `backend/supabase/migrations/0001_drugs.sql` and
 `backend/supabase/seed.sql` (regenerate with `python3 data/export_seed.py`), deploy `functions/drug-check`, and put
@@ -83,9 +96,19 @@ How AI tools were used, and which pre-existing components are reused: [`AI_WORKF
 
 **Pre-existing / third-party components (Challenge Rules §4):** DevEco Studio's Empty Ability template
 (hvigor files, `EntryAbility` skeleton, Hypium test harness) and the `@ohos/hypium` / `@ohos/hamock` test libraries.
+Hosting: Supabase (Edge Functions, Storage) and Vercel (static viewer pages in `site/`; they hold no data).
+Public APIs called by the `/drug-check` and `/box-identify` Edge Functions for medicines outside our data: NLM RxNav
+(name → ingredient, rxnav.nlm.nih.gov), openFDA drug labels (api.fda.gov, public domain), AEMPS CIMA (Spanish
+medicines register, cima.aemps.es), UPCitemdb (free trial API) and Open Food / Products / Beauty Facts (ODbL). Only a
+medicine name or a barcode is sent; no personal data.
+Nearby help opens Google Maps search URLs (developers.google.com/maps/documentation/urls, no key, no location sent
+by the app).
 App code, data and prompts are written in this repo.
 
 **Data sources:** drug risk categories follow the public CredibleMeds QTdrugs lists (crediblemeds.org); brand names
 from the Polish (URPL) and Bulgarian (BDA) medicine registers; emergency numbers from the EU 112 pages and national
 regulators; CPR guidance from ERC / AHA public guidelines; genotype triggers from Schwartz et al. (Circulation 2001)
-and the HRS/EHRA/APHRS 2013 consensus. The bundled list is a curated demo subset — not a medical device.
+and the HRS/EHRA/APHRS 2013 consensus. Box barcodes, product names, strengths, forms, availability categories and
+leaflet links come from the public Polish medicines register export (Rejestr Produktów Leczniczych, URPL —
+rejestrymedyczne.ezdrowie.gov.pl, snapshot date stored in `gtin_pl.json`); ATC group names from the WHO ATC index
+(whocc.no); GS1 country prefixes from the public GS1 prefix list. The bundled list is a curated demo subset — not a medical device.

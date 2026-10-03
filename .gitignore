@@ -49,3 +49,6 @@ watch/entry/src/main/resources/rawfile/config.json
 
 # Supabase CLI local state (supabase link / login)
 **/supabase/.temp/
+
+# Playwright MCP screenshots/logs (may show demo patient data)
+.playwright-mcp/

@@ -1,34 +1,41 @@
-// Medicines tab: check a medicine by name, my medicines (with risk), add / remove, history.
+// Medicines tab (design B4): search-first check, recently checked chips, my medicines as a two-column grid.
 
-import { CheckParam, Routes } from '../common/Routes';
+import { AskParam, CheckParam, Routes } from '../common/Routes';
 import { DrugChecker } from '../drugs/DrugChecker';
 import { DrugEntry } from '../drugs/DrugDataset';
 import { LocalStore, StoreTopic } from '../data/LocalStore';
 import { Medication } from '../model/Medication';
+import { ScanRecord } from '../model/ScanRecord';
 import { RiskLevel } from '../model/DrugVerdict';
 import { AddMedForm } from '../components/AddMedForm';
-import { NavRow, PageTitle, PrimaryButton, RiskBadge, SecondaryButton, SectionHeader } from '../components/Common';
-import { BarcodeResult, scanBox } from '../drugs/BarcodeService';
-import { toast } from '../common/Toast';
+import { MedicineDetailSheet } from '../components/MedicineDetailSheet';
+import { medSubtitle } from '../drugs/MedFacts';
+import { EmptyCard, NavRow, PageTitle, RiskBadge, SectionHeader, StatusChip } from '../components/Common';
 
 export function medRisk(m: Medication): RiskLevel {
   const e: DrugEntry | undefined = DrugChecker.get().entry(m.ingredient) ?? DrugChecker.get().resolve(m.name);
   return e === undefined ? 'UNKNOWN_DRUG' : e.risk;
 }
 
+const RECENT_MAX: number = 6;
+const MED_CARD_HEIGHT: number = 164;
+
 @ComponentV2
 export struct MedicinesPage {
   @Consumer('navStack') navStack: NavPathStack = new NavPathStack();
   @Local query: string = '';
   @Local meds: Medication[] = [];
+  @Local recent: ScanRecord[] = [];
   @Local showAdd: boolean = false;
+  @Local detail: Medication | undefined = undefined;
+  @Local showDetail: boolean = false;
   private unsubscribe: () => void = () => {
   };
 
   aboutToAppear(): void {
     this.reload();
     this.unsubscribe = LocalStore.get().onChange((t: StoreTopic) => {
-      if (t === 'meds') {
+      if (t === 'meds' || t === 'scans') {
         this.reload();
       }
     });
@@ -40,6 +47,17 @@ export struct MedicinesPage {
 
   private async reload(): Promise<void> {
     this.meds = await LocalStore.get().listMeds();
+    // Latest check per medicine, newest first.
+    const seen: string[] = [];
+    const out: ScanRecord[] = [];
+    for (const s of await LocalStore.get().listScans()) {
+      const key: string = (s.ingredient === '' ? s.query : s.ingredient).toLowerCase();
+      if (!seen.includes(key) && out.length < RECENT_MAX) {
+        seen.push(key);
+        out.push(s);
+      }
+    }
+    this.recent = out;
   }
 
   private check(): void {
@@ -50,158 +68,233 @@ export struct MedicinesPage {
     this.navStack.pushPathByName(Routes.CHECK_RESULT, new CheckParam(q, true));
   }
 
-  private async scan(): Promise<void> {
-    const r: BarcodeResult | undefined = await scanBox(this.getUIContext().getHostContext()!);
-    if (r === undefined) {
-      return;
-    }
-    if (r.entry !== undefined) {
-      this.navStack.pushPathByName(Routes.CHECK_RESULT, new CheckParam(r.gtin, true, 'BARCODE'));
-    } else if (r.gtin !== '') {
-      toast(this.getUIContext(), $r('app.string.scan_unknown_box'));
-    } else {
-      // Not a product code (e.g. a QR with text): check the text itself.
-      this.navStack.pushPathByName(Routes.CHECK_RESULT, new CheckParam(r.raw, true, 'BARCODE'));
-    }
+  private label(s: ScanRecord): string {
+    const t: string = /^[0-9]{8,14}$/.test(s.query) && s.ingredient !== '' ? s.ingredient : s.query;
+    return t.length > 0 ? t.charAt(0).toUpperCase() + t.slice(1) : t;
   }
 
   @Builder
   addSheet() {
-    Column({ space: 16 }) {
-      Text($r('app.string.meds_add_title'))
-        .fontSize($r('app.float.font_title'))
-        .fontWeight(FontWeight.Bold)
-        .fontColor($r('sys.color.font_primary'))
-      AddMedForm({
-        onAdded: () => {
-          this.showAdd = false;
-        }
-      })
-    }
-    .padding(20)
-    .width('100%')
-    .alignItems(HorizontalAlign.Start)
-  }
-
-  @Builder
-  medRow(m: Medication) {
-    Row({ space: 12 }) {
-      Image($r('app.media.ic_pill')).width(22).height(22).fillColor($r('app.color.brand_accent'))
-      Column({ space: 2 }) {
-        Text(m.name)
-          .fontSize($r('app.float.font_body'))
-          .fontWeight(FontWeight.Medium)
-          .fontColor($r('sys.color.font_primary'))
-        Text(m.dose === '' ? (m.ingredient === '' ? '—' : m.ingredient) : `${m.ingredient} · ${m.dose}`)
-          .fontSize($r('app.float.font_caption'))
-          .fontColor($r('sys.color.font_secondary'))
+    Scroll() {
+      Column({ space: 16 }) {
+        Text($r('app.string.meds_add_title'))
+          .fontSize($r('app.float.font_title'))
+          .fontWeight(FontWeight.Bold)
+          .fontColor($r('app.color.ink'))
+        AddMedForm({
+          onAdded: () => {
+            this.showAdd = false;
+          }
+        })
       }
+      .padding(20)
+      .width('100%')
       .alignItems(HorizontalAlign.Start)
-      .layoutWeight(1)
-      RiskBadge({ risk: medRisk(m), compact: true })
     }
     .width('100%')
-    .padding({ top: 14, bottom: 14, left: 16, right: 16 })
-    .backgroundColor($r('app.color.card_bg'))
-    .borderRadius($r('app.float.radius_m'))
+    .height('100%')
+    .align(Alignment.Top)
+    .scrollBar(BarState.Off)
   }
 
   @Builder
-  deleteAction(m: Medication) {
-    Row() {
-      Image($r('app.media.ic_delete')).width(22).height(22).fillColor($r('app.color.on_accent'))
+  medMenu(m: Medication) {
+    Menu() {
+      MenuItem({ content: $r('app.string.meds_remove') })
+        .onClick(() => {
+          LocalStore.get().removeMed(m.id);
+        })
     }
-    .height('100%')
-    .width(72)
-    .justifyContent(FlexAlign.Center)
-    .backgroundColor($r('app.color.risk_known'))
-    .borderRadius($r('app.float.radius_m'))
-    .margin({ left: 8 })
-    .accessibilityText($r('app.string.meds_remove'))
+  }
+
+  @Builder
+  detailSheet() {
+    MedicineDetailSheet({
+      med: this.detail,
+      meds: this.meds,
+      onCheck: (m: Medication) => {
+        this.showDetail = false;
+        this.navStack.pushPathByName(Routes.CHECK_RESULT, new CheckParam(m.ingredient === '' ? m.name : m.ingredient,
+          false));
+      },
+      onRemind: (m: Medication) => {
+        this.showDetail = false;
+        this.navStack.pushPathByName(Routes.REMINDERS, m.id);
+      },
+      onAsk: (m: Medication) => {
+        this.showDetail = false;
+        const ctx: Context | undefined = this.getUIContext().getHostContext();
+        const label: string = m.name.length > 0 ? m.name.charAt(0).toUpperCase() + m.name.slice(1) : m.name;
+        const q: string = ctx === undefined ? `Tell me about ${label}.` :
+          ctx.resourceManager.getStringSync($r('app.string.med_ask_prompt').id, label);
+        this.navStack.pushPathByName(Routes.AGENT_CHAT, new AskParam(q));
+      }
+    })
+  }
+
+  @Builder
+  medCard(m: Medication) {
+    Column() {
+      RiskBadge({ risk: medRisk(m), compact: true })
+      Blank()
+      Text(m.name.length > 0 ? m.name.charAt(0).toUpperCase() + m.name.slice(1) : m.name)
+        .fontSize($r('app.float.font_headline'))
+        .fontWeight(FontWeight.Bold)
+        .fontColor($r('app.color.ink'))
+        .maxLines(1)
+        .textOverflow({ overflow: TextOverflow.Ellipsis })
+      Text(medSubtitle(m) === '' ? (m.ingredient === '' ? '—' : m.ingredient) : medSubtitle(m))
+        .fontSize($r('app.float.font_caption'))
+        .fontColor($r('app.color.ink_3'))
+        .lineHeight(16)
+        .maxLines(2)
+        .textOverflow({ overflow: TextOverflow.Ellipsis })
+        .margin({ top: 4 })
+      if (m.dose !== '') {
+        Text(m.dose)
+          .fontSize($r('app.float.font_micro'))
+          .fontWeight(FontWeight.Bold)
+          .fontColor($r('app.color.ink_2'))
+          .height(20)
+          .padding({ left: 8, right: 8 })
+          .backgroundColor($r('app.color.surface_alt'))
+          .borderRadius(10)
+          .margin({ top: 8 })
+      }
+    }
+    .width('100%')
+    .height(MED_CARD_HEIGHT)
+    .alignItems(HorizontalAlign.Start)
+    .padding(14)
+    .backgroundColor($r('app.color.surface'))
+    .border({ width: 1, color: $r('app.color.border') })
+    .borderRadius($r('app.float.radius_ml'))
+    .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.98 })
+    .accessibilityText(`${m.name}. ${medSubtitle(m)}`)
     .onClick(() => {
-      LocalStore.get().removeMed(m.id);
+      this.detail = m;
+      this.showDetail = true;
+    })
+    .bindContextMenu(this.medMenu(m), ResponseType.LongPress)
+  }
+
+  @Builder
+  addTile() {
+    Column({ space: 8 }) {
+      Image($r('app.media.ic_plus')).width(20).height(20).fillColor($r('app.color.ink_3'))
+      Text($r('app.string.meds_add_tile'))
+        .fontSize($r('app.float.font_button'))
+        .fontWeight(FontWeight.Medium)
+        .fontColor($r('app.color.ink_3'))
+    }
+    .width('100%')
+    .height(MED_CARD_HEIGHT)
+    .justifyContent(FlexAlign.Center)
+    .border({ width: 2, color: $r('app.color.border_strong'), style: BorderStyle.Dashed })
+    .borderRadius($r('app.float.radius_ml'))
+    .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.98 })
+    .onClick(() => {
+      this.showAdd = true;
     })
   }
 
   build() {
     Scroll() {
       Column({ space: 12 }) {
-        PageTitle({ title: $r('app.string.medicines_title'), subtitle: $r('app.string.medicines_subtitle') })
+        PageTitle({ title: $r('app.string.medicines_title') })
 
-        // Check a medicine
-        Column({ space: 12 }) {
-          Text($r('app.string.check_prompt'))
-            .fontSize($r('app.float.font_subtitle'))
-            .fontWeight(FontWeight.Medium)
-            .fontColor($r('sys.color.font_primary'))
-          Search({ value: this.query, placeholder: $r('app.string.check_hint') })
-            .height(48)
-            .onChange((v: string) => {
-              this.query = v;
-            })
-            .onSubmit((v: string) => {
-              this.query = v;
-              this.check();
-            })
-          PrimaryButton({
-            label: $r('app.string.check_button'),
-            icon: $r('app.media.ic_search'),
-            active: this.query.trim().length > 0,
-            onTap: () => this.check()
-          })
-          SecondaryButton({
-            label: $r('app.string.scan_button'),
-            icon: $r('app.media.ic_scan'),
-            onTap: () => {
-              this.scan();
-            }
+        // Search-first check + scan
+        Row({ space: 10 }) {
+          Row({ space: 10 }) {
+            Image($r('app.media.ic_search')).width(20).height(20).fillColor($r('app.color.ink'))
+            TextInput({ text: this.query, placeholder: $r('app.string.check_hint') })
+              .layoutWeight(1)
+              .height('100%')
+              .padding(0)
+              .backgroundColor(Color.Transparent)
+              .borderRadius(0)
+              .fontSize($r('app.float.font_headline'))
+              .fontColor($r('app.color.ink'))
+              .placeholderColor($r('app.color.ink_3'))
+              .enterKeyType(EnterKeyType.Search)
+              .onChange((v: string) => {
+                this.query = v;
+              })
+              .onSubmit(() => {
+                this.check();
+              })
+          }
+          .layoutWeight(1)
+          .height(56)
+          .padding({ left: 16, right: 12 })
+          .backgroundColor($r('app.color.surface'))
+          .border({ width: 1.5, color: $r('app.color.ink') })
+          .borderRadius($r('app.float.radius_m'))
+
+          Row() {
+            Image($r('app.media.ic_camera')).width(24).height(24).fillColor($r('app.color.on_accent'))
+          }
+          .width(56)
+          .height(56)
+          .justifyContent(FlexAlign.Center)
+          .backgroundColor($r('app.color.brand_accent'))
+          .borderRadius($r('app.float.radius_m'))
+          .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.96 })
+          .accessibilityText($r('app.string.a11y_camera'))
+          .onClick(() => {
+            this.navStack.pushPathByName(Routes.SCAN, null);
           })
         }
         .width('100%')
-        .alignItems(HorizontalAlign.Start)
-        .padding(16)
-        .backgroundColor($r('app.color.card_bg'))
-        .borderRadius($r('app.float.radius_m'))
 
-        SectionHeader({
-          title: $r('app.string.meds_mine'),
-          action: $r('app.string.meds_add_short'),
-          onAction: () => {
-            this.showAdd = true;
+        if (this.recent.length > 0) {
+          SectionHeader({
+            title: $r('app.string.meds_recent'),
+            action: $r('app.string.home_all'),
+            onAction: () => {
+              this.navStack.pushPathByName(Routes.HISTORY, null);
+            }
+          })
+          Scroll() {
+            Row({ space: 8 }) {
+              ForEach(this.recent, (s: ScanRecord) => {
+                StatusChip({
+                  label: this.label(s),
+                  risk: s.risk,
+                  onTap: () => {
+                    this.navStack.pushPathByName(Routes.CHECK_RESULT, new CheckParam(s.query, false));
+                  }
+                })
+              }, (s: ScanRecord) => `${s.id}`)
+            }
           }
-        })
+          .scrollable(ScrollDirection.Horizontal)
+          .scrollBar(BarState.Off)
+          .width('100%')
+          .align(Alignment.Start)
+        }
+
+        SectionHeader({ title: this.meds.length > 0 ? `My medicines · ${this.meds.length}` : $r('app.string.meds_mine') })
         if (this.meds.length === 0) {
-          Column({ space: 8 }) {
-            Text($r('app.string.meds_empty'))
-              .fontSize($r('app.float.font_body'))
-              .fontColor($r('sys.color.font_secondary'))
-              .textAlign(TextAlign.Center)
-            Text($r('app.string.meds_add'))
-              .fontSize($r('app.float.font_body'))
-              .fontColor($r('app.color.brand_accent'))
-              .onClick(() => {
-                this.showAdd = true;
-              })
-          }
-          .width('100%')
-          .padding(24)
-          .backgroundColor($r('app.color.card_bg'))
-          .borderRadius($r('app.float.radius_m'))
+          EmptyCard({
+            message: $r('app.string.meds_empty'),
+            action: $r('app.string.meds_add_tile'),
+            onAction: () => {
+              this.showAdd = true;
+            }
+          })
         } else {
-          List({ space: 8 }) {
+          GridRow({ columns: 2, gutter: 12 }) {
             ForEach(this.meds, (m: Medication) => {
-              ListItem() {
-                this.medRow(m)
+              GridCol() {
+                this.medCard(m)
               }
-              .swipeAction({ end: this.deleteAction(m) })
             }, (m: Medication) => `${m.id}`)
+            GridCol() {
+              this.addTile()
+            }
           }
           .width('100%')
-          .scrollBarWidth(0)
-          .nestedScroll({ scrollForward: NestedScrollMode.PARENT_FIRST, scrollBackward: NestedScrollMode.SELF_FIRST })
-          Text($r('app.string.meds_swipe_hint'))
-            .fontSize($r('app.float.font_caption'))
-            .fontColor($r('sys.color.font_tertiary'))
         }
 
         NavRow({
@@ -212,26 +305,28 @@ export struct MedicinesPage {
             this.navStack.pushPathByName(Routes.REMINDERS, null);
           }
         })
-        NavRow({
-          icon: $r('app.media.ic_history'),
-          title: $r('app.string.history_title'),
-          subtitle: $r('app.string.history_subtitle'),
-          onTap: () => {
-            this.navStack.pushPathByName(Routes.HISTORY, null);
-          }
-        })
+          .margin({ top: 8 })
       }
-      .padding({ left: 16, right: 16, bottom: 24 })
+      .padding({ left: $r('app.float.space_screen'), right: $r('app.float.space_screen'), bottom: 24 })
       .width('100%')
+      .bindSheet(this.showDetail, this.detailSheet(), {
+        detents: [SheetSize.LARGE, SheetSize.MEDIUM],
+        showClose: true,
+        backgroundColor: $r('app.color.bg'),
+        onDisappear: () => {
+          this.showDetail = false;
+        }
+      })
     }
     .width('100%')
     .height('100%')
     .align(Alignment.Top)
     .scrollBar(BarState.Off)
-    .backgroundColor($r('app.color.page_bg'))
+    .backgroundColor($r('app.color.bg'))
     .bindSheet(this.showAdd, this.addSheet(), {
       detents: [SheetSize.MEDIUM, SheetSize.LARGE],
       showClose: true,
+      backgroundColor: $r('app.color.bg'),
       onDisappear: () => {
         this.showAdd = false;
       }

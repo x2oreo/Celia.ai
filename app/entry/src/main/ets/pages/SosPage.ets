@@ -15,8 +15,9 @@ import { dial } from '../common/Dialer';
 import { pulse, stopPulse } from '../common/Haptics';
 import { keepScreenOn } from '../common/Screen';
 import { toast } from '../common/Toast';
-import { PrimaryButton, SecondaryButton } from '../components/Common';
+import { BackHeader, InkButton, PrimaryButton, SecondaryButton } from '../components/Common';
 import { LiveStatus } from '../emergency/LiveStatus';
+import { AgentCore } from '../agent/AgentCore';
 
 @ComponentV2
 export struct SosPage {
@@ -101,6 +102,7 @@ export struct SosPage {
 
   private imOk(): void {
     SosController.get().ack();
+    AgentCore.get().emergencyCancelled();
     this.state = 'ACKED';
     stopPulse();
     LiveStatus.end();
@@ -144,70 +146,81 @@ export struct SosPage {
   }
 
   @Builder
+  testBanner() {
+    Text($r('app.string.sos_test_banner'))
+      .fontSize($r('app.float.font_badge'))
+      .fontWeight(FontWeight.Bold)
+      .fontColor($r('app.color.ink'))
+      .padding({ left: 12, right: 12, top: 6, bottom: 6 })
+      .border({ width: 1, color: $r('app.color.ink') })
+      .borderRadius(16)
+  }
+
+  // Calm surface, one draining ring (DESIGN.md §10.2). Red is the ring and the send action only.
+  @Builder
   countdown() {
-    Column({ space: 20 }) {
+    Column({ space: 16 }) {
       if (this.test) {
-        Text($r('app.string.sos_test_banner'))
-          .fontSize($r('app.float.font_small'))
-          .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.sim_badge'))
-          .padding({ left: 12, right: 12, top: 6, bottom: 6 })
-          .backgroundColor($r('app.color.sim_badge_soft'))
-          .borderRadius(100)
+        this.testBanner()
       }
+      Text($r('app.string.sos_label'))
+        .fontSize($r('app.float.font_badge'))
+        .fontWeight(800)
+        .letterSpacing(1)
+        .fontColor($r('app.color.risk_known_text'))
+        .margin({ top: 12 })
       Text($r('app.string.sos_question'))
-        .fontSize($r('app.float.font_title'))
-        .fontWeight(FontWeight.Bold)
-        .fontColor('#FFFFFF')
+        .fontSize($r('app.float.font_title_1'))
+        .fontWeight(800)
+        .fontColor($r('app.color.ink'))
         .textAlign(TextAlign.Center)
       if (this.reason.length > 0) {
         Text(this.reason)
           .fontSize($r('app.float.font_body'))
-          .fontColor('#FFE4E2')
+          .fontColor($r('app.color.ink_2'))
           .textAlign(TextAlign.Center)
       }
       Stack() {
         Progress({ value: this.remaining, total: this.test ? TEST_COUNTDOWN_S : COUNTDOWN_S, type: ProgressType.Ring })
           .width(200)
           .height(200)
-          .color('#FFFFFF')
-          .style({ strokeWidth: 10 })
+          .color($r('app.color.risk_known'))
+          .backgroundColor($r('app.color.border'))
+          .style({ strokeWidth: 12 })
         Column() {
           Text(`${this.remaining}`)
-            .fontSize(72)
-            .fontWeight(FontWeight.Bold)
-            .fontColor('#FFFFFF')
+            .fontSize($r('app.float.font_display'))
+            .fontWeight(800)
+            .fontColor($r('app.color.ink'))
             .fontFeature('"tnum" on')
           Text($r('app.string.sos_seconds'))
             .fontSize($r('app.float.font_small'))
-            .fontColor('#FFE4E2')
+            .fontColor($r('app.color.ink_3'))
         }
       }
+      .margin({ top: 8, bottom: 8 })
       Text($r('app.string.sos_explain'))
         .fontSize($r('app.float.font_small'))
-        .fontColor('#FFE4E2')
+        .fontColor($r('app.color.ink_3'))
         .textAlign(TextAlign.Center)
       Blank()
-      Button($r('app.string.sos_im_ok'))
-        .width('100%')
-        .height(80)
-        .fontSize(26)
-        .fontWeight(FontWeight.Bold)
-        .fontColor('#B42318')
-        .backgroundColor('#FFFFFF')
-        .clickEffect({ level: ClickEffectLevel.MIDDLE, scale: 0.97 })
-        .onClick(() => this.imOk())
-      Text($r('app.string.sos_send_now'))
-        .fontSize($r('app.float.font_body'))
-        .fontColor('#FFFFFF')
-        .decoration({ type: TextDecorationType.Underline })
-        .padding(12)
-        .onClick(() => this.sendNow())
+      InkButton({
+        label: $r('app.string.sos_im_ok'),
+        large: true,
+        onTap: () => this.imOk()
+      })
+        .height($r('app.float.button_height_l'))
+      PrimaryButton({
+        label: $r('app.string.sos_send_now'),
+        danger: true,
+        large: true,
+        onTap: () => this.sendNow()
+      })
     }
     .width('100%')
     .height('100%')
     .padding(24)
-    .backgroundColor('#B42318')
+    .backgroundColor($r('app.color.bg'))
   }
 
   @Builder
@@ -215,21 +228,15 @@ export struct SosPage {
     Scroll() {
       Column({ space: 14 }) {
         if (this.test) {
-          Text($r('app.string.sos_test_banner'))
-            .fontSize($r('app.float.font_small'))
-            .fontWeight(FontWeight.Bold)
-            .fontColor($r('app.color.sim_badge'))
-            .padding({ left: 12, right: 12, top: 6, bottom: 6 })
-            .backgroundColor($r('app.color.sim_badge_soft'))
-            .borderRadius(100)
+          this.testBanner()
         }
         Text($r('app.string.sos_sent_title'))
-          .fontSize($r('app.float.font_headline'))
+          .fontSize($r('app.float.font_title_1'))
           .fontWeight(FontWeight.Bold)
-          .fontColor($r('sys.color.font_primary'))
+          .fontColor($r('app.color.ink'))
         Text($r('app.string.sos_sent_subtitle'))
           .fontSize($r('app.float.font_body'))
-          .fontColor($r('sys.color.font_secondary'))
+          .fontColor($r('app.color.ink_3'))
         PrimaryButton({
           label: `${this.info().ambulance} · Call ambulance`,
           icon: $r('app.media.ic_phone'),
@@ -256,43 +263,54 @@ export struct SosPage {
           })
         }, (c: Contact) => `${c.name}-${c.phone}`)
         Row({ space: 8 }) {
-          Image($r('app.media.ic_location')).width(18).height(18).fillColor($r('app.color.brand_accent'))
+          Image($r('app.media.ic_location')).width(18).height(18).fillColor($r('app.color.ink_3'))
           Text(this.locating ? $r('app.string.sos_locating') : (this.where === undefined ?
             $r('app.string.sos_no_location') : $r('app.string.sos_location_ok')))
             .fontSize($r('app.float.font_small'))
-            .fontColor($r('sys.color.font_secondary'))
+            .fontColor($r('app.color.ink_3'))
         }
         Text(this.message())
           .fontSize($r('app.float.font_small'))
-          .fontColor($r('sys.color.font_primary'))
+          .fontColor($r('app.color.ink'))
           .padding(14)
           .width('100%')
-          .backgroundColor($r('app.color.card_bg'))
+          .backgroundColor($r('app.color.surface'))
+          .border({ width: 1, color: $r('app.color.border') })
           .borderRadius($r('app.float.radius_m'))
         Text($r('app.string.sos_sms_note'))
           .fontSize($r('app.float.font_caption'))
-          .fontColor($r('sys.color.font_tertiary'))
+          .fontColor($r('app.color.ink_4'))
       }
       .padding(20)
       .width('100%')
       .alignItems(HorizontalAlign.Start)
     }
     .width('100%')
-    .height('100%')
+    .layoutWeight(1)
     .align(Alignment.Top)
-    .backgroundColor($r('app.color.page_bg'))
+    .scrollBar(BarState.Off)
   }
 
   build() {
     NavDestination() {
       if (this.state === 'SENT') {
-        this.sent()
+        Column() {
+          BackHeader({
+            title: $r('app.string.emergency_sos'),
+            onBack: () => {
+              this.navStack.pop();
+            }
+          })
+          this.sent()
+        }
+        .width('100%')
+        .height('100%')
       } else {
         this.countdown()
       }
     }
-    .hideTitleBar(this.state !== 'SENT')
-    .title($r('app.string.emergency_sos'))
+    .hideTitleBar(true)
+    .backgroundColor($r('app.color.bg'))
     .onReady((ctx: NavDestinationContext) => {
       this.begin(ctx.pathInfo.param as SosParam | undefined);
     })

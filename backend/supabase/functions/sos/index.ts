@@ -22,6 +22,10 @@ import { placeCall, type SendResult, sendSms, twilioConfigFromEnv } from './twil
 
 const COOLDOWN_MINUTES = 10;
 const MAX_CONTACTS = 5;
+// Abuse cap across ALL devices: the anon key is public, so anyone can create a device with contacts and fire an SOS.
+// Real (non dry-run) alert rounds are capped per hour for the whole project, which bounds SMS/call costs and
+// harassment. Hackathon scale: one demo watch. Raise SOS_GLOBAL_MAX_PER_HOUR for a real deployment with auth.
+const GLOBAL_MAX_PER_HOUR = Number(Deno.env.get('SOS_GLOBAL_MAX_PER_HOUR') ?? '10');
 
 interface SosRecord {
   id: number;
@@ -121,6 +125,18 @@ Deno.serve(async (req: Request): Promise<Response> => {
   } else if ((count ?? 0) > 0) {
     await audit('skipped_cooldown', { cooldownMinutes: COOLDOWN_MINUTES });
     return json(200, { status: 'skipped_cooldown' });
+  }
+
+  const hourAgo = new Date(Date.now() - 3600_000).toISOString();
+  const { count: globalCount, error: globalError } = await db.from('sos_dispatches')
+    .select('id', { count: 'exact', head: true })
+    .in('status', ['sent', 'partial'])
+    .gte('created_at', hourAgo);
+  if (globalError) {
+    console.error(`[sos] global cap check failed, sending anyway: ${globalError.message}`);
+  } else if ((globalCount ?? 0) >= GLOBAL_MAX_PER_HOUR) {
+    await audit('skipped_global_limit', { maxPerHour: GLOBAL_MAX_PER_HOUR });
+    return json(429, { status: 'skipped_global_limit' });
   }
 
   const symptomSince = new Date(Date.now() - SYMPTOM_WINDOW_MS).toISOString();

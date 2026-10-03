@@ -86,15 +86,15 @@
     },
     {
       "name": "risk_conditional",
-      "value": "Conditional risk"
+      "value": "Conditional"
     },
     {
       "name": "risk_not_listed",
-      "value": "Not on QT lists"
+      "value": "Not listed"
     },
     {
       "name": "risk_unknown",
-      "value": "Not recognised"
+      "value": "Unknown"
     },
     {
       "name": "error_generic",
@@ -126,7 +126,7 @@
     },
     {
       "name": "verdict_ask_doctor",
-      "value": "Copy a question for my doctor"
+      "value": "Ask your doctor"
     },
     {
       "name": "meds_added",
@@ -134,7 +134,7 @@
     },
     {
       "name": "check_add_to_mine",
-      "value": "Add to my medicines"
+      "value": "Add to meds"
     },
     {
       "name": "check_another",
@@ -182,7 +182,7 @@
     },
     {
       "name": "check_hint",
-      "value": "Name on the box, e.g. Klacid"
+      "value": "Can I take…"
     },
     {
       "name": "check_button",
@@ -190,11 +190,11 @@
     },
     {
       "name": "meds_mine",
-      "value": "MY MEDICINES"
+      "value": "My medicines"
     },
     {
       "name": "meds_empty",
-      "value": "No medicines yet. Add what you take so we can warn you about interactions."
+      "value": "No medicines yet. Add one or scan a box."
     },
     {
       "name": "meds_swipe_hint",
@@ -282,11 +282,11 @@
     },
     {
       "name": "heart_no_alerts",
-      "value": "No alerts. We will tell you if your heart rate looks unusual for your genotype."
+      "value": "No alerts. Everything looks calm."
     },
     {
       "name": "heart_sim_controls",
-      "value": "Simulation controls (no watch on the emulator)"
+      "value": "Demo controls"
     },
     {
       "name": "emergency_subtitle",
@@ -313,8 +313,24 @@
       "value": "Show card as QR code"
     },
     {
+      "name": "emergency_card_open",
+      "value": "Open card in browser"
+    },
+    {
+      "name": "emergency_card_copy",
+      "value": "Copy card link"
+    },
+    {
+      "name": "emergency_card_copied",
+      "value": "Card link copied — paste it in any browser or chat."
+    },
+    {
       "name": "emergency_qr_hint",
-      "value": "Any phone camera can read this — no app or internet needed."
+      "value": "Scan with any phone camera to open this card in the reader's language. The card is inside the link — nothing is uploaded."
+    },
+    {
+      "name": "emergency_qr_hint_encrypted",
+      "value": "Scan with any phone camera to open this card in the reader's language. The card was encrypted on this phone before upload; only this link can open it."
     },
     {
       "name": "home_check",
@@ -645,6 +661,26 @@
       "value": "Pick who you are seeing. We prepare a safety brief from your own records."
     },
     {
+      "name": "dp_ai_button",
+      "value": "Summarise for the doctor"
+    },
+    {
+      "name": "dp_ai_loading",
+      "value": "Writing a short summary…"
+    },
+    {
+      "name": "dp_ai_caption",
+      "value": "Generated summary of the brief below, not medical advice. The risk words in the brief come from the QT list, not from AI."
+    },
+    {
+      "name": "dp_ai_rejected",
+      "value": "Couldn't write a summary that follows the safety rules. The brief below is complete."
+    },
+    {
+      "name": "dp_ai_failed",
+      "value": "Couldn't reach the summary service. The brief below is complete and works offline."
+    },
+    {
       "name": "dp_share",
       "value": "Share the brief"
     },
@@ -662,7 +698,7 @@
     },
     {
       "name": "privacy_promise",
-      "value": "Your profile, medicines, contacts, heart data and history are stored only on this phone, encrypted. Nothing is uploaded unless listed below."
+      "value": "Your profile, medicines, contacts, heart data, history and chats with the agent are stored only on this phone, encrypted. Nothing is uploaded unless listed below."
     },
     {
       "name": "privacy_lock",
@@ -679,6 +715,10 @@
     {
       "name": "privacy_empty",
       "value": "Nothing has left your phone."
+    },
+    {
+      "name": "privacy_export",
+      "value": "Export the list"
     },
     {
       "name": "sym_title",
@@ -734,7 +774,7 @@
     },
     {
       "name": "rem_empty",
-      "value": "No reminders yet. Add one below."
+      "value": "No reminders yet. Pick a medicine and a time below."
     },
     {
       "name": "rem_taken",
@@ -774,7 +814,7 @@
     },
     {
       "name": "scan_unknown_box",
-      "value": "We don't know this box yet — type the name on the box."
+      "value": "Couldn't read that box. Type the name instead?"
     },
     {
       "name": "home_more",
@@ -811,6 +851,994 @@
     {
       "name": "privacy_lock_unavailable",
       "value": "Set a screen lock (PIN) on your phone first."
+    },
+    {
+      "name": "teach_title",
+      "value": "New box — teach Celia once"
+    },
+    {
+      "name": "teach_body",
+      "value": "We don't have this barcode yet (only Polish boxes are built in). Type the medicine name printed on the box and we will remember it for next time."
+    },
+    {
+      "name": "teach_name_hint",
+      "value": "Name on the box, e.g. Analgin or Sumamed"
+    },
+    {
+      "name": "teach_strength_hint",
+      "value": "Strength (optional), e.g. 500 mg"
+    },
+    {
+      "name": "teach_unrecognised",
+      "value": "Not in our QT list — it will be checked as unknown"
+    },
+    {
+      "name": "teach_save",
+      "value": "Save and check"
+    },
+    {
+      "name": "teach_privacy",
+      "value": "Saved only on this phone."
+    },
+    {
+      "name": "info_title",
+      "value": "About this medicine"
+    },
+    {
+      "name": "info_leaflet",
+      "value": "Open the patient leaflet (Polish, PDF)"
+    },
+    {
+      "name": "info_forget",
+      "value": "Forget this barcode"
+    },
+    {
+      "name": "info_forgotten",
+      "value": "Barcode forgotten"
+    },
+    {
+      "name": "cardview_title",
+      "value": "Emergency card"
+    },
+    {
+      "name": "cardview_note",
+      "value": "Scanned from a Celia QR code. Read on this phone only — nothing was saved."
+    },
+    {
+      "name": "mic_reason",
+      "value": "The agent listens while you talk to it, so you can ask about medicines by voice."
+    },
+    {
+      "name": "agent_name",
+      "value": "The agent"
+    },
+    {
+      "name": "agent_status",
+      "value": "Your heart-safety agent · not a medical device"
+    },
+    {
+      "name": "agent_offline",
+      "value": "I'm offline, but medicine checks still work."
+    },
+    {
+      "name": "agent_welcome",
+      "value": "Ask me about a medicine, scan a box, or tell me how you feel. Medicine verdicts always come from the QT-risk list, never from guesswork."
+    },
+    {
+      "name": "agent_starter_ibuprofen",
+      "value": "Can I take ibuprofen?"
+    },
+    {
+      "name": "agent_starter_avoid",
+      "value": "What should I avoid with my genotype?"
+    },
+    {
+      "name": "agent_starter_meds",
+      "value": "Check my current medicines"
+    },
+    {
+      "name": "agent_input_hint",
+      "value": "Ask the agent"
+    },
+    {
+      "name": "agent_thinking",
+      "value": "Thinking…"
+    },
+    {
+      "name": "agent_listening",
+      "value": "Listening… tap to send"
+    },
+    {
+      "name": "agent_live_on",
+      "value": "Live voice is on. Just talk."
+    },
+    {
+      "name": "agent_live_connecting",
+      "value": "Connecting live voice…"
+    },
+    {
+      "name": "agent_live_failed",
+      "value": "Live voice isn't available right now. Tap the mic, speak, then tap again to send."
+    },
+    {
+      "name": "agent_mic_unavailable",
+      "value": "I can't use the microphone. Allow it in Settings, or type instead."
+    },
+    {
+      "name": "agent_open_check",
+      "value": "Open full check"
+    },
+    {
+      "name": "agent_confirm",
+      "value": "Confirm"
+    },
+    {
+      "name": "agent_cancel",
+      "value": "Cancel"
+    },
+    {
+      "name": "agent_add_med_title",
+      "value": "Add to my medicines?"
+    },
+    {
+      "name": "agent_share_card_title",
+      "value": "Share your emergency card?"
+    },
+    {
+      "name": "agent_scan",
+      "value": "Scan a medicine box"
+    },
+    {
+      "name": "agent_scan_reading",
+      "value": "Reading the box…"
+    },
+    {
+      "name": "agent_scan_pick",
+      "value": "Which one is it?"
+    },
+    {
+      "name": "agent_open_card",
+      "value": "Open emergency card"
+    },
+    {
+      "name": "agent_emergency_started",
+      "value": "Emergency countdown started"
+    },
+    {
+      "name": "agent_open_sos",
+      "value": "Open SOS"
+    },
+    {
+      "name": "agent_findings",
+      "value": "With your medicines"
+    },
+    {
+      "name": "agent_ask_celia",
+      "value": "Ask the agent"
+    },
+    {
+      "name": "agent_ask_about",
+      "value": "Ask the agent about this"
+    },
+    {
+      "name": "a11y_send",
+      "value": "Send"
+    },
+    {
+      "name": "a11y_mic",
+      "value": "Talk to the agent"
+    },
+    {
+      "name": "a11y_live",
+      "value": "Live voice"
+    },
+    {
+      "name": "agent_emergency_cancelled",
+      "value": "Emergency cancelled"
+    },
+    {
+      "name": "risk_sub_known",
+      "value": "Can affect heart rhythm"
+    },
+    {
+      "name": "risk_sub_possible",
+      "value": "Possible QT effect"
+    },
+    {
+      "name": "risk_sub_conditional",
+      "value": "Risky only in some situations"
+    },
+    {
+      "name": "risk_sub_not_listed",
+      "value": "Not on the QT list"
+    },
+    {
+      "name": "risk_sub_unknown",
+      "value": "Couldn't identify"
+    },
+    {
+      "name": "verdict_source",
+      "value": "CredibleMeds-derived list · Not a medical device. Always ask your doctor or pharmacist."
+    },
+    {
+      "name": "verdict_source_short",
+      "value": "CredibleMeds-derived list · Not a medical device."
+    },
+    {
+      "name": "badge_watch",
+      "value": "WATCH"
+    },
+    {
+      "name": "badge_simulated",
+      "value": "SIMULATED"
+    },
+    {
+      "name": "badge_on_device",
+      "value": "ON-DEVICE"
+    },
+    {
+      "name": "unit_bpm",
+      "value": "bpm"
+    },
+    {
+      "name": "verdict_ask_doctor_short",
+      "value": "Ask doctor"
+    },
+    {
+      "name": "tab_sos",
+      "value": "SOS"
+    },
+    {
+      "name": "home_scan_box",
+      "value": "Scan a box"
+    },
+    {
+      "name": "home_ask",
+      "value": "Ask something"
+    },
+    {
+      "name": "home_meds_ok",
+      "value": "Medicines OK"
+    },
+    {
+      "name": "home_meds_none",
+      "value": "No medicines yet"
+    },
+    {
+      "name": "home_alarm_on",
+      "value": "Gentle alarm on"
+    },
+    {
+      "name": "home_bpm_resting",
+      "value": "bpm · resting"
+    },
+    {
+      "name": "home_bpm_active",
+      "value": "bpm · active"
+    },
+    {
+      "name": "home_bpm_asleep",
+      "value": "bpm · asleep"
+    },
+    {
+      "name": "home_bpm_waiting",
+      "value": "waiting for a reading"
+    },
+    {
+      "name": "a11y_back",
+      "value": "Back"
+    },
+    {
+      "name": "a11y_camera",
+      "value": "Scan a medicine box"
+    },
+    {
+      "name": "agent_welcome_title",
+      "value": "What's on your mind?"
+    },
+    {
+      "name": "meds_recent",
+      "value": "Recently checked"
+    },
+    {
+      "name": "meds_add_tile",
+      "value": "Add a medicine"
+    },
+    {
+      "name": "check_added",
+      "value": "In your medicines"
+    },
+    {
+      "name": "scan_title",
+      "value": "Scan a box"
+    },
+    {
+      "name": "scan_hint",
+      "value": "Point the camera at the barcode on the box."
+    },
+    {
+      "name": "scan_again",
+      "value": "Scan again"
+    },
+    {
+      "name": "scan_type_instead",
+      "value": "Type the name instead"
+    },
+    {
+      "name": "scan_found",
+      "value": "Found"
+    },
+    {
+      "name": "a11y_close",
+      "value": "Close"
+    },
+    {
+      "name": "check_failed",
+      "value": "Couldn't check that just now. Try again?"
+    },
+    {
+      "name": "check_retry",
+      "value": "Try again"
+    },
+    {
+      "name": "heart_trend",
+      "value": "Last minutes"
+    },
+    {
+      "name": "heart_only_hr",
+      "value": "Heart rate only. This app does not measure QT."
+    },
+    {
+      "name": "checkin_from_watch",
+      "value": "from your watch"
+    },
+    {
+      "name": "checkin_from_sim",
+      "value": "from simulated data"
+    },
+    {
+      "name": "checkin_fine",
+      "value": "I'm fine"
+    },
+    {
+      "name": "checkin_dizzy",
+      "value": "I feel dizzy"
+    },
+    {
+      "name": "checkin_help",
+      "value": "Call for help"
+    },
+    {
+      "name": "checkin_note",
+      "value": "If I don't hear back, I'll start the emergency countdown."
+    },
+    {
+      "name": "checkin_high",
+      "value": "High for resting"
+    },
+    {
+      "name": "checkin_low",
+      "value": "Low heart rate"
+    },
+    {
+      "name": "checkin_alert",
+      "value": "Heart-rate alert"
+    },
+    {
+      "name": "sos_label",
+      "value": "EMERGENCY"
+    },
+    {
+      "name": "em_alert_label",
+      "value": "MEDICAL ALERT"
+    },
+    {
+      "name": "em_avoid",
+      "value": "AVOID QT-prolonging drugs"
+    },
+    {
+      "name": "em_call",
+      "value": "Call"
+    },
+    {
+      "name": "em_sos_title",
+      "value": "Start SOS countdown"
+    },
+    {
+      "name": "em_sos_sub",
+      "value": "Alerts your contacts if you don't answer"
+    },
+    {
+      "name": "em_bystander_sub",
+      "value": "Step-by-step help for the person next to you"
+    },
+    {
+      "name": "em_full_card",
+      "value": "Full emergency card"
+    },
+    {
+      "name": "em_read_aloud",
+      "value": "Read the card aloud"
+    },
+    {
+      "name": "em_read_stop",
+      "value": "Stop reading"
+    },
+    {
+      "name": "em_read_unavailable",
+      "value": "No voice is available for this language right now. Show the card instead."
+    },
+    {
+      "name": "em_nearby",
+      "value": "Nearby help"
+    },
+    {
+      "name": "em_nearby_hospital",
+      "value": "Hospital"
+    },
+    {
+      "name": "em_nearby_pharmacy",
+      "value": "Pharmacy"
+    },
+    {
+      "name": "em_nearby_aed",
+      "value": "Defibrillator (AED)"
+    },
+    {
+      "name": "share_remove_title",
+      "value": "Remove this card link?"
+    },
+    {
+      "name": "share_remove_body",
+      "value": "Anyone who has the link or the QR will no longer be able to open your card. You can make a new link later."
+    },
+    {
+      "name": "share_remove_confirm",
+      "value": "Remove link"
+    },
+    {
+      "name": "em_general",
+      "value": "General emergency"
+    },
+    {
+      "name": "agent_voice_idle",
+      "value": "Tap to talk"
+    },
+    {
+      "name": "agent_voice_idle_hint",
+      "value": "Ask about a medicine, or tell me how you feel."
+    },
+    {
+      "name": "agent_voice_connecting",
+      "value": "Connecting…"
+    },
+    {
+      "name": "agent_voice_listening",
+      "value": "I'm listening"
+    },
+    {
+      "name": "agent_voice_hearing",
+      "value": "Listening…"
+    },
+    {
+      "name": "agent_voice_speaking",
+      "value": "Speaking"
+    },
+    {
+      "name": "agent_voice_muted",
+      "value": "Muted. Tap the mic to unmute."
+    },
+    {
+      "name": "agent_voice_unavailable",
+      "value": "I can't use the microphone right now."
+    },
+    {
+      "name": "agent_type_instead",
+      "value": "Type instead"
+    },
+    {
+      "name": "a11y_mute",
+      "value": "Mute microphone"
+    },
+    {
+      "name": "a11y_unmute",
+      "value": "Unmute microphone"
+    },
+    {
+      "name": "a11y_end",
+      "value": "End conversation"
+    },
+    {
+      "name": "a11y_keyboard",
+      "value": "Type instead"
+    },
+    {
+      "name": "a11y_voice",
+      "value": "Switch to voice"
+    },
+    {
+      "name": "a11y_orb",
+      "value": "The agent. Tap to talk."
+    },
+    {
+      "name": "tool_check_drug",
+      "value": "Checking %s against the QT list"
+    },
+    {
+      "name": "tool_check_drug_done",
+      "value": "Checked %s against the QT list"
+    },
+    {
+      "name": "tool_get_my_meds",
+      "value": "Looking at your medicines"
+    },
+    {
+      "name": "tool_get_my_meds_done",
+      "value": "Looked at your medicines"
+    },
+    {
+      "name": "tool_suggest_alternatives",
+      "value": "Finding options for %s"
+    },
+    {
+      "name": "tool_suggest_alternatives_done",
+      "value": "Looked for options for %s"
+    },
+    {
+      "name": "tool_explain_condition",
+      "value": "Reading your condition notes"
+    },
+    {
+      "name": "tool_explain_condition_done",
+      "value": "Read your condition notes"
+    },
+    {
+      "name": "tool_get_vitals_summary",
+      "value": "Reading your heart rate"
+    },
+    {
+      "name": "tool_get_vitals_summary_done",
+      "value": "Read your heart rate"
+    },
+    {
+      "name": "tool_scan_medicine",
+      "value": "Opening the scanner"
+    },
+    {
+      "name": "tool_scan_medicine_done",
+      "value": "Scanner ready"
+    },
+    {
+      "name": "tool_add_med",
+      "value": "Preparing %s for your list"
+    },
+    {
+      "name": "tool_add_med_done",
+      "value": "Prepared %s. Waiting for your tap"
+    },
+    {
+      "name": "tool_show_emergency_card",
+      "value": "Getting your emergency card"
+    },
+    {
+      "name": "tool_show_emergency_card_done",
+      "value": "Emergency card ready"
+    },
+    {
+      "name": "tool_start_emergency",
+      "value": "Starting the SOS countdown"
+    },
+    {
+      "name": "tool_start_emergency_done",
+      "value": "SOS countdown started"
+    },
+    {
+      "name": "tool_share_emergency_card",
+      "value": "Preparing your emergency card"
+    },
+    {
+      "name": "tool_share_emergency_card_done",
+      "value": "Emergency card ready to share"
+    },
+    {
+      "name": "tool_generic",
+      "value": "Working on it"
+    },
+    {
+      "name": "tool_generic_done",
+      "value": "Done"
+    },
+    {
+      "name": "tool_this_medicine",
+      "value": "this medicine"
+    },
+    {
+      "name": "agent_meds_title",
+      "value": "My medicines · %d"
+    },
+    {
+      "name": "agent_meds_empty",
+      "value": "No medicines saved yet."
+    },
+    {
+      "name": "agent_meds_open",
+      "value": "Open medicines"
+    },
+    {
+      "name": "agent_alt_title",
+      "value": "Options to discuss"
+    },
+    {
+      "name": "agent_alt_for",
+      "value": "Instead of %s"
+    },
+    {
+      "name": "agent_alt_none",
+      "value": "No verified alternatives on the list. Your doctor needs to choose one with you."
+    },
+    {
+      "name": "agent_alt_caveat",
+      "value": "Not listed doesn't guarantee safety. Only a doctor can switch your medicine."
+    },
+    {
+      "name": "agent_confirm_done",
+      "value": "Confirmed"
+    },
+    {
+      "name": "agent_confirm_cancelled",
+      "value": "Cancelled"
+    },
+    {
+      "name": "agent_card_sub",
+      "value": "Show it to a bystander, paramedic or doctor"
+    },
+    {
+      "name": "agent_scan_sub",
+      "value": "I'll read the name and check it"
+    },
+    {
+      "name": "agent_share_card_sub",
+      "value": "You choose where it goes. Nothing is sent until you confirm."
+    },
+    {
+      "name": "agent_card_title",
+      "value": "Emergency card"
+    },
+    {
+      "name": "widget_check_name",
+      "value": "Can I take this?"
+    },
+    {
+      "name": "widget_check_desc",
+      "value": "Scan or type a medicine to check it against the QT list."
+    },
+    {
+      "name": "widget_alert_name",
+      "value": "Medical alert"
+    },
+    {
+      "name": "widget_alert_desc",
+      "value": "Your condition, medicines and emergency call, readable by anyone."
+    },
+    {
+      "name": "widget_brand",
+      "value": "Celia.ai"
+    },
+    {
+      "name": "widget_scan_or_type",
+      "value": "Scan or type"
+    },
+    {
+      "name": "widget_open_card",
+      "value": "Open emergency card"
+    },
+    {
+      "name": "widget_help",
+      "value": "Help this person"
+    },
+    {
+      "name": "chats_title",
+      "value": "Chats"
+    },
+    {
+      "name": "chats_new",
+      "value": "New chat"
+    },
+    {
+      "name": "chats_empty",
+      "value": "No chats yet. Ask the agent something to start one."
+    },
+    {
+      "name": "chats_privacy",
+      "value": "Chats are saved only on this phone."
+    },
+    {
+      "name": "chats_untitled",
+      "value": "New chat"
+    },
+    {
+      "name": "chats_open_now",
+      "value": "Open now"
+    },
+    {
+      "name": "chats_rename",
+      "value": "Rename"
+    },
+    {
+      "name": "chats_rename_hint",
+      "value": "Chat name"
+    },
+    {
+      "name": "chats_rename_save",
+      "value": "Save"
+    },
+    {
+      "name": "chats_delete",
+      "value": "Delete"
+    },
+    {
+      "name": "chats_delete_title",
+      "value": "Delete this chat?"
+    },
+    {
+      "name": "chats_delete_body",
+      "value": "The messages are removed from this phone. Your medicines and checks stay."
+    },
+    {
+      "name": "a11y_chats",
+      "value": "Chats"
+    },
+    {
+      "name": "a11y_new_chat",
+      "value": "New chat"
+    },
+    {
+      "name": "home_chats",
+      "value": "Chats"
+    },
+    {
+      "name": "med_about",
+      "value": "What it's for"
+    },
+    {
+      "name": "med_tips",
+      "value": "Good to know"
+    },
+    {
+      "name": "med_with_mine",
+      "value": "With your medicines"
+    },
+    {
+      "name": "med_no_interactions",
+      "value": "No known interactions with your other medicines on our list."
+    },
+    {
+      "name": "med_alternatives",
+      "value": "Ask your doctor about: %s"
+    },
+    {
+      "name": "med_brands",
+      "value": "Also sold as"
+    },
+    {
+      "name": "med_unknown_body",
+      "value": "We couldn't match this name to our list, so we can't say anything about heart rhythm. Check the spelling or ask your pharmacist."
+    },
+    {
+      "name": "med_ai_button",
+      "value": "Explain it in plain words"
+    },
+    {
+      "name": "med_ai_loading",
+      "value": "Writing a plain explanation…"
+    },
+    {
+      "name": "med_ai_badge",
+      "value": "AI SUMMARY"
+    },
+    {
+      "name": "med_ai_contains",
+      "value": "What's in it"
+    },
+    {
+      "name": "med_ai_caption",
+      "value": "Generated explanation, not medical advice. The heart-rhythm badge above comes from the QT list, not from AI."
+    },
+    {
+      "name": "med_ai_offline",
+      "value": "Explanations need a connection. Everything above works offline."
+    },
+    {
+      "name": "med_ai_unknown",
+      "value": "No explanation found for this name. Check the spelling."
+    },
+    {
+      "name": "med_ai_rejected",
+      "value": "Couldn't write a safe summary for this one. The facts above are complete."
+    },
+    {
+      "name": "med_ai_failed",
+      "value": "Couldn't reach the explanation service. Try again later; everything above works offline."
+    },
+    {
+      "name": "med_check",
+      "value": "Full check"
+    },
+    {
+      "name": "med_remind",
+      "value": "Remind me"
+    },
+    {
+      "name": "med_source",
+      "value": "Facts: public patient leaflets · QT data: CredibleMeds-derived list · Not a medical device."
+    },
+    {
+      "name": "rem_progress",
+      "value": "%d of %d taken today"
+    },
+    {
+      "name": "rem_all_done",
+      "value": "All done for today"
+    },
+    {
+      "name": "rem_next",
+      "value": "Next: %s at %s"
+    },
+    {
+      "name": "rem_none_today",
+      "value": "Nothing scheduled yet"
+    },
+    {
+      "name": "rem_status_taken",
+      "value": "Taken"
+    },
+    {
+      "name": "rem_status_due",
+      "value": "Due now"
+    },
+    {
+      "name": "rem_status_missed",
+      "value": "Missed"
+    },
+    {
+      "name": "rem_status_upcoming",
+      "value": "Later"
+    },
+    {
+      "name": "rem_status_skipped",
+      "value": "Skipped"
+    },
+    {
+      "name": "rem_pick_med",
+      "value": "Which medicine"
+    },
+    {
+      "name": "rem_pick_time",
+      "value": "When"
+    },
+    {
+      "name": "rem_morning",
+      "value": "Morning"
+    },
+    {
+      "name": "rem_noon",
+      "value": "Midday"
+    },
+    {
+      "name": "rem_evening",
+      "value": "Evening"
+    },
+    {
+      "name": "rem_night",
+      "value": "Night"
+    },
+    {
+      "name": "rem_custom",
+      "value": "Other"
+    },
+    {
+      "name": "rem_gentle",
+      "value": "Gentle reminders, no sudden loud alarm. They work even when the app is closed."
+    },
+    {
+      "name": "rem_delete",
+      "value": "Delete reminder"
+    },
+    {
+      "name": "rem_add_at",
+      "value": "Remind me daily at %s"
+    },
+    {
+      "name": "share_preparing",
+      "value": "Preparing a secure link…"
+    },
+    {
+      "name": "share_card_caption",
+      "value": "End-to-end encrypted. The link stays the same until your card changes."
+    },
+    {
+      "name": "share_remove",
+      "value": "Remove this link"
+    },
+    {
+      "name": "share_removed",
+      "value": "Link removed — it no longer opens"
+    },
+    {
+      "name": "dp_send_link",
+      "value": "Send report link"
+    },
+    {
+      "name": "dp_copy_link",
+      "value": "Copy report link"
+    },
+    {
+      "name": "dp_link_caption",
+      "value": "Opens on any phone or computer. Encrypted, and it stops working after 48 hours."
+    },
+    {
+      "name": "dp_link_failed",
+      "value": "Couldn’t create the link. Check the connection, or share the text instead."
+    },
+    {
+      "name": "dp_link_copied",
+      "value": "Report link copied"
+    },
+    {
+      "name": "dp_share_text",
+      "value": "Share as text"
+    },
+    {
+      "name": "dp_link_message",
+      "value": "My Long QT safety report (opens in any browser, link works for 48 hours):"
+    },
+    {
+      "name": "med_ask",
+      "value": "Ask the agent"
+    },
+    {
+      "name": "med_ask_prompt",
+      "value": "Tell me about %s: what is it for, and is it OK with my long QT and my other medicines?"
+    },
+    {
+      "name": "scan_lookup_title",
+      "value": "Looking this box up…"
+    },
+    {
+      "name": "scan_lookup_web",
+      "value": "Searching pharmacies on the web…"
+    },
+    {
+      "name": "scan_lookup_web_caption",
+      "value": "This can take up to 20 seconds."
+    },
+    {
+      "name": "scan_candidate_title",
+      "value": "Is this your box?"
+    },
+    {
+      "name": "scan_candidate_ai_badge",
+      "value": "AI · WEB"
+    },
+    {
+      "name": "scan_candidate_ai_caption",
+      "value": "Found by a web search. Check the name matches your box."
+    },
+    {
+      "name": "scan_candidate_unconfirmed",
+      "value": "Not confirmed: %s"
+    },
+    {
+      "name": "scan_candidate_yes",
+      "value": "Yes, check it"
+    },
+    {
+      "name": "scan_candidate_no",
+      "value": "Not my box"
+    },
+    {
+      "name": "a11y_box_lookup",
+      "value": "Looking the box up online"
     }
   ]
 }

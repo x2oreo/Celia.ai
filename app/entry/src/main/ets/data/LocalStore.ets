@@ -1,4 +1,5 @@
-// On-device store. Personal data (profile, meds, contacts, events, checks) lives only here — never on a server.
+// On-device store. Personal data (profile, meds, contacts, events, checks, agent chats) lives only here — never on a
+// server.
 //
 // Reads are served from an in-memory cache; every write updates the cache and is persisted to ArkData RDB
 // (celia.db, encrypted). Before `init(context)` — and in local unit tests — the store is memory-only.
@@ -10,13 +11,17 @@ import { Medication } from '../model/Medication';
 import { AppEvent, AppEventKind } from '../model/AppEvent';
 import { ScanRecord, ScanVia } from '../model/ScanRecord';
 import { ComboKind, RiskLevel } from '../model/DrugVerdict';
+import { ChatRole, UiAction } from '../model/AgentTypes';
+import {
+  ChatSummary, MAX_CHAT_MESSAGES, MAX_CHATS, StoredChatMessage, chatTitle, keepOnRestore
+} from '../model/Chat';
 import { Listener, Listeners } from '../common/Listeners';
 import { Logger } from '../common/Logger';
 
 const log: Logger = new Logger('LocalStore');
 
 const DB_NAME: string = 'celia.db';
-const SCHEMA_VERSION: number = 1;
+const SCHEMA_VERSION: number = 2;   // 2: agent chats
 const MAX_EVENTS: number = 500;
 const MAX_SCANS: number = 300;
 
@@ -27,11 +32,26 @@ const CREATE_TABLES: string[] = [
   'CREATE TABLE IF NOT EXISTS events (id INTEGER PRIMARY KEY, ts INTEGER NOT NULL, kind TEXT NOT NULL, ' +
     'detail TEXT NOT NULL)',
   'CREATE TABLE IF NOT EXISTS scans (id INTEGER PRIMARY KEY, ts INTEGER NOT NULL, via TEXT NOT NULL, ' +
-    'query TEXT NOT NULL, ingredient TEXT NOT NULL, risk TEXT NOT NULL, combo TEXT NOT NULL)'
+    'query TEXT NOT NULL, ingredient TEXT NOT NULL, risk TEXT NOT NULL, combo TEXT NOT NULL)',
+  'CREATE TABLE IF NOT EXISTS chats (id INTEGER PRIMARY KEY, title TEXT NOT NULL, created_at INTEGER NOT NULL, ' +
+    'updated_at INTEGER NOT NULL)',
+  'CREATE TABLE IF NOT EXISTS chat_messages (id INTEGER PRIMARY KEY, chat_id INTEGER NOT NULL, ts INTEGER NOT NULL, ' +
+    'role TEXT NOT NULL, text TEXT NOT NULL, actions TEXT NOT NULL)',
+  'CREATE INDEX IF NOT EXISTS chat_messages_chat ON chat_messages (chat_id, id)'
 ];
 
 // What changed — screens subscribe with onChange() and reload only what they show.
-export type StoreTopic = 'profile' | 'meds' | 'events' | 'scans' | 'settings';
+export type StoreTopic = 'profile' | 'meds' | 'events' | 'scans' | 'settings' | 'chats';
+
+// Stored card list of a chat message; a corrupt value drops the cards, never the message. Exported for tests.
+export function parseStoredActions(raw: string): UiAction[] {
+  try {
+    const a: UiAction[] = JSON.parse(raw) as UiAction[];
+    return Array.isArray(a) ? a : [];
+  } catch (e) {
+    return [];
+  }
+}
 
 export class LocalStore {
   private static instance: LocalStore | undefined = undefined;
@@ -41,6 +61,8 @@ export class LocalStore {
   private events: AppEvent[] = [];
   private scans: ScanRecord[] = [];
   private settings: Map<string, string> = new Map<string, string>();
+  private chats: ChatSummary[] = [];
+  private chatMessages: Map<number, StoredChatMessage[]> = new Map<number, StoredChatMessage[]>();
   private nextId: number = 1;
   private rdb: relationalStore.RdbStore | undefined = undefined;
   private ready: Promise<void> = Promise.resolve();
@@ -180,6 +202,109 @@ export class LocalStore {
     this.changes.emit('settings');
   }
 
+  // ── Agent chats ──────────────────────────────────────────────────────────────────────────────
+  // Most recently used first.
+  async listChats(): Promise<ChatSummary[]> {
+    await this.ready;
+    return this.chats.slice().sort((a: ChatSummary, b: ChatSummary) => b.updatedAt - a.updatedAt);
+  }
+
+  async getChat(id: number): Promise<ChatSummary | undefined> {
+    await this.ready;
+    return this.chats.find((c: ChatSummary) => c.id === id);
+  }
+
+  async createChat(): Promise<ChatSummary> {
+    await this.ready;
+    const now: number = Date.now();
+    const chat: ChatSummary = { id: this.nextId++, title: '', createdAt: now, updatedAt: now, messageCount: 0 };
+    this.chats.push(chat);
+    this.chatMessages.set(chat.id, []);
+    const row: relationalStore.ValuesBucket = {
+      id: chat.id, title: chat.title, created_at: chat.createdAt, updated_at: chat.updatedAt
+    };
+    await this.safeInsert('chats', row);
+    await this.trimChats(chat.id);
+    this.changes.emit('chats');
+    return chat;
+  }
+
+  async listChatMessages(chatId: number): Promise<StoredChatMessage[]> {
+    await this.ready;
+    return (this.chatMessages.get(chatId) ?? []).slice();
+  }
+
+  // Appends a message. The first user message names the chat; only display cards are kept (keepOnRestore).
+  async addChatMessage(chatId: number, role: ChatRole, text: string, actions: UiAction[]): Promise<void> {
+    await this.ready;
+    const chat: ChatSummary | undefined = this.chats.find((c: ChatSummary) => c.id === chatId);
+    if (chat === undefined) {
+      return;
+    }
+    const msg: StoredChatMessage = {
+      id: this.nextId++, chatId: chatId, role: role, text: text, ts: Date.now(),
+      actions: actions.filter((a: UiAction) => keepOnRestore(a))
+    };
+    let list: StoredChatMessage[] = this.chatMessages.get(chatId) ?? [];
+    list.push(msg);
+    if (list.length > MAX_CHAT_MESSAGES) {
+      const drop: StoredChatMessage[] = list.slice(0, list.length - MAX_CHAT_MESSAGES);
+      list = list.slice(list.length - MAX_CHAT_MESSAGES);
+      for (const d of drop) {
+        await this.safeExec('DELETE FROM chat_messages WHERE id = ?', [d.id]);
+      }
+    }
+    this.chatMessages.set(chatId, list);
+    chat.updatedAt = msg.ts;
+    chat.messageCount = list.length;
+    if (chat.title === '' && role === 'user' && text.trim().length > 0) {
+      chat.title = chatTitle(text);
+    }
+    const row: relationalStore.ValuesBucket = {
+      id: msg.id, chat_id: chatId, ts: msg.ts, role: role, text: text, actions: JSON.stringify(msg.actions)
+    };
+    await this.safeInsert('chat_messages', row);
+    await this.safeExec('UPDATE chats SET title = ?, updated_at = ? WHERE id = ?', [chat.title, chat.updatedAt, chatId]);
+    this.changes.emit('chats');
+  }
+
+  async renameChat(chatId: number, title: string): Promise<void> {
+    await this.ready;
+    const chat: ChatSummary | undefined = this.chats.find((c: ChatSummary) => c.id === chatId);
+    const t: string = chatTitle(title);
+    if (chat === undefined || t.length === 0) {
+      return;
+    }
+    chat.title = t;
+    await this.safeExec('UPDATE chats SET title = ? WHERE id = ?', [t, chatId]);
+    this.changes.emit('chats');
+  }
+
+  async deleteChat(chatId: number): Promise<void> {
+    await this.ready;
+    this.chats = this.chats.filter((c: ChatSummary) => c.id !== chatId);
+    this.chatMessages.delete(chatId);
+    await this.safeExec('DELETE FROM chat_messages WHERE chat_id = ?', [chatId]);
+    await this.safeExec('DELETE FROM chats WHERE id = ?', [chatId]);
+    this.changes.emit('chats');
+  }
+
+  // Keeps at most MAX_CHATS: the least recently used go first (never `keep`, the chat just opened).
+  private async trimChats(keep: number): Promise<void> {
+    while (this.chats.length > MAX_CHATS) {
+      const oldest: ChatSummary[] = this.chats.filter((c: ChatSummary) => c.id !== keep)
+        .sort((a: ChatSummary, b: ChatSummary) => a.updatedAt - b.updatedAt);
+      if (oldest.length === 0) {
+        return;
+      }
+      const id: number = oldest[0].id;
+      this.chats = this.chats.filter((c: ChatSummary) => c.id !== id);
+      this.chatMessages.delete(id);
+      await this.safeExec('DELETE FROM chat_messages WHERE chat_id = ?', [id]);
+      await this.safeExec('DELETE FROM chats WHERE id = ?', [id]);
+    }
+  }
+
   // Wipes every table (Settings → Clear all data).
   async clearAll(): Promise<void> {
     await this.ready;
@@ -188,7 +313,9 @@ export class LocalStore {
     this.events = [];
     this.scans = [];
     this.settings.clear();
-    for (const table of ['kv', 'meds', 'events', 'scans']) {
+    this.chats = [];
+    this.chatMessages.clear();
+    for (const table of ['kv', 'meds', 'events', 'scans', 'chat_messages', 'chats']) {
       await this.safeExec(`DELETE FROM ${table}`, []);
     }
     this.changes.emit('profile');
@@ -196,6 +323,7 @@ export class LocalStore {
     this.changes.emit('events');
     this.changes.emit('scans');
     this.changes.emit('settings');
+    this.changes.emit('chats');
   }
 
   // ── Persistence ──────────────────────────────────────────────────────────────────────────────
@@ -215,7 +343,8 @@ export class LocalStore {
       }
       this.rdb = store;
       await this.loadAll(store);
-      log.info(`opened ${DB_NAME} v${store.version}: ${this.meds.length} meds, ${this.scans.length} checks`);
+      log.info(`opened ${DB_NAME} v${store.version}: ${this.meds.length} meds, ${this.scans.length} checks, ` +
+        `${this.chats.length} chats`);
     } catch (e) {
       // Keep the app usable: memory-only store for this session.
       log.error(`RDB open failed, memory-only: ${JSON.stringify(e)}`);
@@ -224,8 +353,8 @@ export class LocalStore {
   }
 
   private async loadAll(store: relationalStore.RdbStore): Promise<void> {
+    let maxId: number = 0;
     try {
-      let maxId: number = 0;
 
       const kv: relationalStore.ResultSet = await store.querySql('SELECT k, v FROM kv', []);
       while (kv.goToNextRow()) {
@@ -284,9 +413,52 @@ export class LocalStore {
       }
       scans.close();
 
-      this.nextId = maxId + 1;
+      const chats: relationalStore.ResultSet = await store.querySql('SELECT * FROM chats ORDER BY id', []);
+      while (chats.goToNextRow()) {
+        const c: ChatSummary = {
+          id: chats.getLong(chats.getColumnIndex('id')),
+          title: chats.getString(chats.getColumnIndex('title')),
+          createdAt: chats.getLong(chats.getColumnIndex('created_at')),
+          updatedAt: chats.getLong(chats.getColumnIndex('updated_at')),
+          messageCount: 0
+        };
+        maxId = Math.max(maxId, c.id);
+        this.chats.push(c);
+        this.chatMessages.set(c.id, []);
+      }
+      chats.close();
+
+      const msgs: relationalStore.ResultSet = await store.querySql('SELECT * FROM chat_messages ORDER BY id', []);
+      while (msgs.goToNextRow()) {
+        const id: number = msgs.getLong(msgs.getColumnIndex('id'));
+        maxId = Math.max(maxId, id);
+        const role: string = msgs.getString(msgs.getColumnIndex('role'));
+        if (role !== 'user' && role !== 'assistant') {
+          continue;   // one bad row never loses the rest of the history
+        }
+        const m: StoredChatMessage = {
+          id: id,
+          chatId: msgs.getLong(msgs.getColumnIndex('chat_id')),
+          role: role as ChatRole,
+          text: msgs.getString(msgs.getColumnIndex('text')),
+          ts: msgs.getLong(msgs.getColumnIndex('ts')),
+          actions: parseStoredActions(msgs.getString(msgs.getColumnIndex('actions')))
+        };
+        const list: StoredChatMessage[] | undefined = this.chatMessages.get(m.chatId);
+        if (list !== undefined) {
+          list.push(m);
+        }
+      }
+      msgs.close();
+      for (const c of this.chats) {
+        c.messageCount = (this.chatMessages.get(c.id) ?? []).length;
+      }
+
     } catch (e) {
       log.error(`load failed: ${JSON.stringify(e)}`);
+    } finally {
+      // Always past every id seen, so a partial load can never reuse a primary key.
+      this.nextId = Math.max(this.nextId, maxId + 1);
     }
   }
 

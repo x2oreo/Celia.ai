@@ -1,9 +1,11 @@
 // Privacy (F-45, F-46): app lock switch and "What left my phone" — the ledger of every outbound request.
 
-import { Ledger, LedgerEntry } from '../privacy/Ledger';
+import { Ledger, LedgerEntry, ledgerReport } from '../privacy/Ledger';
+import { common } from '@kit.AbilityKit';
+import { shareText } from '../common/Share';
 import { AppLock } from '../common/AppLock';
 import { dateTime } from '../common/Format';
-import { SectionHeader } from '../components/Common';
+import { SecondaryButton, SectionHeader } from '../components/Common';
 import { toast } from '../common/Toast';
 
 @ComponentV2
@@ -30,22 +32,23 @@ export struct PrivacyPage {
             Image($r('app.media.ic_lock')).width(32).height(32).fillColor($r('app.color.brand_accent'))
             Text($r('app.string.privacy_promise'))
               .fontSize($r('app.float.font_body'))
-              .fontColor($r('sys.color.font_primary'))
+              .fontColor($r('app.color.ink'))
           }
           .width('100%')
           .alignItems(HorizontalAlign.Start)
           .padding(16)
-          .backgroundColor($r('app.color.card_bg'))
+          .backgroundColor($r('app.color.surface'))
+          .border({ width: 1, color: $r('app.color.border') })
           .borderRadius($r('app.float.radius_m'))
 
           Row() {
             Column({ space: 2 }) {
               Text($r('app.string.privacy_lock'))
                 .fontSize($r('app.float.font_body'))
-                .fontColor($r('sys.color.font_primary'))
+                .fontColor($r('app.color.ink'))
               Text($r('app.string.privacy_lock_hint'))
                 .fontSize($r('app.float.font_caption'))
-                .fontColor($r('sys.color.font_secondary'))
+                .fontColor($r('app.color.ink_3'))
             }
             .alignItems(HorizontalAlign.Start)
             .layoutWeight(1)
@@ -61,7 +64,8 @@ export struct PrivacyPage {
           }
           .width('100%')
           .padding(16)
-          .backgroundColor($r('app.color.card_bg'))
+          .backgroundColor($r('app.color.surface'))
+          .border({ width: 1, color: $r('app.color.border') })
           .borderRadius($r('app.float.radius_m'))
 
           SectionHeader({
@@ -75,10 +79,11 @@ export struct PrivacyPage {
           if (this.loaded && this.entries.length === 0) {
             Text($r('app.string.privacy_empty'))
               .fontSize($r('app.float.font_body'))
-              .fontColor($r('sys.color.font_secondary'))
+              .fontColor($r('app.color.ink_3'))
               .width('100%')
               .padding(16)
-              .backgroundColor($r('app.color.card_bg'))
+              .backgroundColor($r('app.color.surface'))
+              .border({ width: 1, color: $r('app.color.border') })
               .borderRadius($r('app.float.radius_m'))
           }
           ForEach(this.entries, (e: LedgerEntry) => {
@@ -87,23 +92,33 @@ export struct PrivacyPage {
                 Text(e.endpoint)
                   .fontSize($r('app.float.font_body'))
                   .fontWeight(FontWeight.Medium)
-                  .fontColor($r('sys.color.font_primary'))
+                  .fontColor($r('app.color.ink'))
                   .layoutWeight(1)
                 Text(e.outcome)
                   .fontSize($r('app.float.font_caption'))
-                  .fontColor(e.outcome === 'BLOCKED' ? $r('app.color.risk_known') : $r('sys.color.font_secondary'))
+                  .fontColor(e.outcome === 'BLOCKED' ? $r('app.color.risk_known') : $r('app.color.ink_3'))
               }
               .width('100%')
               Text(`${dateTime(e.ts, Date.now())} · sent: ${e.fields.join(', ')} · ${e.bytes} B`)
                 .fontSize($r('app.float.font_caption'))
-                .fontColor($r('sys.color.font_secondary'))
+                .fontColor($r('app.color.ink_3'))
             }
             .width('100%')
             .alignItems(HorizontalAlign.Start)
             .padding(14)
-            .backgroundColor($r('app.color.card_bg'))
+            .backgroundColor($r('app.color.surface'))
+            .border({ width: 1, color: $r('app.color.border') })
             .borderRadius($r('app.float.radius_m'))
           }, (e: LedgerEntry) => `${e.ts}-${e.endpoint}`)
+          if (this.entries.length > 0) {
+            SecondaryButton({
+              label: $r('app.string.privacy_export'),
+              onTap: () => {
+                const ctx: common.UIAbilityContext = this.getUIContext().getHostContext() as common.UIAbilityContext;
+                shareText(ctx, 'Celia privacy ledger', ledgerReport(this.entries));
+              }
+            })
+          }
         }
         .padding({ left: 16, right: 16, bottom: 32 })
         .width('100%')
@@ -114,6 +129,6 @@ export struct PrivacyPage {
       .scrollBar(BarState.Off)
     }
     .title($r('app.string.privacy_nav'))
-    .backgroundColor($r('app.color.page_bg'))
+    .backgroundColor($r('app.color.bg'))
   }
 }
