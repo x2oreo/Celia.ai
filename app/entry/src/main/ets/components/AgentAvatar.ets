@@ -10,10 +10,10 @@ export struct AgentAvatar {
   @Local out: boolean = false;
 
   build() {
-    Circle()
+    Row()
       .width(this.dim)
       .height(this.dim)
-      .fillOpacity(0)
+      .borderRadius(this.dim / 2)
       .radialGradient({
         center: [this.dim * 0.35, this.dim * 0.3],
         radius: this.dim * 0.8,
@@ -23,7 +23,6 @@ export struct AgentAvatar {
           [$r('app.color.orb_dark'), 1]
         ]
       })
-      .clipShape(new CircleShape({ width: this.dim, height: this.dim }))
       .scale({ x: this.out ? 1.04 : 0.92, y: this.out ? 1.04 : 0.92 })
       .opacity(this.out ? 1 : 0.92)
       .animation(this.breathing && !Motion.reduced ? {

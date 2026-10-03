@@ -14,15 +14,17 @@ export class Routes {
   static readonly PRIVACY: string = 'privacy';
   static readonly SYMPTOM_LOG: string = 'symptomLog';
   static readonly REMINDERS: string = 'reminders';
+  static readonly AGENT_CHAT: string = 'agentChat';
+  static readonly SCAN: string = 'scan';
 }
 
-// Tab indexes of components/MainTabs.ets.
+// Tab indexes of components/MainTabs.ets. The first tab is the agent's home; the chat itself is a pushed page
+// (Routes.AGENT_CHAT).
 export class TabIndex {
   static readonly HOME: number = 0;
   static readonly MEDICINES: number = 1;
   static readonly HEART: number = 2;
   static readonly EMERGENCY: number = 3;
-  static readonly AGENT: number = 4;
 }
 
 export class SosParam {

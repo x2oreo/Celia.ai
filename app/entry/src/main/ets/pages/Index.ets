@@ -14,6 +14,7 @@ import { PharmacyCardPage } from './PharmacyCardPage';
 import { PrivacyPage } from './PrivacyPage';
 import { SymptomLogPage } from './SymptomLogPage';
 import { RemindersPage } from './RemindersPage';
+import { AgentPage } from './AgentPage';
 import { LockScreen } from '../components/LockScreen';
 import { Routes, SosParam } from '../common/Routes';
 import { LocalStore } from '../data/LocalStore';
@@ -26,6 +27,7 @@ import { askNotificationPermission } from '../common/Notify';
 import { AppLock } from '../common/AppLock';
 import { ReminderService } from '../reminders/ReminderService';
 import { AgentCore } from '../agent/AgentCore';
+import { AgentPrompt } from '../agent/AgentPrompt';
 import { AgentReply, EmergencyPayload, UiAction } from '../model/AgentTypes';
 
 @Entry
@@ -40,6 +42,7 @@ struct Index {
     WearNotifier.start();
     VitalsService.get().onAlert((a: VitalsAlert) => this.onAlert(a));
     AgentCore.get().onProactive((r: AgentReply) => this.onAgentProactive(r));
+    AgentPrompt.onOpenChat(() => this.openChat());
     askNotificationPermission(this.getUIContext().getHostContext() as common.UIAbilityContext);
     AppLock.onLockChange((locked: boolean) => {
       this.locked = locked;
@@ -56,6 +59,15 @@ struct Index {
     if (profile === undefined) {
       this.navStack.pushPathByName(Routes.ONBOARDING, null, false);
     }
+  }
+
+  // "Ask the agent" from anywhere: bring the chat page to the front (once).
+  private openChat(): void {
+    const names: string[] = this.navStack.getAllPathName();
+    if (names.length > 0 && names[names.length - 1] === Routes.AGENT_CHAT) {
+      return;
+    }
+    this.navStack.pushPathByName(Routes.AGENT_CHAT, null);
   }
 
   // CRITICAL heart alert → wrist/phone alert + SOS countdown (unless one is running or in cooldown).
@@ -103,6 +115,8 @@ struct Index {
       SymptomLogPage()
     } else if (name === Routes.REMINDERS) {
       RemindersPage()
+    } else if (name === Routes.AGENT_CHAT) {
+      AgentPage()
     }
   }
 
@@ -113,7 +127,7 @@ struct Index {
       }
       .hideTitleBar(true)
       .mode(NavigationMode.Stack)
-      .backgroundColor($r('app.color.page_bg'))
+      .backgroundColor($r('app.color.bg'))
       .navDestination(this.routeMap)
 
       // App lock (F-45): covers private data; the emergency card and bystander help stay reachable from it.

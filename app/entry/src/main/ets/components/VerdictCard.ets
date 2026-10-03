@@ -48,10 +48,11 @@ export struct VerdictCard {
   }
 
   private title(v: DrugVerdict): string {
-    if (v.ingredient === '') {
-      return v.query;
+    const name: string = v.query.length > 0 ? v.query.charAt(0).toUpperCase() + v.query.slice(1) : v.query;
+    if (v.ingredient === '' || v.query.toLowerCase() === v.ingredient.toLowerCase()) {
+      return name;
     }
-    return v.query.toLowerCase() === v.ingredient.toLowerCase() ? v.ingredient : `${v.query} → ${v.ingredient}`;
+    return `${name} → ${v.ingredient}`;
   }
 
   @Builder

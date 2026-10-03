@@ -1,4 +1,4 @@
-// Agent tab: chat with Celia. Text, push-to-talk and live voice all go through AgentCore (SafetyGate first, then
+// Agent chat (design B2), a pushed page: Text, push-to-talk and live voice all go through AgentCore (SafetyGate first, then
 // the model with deterministic tools). The cards under a reply come from deterministic data, never from model
 // text: verdict, confirm-before-write, quick replies, emergency hand-off to the SOS screen, box scan.
 
@@ -12,14 +12,17 @@ import { AgentPrompt } from '../agent/AgentPrompt';
 import { MedicineScanFlow, ScanCandidate, ScanOutcome } from '../agent/MedicineScanFlow';
 import { AddMedPayload, AgentReply, ChatMessage, ChatRole, ConfirmPayload, EmergencyPayload, InteractionFinding,
   QuickRepliesPayload, UiAction, VerdictCardPayload } from '../model/AgentTypes';
-import { RiskLevel } from '../model/DrugVerdict';
 import { VoiceSession, VoiceStatus, VoiceTurn } from '../voice/VoiceSession';
 import { RealtimeSession, RealtimeStatus } from '../voice/RealtimeSession';
 import { SosController } from '../emergency/SosController';
 import { CheckParam, Routes, SosParam, TabIndex } from '../common/Routes';
+import { TabRequest } from '../common/TabRequest';
 import { Config } from '../common/Config';
 import { Logger } from '../common/Logger';
-import { RiskBadge } from '../components/Common';
+import { DrugVerdict, RiskLevel } from '../model/DrugVerdict';
+import { InkButton, QuickReplyChip, SecondaryButton, SourceBadge, StatusStrip, TypingDots } from '../components/Common';
+import { AgentAvatar } from '../components/AgentAvatar';
+import { VerdictCard } from '../components/VerdictCard';
 
 const log: Logger = new Logger('AgentPage');
 
@@ -43,7 +46,6 @@ class ChatItem {
 @ComponentV2
 export struct AgentPage {
   @Consumer('navStack') navStack: NavPathStack = new NavPathStack();
-  @Consumer('tabIndex') activeTab: number = TabIndex.AGENT;
   @Local items: ChatItem[] = [];
   @Local draft: string = '';
   @Local busy: boolean = false;
@@ -264,91 +266,6 @@ export struct AgentPage {
 
   // ---- builders ------------------------------------------------------------------------------------------------
 
-  @Builder
-  avatar(size: number) {
-    Stack() {
-      Circle().width(size).height(size).fill($r('app.color.brand_accent_soft'))
-      Circle().width(size * 0.4).height(size * 0.4).fill($r('app.color.brand_accent'))
-    }
-    .width(size)
-    .height(size)
-  }
-
-  @Builder
-  chip(label: ResourceStr, escalation: boolean, onTap: () => void) {
-    Text(label)
-      .fontSize($r('app.float.font_small'))
-      .fontWeight(escalation ? FontWeight.Bold : FontWeight.Medium)
-      .fontColor(escalation ? $r('app.color.risk_known') : $r('sys.color.font_primary'))
-      .height(44)
-      .padding({ left: 16, right: 16 })
-      .borderRadius(22)
-      .borderWidth(1.5)
-      .borderColor(escalation ? $r('app.color.risk_known') : $r('app.color.divider'))
-      .backgroundColor($r('app.color.card_bg'))
-      .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.97 })
-      .onClick(onTap)
-  }
-
-  @Builder
-  inkButton(label: ResourceStr, filled: boolean, onTap: () => void) {
-    Text(label)
-      .fontSize($r('app.float.font_small'))
-      .fontWeight(FontWeight.Bold)
-      .fontColor(filled ? $r('app.color.chat_user_text') : $r('sys.color.font_primary'))
-      .textAlign(TextAlign.Center)
-      .layoutWeight(1)
-      .height(44)
-      .borderRadius($r('app.float.radius_s'))
-      .borderWidth(filled ? 0 : 1.5)
-      .borderColor($r('app.color.divider'))
-      .backgroundColor(filled ? $r('app.color.chat_user_bg') : $r('app.color.card_bg'))
-      .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.97 })
-      .onClick(onTap)
-  }
-
-  @Builder
-  verdictCard(a: UiAction) {
-    Column({ space: 8 }) {
-      RiskBadge({ risk: this.vp(a).combinedRisk as RiskLevel })
-      Text(this.verdictTitle(this.vp(a)))
-        .fontSize($r('app.float.font_body'))
-        .fontWeight(FontWeight.Bold)
-        .fontColor($r('sys.color.font_primary'))
-      Text(this.vp(a).reason)
-        .fontSize($r('app.float.font_small'))
-        .fontColor($r('sys.color.font_secondary'))
-        .lineHeight(20)
-      if (this.vp(a).findings.length > 0) {
-        Text($r('app.string.agent_findings'))
-          .fontSize($r('app.float.font_caption'))
-          .fontWeight(FontWeight.Bold)
-          .fontColor($r('sys.color.font_secondary'))
-        ForEach(this.vp(a).findings, (f: InteractionFinding) => {
-          Text(`• ${f.detail}`)
-            .fontSize($r('app.float.font_small'))
-            .fontColor($r('sys.color.font_primary'))
-        }, (f: InteractionFinding, i: number) => `${i}-${f.kind}`)
-      }
-      Row() {
-        this.inkButton($r('app.string.agent_open_check'), true, () => {
-          this.navStack.pushPathByName(Routes.CHECK_RESULT, new CheckParam(this.vp(a).query, false, 'CHAT'));
-        })
-      }
-      .width('100%')
-      Text(this.vp(a).source + ' · ' + this.str($r('app.string.disclaimer')))
-        .fontSize($r('app.float.font_caption'))
-        .fontColor($r('sys.color.font_tertiary'))
-    }
-    .alignItems(HorizontalAlign.Start)
-    .width('100%')
-    .padding({ left: 14, right: 14, top: 12, bottom: 12 })
-    .backgroundColor($r('app.color.card_bg'))
-    .borderRadius(20)
-    .borderWidth(1.5)
-    .borderColor(this.riskBorder(this.vp(a).combinedRisk as RiskLevel))
-  }
-
   private vp(a: UiAction): VerdictCardPayload {
     return JSON.parse(a.payload) as VerdictCardPayload;
   }
@@ -357,49 +274,80 @@ export struct AgentPage {
     return JSON.parse(a.payload) as AddMedPayload;
   }
 
-  private verdictTitle(p: VerdictCardPayload): string {
+  // The card payload carries the deterministic verdict; the colour and word come from it, never from model text.
+  private verdictOf(p: VerdictCardPayload): DrugVerdict {
     const brand: string = p.query.length > 0 ? p.query.charAt(0).toUpperCase() + p.query.slice(1) : p.query;
-    if (p.ingredient === '' || p.ingredient === p.query.toLowerCase()) {
-      return p.ingredient === '' ? brand : p.ingredient;
-    }
-    return `${brand} → ${p.ingredient}`;
+    const v: DrugVerdict = {
+      query: brand,
+      ingredient: p.ingredient,
+      risk: p.combinedRisk as RiskLevel,
+      reason: p.reason,
+      source: p.source
+    };
+    return v;
   }
 
-  private riskBorder(risk: RiskLevel): Resource {
-    switch (risk) {
-      case 'KNOWN_RISK':
-        return $r('app.color.risk_known_soft');
-      case 'POSSIBLE_RISK':
-        return $r('app.color.risk_possible_soft');
-      case 'CONDITIONAL_RISK':
-        return $r('app.color.risk_conditional_soft');
-      case 'NOT_LISTED':
-        return $r('app.color.risk_not_listed_soft');
-      default:
-        return $r('app.color.risk_unknown_soft');
+  @Builder
+  verdictCard(a: UiAction) {
+    Column({ space: 8 }) {
+      VerdictCard({
+        verdict: this.verdictOf(this.vp(a)),
+        variant: 'INLINE',
+        actionLabel: $r('app.string.agent_open_check'),
+        onAction: () => {
+          this.navStack.pushPathByName(Routes.CHECK_RESULT, new CheckParam(this.vp(a).query, false, 'CHAT'));
+        }
+      })
+      if (this.vp(a).findings.length > 0) {
+        Column({ space: 4 }) {
+          Text($r('app.string.agent_findings'))
+            .fontSize($r('app.float.font_caption'))
+            .fontWeight(FontWeight.Bold)
+            .fontColor($r('app.color.risk_possible_text'))
+          ForEach(this.vp(a).findings, (f: InteractionFinding) => {
+            Text(`• ${f.detail}`)
+              .fontSize($r('app.float.font_small'))
+              .fontColor($r('app.color.ink_2'))
+          }, (f: InteractionFinding, i: number) => `${i}-${f.kind}`)
+        }
+        .alignItems(HorizontalAlign.Start)
+        .width('100%')
+        .padding(12)
+        .backgroundColor($r('app.color.risk_possible_tint'))
+        .borderRadius($r('app.float.radius_s'))
+      }
     }
+    .width('100%')
   }
 
   @Builder
   confirmCard(title: ResourceStr, detail: string, actionId: string) {
     Column({ space: 10 }) {
       Text(title)
-        .fontSize($r('app.float.font_body'))
+        .fontSize($r('app.float.font_headline'))
         .fontWeight(FontWeight.Bold)
-        .fontColor($r('sys.color.font_primary'))
+        .fontColor($r('app.color.ink'))
       if (detail !== '') {
         Text(detail)
           .fontSize($r('app.float.font_small'))
-          .fontColor($r('sys.color.font_secondary'))
+          .fontColor($r('app.color.ink_2'))
       }
       if (!this.resolved.includes(actionId)) {
         Row({ space: 8 }) {
-          this.inkButton($r('app.string.agent_confirm'), true, () => {
-            this.resolve(actionId, true);
+          InkButton({
+            label: $r('app.string.agent_confirm'),
+            onTap: () => {
+              this.resolve(actionId, true);
+            }
           })
-          this.inkButton($r('app.string.agent_cancel'), false, () => {
-            this.resolve(actionId, false);
+            .layoutWeight(1)
+          SecondaryButton({
+            label: $r('app.string.agent_cancel'),
+            onTap: () => {
+              this.resolve(actionId, false);
+            }
           })
+            .layoutWeight(1)
         }
         .width('100%')
       }
@@ -407,10 +355,9 @@ export struct AgentPage {
     .alignItems(HorizontalAlign.Start)
     .width('100%')
     .padding(14)
-    .backgroundColor($r('app.color.card_bg'))
-    .borderRadius(20)
-    .borderWidth(1)
-    .borderColor($r('app.color.divider'))
+    .backgroundColor($r('app.color.surface'))
+    .borderRadius($r('app.float.radius_ml'))
+    .border({ width: 1, color: $r('app.color.border') })
   }
 
   @Builder
@@ -420,8 +367,12 @@ export struct AgentPage {
     } else if (a.type === 'QUICK_REPLIES') {
       Flex({ wrap: FlexWrap.Wrap, space: { main: LengthMetrics.vp(8), cross: LengthMetrics.vp(8) } }) {
         ForEach((JSON.parse(a.payload) as QuickRepliesPayload).options, (o: string) => {
-          this.chip(o, o === QUICK_REPLY_UNWELL, () => {
-            this.send(o);
+          QuickReplyChip({
+            label: o,
+            chipStyle: o === QUICK_REPLY_UNWELL ? 'ESCALATION' : 'DEFAULT',
+            onTap: () => {
+              this.send(o);
+            }
           })
         }, (o: string) => o)
       }
@@ -436,43 +387,62 @@ export struct AgentPage {
         Text(ts > this.sosClosedAt ? $r('app.string.agent_emergency_started') : $r('app.string.agent_emergency_cancelled'))
           .fontSize($r('app.float.font_small'))
           .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.risk_known'))
+          .fontColor($r('app.color.risk_known_text'))
           .layoutWeight(1)
         if (ts > this.sosClosedAt) {
-          this.chip($r('app.string.agent_open_sos'), true, () => {
-            this.openSos(a);
+          QuickReplyChip({
+            label: $r('app.string.agent_open_sos'),
+            chipStyle: 'ESCALATION',
+            onTap: () => {
+              this.openSos(a);
+            }
           })
         }
       }
       .width('100%')
     } else if (a.type === 'SHOW_EMERGENCY_CARD') {
-      this.chip($r('app.string.agent_open_card'), false, () => {
-        this.activeTab = TabIndex.EMERGENCY;
+      QuickReplyChip({
+        label: $r('app.string.agent_open_card'),
+        onTap: () => {
+          this.navStack.clear();
+          TabRequest.open(TabIndex.EMERGENCY);
+        }
       })
     } else if (a.type === 'OPEN_MED_SCAN') {
-      this.chip($r('app.string.agent_scan'), false, () => {
-        this.pickAndScan();
+      QuickReplyChip({
+        label: $r('app.string.agent_scan'),
+        icon: $r('app.media.ic_camera'),
+        onTap: () => {
+          this.pickAndScan();
+        }
       })
     }
   }
 
+  // User turns are ink bubbles with the tail bottom-right. The agent speaks in plain text, no bubble.
   @Builder
   bubble(item: ChatItem) {
-    Column({ space: 8 }) {
+    Column({ space: 10 }) {
       if (item.text.length > 0) {
-        Text(item.text)
-          .fontSize($r('app.float.font_body'))
-          .lineHeight(23)
-          .fontColor(item.role === 'user' ? $r('app.color.chat_user_text') : $r('sys.color.font_primary'))
-          .padding({ left: 14, right: 14, top: 10, bottom: 10 })
-          .backgroundColor(item.role === 'user' ? $r('app.color.chat_user_bg') : $r('app.color.card_bg'))
-          .borderWidth(item.role === 'user' ? 0 : 1)
-          .borderColor($r('app.color.divider'))
-          .borderRadius(item.role === 'user' ?
-            { topLeft: 20, topRight: 20, bottomRight: 6, bottomLeft: 20 } :
-            { topLeft: 6, topRight: 20, bottomRight: 20, bottomLeft: 20 })
-          .constraintSize({ maxWidth: '85%' })
-          .copyOption(CopyOptions.LocalDevice)
+        if (item.role === 'user') {
+          Text(item.text)
+            .fontSize($r('app.float.font_button'))
+            .lineHeight(22)
+            .fontColor($r('app.color.chat_user_text'))
+            .padding({ left: 14, right: 14, top: 10, bottom: 10 })
+            .backgroundColor($r('app.color.chat_user_bg'))
+            .borderRadius({ topLeft: 20, topRight: 20, bottomRight: 6, bottomLeft: 20 })
+            .constraintSize({ maxWidth: '82%' })
+            .copyOption(CopyOptions.LocalDevice)
+        } else {
+          Text(item.text)
+            .fontSize($r('app.float.font_body'))
+            .fontWeight(FontWeight.Medium)
+            .lineHeight(23)
+            .fontColor($r('app.color.ink'))
+            .constraintSize({ maxWidth: '92%' })
+            .copyOption(CopyOptions.LocalDevice)
+        }
       }
       ForEach(item.actions, (a: UiAction) => {
         this.actionView(a, item.ts)
@@ -480,9 +450,12 @@ export struct AgentPage {
       if (item.candidates.length > 0) {
         Flex({ wrap: FlexWrap.Wrap, space: { main: LengthMetrics.vp(8), cross: LengthMetrics.vp(8) } }) {
           ForEach(item.candidates, (c: ScanCandidate) => {
-            this.chip(c.ingredient !== '' && c.ingredient !== c.name.toLowerCase() ? `${c.name} (${c.ingredient})` :
-              c.name, false, () => {
-              this.pickCandidate(c);
+            QuickReplyChip({
+              label: c.ingredient !== '' && c.ingredient !== c.name.toLowerCase() ? `${c.name} (${c.ingredient})` :
+                c.name,
+              onTap: () => {
+                this.pickCandidate(c);
+              }
             })
           }, (c: ScanCandidate) => c.name)
         }
@@ -493,172 +466,181 @@ export struct AgentPage {
   }
 
   @Builder
-  welcome() {
-    Column({ space: 16 }) {
-      this.avatar(96)
-      Text($r('app.string.agent_welcome'))
-        .fontSize($r('app.float.font_body'))
-        .lineHeight(23)
-        .fontColor($r('sys.color.font_primary'))
-        .textAlign(TextAlign.Center)
-      Flex({ wrap: FlexWrap.Wrap, justifyContent: FlexAlign.Center,
-        space: { main: LengthMetrics.vp(8), cross: LengthMetrics.vp(8) } }) {
-        this.chip($r('app.string.agent_starter_ibuprofen'), false, () => {
-          this.send(this.str($r('app.string.agent_starter_ibuprofen')));
-        })
-        this.chip($r('app.string.agent_starter_avoid'), false, () => {
-          this.send(this.str($r('app.string.agent_starter_avoid')));
-        })
-        this.chip($r('app.string.agent_starter_meds'), false, () => {
-          this.send(this.str($r('app.string.agent_starter_meds')));
-        })
-        this.chip($r('app.string.agent_scan'), false, () => {
-          this.pickAndScan();
-        })
+  starter(label: Resource) {
+    QuickReplyChip({
+      label: label,
+      onTap: () => {
+        this.send(this.str(label));
       }
-    }
-    .width('100%')
-    .padding({ top: 32, left: 8, right: 8 })
+    })
   }
 
   @Builder
-  statusStrip(text: ResourceStr) {
-    Row({ space: 8 }) {
-      Circle().width(8).height(8).fill($r('sys.color.font_tertiary'))
-      Text(text)
+  welcome() {
+    Column({ space: 20 }) {
+      AgentAvatar({ dim: 96 })
+      Text($r('app.string.agent_welcome_title'))
+        .fontSize($r('app.float.font_title'))
+        .fontWeight(FontWeight.Bold)
+        .fontColor($r('app.color.ink'))
+      Text($r('app.string.agent_welcome'))
         .fontSize($r('app.float.font_small'))
-        .fontWeight(FontWeight.Medium)
-        .fontColor($r('app.color.status_offline_text'))
-        .layoutWeight(1)
+        .lineHeight(20)
+        .fontColor($r('app.color.ink_3'))
+        .textAlign(TextAlign.Center)
+      Flex({ wrap: FlexWrap.Wrap, justifyContent: FlexAlign.Center,
+        space: { main: LengthMetrics.vp(8), cross: LengthMetrics.vp(8) } }) {
+        this.starter($r('app.string.agent_starter_ibuprofen'))
+        this.starter($r('app.string.agent_starter_avoid'))
+        this.starter($r('app.string.agent_starter_meds'))
+      }
     }
     .width('100%')
-    .padding({ left: 12, right: 12, top: 8, bottom: 8 })
-    .backgroundColor($r('app.color.status_offline_bg'))
-    .borderRadius($r('app.float.radius_s'))
+    .padding({ top: 40, left: 8, right: 8 })
   }
 
   @Builder
   roundButton(icon: Resource, filled: boolean, a11y: Resource) {
-    Image(icon)
-      .width(22)
-      .height(22)
-      .fillColor(filled ? $r('app.color.on_accent') : $r('app.color.brand_accent'))
-      .padding(13)
-      .width(48)
-      .height(48)
-      .borderRadius(24)
-      .backgroundColor(filled ? $r('app.color.brand_accent') : $r('app.color.brand_accent_soft'))
-      .accessibilityText(a11y)
+    Row() {
+      Image(icon)
+        .width(22)
+        .height(22)
+        .fillColor(filled ? $r('app.color.on_accent') : $r('app.color.ink'))
+    }
+    .width($r('app.float.touch_min'))
+    .height($r('app.float.touch_min'))
+    .justifyContent(FlexAlign.Center)
+    .borderRadius(24)
+    .backgroundColor(filled ? $r('app.color.brand_accent') : $r('app.color.surface'))
+    .border({ width: filled ? 0 : 1, color: $r('app.color.border') })
+    .accessibilityText(a11y)
   }
 
   build() {
-    Column() {
-      // Header
-      Row({ space: 12 }) {
-        this.avatar(40)
-        Column({ space: 2 }) {
+    NavDestination() {
+      Column() {
+        // Header: back, orb, name, technical badge, live voice
+        Row({ space: 10 }) {
+          Row() {
+            Image($r('app.media.ic_chevron_left')).width(24).height(24).fillColor($r('app.color.ink'))
+          }
+          .width($r('app.float.touch_min'))
+          .height($r('app.float.touch_min'))
+          .justifyContent(FlexAlign.Center)
+          .accessibilityText($r('app.string.a11y_back'))
+          .onClick(() => {
+            this.navStack.pop();
+          })
+          AgentAvatar({ dim: 40 })
           Text($r('app.string.agent_name'))
             .fontSize($r('app.float.font_subtitle'))
             .fontWeight(FontWeight.Bold)
-            .fontColor($r('sys.color.font_primary'))
-          Text($r('app.string.agent_status'))
-            .fontSize($r('app.float.font_caption'))
-            .fontColor($r('sys.color.font_secondary'))
-        }
-        .alignItems(HorizontalAlign.Start)
-        .layoutWeight(1)
-        Stack() {
-          this.roundButton($r('app.media.ic_wave'), this.live === 'LIVE', $r('app.string.a11y_live'))
-        }
-        .onClick(() => {
-          this.toggleLive();
-        })
-      }
-      .width('100%')
-      .padding({ left: 16, right: 16, top: 12, bottom: 8 })
-
-      if (!Config.hasBackend()) {
-        Column() {
-          this.statusStrip($r('app.string.agent_offline'))
-        }
-        .padding({ left: 16, right: 16, bottom: 8 })
-      } else if (this.live === 'LIVE' || this.live === 'CONNECTING') {
-        Column() {
-          this.statusStrip(this.live === 'LIVE' ? $r('app.string.agent_live_on') :
-            $r('app.string.agent_live_connecting'))
-        }
-        .padding({ left: 16, right: 16, bottom: 8 })
-      }
-
-      // Thread
-      List({ space: 12, scroller: this.scroller }) {
-        if (this.items.length === 0) {
-          ListItem() {
-            this.welcome()
+            .fontColor($r('app.color.ink'))
+            .layoutWeight(1)
+          if (!Config.hasBackend()) {
+            SourceBadge({ label: $r('app.string.badge_on_device') })
           }
-        }
-        ForEach(this.items, (item: ChatItem) => {
-          ListItem() {
-            this.bubble(item)
-          }
-        }, (item: ChatItem) => `${item.id}`)
-        if (this.busy || this.listening) {
-          ListItem() {
-            Row({ space: 8 }) {
-              LoadingProgress().width(20).height(20).color($r('app.color.brand_accent'))
-              Text(this.listening ? $r('app.string.agent_listening') : this.busyLabel)
-                .fontSize($r('app.float.font_small'))
-                .fontColor($r('sys.color.font_secondary'))
-            }
-          }
-        }
-      }
-      .layoutWeight(1)
-      .width('100%')
-      .padding({ left: 16, right: 16 })
-      .edgeEffect(EdgeEffect.Spring)
-
-      // Input bar
-      Row({ space: 8 }) {
-        TextInput({ text: this.draft, placeholder: $r('app.string.agent_input_hint') })
-          .layoutWeight(1)
-          .height(48)
-          .borderRadius(24)
-          .backgroundColor($r('app.color.field_bg'))
-          .fontSize($r('app.float.font_body'))
-          .enterKeyType(EnterKeyType.Send)
-          .onChange((v: string) => {
-            this.draft = v;
-          })
-          .onSubmit(() => {
-            this.send(this.draft);
-          })
-        if (this.draft.trim().length > 0) {
           Stack() {
-            this.roundButton($r('app.media.ic_send'), true, $r('app.string.a11y_send'))
+            this.roundButton($r('app.media.ic_wave'), this.live === 'LIVE', $r('app.string.a11y_live'))
           }
           .onClick(() => {
-            this.send(this.draft);
-          })
-        } else {
-          Stack() {
-            this.roundButton($r('app.media.ic_mic'), this.listening, $r('app.string.a11y_mic'))
-          }
-          .onTouch((e: TouchEvent) => {
-            if (e.type === TouchType.Down) {
-              this.micDown();
-            } else if (e.type === TouchType.Up || e.type === TouchType.Cancel) {
-              this.micUp();
-            }
+            this.toggleLive();
           })
         }
+        .width('100%')
+        .padding({ left: 4, right: 16, top: 8, bottom: 8 })
+
+        if (!Config.hasBackend()) {
+          StatusStrip({ label: $r('app.string.agent_offline') })
+            .padding({ left: 20, right: 20, bottom: 8 })
+        } else if (this.live === 'LIVE' || this.live === 'CONNECTING') {
+          StatusStrip({
+            label: this.live === 'LIVE' ? $r('app.string.agent_live_on') : $r('app.string.agent_live_connecting')
+          })
+            .padding({ left: 20, right: 20, bottom: 8 })
+        }
+
+        // Thread
+        List({ space: 16, scroller: this.scroller }) {
+          if (this.items.length === 0) {
+            ListItem() {
+              this.welcome()
+            }
+          }
+          ForEach(this.items, (item: ChatItem) => {
+            ListItem() {
+              this.bubble(item)
+            }
+          }, (item: ChatItem) => `${item.id}`)
+          if (this.busy || this.listening) {
+            ListItem() {
+              Row({ space: 10 }) {
+                AgentAvatar({ dim: 28 })
+                TypingDots({ label: this.listening ? $r('app.string.agent_listening') : this.busyLabel })
+              }
+            }
+          }
+        }
+        .layoutWeight(1)
+        .width('100%')
+        .padding({ left: 20, right: 20 })
+        .contentEndOffset(12)
+        .scrollBar(BarState.Off)
+        .edgeEffect(EdgeEffect.Spring)
+
+        // Input bar: camera, pill input, mic (send when there is text)
+        Row({ space: 8 }) {
+          Stack() {
+            this.roundButton($r('app.media.ic_camera'), false, $r('app.string.a11y_camera'))
+          }
+          .onClick(() => {
+            this.pickAndScan();
+          })
+          TextInput({ text: this.draft, placeholder: $r('app.string.agent_input_hint') })
+            .layoutWeight(1)
+            .height($r('app.float.touch_min'))
+            .borderRadius(24)
+            .backgroundColor($r('app.color.surface'))
+            .border({ width: 1, color: $r('app.color.border') })
+            .fontSize($r('app.float.font_body'))
+            .fontColor($r('app.color.ink'))
+            .placeholderColor($r('app.color.ink_4'))
+            .enterKeyType(EnterKeyType.Send)
+            .onChange((v: string) => {
+              this.draft = v;
+            })
+            .onSubmit(() => {
+              this.send(this.draft);
+            })
+          if (this.draft.trim().length > 0) {
+            Stack() {
+              this.roundButton($r('app.media.ic_send'), true, $r('app.string.a11y_send'))
+            }
+            .onClick(() => {
+              this.send(this.draft);
+            })
+          } else {
+            Stack() {
+              this.roundButton($r('app.media.ic_mic'), true, $r('app.string.a11y_mic'))
+            }
+            .scale({ x: this.listening ? 1.12 : 1, y: this.listening ? 1.12 : 1 })
+            .animation({ duration: 150, curve: Curve.EaseOut })
+            .onTouch((e: TouchEvent) => {
+              if (e.type === TouchType.Down) {
+                this.micDown();
+              } else if (e.type === TouchType.Up || e.type === TouchType.Cancel) {
+                this.micUp();
+              }
+            })
+          }
+        }
+        .width('100%')
+        .padding({ left: 16, right: 16, top: 8, bottom: 12 })
       }
       .width('100%')
-      .padding({ left: 16, right: 16, top: 8, bottom: 12 })
-      .backgroundColor($r('app.color.page_bg'))
+      .height('100%')
     }
-    .width('100%')
-    .height('100%')
-    .backgroundColor($r('app.color.page_bg'))
+    .hideTitleBar(true)
+    .backgroundColor($r('app.color.bg'))
   }
 }
