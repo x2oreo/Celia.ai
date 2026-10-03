@@ -5,7 +5,8 @@
 - Asked: research B12 (Push Kit), B13 (Live View + lock-screen medical ID), B17 (phone ↔ watch link), B18 (Account
   Kit) into `docs/research/*.md` so S4 / S1 can implement without re-researching; summarise the SOS voice path for
   B11 and ask for the Cardbeat reference before designing a conversational call. Docs only.
-- Produced: `docs/research/push-kit.md`, `live-view.md`, `phone-watch-link.md`, `account-kit.md` (each: verdict,
+- Produced: `docs/research/push-kit.md`, `live-view.md`, `phone-watch-link.md`, `account-kit.md`,
+  `sos-voice-call.md` (each: verdict,
   exact AGC steps, client and server sketches, emulator vs real phone, "Needs" list, sources). B11 summary below.
 - How: Context7 was not connected in this session. Official pages came from developer.huawei.com through the site's
   own document JSON endpoint (the rendered pages time out for WebFetch), API names were checked against the local
@@ -77,7 +78,9 @@ What it lacks:
 6. **Abuse surface remains** until B9: contacts are keyed by `device_id` with an anon insert policy; the global cap
    limits cost, not targeting.
 
-Before proposing a conversational call design: **waiting for Georgi's Cardbeat reference implementation** (asked in
-the terminal, 2026-10-03). The design should keep the facts deterministic (the agent reads from `message.ts`
-output and the profile, never invents medical content), keep the one-way call as the fallback, and add status
-callbacks + acknowledgement first, since those make even the current call honest.
+Reference received: the brief's "Cardbeat" is **Heartbeat / QTShield** (`x2oreo/heartbeat`, reviewed at `fc7d4b8`).
+Its call is also one-way TwiML `<Say>`, so there is nothing conversational to port. Its spoken address, spoken
+country ambulance number and voice-script ordering are worth re-implementing fresh. The design is in
+`docs/research/sos-voice-call.md`: stage 1 honest one-way call (script, geocoded address, AMD, status callbacks),
+stage 2 press-1 acknowledgement + escalation, stage 3 optional ConversationRelay with a closed intent set and
+deterministic answers. Twilio attribute names were checked against Twilio's docs (2026-10-03).
