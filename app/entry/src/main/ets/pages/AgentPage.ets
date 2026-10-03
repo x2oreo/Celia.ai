@@ -9,6 +9,7 @@
 import { keepOnRestore } from '../model/Chat';
 import { common } from '@kit.AbilityKit';
 import { photoAccessHelper } from '@kit.MediaLibraryKit';
+import { camera, cameraPicker } from '@kit.CameraKit';
 import { fileIo } from '@kit.CoreFileKit';
 import { image } from '@kit.ImageKit';
 import { AgentCore } from '../agent/AgentCore';
@@ -384,16 +385,36 @@ export struct AgentConversation {
 
   // ---- box scan ------------------------------------------------------------------------------------------------
 
+  // The system camera (its own UI, so the app holds no camera permission). Returns '' when the user backs out.
+  // Throws when there is no camera to open (e.g. an emulator without one).
+  private async takePhoto(): Promise<string> {
+    const profile: cameraPicker.PickerProfile = new cameraPicker.PickerProfile();
+    profile.cameraPosition = camera.CameraPosition.CAMERA_POSITION_BACK;
+    const res: cameraPicker.PickerResult =
+      await cameraPicker.pick(this.ctx(), [cameraPicker.PickerMediaType.PHOTO], profile);
+    return res.resultCode === 0 ? res.resultUri : '';
+  }
+
+  private async choosePhoto(): Promise<string> {
+    const opts: photoAccessHelper.PhotoSelectOptions = new photoAccessHelper.PhotoSelectOptions();
+    opts.MIMEType = photoAccessHelper.PhotoViewMIMETypes.IMAGE_TYPE;
+    opts.maxSelectNumber = 1;
+    const res: photoAccessHelper.PhotoSelectResult = await new photoAccessHelper.PhotoViewPicker().select(opts);
+    return res.photoUris.length > 0 ? res.photoUris[0] : '';
+  }
+
+  // Camera first; the gallery only when the camera cannot be opened.
   private async pickAndScan(): Promise<void> {
     let uri: string = '';
     try {
-      const opts: photoAccessHelper.PhotoSelectOptions = new photoAccessHelper.PhotoSelectOptions();
-      opts.MIMEType = photoAccessHelper.PhotoViewMIMETypes.IMAGE_TYPE;
-      opts.maxSelectNumber = 1;
-      const res: photoAccessHelper.PhotoSelectResult = await new photoAccessHelper.PhotoViewPicker().select(opts);
-      uri = res.photoUris.length > 0 ? res.photoUris[0] : '';
+      uri = await this.takePhoto();
     } catch (e) {
-      log.warn(`photo picker failed: ${JSON.stringify(e)}`);
+      log.warn(`camera picker failed, opening the gallery: ${JSON.stringify(e)}`);
+      try {
+        uri = await this.choosePhoto();
+      } catch (e2) {
+        log.warn(`photo picker failed: ${JSON.stringify(e2)}`);
+      }
     }
     if (uri === '') {
       return;

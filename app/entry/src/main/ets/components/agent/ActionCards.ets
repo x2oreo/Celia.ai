@@ -4,8 +4,8 @@
 import { LengthMetrics } from '@kit.ArkUI';
 import { QUICK_REPLY_UNWELL } from '../../agent/AgentCore';
 import {
-  AddMedPayload, AlternativesPayload, ConfirmPayload, InteractionFinding, MedsPayload, OpenPagePayload,
-  QuickRepliesPayload, UiAction, VerdictCardPayload
+  AddMedPayload, AlternativesPayload, ConfirmPayload, InteractionFinding, LogDosePayload, MedsPayload,
+  OpenPagePayload, QuickRepliesPayload, UiAction, VerdictCardPayload
 } from '../../model/AgentTypes';
 import { RiskLevel } from '../../model/DrugVerdict';
 import { CheckParam, DoctorPrepParam, Routes, TabIndex } from '../../common/Routes';
@@ -42,6 +42,10 @@ export struct ActionCard {
 
   private confirmId(): string {
     return (JSON.parse(this.action.payload) as ConfirmPayload).actionId;
+  }
+
+  private logDose(): LogDosePayload {
+    return JSON.parse(this.action.payload) as LogDosePayload;
   }
 
   private pagePayload(): OpenPagePayload {
@@ -111,6 +115,15 @@ export struct ActionCard {
           this.navStack.pushPathByName(Routes.TRENDS, null);
         }
       })
+    } else if (this.pagePayload().page === 'SYMPTOM_LOG') {
+      ActionTile({
+        icon: $r('app.media.ic_history'),
+        title: $r('app.string.sym_title'),
+        subtitle: $r('app.string.sym_subtitle'),
+        onTap: () => {
+          this.navStack.pushPathByName(Routes.SYMPTOM_LOG, null);
+        }
+      })
     }
   }
 
@@ -154,6 +167,20 @@ export struct ActionCard {
         },
         onCancel: () => {
           this.onResolve(this.confirmId(), false);
+        }
+      })
+    } else if (this.action.type === 'LOG_DOSE') {
+      // Nothing is written until Confirm; AgentCore re-checks the dose at tap time.
+      ConfirmCard({
+        icon: $r('app.media.ic_bell'),
+        title: $r('app.string.agent_log_dose_title'),
+        detail: `${this.logDose().medicine} ${this.logDose().time}`.trim(),
+        state: confirmStateOf(this.resolved, this.accepted, this.logDose().actionId),
+        onConfirm: () => {
+          this.onResolve(this.logDose().actionId, true);
+        },
+        onCancel: () => {
+          this.onResolve(this.logDose().actionId, false);
         }
       })
     } else if (this.action.type === 'SHOW_MEDS') {
