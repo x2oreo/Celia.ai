@@ -1,13 +1,19 @@
 // Emergency tab (F-08, F-26, F-29, F-30): call the right number for the country, SOS, bystander help, and an
-// emergency card a stranger can read — high contrast, English, and a QR link to the card viewer.
+// emergency card a stranger can read — high contrast, in the chosen card language (13), read aloud on request,
+// and a QR link to the card viewer.
 
 import { LocalStore, StoreTopic } from '../data/LocalStore';
 import { Contact, Profile } from '../model/Profile';
 import { Medication } from '../model/Medication';
 import { emergencyFor, EmergencyInfo, systemCountry } from '../common/EmergencyNumbers';
-import { cardText } from '../common/CardStrings';
+import { CARD_TEXTS, CardText, cardText } from '../common/CardStrings';
+import { cardSpeech } from '../emergency/CardSpeech';
+import { NearbyKind, nearbySearchUrl } from '../emergency/NearbyHelp';
+import { VoiceOutput } from '../voice/VoiceOutput';
+import { promptAction } from '@kit.ArkUI';
 import { medLine } from '../emergency/CardContent';
-import { cardLink } from '../emergency/CardLink';
+import { buildPayload, cardLink } from '../emergency/CardLink';
+import { ShareRecord, ShareService } from '../share/ShareService';
 import { dial } from '../common/Dialer';
 import { Routes } from '../common/Routes';
 import { NavRow, PageTitle, QuietButton, SecondaryButton, SectionHeader } from '../components/Common';
@@ -23,13 +29,22 @@ export struct EmergencyPage {
   @Consumer('navStack') navStack: NavPathStack = new NavPathStack();
   @Local profile: Profile | undefined = undefined;
   @Local meds: Medication[] = [];
-  // English for now; the other 12 languages in common/CardStrings.ets are kept for later.
-  private lang: string = 'en';
+  @Local lang: string = 'en';          // card language (Profile.cardLanguage), 13 in common/CardStrings.ets
+  @Local canSpeak: boolean = false;
+  @Local speaking: boolean = false;
+  private unsubSpeaking: () => void = () => {
+  };
   @Local showQr: boolean = false;
+  @Local shareUrl: string = '';        // short encrypted link (Supabase share); '' → the long in-link fallback
+  @Local sharing: boolean = false;
+  private shareDirty: boolean = false;
   private unsubscribe: () => void = () => {
   };
 
   aboutToAppear(): void {
+    this.unsubSpeaking = VoiceOutput.get().onSpeaking((on: boolean) => {
+      this.speaking = on;
+    });
     this.reload();
     this.unsubscribe = LocalStore.get().onChange((t: StoreTopic) => {
       if (t === 'profile' || t === 'meds') {
@@ -40,10 +55,105 @@ export struct EmergencyPage {
 
   aboutToDisappear(): void {
     this.unsubscribe();
+    this.unsubSpeaking();
+    if (this.speaking) {
+      VoiceOutput.get().stop();
+    }
+  }
+
+  private async refreshVoice(): Promise<void> {
+    this.canSpeak = await VoiceOutput.get().canSay(this.lang);
+  }
+
+  private async pickLanguage(code: string): Promise<void> {
+    if (code === this.lang) {
+      return;
+    }
+    this.lang = code;
+    if (this.speaking) {
+      await VoiceOutput.get().stop();
+    }
+    this.refreshVoice();
+    if (this.profile !== undefined) {
+      const p: Profile = this.profile;
+      p.cardLanguage = code;
+      await LocalStore.get().saveProfile(p);
+    }
+  }
+
+  private async readAloud(): Promise<void> {
+    if (this.speaking) {
+      await VoiceOutput.get().stop();
+      return;
+    }
+    const ok: boolean = await VoiceOutput.get().say(cardSpeech(cardText(this.lang), this.cardProfile(), this.meds),
+      this.lang);
+    if (!ok) {
+      toast(this.getUIContext(), $r('app.string.em_read_unavailable'));
+    }
+  }
+
+  private openNearby(kind: NearbyKind): void {
+    const ctx: common.UIAbilityContext = this.getUIContext().getHostContext() as common.UIAbilityContext;
+    ctx.openLink(nearbySearchUrl(kind)).catch((e: Error) => {
+      log.warn(`nearby open failed: ${JSON.stringify(e)}`);
+      toast(this.getUIContext(), $r('app.string.error_generic'));
+    });
+  }
+
+  private confirmRemove(): void {
+    if (this.sharing) {
+      return;
+    }
+    this.getUIContext().getPromptAction().showDialog({
+      title: this.str($r('app.string.share_remove_title')),
+      message: this.str($r('app.string.share_remove_body')),
+      buttons: [
+        { text: this.str($r('app.string.agent_cancel')), color: $r('app.color.ink_2') },
+        { text: this.str($r('app.string.share_remove_confirm')), color: $r('app.color.danger') }
+      ]
+    }).then((r: promptAction.ShowDialogSuccessResponse) => {
+      if (r.index === 1) {
+        this.removeShare();
+      }
+    }).catch((e: Error) => log.warn(`remove dialog: ${e.message}`));
   }
 
   private currentCardLink(): string {
+    if (this.shareUrl !== '') {
+      return this.shareUrl;
+    }
     return this.profile === undefined ? '' : cardLink(this.profile, this.meds, this.info().code);
+  }
+
+  // Encrypts the current card and uploads it once per change; the QR becomes a short link that scans instantly.
+  // Without a backend (or offline) the QR keeps the whole card inside the link.
+  private async refreshShare(): Promise<void> {
+    if (this.profile === undefined || !ShareService.available()) {
+      return;
+    }
+    if (this.sharing) {
+      this.shareDirty = true;   // the card changed mid-upload: upload once more when this one finishes
+      return;
+    }
+    this.sharing = true;
+    try {
+      do {
+        this.shareDirty = false;
+        const json: string = JSON.stringify(buildPayload(this.cardProfile(), this.meds, this.info().code));
+        const r: ShareRecord | undefined = await ShareService.share('card', json);
+        this.shareUrl = r !== undefined ? ShareService.url(r) : '';
+      } while (this.shareDirty);
+    } finally {
+      this.sharing = false;
+    }
+  }
+
+  private async removeShare(): Promise<void> {
+    const ok: boolean = await ShareService.revoke('card');
+    this.shareUrl = '';
+    this.showQr = false;
+    toast(this.getUIContext(), ok ? $r('app.string.share_removed') : $r('app.string.error_generic'));
   }
 
   private openCard(): void {
@@ -68,6 +178,20 @@ export struct EmergencyPage {
   private async reload(): Promise<void> {
     this.profile = await LocalStore.get().getProfile();
     this.meds = await LocalStore.get().listMeds();
+    this.lang = cardText(this.profile?.cardLanguage).code;
+    this.refreshVoice();
+    if (this.showQr) {
+      this.refreshShare();   // the card changed: upload it again (the old link is revoked)
+    }
+  }
+
+  private str(r: Resource): string {
+    try {
+      const ctx: common.UIAbilityContext = this.getUIContext().getHostContext() as common.UIAbilityContext;
+      return ctx.resourceManager.getStringSync(r.id);
+    } catch (e) {
+      return '';
+    }
   }
 
   // Builders read state through `this` so the card re-renders when the profile changes.
@@ -85,6 +209,79 @@ export struct EmergencyPage {
     if (!ok) {
       toast(this.getUIContext(), $r('app.string.emergency_dial_failed'));
     }
+  }
+
+  // Card language chips (DESIGN.md §10.2 Emergency): each language in its own name.
+  @Builder
+  languageRow() {
+    Scroll() {
+      Row({ space: 8 }) {
+        ForEach(CARD_TEXTS, (t: CardText) => {
+          Text(t.language)
+            .fontSize($r('app.float.font_small'))
+            .fontWeight(FontWeight.Medium)
+            .fontColor(this.lang === t.code ? $r('app.color.on_accent') : $r('app.color.ink'))
+            .height($r('app.float.chip_height'))
+            .padding({ left: 16, right: 16 })
+            .backgroundColor(this.lang === t.code ? $r('app.color.chat_user_bg') : $r('app.color.surface'))
+            .border({ width: this.lang === t.code ? 0 : 1, color: $r('app.color.border') })
+            .borderRadius(22)
+            .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.97 })
+            .accessibilityText(`Card language ${t.language}${this.lang === t.code ? ', selected' : ''}`)
+            .onClick(() => {
+              this.pickLanguage(t.code);
+            })
+        }, (t: CardText) => t.code)
+      }
+    }
+    .scrollable(ScrollDirection.Horizontal)
+    .scrollBar(BarState.Off)
+    .width('100%')
+  }
+
+  @Builder
+  nearbyButton(kind: NearbyKind, label: Resource) {
+    Text(label)
+      .fontSize($r('app.float.font_small'))
+      .fontWeight(FontWeight.Medium)
+      .fontColor($r('app.color.ink'))
+      .textAlign(TextAlign.Center)
+      .maxLines(2)
+      .layoutWeight(1)
+      .constraintSize({ minHeight: $r('app.float.chip_height') })
+      .padding({ left: 8, right: 8, top: 6, bottom: 6 })
+      .backgroundColor($r('app.color.surface_alt'))
+      .borderRadius($r('app.float.radius_btn'))
+      .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.97 })
+      .accessibilityDescription('Opens a map search near you')
+      .onClick(() => {
+        this.openNearby(kind);
+      })
+  }
+
+  @Builder
+  nearbyRow() {
+    Column({ space: 8 }) {
+      Row({ space: 8 }) {
+        Image($r('app.media.ic_location')).width(18).height(18).fillColor($r('app.color.ink_2'))
+        Text($r('app.string.em_nearby'))
+          .fontSize($r('app.float.font_body'))
+          .fontWeight(FontWeight.Medium)
+          .fontColor($r('app.color.ink'))
+      }
+      Row({ space: 8 }) {
+        this.nearbyButton('HOSPITAL', $r('app.string.em_nearby_hospital'))
+        this.nearbyButton('PHARMACY', $r('app.string.em_nearby_pharmacy'))
+        this.nearbyButton('AED', $r('app.string.em_nearby_aed'))
+      }
+      .width('100%')
+    }
+    .width('100%')
+    .alignItems(HorizontalAlign.Start)
+    .padding(16)
+    .backgroundColor($r('app.color.surface'))
+    .border({ width: 1, color: $r('app.color.border') })
+    .borderRadius($r('app.float.radius_m'))
   }
 
   @Builder
@@ -285,6 +482,8 @@ export struct EmergencyPage {
           }
         })
 
+        this.nearbyRow()
+
         if (this.profile === undefined) {
           Text($r('app.string.emergency_no_profile'))
             .fontSize($r('app.float.font_small'))
@@ -292,7 +491,20 @@ export struct EmergencyPage {
             .padding(20)
         } else {
           SectionHeader({ title: $r('app.string.em_full_card') })
-          this.card()
+          this.languageRow()
+          if (this.canSpeak) {
+            SecondaryButton({
+              label: this.speaking ? $r('app.string.em_read_stop') : $r('app.string.em_read_aloud'),
+              icon: $r('app.media.ic_wave'),
+              onTap: () => {
+                this.readAloud();
+              }
+            })
+          }
+          // Keyed on the language: cardLine() gets its labels by value, so the card is rebuilt when it changes.
+          ForEach([this.lang], (l: string) => {
+            this.card()
+          }, (l: string) => `card-${l}`)
 
           // QR → card viewer link; the card travels in the #fragment and is rendered on the scanner's phone
           Column({ space: 12 }) {
@@ -312,21 +524,27 @@ export struct EmergencyPage {
             }
             .width('100%')
             .height($r('app.float.chip_height'))
+            .accessibilityGroup(true)
+            .accessibilityDescription(this.showQr ? 'Expanded' : 'Collapsed')
             .onClick(() => {
               this.showQr = !this.showQr;
+              if (this.showQr) {
+                this.refreshShare();
+              }
             })
             if (this.showQr) {
-              QRCode(cardLink(this.profile, this.meds, this.info().code))
+              QRCode(this.currentCardLink())
                 .width(240)
                 .height(240)
                 .color($r('app.color.card_fixed_ink'))
                 .backgroundColor($r('app.color.card_fixed_bg'))
-              Text($r('app.string.emergency_qr_hint'))
+              // Encrypted short link vs. legacy link with the card inside: the hint must say which is true.
+              Text(this.shareUrl !== '' ? $r('app.string.emergency_qr_hint_encrypted') : $r('app.string.emergency_qr_hint'))
                 .fontSize($r('app.float.font_caption'))
                 .fontColor($r('app.color.ink_3'))
                 .textAlign(TextAlign.Center)
               // Same link as text, for when the QR can't be scanned (or to send it in a chat)
-              Text(cardLink(this.profile, this.meds, this.info().code))
+              Text(this.sharing ? this.str($r('app.string.share_preparing')) : this.currentCardLink())
                 .fontSize($r('app.float.font_caption'))
                 .fontColor($r('app.color.brand_accent'))
                 .maxLines(2)
@@ -348,6 +566,20 @@ export struct EmergencyPage {
                   this.copyCard();
                 }
               })
+              if (this.shareUrl !== '') {
+                Text($r('app.string.share_card_caption'))
+                  .fontSize($r('app.float.font_caption'))
+                  .fontColor($r('app.color.ink_3'))
+                  .textAlign(TextAlign.Center)
+                Text($r('app.string.share_remove'))
+                  .fontSize($r('app.float.font_small'))
+                  .fontWeight(FontWeight.Bold)
+                  .fontColor($r('app.color.brand_text'))
+                  .height($r('app.float.touch_min'))
+                  .onClick(() => {
+                    this.confirmRemove();
+                  })
+              }
             }
           }
           .width('100%')

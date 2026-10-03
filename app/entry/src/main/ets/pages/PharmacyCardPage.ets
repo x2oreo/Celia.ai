@@ -1,11 +1,14 @@
 // Pharmacy card (F-40): a full-screen message to show at a pharmacy counter, with my current medicines.
-// English for now (other languages are kept in emergency/PharmacyStrings.ets). Screen stays on, brightness up.
+// In the language of the country the phone is in (travel mode, emergency/TravelService.ets) or of the home country,
+// with English below when that is not English. Screen stays on, brightness up.
 
 import { LocalStore } from '../data/LocalStore';
 import { Profile } from '../model/Profile';
 import { Medication } from '../model/Medication';
 import { pharmacyText, PharmacyText } from '../emergency/PharmacyStrings';
 import { emergencyFor, systemCountry } from '../common/EmergencyNumbers';
+import { languageForCountry } from '../common/CardStrings';
+import { TravelService } from '../emergency/TravelService';
 import { medLine } from '../emergency/CardContent';
 import { keepScreenOn, setBrightness } from '../common/Screen';
 
@@ -30,6 +33,15 @@ export struct PharmacyCardPage {
     this.meds = await LocalStore.get().listMeds();
   }
 
+  private country(): string {
+    const here: string = TravelService.current();
+    return here !== '' ? here : (this.profile?.country ?? systemCountry());
+  }
+
+  private lang(): string {
+    return pharmacyText(languageForCountry(this.country())).code;
+  }
+
   @Builder
   message(t: PharmacyText, big: boolean) {
     Column({ space: 8 }) {
@@ -49,13 +61,16 @@ export struct PharmacyCardPage {
     NavDestination() {
       Scroll() {
         Column({ space: 20 }) {
-          this.message(pharmacyText('en'), true)
+          this.message(pharmacyText(this.lang()), true)
+          if (this.lang() !== 'en') {
+            this.message(pharmacyText('en'), false)
+          }
           Divider().color($r('app.color.card_fixed_border'))
           Text(this.meds.length === 0 ? '—' : this.meds.map((m: Medication) => medLine(m)).join('\n'))
             .fontSize($r('app.float.font_subtitle'))
             .fontColor($r('app.color.card_fixed_ink'))
             .width('100%')
-          Text(emergencyFor(this.profile?.country ?? systemCountry()).name)
+          Text(emergencyFor(this.country()).name)
             .fontSize($r('app.float.font_caption'))
             .fontColor($r('app.color.card_fixed_ink_3'))
         }
