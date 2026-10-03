@@ -10,9 +10,7 @@ import { HistoryPage } from './HistoryPage';
 import { SettingsPage } from './SettingsPage';
 import { SosPage } from './SosPage';
 import { BystanderPage } from './BystanderPage';
-import { DoctorVisitsPage } from './DoctorVisitsPage';
-import { NewVisitPage } from './NewVisitPage';
-import { DoctorVisitPage } from './DoctorVisitPage';
+import { DoctorPrepPage } from './DoctorPrepPage';
 import { PharmacyCardPage } from './PharmacyCardPage';
 import { PrivacyPage } from './PrivacyPage';
 import { SymptomLogPage } from './SymptomLogPage';
@@ -220,11 +218,7 @@ struct Index {
     } else if (name === Routes.BYSTANDER) {
       BystanderPage()
     } else if (name === Routes.DOCTOR_PREP) {
-      DoctorVisitsPage()
-    } else if (name === Routes.DOCTOR_VISIT_NEW) {
-      NewVisitPage()
-    } else if (name === Routes.DOCTOR_VISIT) {
-      DoctorVisitPage()
+      DoctorPrepPage()
     } else if (name === Routes.PHARMACY_CARD) {
       PharmacyCardPage()
     } else if (name === Routes.PRIVACY) {
