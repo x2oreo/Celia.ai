@@ -23,7 +23,7 @@ Built and running on the emulator: T1–T14, T16, T17, T19, T22–T24, T27–T30
 Partly built / blocked by approvals: T18 Live View (scenario approval; notification fallback, no HR/verdict updates),
 T21 "Taken" button on the system reminder (quota), T10 SOS via backend SMS from the phone (contacts would leave the
 phone; share-sheet path kept). Not built: F-17 caregiver tablet, F-18 Brugada/CPVT pack, A2A agent (HMAF).
-Unit tests: 188 Hypium + 59 Deno, all green. Details: README "How to verify each feature", ARCHITECTURE capability table.
+Unit tests: 211 Hypium (phone) + 43 Hypium (watch) + 68 Deno, all green. Details: README "How to verify each feature", ARCHITECTURE capability table.
 
 ## Feature map
 
@@ -60,7 +60,7 @@ Unit tests: 188 Hypium + 59 Deno, all green. Details: README "How to verify each
 | Privacy ledger | **T29** |
 | Accessible & calm UI | **T30** |
 
-Out of scope: user accounts / login — data stays on device (D6); watch pairing is handled by Huawei Health.
+Out of scope: user accounts / login — the core data stays on device (D6). The watch is linked with a 6-digit pairing code (see `watch/README.md`).
 
 ## Conventions for every task
 

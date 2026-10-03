@@ -34,9 +34,17 @@ without blocking each other. Change a contract → tell the team on Discord + up
  └───────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-**Data rule (sovereignty pitch):** personal data (profile, meds, ICE contacts, vitals, events) is stored **only in
-on-device RDB**. Backend receives: drug names, and for `/agent` a minimal context (condition, genotype, med names,
-latest vitals summary) — **no name, phone numbers, or IDs**. Write this into `AI_FEATURES.md`.
+**Data rule:** the deterministic core works offline and its data (profile, meds, ICE contacts, chats, events) is
+stored only in the on-device encrypted RDB. Optional cloud paths, all listed in `AI_FEATURES.md` §3:
+
+- Supabase: the watch app uploads `watch_metrics` rows keyed by a device id (heart rate, alerts, symptoms, doses
+  taken, falls, wear state, simulated vitals, and an `sos` row with location when allowed). The phone writes
+  `watch_context` (genotype, last risky medicine and time) and reads the metrics back.
+- OpenAI, through our Edge Functions: `/agent` context and the last 12 chat messages, voice audio, a downscaled box
+  photo. Live voice opens a WebSocket straight to OpenAI with a 2-minute secret.
+- Never uploaded in the clear by either app: name, phone numbers, contacts, notes.
+
+Known limit: watch rows are protected by a shared anon key plus the device id, not per-user auth (see README).
 
 **Offline rule:** `DrugChecker` ships a **bundled copy** of the curated drug list (`rawfile/drugs.json`) and works
 offline. `/drug-check` is the online/fresh path; app falls back to the bundle on error/timeout.
@@ -209,7 +217,9 @@ Full contract: `backend/supabase/functions/README.md`.
 ```
 Tools (schemas in `_shared/tools.ts`, executors in `app/.../agent/tools/`): `check_drug`, `get_my_meds`,
 `get_vitals_summary`, `explain_condition`, `suggest_alternatives`, `scan_medicine`, `add_med`, `show_emergency_card`,
-`start_emergency`, `share_emergency_card`, `start_new_chat`, `log_symptom`. Write tools only create confirm cards (`log_symptom` writes the on-device symptom log directly; red flags start SOS by rule). Responses are validated in the app
+`start_emergency`, `share_emergency_card`, `start_new_chat`, `log_symptom`, `prepare_doctor_visit`, `get_dose_status`, `get_trends`
+(the last three are read-only and return fixed content from `doctor/DoctorPrep.ets`, `reminders/DoseSchedule.ets` and
+`vitals/Trends.ets`). Write tools only create confirm cards (`log_symptom` writes the on-device symptom log directly; red flags start SOS by rule). Responses are validated in the app
 (`ResponseValidator`); anything invalid → `fallback: true` deterministic reply. Auth: Supabase anon key; the OpenAI
 key is an Edge Function secret. Timeouts: app 20 s per step → fallback.
 

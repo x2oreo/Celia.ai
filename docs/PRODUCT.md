@@ -14,7 +14,7 @@
 | D3 | **Backend: Supabase, EU region (Frankfurt).** Postgres (`drugs`, `drug_aliases`, `agent_logs`) + Edge Functions `/drug-check` (deterministic lookup) and `/agent` (one OpenAI model step; the tool loop runs in the app). The OpenAI key lives only in Edge Function secrets; the app holds just the public anon key (RLS read-only). | ARCHITECTURE, PLAN decisions log |
 | D4 | **Verdicts are deterministic** (curated LQTS drug list, `DrugChecker`). The LLM only explains and picks tools; if its text contradicts the verdict, the text is dropped. Unknown input → `UNKNOWN_DRUG`, never "safe". | IDEA scope rules, ARCHITECTURE agent rules |
 | D5 | **Offline:** `DrugChecker` uses the bundled `rawfile/drugs.json`; `/drug-check` is the online/fresh path with fallback to the bundle on error/timeout. No network → agent says it is offline, drug checks still work. | ARCHITECTURE, Kaloyan DoD |
-| D6 | **Data on device:** profile, meds, ICE contacts, vitals, events live only in on-device ArkData RDB (no system backup). The backend gets drug names and, for `/agent`, a de-identified context (condition, genotype, med names, vitals summary). | ARCHITECTURE data rule |
+| D6 | **Offline core, optional cloud:** profile, meds, ICE contacts, chats and events live in on-device ArkData RDB (encrypted, no system backup) and the deterministic features need no network. Optional cloud paths: watch metrics and watch context in Supabase keyed by device id; `/agent`, voice and box photos through Edge Functions to OpenAI. Name and contacts are never uploaded in the clear. (Revised 3 Oct: the first version said vitals stay on device; the watch app made that untrue.) | ARCHITECTURE data rule |
 | D7 | **LQTS only** for the build. Brugada/CPVT = one "condition packs" slide (drug list is data). | IDEA scope rules |
 | D8 | **Built fresh in this repo.** Third-party data/libraries (CredibleMeds-derived categories, ohpm libs, DevEco templates) are cited in README + `AI_WORKFLOW.md`. | IDEA scope rules, Challenge Rules §4 |
 | D9 | **Honest platform claims:** simulated vitals labelled `SIMULATED` on screen; each kit's emulator status kept in ARCHITECTURE's capability table. | ARCHITECTURE, IDEA |
@@ -24,7 +24,8 @@
 
 An **agent-first heart-safety companion for people with Long QT syndrome** on HarmonyOS: an AI agent you can talk
 to about your syndrome, that checks every medicine before you take it, watches your heart through your Huawei watch,
-and takes over in an emergency — with your health data staying on *your* devices.
+and takes over in an emergency. The safety core (verdicts, emergency card, profile) works fully offline; cloud
+features are optional and every request the phone makes is listed in an on-phone ledger.
 
 Challenge areas: **Human-Centric** (primary) + **Intelligent Experiences** (primary); Spatial only lightly
 (location sent with SOS).
@@ -171,7 +172,7 @@ the emulator · ⚠️ verify early / real device, with a labelled fallback.
 4. Watch / simulated LQT2 scenario spikes → watch buzzes → agent checks in → "I feel dizzy" → emergency mode
    (F-08..10, F-13).
 5. Robustness: model returns garbage → deterministic fallback (F-03, tests in repo).
-6. Close: on-device data, open platform, condition packs next.
+6. Close: offline safety core, ledger of what leaves the phone, open platform, condition packs next.
 
 Optional beat if F-36 / F-41 are done: scan the box barcode instead of the photo in beat 2, or show bystander
 mode opened from the lock-screen widget after beat 4.

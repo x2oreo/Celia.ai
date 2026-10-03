@@ -452,6 +452,14 @@ In ArkUI, use `animateTo` / `.animation()` with `Curve.EaseInOut` and `iteration
 - **Heart**: `title-1`, ring hero shared with Home, stats row (resting HR, HRV, rhythm) as three quiet cells, recent
   alerts as rows with an out-of-range HR chip, links to Symptom log and Doctor report, then "Demo controls" collapsed.
   The chart is a trend line in `brand` on `surface`, with dashed `border_strong` guides at 60 and 120. Never ECG-like.
+- **Trends** (pushed from Heart and from the agent's tile): range chips (14 / 30 days, selected = ink) with the
+  `SIMULATED` badge on the right when the data is demo data. One card: "Resting heart rate" (`headline`), a daily
+  trend line in `brand` with a dot per day, three dashed `border_strong` guides, min/max labels in `micro`, first and
+  last date under the plot. Two rows aligned to the same days: dose logged (8 vp square, filled `ink-2` = yes,
+  outlined = no) and symptom reported (8 vp `ink` dot). Marks are ink, never risk colours, and each row has a text
+  label. Caption "This is not an ECG". Then four stat tiles (average resting, last 7 days vs before, days with a
+  dose, days with a symptom) and "What stands out": fixed-rule findings as neutral cards with a `NOTE` / `IMPORTANT`
+  word. Numbers are reported, never judged as good or bad.
 - **Emergency (calm)**: `title-1`, the Medical alert card (as the widget), a danger "Call 112" button, then rows for
   Bystander guide, Pharmacy card, Offline QR and Test SOS. The full emergency card stays always light (`card_fixed_*`).
   Above the full card: a **card language** row (horizontal chips, height 44, pill, `surface` + 1 vp `border`; selected

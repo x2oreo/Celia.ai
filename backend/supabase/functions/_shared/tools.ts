@@ -67,7 +67,7 @@ export const TOOLS: FunctionTool[] = [
   ),
   tool(
     'scan_medicine',
-    'Open the camera so the user can photograph a medicine box. The app reads the name on-device and asks the ' +
+    'Show a scan button so the user can pick a photo of a medicine box. The app reads the name and asks the ' +
       'user to confirm it, then the verdict is shown.',
     {},
   ),
@@ -89,8 +89,8 @@ export const TOOLS: FunctionTool[] = [
   ),
   tool(
     'start_emergency',
-    'Start the emergency flow: a cancellable countdown, then calling the emergency number and alerting the ' +
-      'emergency contacts. Use when the user reports fainting, chest pain, a seizure, severe dizziness or ' +
+    'Start the emergency flow: a cancellable countdown, then one-tap buttons to call the emergency number and ' +
+      'message the emergency contacts (nothing is dialled or sent without a tap). Use when the user reports fainting, chest pain, a seizure, severe dizziness or ' +
       'palpitations, or asks for help.',
     {
       reason: { type: 'string', description: 'Short reason in the user\'s words, e.g. "felt faint after alarm".' },
@@ -119,6 +119,33 @@ export const TOOLS: FunctionTool[] = [
         description: 'What the user was doing, if they said; otherwise null.',
       },
       note: nullableString('A few of the user\'s own words (max 120 characters), otherwise null.'),
+    },
+  ),
+  tool(
+    'prepare_doctor_visit',
+    'Get the fixed list of things to tell and ask a doctor before a visit, for one kind of doctor, and put a ' +
+      'button to the full visit brief on screen. Use when the user mentions an upcoming appointment or procedure.',
+    {
+      specialty: {
+        type: 'string',
+        enum: ['GP', 'CARDIOLOGIST', 'DENTIST', 'SURGEON', 'ANESTHESIOLOGIST', 'PSYCHIATRIST', 'EMERGENCY'],
+        description: 'Closest kind of doctor. Use GP if unsure.',
+      },
+    },
+  ),
+  tool(
+    'get_dose_status',
+    "Read today's medicine doses from the reminder log on the phone (taken, due, missed, upcoming). Read-only. " +
+      'Use when the user asks whether they took a medicine or what is due.',
+    {},
+  ),
+  tool(
+    'get_trends',
+    'Read the last 14 or 30 days of watch history: average resting heart rate, change over the last week, days ' +
+      'with a dose logged, days with a symptom, and fixed-rule findings. Also puts a button to the trends chart on ' +
+      'screen. Use when the user asks how they have been doing lately or about patterns.',
+    {
+      days: { type: 'integer', enum: [14, 30], description: 'Window in days. Use 14 unless the user asks for a month.' },
     },
   ),
   tool(

@@ -19,6 +19,7 @@ export class Routes {
   static readonly CHATS: string = 'chats';               // saved agent chats
   static readonly SCAN: string = 'scan';
   static readonly PAIR_WATCH: string = 'pairWatch';
+  static readonly TRENDS: string = 'trends';
 }
 
 // Tab indexes of components/MainTabs.ets. The first tab is the agent's home; the chat itself is a pushed page
@@ -28,6 +29,15 @@ export class TabIndex {
   static readonly MEDICINES: number = 1;
   static readonly HEART: number = 2;
   static readonly EMERGENCY: number = 3;
+}
+
+// Opens doctor prep on this specialty (doctor/DoctorPrep Specialty), e.g. from the agent's tile.
+export class DoctorPrepParam {
+  specialty: string;
+
+  constructor(specialty: string) {
+    this.specialty = specialty;
+  }
 }
 
 export class SosParam {

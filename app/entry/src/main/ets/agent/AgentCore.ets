@@ -415,8 +415,8 @@ export class AgentCore {
     } catch (e) {
       log.warn(`logEvent failed: ${String(e)}`);
     }
-    return this.say(`This could be serious. Sit or lie down now. I'm calling ${num} in ${EMERGENCY_COUNTDOWN_SEC} ` +
-      'seconds and alerting your emergency contacts — tap "I\'m OK" if you are fine.',
+    return this.say(`This could be serious. Sit or lie down now. In ${EMERGENCY_COUNTDOWN_SEC} seconds I'll show ` +
+      `one-tap buttons to call ${num} and message your emergency contacts — tap "I\'m OK" if you are fine.`,
       [action('START_EMERGENCY', payload)], true);
   }
 

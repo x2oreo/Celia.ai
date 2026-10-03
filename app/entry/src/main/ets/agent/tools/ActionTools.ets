@@ -38,8 +38,9 @@ export class ScanMedicineTool implements AgentTool {
   async execute(args: Record<string, Object>, turn: TurnState): Promise<string> {
     const open: UiAction = { type: 'OPEN_MED_SCAN', payload: '{}' };
     turn.actions.push(open);
-    return status('CAMERA_OPENED',
-      'The user photographs the box; the app reads and confirms the name, then shows the verdict card.');
+    return status('SCAN_OFFERED',
+      'A scan button is on screen. The user taps it and picks a photo of the box; the app reads and confirms the ' +
+        'name, then shows the verdict card.');
   }
 }
 
@@ -68,8 +69,9 @@ export class StartEmergencyTool implements AgentTool {
       turn.emergencyStarted = true;
     }
     return status('COUNTDOWN_STARTED',
-      `In ${EMERGENCY_COUNTDOWN_SEC} seconds the phone calls ${turn.emergencyNumber} and alerts the emergency ` +
-        'contacts unless the user cancels. Tell them to stay seated or lie down and that help is coming.');
+      `A ${EMERGENCY_COUNTDOWN_SEC}-second countdown is on screen. When it ends the phone shows one-tap buttons ` +
+        `to call ${turn.emergencyNumber} and to send the SOS message to the emergency contacts. Nothing is dialled ` +
+        'or sent without a tap. Tell them to stay seated or lie down and to tap Call if they can.');
   }
 }
 

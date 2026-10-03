@@ -4,8 +4,8 @@ import { Ring } from './Ring';
 import { Theme } from './Theme';
 
 /**
- * W5 SOS countdown, then "SOS sent". The watch does not dial 112 itself (unsafe in a test build): it sends an `sos`
- * row and the phone app alerts contacts and offers the call.
+ * W5 SOS countdown, then "SOS sent" once the `sos` row is uploaded ("SOS saved" while it waits). The watch does not
+ * dial 112 itself (unsafe in a test build): the phone app shows the alert with call and message buttons.
  */
 @ComponentV2
 export struct SosScreen {
@@ -16,8 +16,8 @@ export struct SosScreen {
       Ring({ percent: this.ctrl.sosSent ? 100 : this.ctrl.sosCountdown * 10, color: Theme.DANGER, strokeWidth: 10 })
       if (this.ctrl.sosSent) {
         Column({ space: 4 }) {
-          Text('SOS SENT').fontSize(11).fontWeight(FontWeight.Bolder).letterSpacing(1).fontColor(Theme.DANGER)
-          Text('Your phone is alerting your contacts.')
+          Text(this.ctrl.sosDelivered ? 'SOS SENT' : 'SOS SAVED').fontSize(11).fontWeight(FontWeight.Bolder).letterSpacing(1).fontColor(Theme.DANGER)
+          Text(this.ctrl.sosDelivered ? 'Open Celia on your phone to call or message.' : 'Not sent yet. Retrying.')
             .fontSize(13)
             .fontWeight(FontWeight.Bold)
             .fontColor(Theme.TEXT)

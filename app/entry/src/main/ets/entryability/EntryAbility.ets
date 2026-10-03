@@ -3,6 +3,7 @@ import { window } from '@kit.ArkUI';
 import { Logger } from '../common/Logger';
 import { LocalStore } from '../data/LocalStore';
 import { AppLock } from '../common/AppLock';
+import { DemoVoice } from '../voice/DemoVoice';
 import { GtinCatalog } from '../drugs/GtinCatalog';
 import { AgentCore } from '../agent/AgentCore';
 import { WidgetSync } from '../widget/WidgetSync';
@@ -28,6 +29,7 @@ export default class EntryAbility extends UIAbility {
       WidgetSync.start(this.context);
     });
     GtinCatalog.get().init(this.context);
+    DemoVoice.init(this.context);
     // Agent listens for vitals alerts from app start (proactive check-ins).
     AgentCore.get().start();
     this.handleCardTap(want);

@@ -40,7 +40,10 @@ struct Index {
         VitalsPage({ ctrl: this.ctrl })
         CheckIn({ ctrl: this.ctrl, asPage: true })
         SettingsPage({ ctrl: this.ctrl })
-        SimulatePage({ ctrl: this.ctrl })
+        // Demo triggers (fall, risky drug, missed dose) exist only in a DEMO_MODE build.
+        if (this.ctrl.demoMode) {
+          SimulatePage({ ctrl: this.ctrl })
+        }
       }
       .loop(false)
       .onChange((index: number) => {

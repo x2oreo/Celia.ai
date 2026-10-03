@@ -22,6 +22,8 @@ struct FeelButton {
     .borderRadius(27)
     .border({ width: 2, color: this.color })
     .backgroundColor(this.fill)
+    .accessibilityGroup(true)
+    .accessibilityText(this.label)
     .onClick(() => this.onTap())
   }
 }
@@ -62,18 +64,33 @@ export struct CheckIn {
             this.answer('palpitations', 'Sit down. Logged for your doctor');
           } })
         }
-        Text('"Racing" = palpitations').fontSize(9).fontColor(Theme.MUTED)
+        Text('"Racing" = palpitations').fontSize(10).fontColor(Theme.MUTED)
         if (this.asPage) {
-          Text(`Took ${this.ctrl.medicationName}`)
-            .fontSize(10)
-            .fontColor(Theme.OK)
-            .padding({ left: 10, right: 10, top: 4, bottom: 4 })
-            .borderRadius(10)
-            .backgroundColor(Theme.CARD)
-            .onClick(() => {
-              this.ctrl.logMedication();
-              this.toast('Medication logged');
-            })
+          Row({ space: 6 }) {
+            Text(`Took ${this.ctrl.medicationName}`)
+              .fontSize(11)
+              .fontColor(Theme.OK)
+              .padding({ left: 10, right: 10, top: 8, bottom: 8 })
+              .borderRadius(14)
+              .backgroundColor(Theme.CARD)
+              .accessibilityText(`Log ${this.ctrl.medicationName} as taken`)
+              .onClick(() => {
+                this.ctrl.logMedication();
+                this.toast('Medication logged');
+              })
+            // Manual SOS: the same 10 s cancellable countdown an alert's "Need help" starts.
+            Text('SOS')
+              .fontSize(11)
+              .fontWeight(FontWeight.Bolder)
+              .fontColor(Theme.TEXT)
+              .padding({ left: 12, right: 12, top: 8, bottom: 8 })
+              .borderRadius(14)
+              .backgroundColor(Theme.DANGER)
+              .accessibilityText('Start S O S countdown')
+              .onClick(() => {
+                this.ctrl.needHelp();
+              })
+          }
         }
       }
     }

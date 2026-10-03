@@ -663,3 +663,35 @@ The tap-to-talk fallback is also untested end to end.
   hardware-only (camera, microphone, biometrics, Celia intents) is untested — listed in REAL_DEVICE.md §4. Found by
   running instead of assuming: the build was broken on this laptop because `LocalConfig.ets` predated four template
   fields, and its backend pointed at `127.0.0.1`, which a phone cannot reach.
+
+### 2026-10-03 (evening) — Kaloyan + Claude Code: final-pass plan, honesty fixes, voice without a mic, Trends (branch `kaloyan/final-pass`)
+- **Asked:** a long wish list for the last night (redesign around the agent, immersive orb, test voice with no
+  microphone, watch-data history, emergency responder view, auth, push, Live View, calling contacts, RLS...) —
+  research deeply, prioritise, split between Kaloyan and Georgi, then start.
+- **Plan (AI, approved by Kaloyan):** three read-only sweeps (phone app, watch + backend, docs/rules), then four
+  questions (deadline Sun 11:00, two builders, real phone only at 08:00, no Twilio). Ranked by judging weight with
+  "misleading information" first. Cut to a slide: accounts, Push Kit, real Live View, SMS/calls to contacts, NFC,
+  direct phone-watch link, A2A. Kaloyan: agent, voice, backend, watch, Trends, docs. Georgi: pages, orb, emergency,
+  onboarding, release, video.
+- **Produced:**
+  - Honesty: the agent no longer says the phone "calls and alerts the emergency contacts" (it shows one-tap
+    buttons); `scan_medicine` no longer says "camera" (it is a photo picker); the watch shows "SOS SENT" only after
+    the row is uploaded, "SOS SAVED" until then. Privacy claims rewritten in README, IDEA, PRODUCT (D6),
+    ARCHITECTURE, AI_FEATURES, TASKS with a table of every cloud path and the known auth limit.
+  - `voice/DemoVoice.ets`: with `DEMO_VOICE_INPUT = 'on'` a live session streams a bundled 24 kHz clip (macOS
+    system voice) into the Realtime input buffer instead of opening the microphone; `SIMULATED VOICE INPUT` badge.
+  - Agent tools `prepare_doctor_visit`, `get_dose_status`, `get_trends` (read-only, fixed content) and an
+    `OPEN_PAGE` tile; doctor prep opens on the specialty the agent picked.
+  - Trends page (`vitals/Trends.ets`, `components/TrendChart.ets`, `pages/TrendsPage.ets`) from the watch daily
+    summary and insights that no screen used; DESIGN.md spec added first.
+  - Watch: manual SOS on the check-in page, Simulate page only in `DEMO_MODE`, upload timer stops while hidden,
+    screen-reader text on Home and the feel buttons.
+- **Validated:** 211 phone + 43 watch Hypium tests and 68 Deno tests green; strict ArkTS builds of both apps. On the
+  phone emulator against the local backend: clip "Can I take ondansetron?" → server VAD and transcription →
+  `check_drug` → Known-risk card; clip "I am seeing the dentist tomorrow" → `prepare_doctor_visit` → reply and tile →
+  brief opens; Trends page renders the labelled demo history.
+- **Not validated / lessons:** the watch changes were built and unit-tested but not seen on the watch emulator (it
+  was not running). `get_dose_status` and `get_trends` were not exercised by voice. Trends with real watch rows was
+  not seen because the laptop's backend is the local proxy, which has no database. The first voice test failed with
+  "no voice session from backend" — the local proxy was simply not running; reading the log beat guessing. The new
+  tool schemas only reach users after the `agent` and `realtime-session` functions are redeployed.

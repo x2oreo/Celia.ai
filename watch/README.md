@@ -192,7 +192,7 @@ GET {SUPABASE_URL}/rest/v1/watch_metrics?device_id=eq.demo-watch-1&type=eq.hr_al
 cd watch && source env.sh
 ohpm install
 hvigorw --mode module -p module=entry@default -p product=default assembleHap --no-daemon
-hvigorw test -p module=entry -p coverage=false --no-daemon     # 35 local unit tests
+hvigorw test -p module=entry -p coverage=false --no-daemon     # 43 local unit tests
 cat entry/.test/default/intermediates/test/coverage_data/test_result.txt
 
 # Wearable emulator (image: HarmonyOS 6.1.1 wearable)

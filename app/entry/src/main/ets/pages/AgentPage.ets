@@ -14,14 +14,14 @@ import { AgentPrompt } from '../agent/AgentPrompt';
 import { MedicineScanFlow, ScanCandidate, ScanOutcome } from '../agent/MedicineScanFlow';
 import {
   AddMedPayload, AgentReply, AlternativesPayload, ChatMessage, ChatRole, ConfirmPayload, EmergencyPayload,
-  InteractionFinding, MedsPayload, QuickRepliesPayload, ToolActivity, UiAction, VerdictCardPayload
+  InteractionFinding, MedsPayload, QuickRepliesPayload, ToolActivity, UiAction, VerdictCardPayload, OpenPagePayload
 } from '../model/AgentTypes';
 import { VoiceSession, VoiceStatus, VoiceTurn } from '../voice/VoiceSession';
 import { VoiceInput } from '../voice/VoiceInput';
 import { VoiceOutput } from '../voice/VoiceOutput';
 import { RealtimeSession, RealtimeStatus, VoicePhase } from '../voice/RealtimeSession';
 import { SosController } from '../emergency/SosController';
-import { AskParam, CheckParam, Routes, SosParam, TabIndex } from '../common/Routes';
+import { AskParam, CheckParam, DoctorPrepParam, Routes, SosParam, TabIndex } from '../common/Routes';
 import { TabRequest } from '../common/TabRequest';
 import { Config } from '../common/Config';
 import { Logger } from '../common/Logger';
@@ -618,7 +618,40 @@ export struct AgentPage {
           this.pickAndScan();
         }
       })
+    } else if (a.type === 'OPEN_PAGE') {
+      if (this.pagePayload(a).page === 'DOCTOR_PREP') {
+        ActionTile({
+          icon: $r('app.media.ic_doctor'),
+          title: $r('app.string.home_doctor'),
+          subtitle: $r('app.string.agent_open_brief_sub'),
+          onTap: () => {
+            this.navStack.pushPathByName(Routes.DOCTOR_PREP, new DoctorPrepParam(this.pagePayload(a).specialty));
+          }
+        })
+      } else if (this.pagePayload(a).page === 'REMINDERS') {
+        ActionTile({
+          icon: $r('app.media.ic_bell'),
+          title: $r('app.string.rem_title'),
+          subtitle: $r('app.string.agent_open_reminders_sub'),
+          onTap: () => {
+            this.navStack.pushPathByName(Routes.REMINDERS, null);
+          }
+        })
+      } else if (this.pagePayload(a).page === 'TRENDS') {
+        ActionTile({
+          icon: $r('app.media.ic_wave'),
+          title: $r('app.string.trends_title'),
+          subtitle: $r('app.string.trends_subtitle'),
+          onTap: () => {
+            this.navStack.pushPathByName(Routes.TRENDS, null);
+          }
+        })
+      }
     }
+  }
+
+  private pagePayload(a: UiAction): OpenPagePayload {
+    return JSON.parse(a.payload) as OpenPagePayload;
   }
 
   // The user's words: an ink bubble with the tail bottom-right. Dimmed while they are still being recognised.
@@ -790,6 +823,11 @@ export struct AgentPage {
         .maxLines(1)
         .textOverflow({ overflow: TextOverflow.Ellipsis })
         .padding({ left: 20, right: 20 })
+
+      if (Config.DEMO_VOICE_INPUT) {
+        SourceBadge({ label: $r('app.string.demo_voice_badge') })
+          .margin({ top: 8 })
+      }
     }
     .width('100%')
     .padding({ bottom: 12 })

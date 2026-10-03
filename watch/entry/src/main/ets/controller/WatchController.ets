@@ -150,6 +150,8 @@ export class WatchController {
   @Trace checkInOpen: boolean = false;
   @Trace sosCountdown: number = 0;
   @Trace sosSent: boolean = false;
+  // True once the `sos` row reached the server. Until then the screen says saved, not sent.
+  @Trace sosDelivered: boolean = false;
   /** Drug-verdict glance: shown once when a new risky drug arrives. */
   @Trace verdictDrug: string = '';
   @Trace riskyDrugRisk: string = '';
@@ -279,9 +281,6 @@ export class WatchController {
       this.pairing = new PairingClient(this.cfg.supabaseUrl, this.cfg.supabaseAnonKey);
       this.syncState = this.pending > 0 ? 'PENDING' : 'OK';
     }
-    this.syncTimer = setInterval(() => {
-      this.syncNow();
-    }, SYNC_EVERY_MS);
     this.monitoringSinceMs = Date.now();
     // Ask for permissions once, up front, so the dialog doesn't interrupt a running monitor.
     this.ready = this.requestPermissions().then(() => this.notifier.init(ctx)).then(() => {
@@ -292,10 +291,6 @@ export class WatchController {
   dispose(): void {
     this.pause();
     this.stopPairPolling();
-    if (this.syncTimer >= 0) {
-      clearInterval(this.syncTimer);
-      this.syncTimer = -1;
-    }
   }
 
   get scenarioLabel(): string {
@@ -313,6 +308,11 @@ export class WatchController {
     if (this.visible) {
       this.startSource();
       this.refreshContext();
+      if (this.syncTimer < 0) {
+        this.syncTimer = setInterval(() => {
+          this.syncNow();
+        }, SYNC_EVERY_MS);
+      }
     }
   }
 
@@ -321,6 +321,11 @@ export class WatchController {
     this.visible = false;
     this.closePairing();
     this.stopSource();
+    // No upload timer while hidden: nothing new is recorded, so it would only wake the radio.
+    if (this.syncTimer >= 0) {
+      clearInterval(this.syncTimer);
+      this.syncTimer = -1;
+    }
     this.flushWindow(Date.now());
     this.syncNow();
   }
@@ -598,6 +603,7 @@ export class WatchController {
     const res = await this.uploader.upload(batch);
     if (res.ok) {
       this.outbox.ack(batch.length);
+      this.confirmSosDelivery();
       this.batchSize = BATCH;
       this.syncState = this.outbox.size > 0 ? 'PENDING' : 'OK';
     } else if (res.status === 400) {
@@ -1049,9 +1055,20 @@ export class WatchController {
     }
     this.record('sos', v, now);
     this.sosSent = true;
-    this.notifier.alert(NOTIFY_SOS, 'SOS sent', 'Your phone is alerting your emergency contacts.');
+    this.sosDelivered = false;
     this.vibrate(3000);
-    Logger.info('SOS sent');
+    Logger.info('SOS queued');
+    this.syncNow();
+  }
+
+  // Runs after each successful upload. A dropped (server-rejected) `sos` row never gets here, so it stays "saved".
+  private confirmSosDelivery(): void {
+    if (!this.sosSent || this.sosDelivered || this.outbox.has('sos')) {
+      return;
+    }
+    this.sosDelivered = true;
+    this.notifier.alert(NOTIFY_SOS, 'SOS sent', 'Open Celia on your phone for the call and message buttons.');
+    Logger.info('SOS delivered');
   }
 
   // ---- Alerts & drug verdict -----------------------------------------------------------------------------------

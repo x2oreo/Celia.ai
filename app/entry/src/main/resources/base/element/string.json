@@ -1967,6 +1967,118 @@
     {
       "name": "intake_retry",
       "value": "Send to watch"
+    },
+    {
+      "name": "demo_voice_badge",
+      "value": "SIMULATED VOICE INPUT"
+    },
+    {
+      "name": "agent_open_brief_sub",
+      "value": "Open the full brief for this visit"
+    },
+    {
+      "name": "agent_open_reminders_sub",
+      "value": "See and mark today's doses"
+    },
+    {
+      "name": "tool_prepare_doctor_visit",
+      "value": "Preparing your visit"
+    },
+    {
+      "name": "tool_prepare_doctor_visit_done",
+      "value": "Visit brief ready"
+    },
+    {
+      "name": "tool_get_dose_status",
+      "value": "Checking today's doses"
+    },
+    {
+      "name": "tool_get_dose_status_done",
+      "value": "Checked today's doses"
+    },
+    {
+      "name": "trends_title",
+      "value": "Trends"
+    },
+    {
+      "name": "trends_subtitle",
+      "value": "Resting heart rate, doses and symptoms by day"
+    },
+    {
+      "name": "trends_days",
+      "value": "%d days"
+    },
+    {
+      "name": "trends_days_a11y",
+      "value": "Show the last %d days"
+    },
+    {
+      "name": "trends_chart_title",
+      "value": "Resting heart rate"
+    },
+    {
+      "name": "trends_row_dose",
+      "value": "Dose logged (filled = yes)"
+    },
+    {
+      "name": "trends_row_symptom",
+      "value": "Symptom reported"
+    },
+    {
+      "name": "trends_not_ecg",
+      "value": "Daily resting heart rate from the watch. This is not an ECG."
+    },
+    {
+      "name": "trends_bpm",
+      "value": "bpm"
+    },
+    {
+      "name": "trends_avg",
+      "value": "Average resting"
+    },
+    {
+      "name": "trends_change",
+      "value": "Last 7 days vs before"
+    },
+    {
+      "name": "trends_of_days",
+      "value": "of %d days"
+    },
+    {
+      "name": "trends_dose_days",
+      "value": "Days with a dose logged"
+    },
+    {
+      "name": "trends_symptom_days",
+      "value": "Days with a symptom"
+    },
+    {
+      "name": "trends_findings",
+      "value": "What stands out"
+    },
+    {
+      "name": "trends_note",
+      "value": "NOTE"
+    },
+    {
+      "name": "trends_important",
+      "value": "IMPORTANT"
+    },
+    {
+      "name": "trends_offline",
+      "value": "Couldn't load your watch history. Check your connection and open this page again."
+    },
+    {
+      "name": "trends_disclaimer",
+      "value": "Shown to help you and your doctor see patterns. Not a diagnosis. Not a medical device."
+    },
+    {
+      "name": "tool_get_trends",
+      "value": "Reading your trends"
+    },
+    {
+      "name": "tool_get_trends_done",
+      "value": "Read your trends"
     }
   ]
 }

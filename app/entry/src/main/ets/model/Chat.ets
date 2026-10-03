@@ -38,5 +38,5 @@ export function chatTitle(firstUserText: string): string {
 // countdown, open scanner) are dropped, so reopening an old chat can never add a medicine or start an SOS.
 export function keepOnRestore(a: UiAction): boolean {
   return a.type === 'SHOW_VERDICT' || a.type === 'SHOW_EMERGENCY_CARD' || a.type === 'SHOW_MEDS' ||
-    a.type === 'SHOW_ALTERNATIVES';
+    a.type === 'SHOW_ALTERNATIVES' || a.type === 'OPEN_PAGE';
 }
