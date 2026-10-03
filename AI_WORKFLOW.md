@@ -290,3 +290,43 @@ long-press), dark mode on a device, and the largest font size.
 **Two sessions, one branch.** A second Claude Code session was rebuilding the voice chat at the same time. The
 sessions agreed file ownership by message and staged explicit paths only. One commit of this session still
 picked up the other session's new strings from the shared `string.json`; nothing was lost.
+
+### 2026-10-03 (cont.) — voice-first conversation with the agent (Kaloyan, with Claude Code)
+
+**Prompt (summary).** "Rework how the AI works in the UI. It should be a voice AI you talk to, with the chatbot as
+an option. Redesign the orb, show my message being written as I speak, and design all the tools beautifully in
+our design system."
+
+**What the model did**
+- Read `docs/design/DESIGN.md`, the chat page and the whole voice layer first, then extended the design system
+  before building (new 6.6a voice orb, 6.8 tool steps and agent cards, revised B2 in 10.1, two motion rows).
+- Voice engine (`voice/RealtimeSession.ets`): reports a conversation phase (connecting, listening, hearing,
+  thinking, speaking), the user's and the agent's words as they arrive, and the loudness of whoever is talking
+  (`pcmLevel` in `Wav.ets`, unit-tested). A reply now waits up to 1.5 s for the user's transcript so the thread
+  stays in order. Typed text and tapped chips go into the live session and are answered out loud, through the same
+  SafetyGate.
+- `AgentCore.runTool` announces every tool call, so both the text loop and live voice show what the agent is
+  doing ("Checking Klacid against the QT list" → "Checked …").
+- New UI: `components/VoiceOrb.ets` (halos follow the voice, neutral for the user and coral for the agent),
+  `components/AgentCards.ets` (tool step, confirm card, medicines card, options card, emergency notice, action
+  tile) and a rewritten `pages/AgentPage.ets` with a voice mode (orb, live thread, mic dock) and a chat mode.
+- Two new deterministic cards: `SHOW_MEDS` (from `get_my_meds`) and `SHOW_ALTERNATIVES` (from
+  `suggest_alternatives`, only options re-checked as Not listed on the device).
+
+**Decisions made by the human / kept from the rules**
+- Verdict colours and words still come only from the deterministic payloads. A finished tool step is neutral ink,
+  never a risk colour, so "done" cannot be read as "safe".
+- The microphone never opens by itself: one tap starts the conversation, and leaving the page ends it.
+
+**Verified on the emulator**
+- Offline: idle voice screen, starter → verdict card, "Check my current medicines" → medicines card, chat mode,
+  and the "can't use the microphone" strip (the emulator has no English on-device speech engine).
+- Live, against the local backend (one short Realtime session): connecting → listening → speaking, the agent's
+  words appearing while it speaks, the `check_drug` step and the verdict card.
+
+**Bug found by running it.** The offline parser read "Check my current medicines" as a medicine called "my
+current medicines". Fixed, with a test.
+
+**Not verified:** real speech into the microphone (nobody can talk to the emulator from the terminal), so the
+live user transcript, the voice-level halos while the user speaks, barge-in and mute are untested on a device.
+The tap-to-talk fallback is also untested end to end.
