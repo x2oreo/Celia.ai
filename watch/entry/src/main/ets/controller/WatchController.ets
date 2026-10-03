@@ -50,7 +50,7 @@ import { SensorHeartRateSource } from '../vitals/SensorHeartRateSource';
 import { SessionStats } from '../vitals/SessionStats';
 import { SimulatedHeartRateSource } from '../vitals/SimulatedHeartRateSource';
 import { isAsleep } from '../vitals/SleepDetector';
-import { MemoryOutboxStore, MetricOutbox } from '../sync/MetricOutbox';
+import { MetricOutbox } from '../sync/MetricOutbox';
 import { PatientContext, PatientContextClient } from '../sync/PatientContextClient';
 import { PreferencesOutboxStore } from '../sync/PreferencesOutboxStore';
 import { DemoRpcClient } from '../sync/DemoRpcClient';
@@ -69,10 +69,9 @@ import {
 import { Fix, currentFix } from '../sync/SosLocation';
 import { FallRecord, FallTick, SosFlow } from './SosFlow';
 import { PairScreen, PairState, PairingFlow } from './PairingFlow';
+import { OUTBOX_CAPACITY, SyncEngine, SyncState } from './SyncEngine';
 import { SupabaseUploader } from '../sync/SupabaseUploader';
 import { shortDrugName } from '../vitals/DrugBadge';
-
-export type SyncState = 'OFF' | 'OK' | 'PENDING' | 'ERROR';
 
 /** Which alert screen is up. */
 export type AlertKind = 'NONE' | 'HIGH' | 'LOW' | 'RHYTHM' | 'RECOVERY' | 'HRV' | 'SPO2';
@@ -99,7 +98,6 @@ const READING_VALID_MS = 30000;
 const DEMO_SPEEDS: number[] = [1, 2, 4, 8];
 /** Simulated cadence while active in demo scenarios (steps per second). */
 const SIM_STEPS_PER_SEC = 2;
-const BATCH = 50;
 const WAITING = 'Waiting for heart rate…';
 const NOT_WORN = 'Watch not worn';
 
@@ -145,8 +143,6 @@ export class WatchController {
   /** When the risky drug was taken (epoch ms); 0 if none or unknown. Drives the home badge's time left. */
   @Trace riskyDrugAt: number = 0;
   @Trace statusText: string = '';
-  @Trace syncState: SyncState = 'OFF';
-  @Trace pending: number = 0;
   @Trace monitoringSec: number = 0;
   /** Fast-forward factor for demo scenarios (Settings). */
   @Trace demoSpeed: number = 4;
@@ -181,8 +177,7 @@ export class WatchController {
   private recovery: RecoveryTracker = new RecoveryTracker();
   private window: SessionStats = new SessionStats();
   private windowStartMs: number = 0;
-  private outbox: MetricOutbox = new MetricOutbox(new MemoryOutboxStore(), 500);
-  private uploader: SupabaseUploader | undefined = undefined;
+  private sync: SyncEngine = new SyncEngine();
   private contextClient: PatientContextClient | undefined = undefined;
   private demoRpc: DemoRpcClient | undefined = undefined;
   private pairing: PairingFlow = new PairingFlow();
@@ -205,8 +200,6 @@ export class WatchController {
   private sos: SosFlow = new SosFlow();
   private tickTimer: number = -1;
   private syncTimer: number = -1;
-  private syncing: boolean = false;
-  private batchSize: number = BATCH;
   private visible: boolean = false;
   private healthPermission: boolean = false;
   private motionPermission: boolean = false;
@@ -237,23 +230,24 @@ export class WatchController {
     this.resting = new RestingHr(this.cfg.restingBpm);
     this.restingBpm = this.cfg.restingBpm;
     this.applyLimits();
+    let outbox: MetricOutbox | undefined = undefined;
     try {
-      this.outbox = new MetricOutbox(new PreferencesOutboxStore(ctx), 500);
+      outbox = new MetricOutbox(new PreferencesOutboxStore(ctx), OUTBOX_CAPACITY);
     } catch (e) {
       Logger.warn('preferences unavailable, outbox is in-memory only');
     }
-    this.pending = this.outbox.size;
     this.doseStore = new DoseStore(ctx);
     this.dose = this.doseStore.load();
-    if (AppConfig.canUpload(this.cfg)) {
-      this.uploader = new SupabaseUploader(this.cfg.supabaseUrl, this.cfg.supabaseAnonKey);
+    const canUpload = AppConfig.canUpload(this.cfg);
+    this.sync.configure(outbox,
+      canUpload ? new SupabaseUploader(this.cfg.supabaseUrl, this.cfg.supabaseAnonKey) : undefined);
+    if (canUpload) {
       this.contextClient = new PatientContextClient(this.cfg.supabaseUrl, this.cfg.supabaseAnonKey,
         this.cfg.deviceId);
       this.demoRpc = new DemoRpcClient(this.cfg.supabaseUrl, this.cfg.supabaseAnonKey);
       this.pairing.configure(new PairingClient(this.cfg.supabaseUrl, this.cfg.supabaseAnonKey), () => {
         this.vibrate(400);
       });
-      this.syncState = this.pending > 0 ? 'PENDING' : 'OK';
     }
     this.monitoringSinceMs = Date.now();
     // Ask for permissions once, up front, so the dialog doesn't interrupt a running monitor.
@@ -307,6 +301,14 @@ export class WatchController {
 
   get pairError(): string {
     return this.pairing.pairError;
+  }
+
+  get syncState(): SyncState {
+    return this.sync.syncState;
+  }
+
+  get pending(): number {
+    return this.sync.pending;
   }
 
   get scenarioLabel(): string {
@@ -542,33 +544,9 @@ export class WatchController {
   }
 
   async syncNow(): Promise<void> {
-    if (this.uploader === undefined || this.syncing || this.outbox.size === 0) {
-      return;
-    }
-    this.syncing = true;
-    const batch = this.outbox.peek(this.batchSize);
-    const res = await this.uploader.upload(batch);
-    if (res.ok) {
-      this.outbox.ack(batch.length);
+    if (await this.sync.syncNow()) {
       this.confirmSosDelivery();
-      this.batchSize = BATCH;
-      this.syncState = this.outbox.size > 0 ? 'PENDING' : 'OK';
-    } else if (res.status === 400) {
-      // The server rejected a row (e.g. a type the DB doesn't know yet). Find it by sending one at a time and drop
-      // only that row, so one bad row can't block the queue forever.
-      if (this.batchSize > 1) {
-        this.batchSize = 1;
-      } else {
-        Logger.error(`dropping row rejected by server: type=${batch[0].type}`);
-        this.outbox.ack(1);
-      }
-      this.syncState = this.outbox.size > 0 ? 'PENDING' : 'OK';
-    } else {
-      this.syncState = 'ERROR';
-      Logger.warn(`sync failed: ${res.message}`);
     }
-    this.pending = this.outbox.size;
-    this.syncing = false;
   }
 
   // ---- Monitoring loop -----------------------------------------------------------------------------------------
@@ -979,7 +957,7 @@ export class WatchController {
 
   // Runs after each successful upload.
   private confirmSosDelivery(): void {
-    if (!this.sos.confirmDelivery(this.outbox.has('sos'))) {
+    if (!this.sos.confirmDelivery(this.sync.has('sos'))) {
       return;
     }
     this.notifier.alert(NOTIFY_SOS, 'SOS sent', 'Open Celia on your phone for the call and message buttons.');
@@ -1090,11 +1068,7 @@ export class WatchController {
   }
 
   private record(type: MetricType, payload: MetricPayload, tsMs: number): void {
-    this.outbox.enqueue(makeRow(this.cfg.deviceId, type, payload, tsMs, sourceForKind(this.sourceKind)));
-    this.pending = this.outbox.size;
-    if (this.uploader !== undefined) {
-      this.syncState = 'PENDING';
-    }
+    this.sync.record(makeRow(this.cfg.deviceId, type, payload, tsMs, sourceForKind(this.sourceKind)));
   }
 
   private vibrate(durationMs: number): void {

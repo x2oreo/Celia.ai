@@ -15,8 +15,13 @@ function result(ok: boolean, status: number, message: string): UploadResult {
   return r;
 }
 
+/** Sends a batch of metric rows; `SupabaseUploader` on the watch, a fake in tests. */
+export interface MetricUploader {
+  upload(rows: MetricRow[]): Promise<UploadResult>;
+}
+
 /** Inserts metric rows into Supabase via PostgREST (`POST /rest/v1/watch_metrics`). */
-export class SupabaseUploader {
+export class SupabaseUploader implements MetricUploader {
   private url: string;
   private anonKey: string;
 

@@ -1,3 +1,4 @@
+import syncEngineTest from './SyncEngine.test';
 import pairingFlowTest from './PairingFlow.test';
 import sosFlowTest from './SosFlow.test';
 import watchControllerTest from './WatchController.test';
@@ -26,4 +27,5 @@ export default function testsuite() {
   watchControllerTest();
   sosFlowTest();
   pairingFlowTest();
+  syncEngineTest();
 }
