@@ -52,7 +52,7 @@ export function demoHistory(now: number): DailyResting[] {
 }
 
 export async function loadRestingHistory(now: number): Promise<DailyResting[]> {
-  if (Config.hasBackend()) {
+  if (Config.hasWatchCloud()) {
     const path: string = `/rest/v1/watch_resting_daily?device_id=eq.${Config.WATCH_DEVICE_ID}` +
       `&select=day,resting_bpm,rest_minutes,simulated&order=day.desc&limit=${DAYS_TO_LOAD}`;
     const res: NetResult = await getJson(path, Config.DRUG_CHECK_TIMEOUT_MS);

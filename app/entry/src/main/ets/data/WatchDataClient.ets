@@ -209,6 +209,9 @@ export class WatchDataClient {
   }
 
   private static async get(path: string, ledger: boolean): Promise<string | undefined> {
+    if (!Config.hasWatchCloud()) {
+      return undefined;   // watch data lives in the Supabase database, not on a local dev backend
+    }
     const res: NetResult = await getJson(path, Config.DRUG_CHECK_TIMEOUT_MS, ledger);
     return res.ok ? res.body : undefined;
   }

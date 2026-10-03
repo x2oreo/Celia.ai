@@ -92,7 +92,7 @@ export class WatchPairing {
 
   /** Sends the profile genotype to the paired watch. No-op when unpaired (the shared demo row isn't ours). */
   static async syncGenotype(): Promise<void> {
-    if (!WatchPairing.isPaired() || !Config.hasBackend()) {
+    if (!WatchPairing.isPaired() || !Config.hasWatchCloud()) {
       return;
     }
     const p: Profile | undefined = await LocalStore.get().getProfile();
@@ -123,7 +123,7 @@ export class WatchPairing {
       const bad: PairResult = { outcome: 'INVALID_CODE', deviceId: '' };
       return bad;
     }
-    if (!Config.hasBackend()) {
+    if (!Config.hasWatchCloud()) {
       const none: PairResult = { outcome: 'NO_BACKEND', deviceId: '' };
       return none;
     }
@@ -161,7 +161,7 @@ export class WatchPairing {
    */
   static async stillPaired(): Promise<boolean | undefined> {
     const token: string = await LocalStore.get().getSetting(KEY_TOKEN, '');
-    if (token === '' || !Config.hasBackend()) {
+    if (token === '' || !Config.hasWatchCloud()) {
       return undefined;
     }
     // POST: the privacy ledger records field names only, so the token never shows up there (a GET URL would).
