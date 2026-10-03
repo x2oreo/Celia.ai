@@ -198,6 +198,15 @@ export struct HeartPage {
         }
 
         NavRow({
+          icon: $r('app.media.ic_wave'),
+          title: $r('app.string.trends_title'),
+          subtitle: $r('app.string.trends_subtitle'),
+          onTap: () => {
+            this.navStack.pushPathByName(Routes.TRENDS, null);
+          }
+        })
+          .margin({ top: 8 })
+        NavRow({
           icon: $r('app.media.ic_tab_heart'),
           title: $r('app.string.sym_title'),
           subtitle: $r('app.string.sym_subtitle'),

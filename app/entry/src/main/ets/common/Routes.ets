@@ -19,6 +19,7 @@ export class Routes {
   static readonly CHATS: string = 'chats';               // saved agent chats
   static readonly SCAN: string = 'scan';
   static readonly PAIR_WATCH: string = 'pairWatch';
+  static readonly TRENDS: string = 'trends';
 }
 
 // Tab indexes of components/MainTabs.ets. The first tab is the agent's home; the chat itself is a pushed page

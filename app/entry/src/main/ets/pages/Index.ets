@@ -32,6 +32,7 @@ import { AppLock } from '../common/AppLock';
 import { ReminderService } from '../reminders/ReminderService';
 import { BetaBlockerWatch } from '../vitals/BetaBlockerWatch';
 import { WatchPairing } from '../data/WatchPairing';
+import { TrendsPage } from './TrendsPage';
 import { PairWatchPage } from './PairWatchPage';
 import { AgentCore, QUICK_REPLY_OK, QUICK_REPLY_UNWELL } from '../agent/AgentCore';
 import { CheckInSheet } from '../components/CheckInSheet';
@@ -228,6 +229,8 @@ struct Index {
       ScanPage()
     } else if (name === Routes.PAIR_WATCH) {
       PairWatchPage()
+    } else if (name === Routes.TRENDS) {
+      TrendsPage()
     }
   }
 
