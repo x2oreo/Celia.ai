@@ -1,6 +1,7 @@
 import contractSmokeTest from './ContractSmoke.test';
 import agentSafetyTest from './AgentSafety.test';
 import agentCoreTest from './AgentCore.test';
+import agentLogicTest from './AgentLogic.test';
 import voiceTest from './Voice.test';
 import medicineScanTest from './MedicineScan.test';
 import drugCheckerTest from './DrugChecker.test';
@@ -30,6 +31,7 @@ export default function testsuite() {
   trendsTest();
   agentSafetyTest();
   agentCoreTest();
+  agentLogicTest();
   voiceTest();
   medicineScanTest();
   drugCheckerTest();

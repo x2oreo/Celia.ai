@@ -5,65 +5,30 @@
 
 import { keepOnRestore } from '../model/Chat';
 import { common } from '@kit.AbilityKit';
-import { LengthMetrics } from '@kit.ArkUI';
 import { photoAccessHelper } from '@kit.MediaLibraryKit';
 import { fileIo } from '@kit.CoreFileKit';
 import { image } from '@kit.ImageKit';
-import { AgentCore, QUICK_REPLY_UNWELL } from '../agent/AgentCore';
+import { AgentCore } from '../agent/AgentCore';
 import { AgentPrompt } from '../agent/AgentPrompt';
 import { MedicineScanFlow, ScanCandidate, ScanOutcome } from '../agent/MedicineScanFlow';
-import {
-  AddMedPayload, AgentReply, AlternativesPayload, ChatMessage, ChatRole, ConfirmPayload, EmergencyPayload,
-  InteractionFinding, MedsPayload, QuickRepliesPayload, ToolActivity, UiAction, VerdictCardPayload, OpenPagePayload
-} from '../model/AgentTypes';
+import { AgentReply, ChatRole, EmergencyPayload, ToolActivity, UiAction } from '../model/AgentTypes';
 import { VoiceSession, VoiceStatus, VoiceTurn } from '../voice/VoiceSession';
 import { VoiceInput } from '../voice/VoiceInput';
 import { VoiceOutput } from '../voice/VoiceOutput';
 import { RealtimeSession, RealtimeStatus, VoicePhase } from '../voice/RealtimeSession';
 import { SosController } from '../emergency/SosController';
-import { AskParam, CheckParam, DoctorPrepParam, Routes, SosParam, TabIndex } from '../common/Routes';
-import { TabRequest } from '../common/TabRequest';
+import { AskParam, Routes, SosParam } from '../common/Routes';
 import { Config } from '../common/Config';
 import { Logger } from '../common/Logger';
-import { DrugVerdict, RiskLevel } from '../model/DrugVerdict';
-import { QuickReplyChip, SourceBadge, StatusStrip, TypingDots } from '../components/Common';
+import { SourceBadge, StatusStrip } from '../components/Common';
 import { AgentAvatar } from '../components/AgentAvatar';
-import { VoiceOrb } from '../components/VoiceOrb';
-import { VerdictCard } from '../components/VerdictCard';
-import {
-  ActionTile, AlternativesCard, ConfirmCard, ConfirmState, EmergencyNotice, MedsCard, ToolStep, ToolStepRow, ToolUi,
-  toolArg
-} from '../components/AgentCards';
+import { ToolStep, ToolUi, toolArg } from '../components/AgentCards';
+import { stagePhase } from '../components/agent/AgentLogic';
+import { VoiceStage } from '../components/agent/VoiceStage';
+import { AgentMode, AgentThread, AgentWelcome, ChatItem } from '../components/agent/AgentThread';
+import { ChatBar, VoiceDock } from '../components/agent/AgentDock';
 
 const log: Logger = new Logger('AgentPage');
-
-type AgentMode = 'VOICE' | 'CHAT';
-
-const ORB_DIM: number = 168;
-const ORB_DIM_COMPACT: number = 84;
-const STAGE_OPEN: number = 264;      // orb at full size, nothing said yet
-const STAGE_COMPACT: number = 124;   // orb at half size above the conversation
-const STAGE_MS: number = 320;
-
-class ChatItem {
-  id: number;
-  role: ChatRole;
-  text: string;
-  actions: UiAction[];
-  candidates: ScanCandidate[];
-  tools: ToolStep[];
-  ts: number = Date.now();
-
-  constructor(id: number, role: ChatRole, text: string, actions: UiAction[], candidates: ScanCandidate[],
-    tools: ToolStep[]) {
-    this.id = id;
-    this.role = role;
-    this.text = text;
-    this.actions = actions;
-    this.candidates = candidates;
-    this.tools = tools;
-  }
-}
 
 @ComponentV2
 export struct AgentPage {
@@ -271,13 +236,6 @@ export struct AgentPage {
     this.showReply(await AgentCore.get().resolveAction(actionId, accepted));
   }
 
-  private confirmState(actionId: string): ConfirmState {
-    if (!this.resolved.includes(actionId)) {
-      return 'OPEN';
-    }
-    return this.accepted.includes(actionId) ? 'ACCEPTED' : 'DECLINED';
-  }
-
   // ---- voice ---------------------------------------------------------------------------------------------------
 
   private async ensureVoice(): Promise<boolean> {
@@ -383,10 +341,7 @@ export struct AgentPage {
 
   // What the orb shows: the voice phase, or "thinking" while a typed or tapped turn is running.
   private stage(): VoicePhase {
-    if (this.busy && (this.phase === 'OFF' || this.phase === 'LISTENING')) {
-      return 'THINKING';
-    }
-    return this.phase;
+    return stagePhase(this.busy, this.phase);
   }
 
   private stageLabel(): ResourceStr {
@@ -481,530 +436,48 @@ export struct AgentPage {
 
   // ---- builders ------------------------------------------------------------------------------------------------
 
-  private vp(a: UiAction): VerdictCardPayload {
-    return JSON.parse(a.payload) as VerdictCardPayload;
-  }
-
-  private addMed(a: UiAction): AddMedPayload {
-    return JSON.parse(a.payload) as AddMedPayload;
-  }
-
-  // The card payload carries the deterministic verdict; the colour and word come from it, never from model text.
-  private verdictOf(p: VerdictCardPayload): DrugVerdict {
-    const brand: string = p.query.length > 0 ? p.query.charAt(0).toUpperCase() + p.query.slice(1) : p.query;
-    const v: DrugVerdict = {
-      query: brand,
-      ingredient: p.ingredient,
-      risk: p.combinedRisk as RiskLevel,
-      reason: p.reason,
-      source: p.source
-    };
-    return v;
-  }
-
-  @Builder
-  verdictCard(a: UiAction) {
-    Column({ space: 8 }) {
-      VerdictCard({
-        verdict: this.verdictOf(this.vp(a)),
-        variant: 'INLINE',
-        actionLabel: $r('app.string.agent_open_check'),
-        onAction: () => {
-          this.navStack.pushPathByName(Routes.CHECK_RESULT, new CheckParam(this.vp(a).query, false, 'CHAT'));
-        }
-      })
-      if (this.vp(a).findings.length > 0) {
-        Column({ space: 4 }) {
-          Text($r('app.string.agent_findings'))
-            .fontSize($r('app.float.font_caption'))
-            .fontWeight(FontWeight.Bold)
-            .fontColor($r('app.color.risk_possible_text'))
-          ForEach(this.vp(a).findings, (f: InteractionFinding) => {
-            Text(`• ${f.detail}`)
-              .fontSize($r('app.float.font_small'))
-              .fontColor($r('app.color.ink_2'))
-          }, (f: InteractionFinding, i: number) => `${i}-${f.kind}`)
-        }
-        .alignItems(HorizontalAlign.Start)
-        .width('100%')
-        .padding(12)
-        .backgroundColor($r('app.color.risk_possible_tint'))
-        .borderRadius($r('app.float.radius_s'))
-      }
-    }
-    .width('100%')
-  }
-
-  private confirmId(a: UiAction): string {
-    return (JSON.parse(a.payload) as ConfirmPayload).actionId;
-  }
-
-  @Builder
-  actionView(a: UiAction, ts: number) {
-    if (a.type === 'SHOW_VERDICT') {
-      this.verdictCard(a)
-    } else if (a.type === 'QUICK_REPLIES') {
-      Flex({ wrap: FlexWrap.Wrap, space: { main: LengthMetrics.vp(8), cross: LengthMetrics.vp(8) } }) {
-        ForEach((JSON.parse(a.payload) as QuickRepliesPayload).options, (o: string) => {
-          QuickReplyChip({
-            label: o,
-            chipStyle: o === QUICK_REPLY_UNWELL ? 'ESCALATION' : 'DEFAULT',
-            onTap: () => {
-              this.send(o);
-            }
-          })
-        }, (o: string) => o)
-      }
-    } else if (a.type === 'ADD_MED') {
-      ConfirmCard({
-        icon: $r('app.media.ic_pill'),
-        title: $r('app.string.agent_add_med_title'),
-        detail: `${this.addMed(a).name} ${this.addMed(a).dose}`.trim(),
-        risk: this.addMed(a).risk as RiskLevel,
-        state: this.confirmState(this.addMed(a).actionId),
-        onConfirm: () => {
-          this.resolve(this.addMed(a).actionId, true);
-        },
-        onCancel: () => {
-          this.resolve(this.addMed(a).actionId, false);
-        }
-      })
-    } else if (a.type === 'SHARE_EMERGENCY_CARD') {
-      ConfirmCard({
-        icon: $r('app.media.ic_share'),
-        title: $r('app.string.agent_share_card_title'),
-        detail: $r('app.string.agent_share_card_sub'),
-        state: this.confirmState(this.confirmId(a)),
-        onConfirm: () => {
-          this.resolve(this.confirmId(a), true);
-        },
-        onCancel: () => {
-          this.resolve(this.confirmId(a), false);
-        }
-      })
-    } else if (a.type === 'SHOW_MEDS') {
-      MedsCard({
-        meds: JSON.parse(a.payload) as MedsPayload,
-        onOpen: () => {
-          this.navStack.clear();
-          TabRequest.open(TabIndex.MEDICINES);
-        }
-      })
-    } else if (a.type === 'SHOW_ALTERNATIVES') {
-      AlternativesCard({ alts: JSON.parse(a.payload) as AlternativesPayload })
-    } else if (a.type === 'START_EMERGENCY') {
-      EmergencyNotice({
-        active: ts > this.sosClosedAt,
-        onOpen: () => {
-          this.openSos(a);
-        }
-      })
-    } else if (a.type === 'SHOW_EMERGENCY_CARD') {
-      ActionTile({
-        icon: $r('app.media.ic_qr'),
-        title: $r('app.string.agent_card_title'),
-        subtitle: $r('app.string.agent_card_sub'),
-        onTap: () => {
-          this.navStack.clear();
-          TabRequest.open(TabIndex.EMERGENCY);
-        }
-      })
-    } else if (a.type === 'OPEN_MED_SCAN') {
-      ActionTile({
-        icon: $r('app.media.ic_camera'),
-        title: $r('app.string.agent_scan'),
-        subtitle: $r('app.string.agent_scan_sub'),
-        onTap: () => {
-          this.pickAndScan();
-        }
-      })
-    } else if (a.type === 'OPEN_PAGE') {
-      if (this.pagePayload(a).page === 'DOCTOR_PREP') {
-        ActionTile({
-          icon: $r('app.media.ic_doctor'),
-          title: $r('app.string.home_doctor'),
-          subtitle: $r('app.string.agent_open_brief_sub'),
-          onTap: () => {
-            this.navStack.pushPathByName(Routes.DOCTOR_PREP, new DoctorPrepParam(this.pagePayload(a).specialty));
-          }
-        })
-      } else if (this.pagePayload(a).page === 'REMINDERS') {
-        ActionTile({
-          icon: $r('app.media.ic_bell'),
-          title: $r('app.string.rem_title'),
-          subtitle: $r('app.string.agent_open_reminders_sub'),
-          onTap: () => {
-            this.navStack.pushPathByName(Routes.REMINDERS, null);
-          }
-        })
-      } else if (this.pagePayload(a).page === 'TRENDS') {
-        ActionTile({
-          icon: $r('app.media.ic_wave'),
-          title: $r('app.string.trends_title'),
-          subtitle: $r('app.string.trends_subtitle'),
-          onTap: () => {
-            this.navStack.pushPathByName(Routes.TRENDS, null);
-          }
-        })
-      }
-    }
-  }
-
-  private pagePayload(a: UiAction): OpenPagePayload {
-    return JSON.parse(a.payload) as OpenPagePayload;
-  }
-
-  // The user's words: an ink bubble with the tail bottom-right. Dimmed while they are still being recognised.
-  @Builder
-  userBubble(text: string, live: boolean) {
-    Row() {
-      if (text.length > 0) {
-        Text(text)
-          .fontSize($r('app.float.font_button'))
-          .lineHeight(22)
-          .fontColor($r('app.color.chat_user_text'))
-          .copyOption(live ? CopyOptions.None : CopyOptions.LocalDevice)
-      } else {
-        TypingDots()
-      }
-    }
-    .padding({ left: 14, right: 14, top: 10, bottom: 10 })
-    .constraintSize({ maxWidth: '82%', minHeight: 42 })
-    .backgroundColor($r('app.color.chat_user_bg'))
-    .borderRadius({ topLeft: 20, topRight: 20, bottomRight: 6, bottomLeft: 20 })
-    .opacity(live ? 0.6 : 1)
-  }
-
-  // The agent speaks in plain text, no bubble.
-  @Builder
-  agentText(text: string) {
-    Text(text)
-      .fontSize($r('app.float.font_body'))
-      .fontWeight(FontWeight.Medium)
-      .lineHeight(23)
-      .fontColor($r('app.color.ink'))
-      .constraintSize({ maxWidth: '92%' })
-      .copyOption(CopyOptions.LocalDevice)
-  }
-
-  @Builder
-  toolSteps(tools: ToolStep[]) {
-    ForEach(tools, (t: ToolStep) => {
-      ToolStepRow({ step: t })
-    }, (t: ToolStep) => `${t.id}-${t.done ? 1 : 0}`)
-  }
-
-  @Builder
-  turn(item: ChatItem) {
-    Column({ space: 10 }) {
-      this.toolSteps(item.tools)
-      if (item.text.length > 0) {
-        if (item.role === 'user') {
-          this.userBubble(item.text, false)
-        } else {
-          this.agentText(item.text)
-        }
-      }
-      ForEach(item.actions, (a: UiAction) => {
-        this.actionView(a, item.ts)
-      }, (a: UiAction, i: number) => `${item.id}-${i}-${a.type}`)
-      if (item.candidates.length > 0) {
-        Flex({ wrap: FlexWrap.Wrap, space: { main: LengthMetrics.vp(8), cross: LengthMetrics.vp(8) } }) {
-          ForEach(item.candidates, (c: ScanCandidate) => {
-            QuickReplyChip({
-              label: c.ingredient !== '' && c.ingredient !== c.name.toLowerCase() ? `${c.name} (${c.ingredient})` :
-                c.name,
-              onTap: () => {
-                this.pickCandidate(c);
-              }
-            })
-          }, (c: ScanCandidate) => c.name)
-        }
-      }
-    }
-    .width('100%')
-    .alignItems(item.role === 'user' ? HorizontalAlign.End : HorizontalAlign.Start)
-  }
-
-  // The turn in progress: what the user is saying, the tools that are running, what the agent is saying.
-  @Builder
-  liveTurn() {
-    if (this.userLive !== '' || this.phase === 'HEARING') {
-      ListItem() {
-        Column() {
-          this.userBubble(this.userLive, true)
-        }
-        .width('100%')
-        .alignItems(HorizontalAlign.End)
-      }
-    }
-    if (this.liveTools.length > 0 || this.agentLive !== '' || this.busy) {
-      ListItem() {
-        Column({ space: 10 }) {
-          this.toolSteps(this.liveTools)
-          if (this.agentLive !== '') {
-            this.agentText(this.agentLive)
-          } else if (this.runningTool() === undefined && (this.busy || this.liveTools.length > 0)) {
-            TypingDots({ label: this.busy ? this.busyLabel : '' })
-          }
-        }
-        .width('100%')
-        .alignItems(HorizontalAlign.Start)
-      }
-    }
-  }
-
   @Builder
   thread() {
-    List({ space: 16, scroller: this.scroller }) {
-      ForEach(this.items, (item: ChatItem) => {
-        ListItem() {
-          this.turn(item)
-        }
-      }, (item: ChatItem) => `${item.id}`)
-      this.liveTurn()
-    }
-    .layoutWeight(1)
-    .width('100%')
-    .padding({ left: 20, right: 20 })
-    .contentStartOffset(4)
-    .contentEndOffset(12)
-    .scrollBar(BarState.Off)
-    .edgeEffect(EdgeEffect.Spring)
+    AgentThread({
+      items: this.items,
+      userLive: this.userLive,
+      agentLive: this.agentLive,
+      liveTools: this.liveTools,
+      hearing: this.phase === 'HEARING',
+      busy: this.busy,
+      busyLabel: this.busyLabel,
+      resolved: this.resolved,
+      accepted: this.accepted,
+      sosClosedAt: this.sosClosedAt,
+      scroller: this.scroller,
+      onSend: (text: string) => {
+        this.send(text);
+      },
+      onResolve: (actionId: string, accepted: boolean) => {
+        this.resolve(actionId, accepted);
+      },
+      onScan: () => {
+        this.pickAndScan();
+      },
+      onOpenSos: (a: UiAction) => {
+        this.openSos(a);
+      },
+      onPickCandidate: (c: ScanCandidate) => {
+        this.pickCandidate(c);
+      }
+    })
+      .layoutWeight(1)
   }
 
   @Builder
-  starter(label: Resource) {
-    QuickReplyChip({
-      label: label,
-      onTap: () => {
+  welcome() {
+    AgentWelcome({
+      mode: this.mode,
+      onStarter: (label: Resource) => {
         this.send(this.str(label));
       }
     })
-  }
-
-  @Builder
-  starters() {
-    Flex({ wrap: FlexWrap.Wrap, justifyContent: FlexAlign.Center,
-      space: { main: LengthMetrics.vp(8), cross: LengthMetrics.vp(8) } }) {
-      this.starter($r('app.string.agent_starter_ibuprofen'))
-      this.starter($r('app.string.agent_starter_avoid'))
-      this.starter($r('app.string.agent_starter_meds'))
-    }
-  }
-
-  // Voice stage: the orb and what it is doing. Full size until something is said, then it steps back above the
-  // conversation.
-  @Builder
-  voiceStage() {
-    Column() {
-      Stack() {
-        VoiceOrb({
-          dim: this.hasThread() ? ORB_DIM_COMPACT : ORB_DIM,
-          phase: this.stage(),
-          level: this.level,
-          muted: this.muted
-        })
-      }
-      .width('100%')
-      .height(this.hasThread() ? STAGE_COMPACT : STAGE_OPEN)
-      .animation({ duration: STAGE_MS, curve: Curve.EaseInOut })
-      .accessibilityText($r('app.string.a11y_orb'))
-      .onClick(() => {
-        if (this.phase === 'OFF' && !this.recording) {
-          this.onMic();
-        }
-      })
-
-      Text(this.stageLabel())
-        .fontSize(this.hasThread() ? $r('app.float.font_badge') : $r('app.float.font_title_3'))
-        .fontWeight(FontWeight.Bold)
-        .fontColor(this.hasThread() ? $r('app.color.ink_3') : $r('app.color.ink'))
-        .maxLines(1)
-        .textOverflow({ overflow: TextOverflow.Ellipsis })
-        .padding({ left: 20, right: 20 })
-
-      if (Config.DEMO_VOICE_INPUT) {
-        SourceBadge({ label: $r('app.string.demo_voice_badge') })
-          .margin({ top: 8 })
-      }
-    }
-    .width('100%')
-    .padding({ bottom: 12 })
-  }
-
-  @Builder
-  voiceWelcome() {
-    Column({ space: 20 }) {
-      Text($r('app.string.agent_voice_idle_hint'))
-        .fontSize($r('app.float.font_small'))
-        .lineHeight(20)
-        .fontColor($r('app.color.ink_3'))
-        .textAlign(TextAlign.Center)
-      this.starters()
-    }
-    .width('100%')
-    .layoutWeight(1)
-    .padding({ left: 20, right: 20 })
-  }
-
-  @Builder
-  chatWelcome() {
-    Column({ space: 20 }) {
-      AgentAvatar({ dim: 96 })
-      Text($r('app.string.agent_welcome_title'))
-        .fontSize($r('app.float.font_title'))
-        .fontWeight(FontWeight.Bold)
-        .fontColor($r('app.color.ink'))
-      Text($r('app.string.agent_welcome'))
-        .fontSize($r('app.float.font_small'))
-        .lineHeight(20)
-        .fontColor($r('app.color.ink_3'))
-        .textAlign(TextAlign.Center)
-      this.starters()
-    }
-    .width('100%')
-    .layoutWeight(1)
-    .padding({ top: 40, left: 28, right: 28 })
-  }
-
-  @Builder
-  roundButton(icon: Resource, filled: boolean, a11y: Resource) {
-    Row() {
-      Image(icon)
-        .width(22)
-        .height(22)
-        .fillColor(filled ? $r('app.color.on_accent') : $r('app.color.ink'))
-    }
-    .width($r('app.float.touch_min'))
-    .height($r('app.float.touch_min'))
-    .justifyContent(FlexAlign.Center)
-    .borderRadius(24)
-    .backgroundColor(filled ? $r('app.color.brand_accent') : $r('app.color.surface'))
-    .border({ width: filled ? 0 : 1, color: $r('app.color.border') })
-    .accessibilityText(a11y)
-    .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.95 })
-  }
-
-  @Builder
-  dockSide(icon: Resource, a11y: Resource) {
-    Row() {
-      Image(icon).width(22).height(22).fillColor($r('app.color.ink'))
-    }
-    .width($r('app.float.dock_side'))
-    .height($r('app.float.dock_side'))
-    .justifyContent(FlexAlign.Center)
-    .borderRadius(26)
-    .backgroundColor($r('app.color.surface'))
-    .border({ width: 1, color: $r('app.color.border') })
-    .accessibilityText(a11y)
-    .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.95 })
-  }
-
-  // Coral mic to talk; outlined with a struck mic when muted; ink "send" while a tap-to-talk question records.
-  @Builder
-  dockMic() {
-    Row() {
-      Image(this.recording ? $r('app.media.ic_send') : (this.muted ? $r('app.media.ic_mic_off') :
-        $r('app.media.ic_mic')))
-        .width(30)
-        .height(30)
-        .fillColor(this.recording ? $r('app.color.chat_user_text') : (this.muted ? $r('app.color.ink') :
-          $r('app.color.on_accent')))
-    }
-    .width($r('app.float.dock_main'))
-    .height($r('app.float.dock_main'))
-    .justifyContent(FlexAlign.Center)
-    .borderRadius(36)
-    .backgroundColor(this.recording ? $r('app.color.chat_user_bg') : (this.muted ? $r('app.color.surface') :
-      $r('app.color.brand_accent')))
-    .border({ width: this.muted ? 1.5 : 0, color: $r('app.color.border_strong') })
-    .opacity(this.phase === 'CONNECTING' ? 0.6 : 1)
-    .accessibilityText(this.recording ? $r('app.string.a11y_send') : (this.muted ? $r('app.string.a11y_unmute') :
-      (this.phase === 'OFF' ? $r('app.string.a11y_mic') : $r('app.string.a11y_mute'))))
-    .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.95 })
-    .onClick(() => {
-      this.onMic();
-    })
-  }
-
-  // Voice dock: scan a box, talk, and either end the conversation or switch to typing.
-  @Builder
-  voiceDock() {
-    Row() {
-      Stack() {
-        this.dockSide($r('app.media.ic_camera'), $r('app.string.a11y_camera'))
-      }
-      .onClick(() => {
-        this.pickAndScan();
-      })
-      this.dockMic()
-      if (this.voiceActive()) {
-        Stack() {
-          this.dockSide($r('app.media.ic_close'), $r('app.string.a11y_end'))
-        }
-        .onClick(() => {
-          this.endVoice();
-        })
-      } else {
-        Stack() {
-          this.dockSide($r('app.media.ic_keyboard'), $r('app.string.a11y_keyboard'))
-        }
-        .onClick(() => {
-          this.setMode('CHAT');
-        })
-      }
-    }
-    .width('100%')
-    .justifyContent(FlexAlign.SpaceEvenly)
-    .alignItems(VerticalAlign.Center)
-    .padding({ left: 32, right: 32, top: 8, bottom: 20 })
-  }
-
-  // Chat input bar: camera, pill input, then send (when there is text) or back to voice.
-  @Builder
-  chatBar() {
-    Row({ space: 8 }) {
-      Stack() {
-        this.roundButton($r('app.media.ic_camera'), false, $r('app.string.a11y_camera'))
-      }
-      .onClick(() => {
-        this.pickAndScan();
-      })
-      TextInput({ text: this.draft, placeholder: $r('app.string.agent_input_hint') })
-        .layoutWeight(1)
-        .height($r('app.float.touch_min'))
-        .borderRadius(24)
-        .backgroundColor($r('app.color.surface'))
-        .border({ width: 1, color: $r('app.color.border') })
-        .fontSize($r('app.float.font_body'))
-        .fontColor($r('app.color.ink'))
-        .placeholderColor($r('app.color.ink_4'))
-        .enterKeyType(EnterKeyType.Send)
-        .onChange((v: string) => {
-          this.draft = v;
-        })
-        .onSubmit(() => {
-          this.send(this.draft);
-        })
-      if (this.draft.trim().length > 0) {
-        Stack() {
-          this.roundButton($r('app.media.ic_send'), true, $r('app.string.a11y_send'))
-        }
-        .onClick(() => {
-          this.send(this.draft);
-        })
-      } else {
-        Stack() {
-          this.roundButton($r('app.media.ic_wave'), true, $r('app.string.a11y_voice'))
-        }
-        .onClick(() => {
-          this.setMode('VOICE');
-        })
-      }
-    }
-    .width('100%')
-    .padding({ left: 16, right: 16, top: 8, bottom: 12 })
+      .layoutWeight(1)
   }
 
   @Builder
@@ -1077,20 +550,59 @@ export struct AgentPage {
         }
 
         if (this.mode === 'VOICE') {
-          this.voiceStage()
-          if (this.hasThread()) {
-            this.thread()
-          } else {
-            this.voiceWelcome()
-          }
-          this.voiceDock()
+          VoiceStage({
+            phase: this.stage(),
+            level: this.level,
+            muted: this.muted,
+            compact: this.hasThread(),
+            label: this.stageLabel(),
+            onOrbTap: () => {
+              if (this.phase === 'OFF' && !this.recording) {
+                this.onMic();
+              }
+            }
+          })
+        }
+        if (this.hasThread()) {
+          this.thread()
         } else {
-          if (this.hasThread()) {
-            this.thread()
-          } else {
-            this.chatWelcome()
-          }
-          this.chatBar()
+          this.welcome()
+        }
+        if (this.mode === 'VOICE') {
+          VoiceDock({
+            phase: this.phase,
+            recording: this.recording,
+            muted: this.muted,
+            active: this.voiceActive(),
+            onMic: () => {
+              this.onMic();
+            },
+            onScan: () => {
+              this.pickAndScan();
+            },
+            onEnd: () => {
+              this.endVoice();
+            },
+            onKeyboard: () => {
+              this.setMode('CHAT');
+            }
+          })
+        } else {
+          ChatBar({
+            draft: this.draft,
+            onDraft: (text: string) => {
+              this.draft = text;
+            },
+            onSend: () => {
+              this.send(this.draft);
+            },
+            onScan: () => {
+              this.pickAndScan();
+            },
+            onVoice: () => {
+              this.setMode('VOICE');
+            }
+          })
         }
       }
       .width('100%')
