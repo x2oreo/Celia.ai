@@ -1,5 +1,15 @@
 import contractSmokeTest from './ContractSmoke.test';
+import drugCheckerTest from './DrugChecker.test';
+import alarmRulesTest from './AlarmRules.test';
+import sosControllerTest from './SosController.test';
+import doctorPrepTest from './DoctorPrep.test';
+import utilsTest from './Utils.test';
 
 export default function testsuite() {
   contractSmokeTest();
+  drugCheckerTest();
+  alarmRulesTest();
+  sosControllerTest();
+  doctorPrepTest();
+  utilsTest();
 }
