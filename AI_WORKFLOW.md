@@ -1281,7 +1281,11 @@ The tap-to-talk fallback is also untested end to end.
   cached, demo watch never cached).
 - **Validated:** `tests/run-rls.sh` passes with 13 new checks (previous owner, late upload, unbind, first owner keeps
   pre-pairing rows, account delete); 407 phone tests (6 new); phone HAP builds.
-- **Not validated:** the migration is not applied to the live project yet; not run on the emulators.
+- **Live backend:** applied by Claude Code with `supabase db push --linked` after a dry run showed it was the only
+  pending file. Checked through the API: the demo watch still reads and its new rows carry its owner (the trigger
+  stamps live uploads), other devices return nothing to anon, `pairing_unbind` refuses an unknown token, anon cannot
+  call `pairing_bind`.
+- **Not validated:** not run on the emulators (live chart backfill, local history, unpair from Settings).
 
 ### 2026-10-04 - Kaloyan + Claude Code: Settings rebuilt as a grouped index (branch `kaloyan/agent-home`)
 
