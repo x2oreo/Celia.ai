@@ -1,47 +1,59 @@
 import { WatchController } from '../controller/WatchController';
-import { HeartBeat, Icon, PillButton, Ring } from './Parts';
+import { HRV_USUAL_MS } from '../vitals/MockedVitals';
+import { USUAL_RECOVERY_DROP_BPM, stateWord } from '../vitals/WatchStatus';
+import { Bezel, Caps, OkHelp, OutlineBadge, StatusMark } from './Parts';
 import { Theme } from './Theme';
 
+/** Seconds to answer a fall before an SOS goes out. */
+const FALL_SECONDS: number = 30;
+
+/** 10 Fall: the ring drains over 30 s; no answer sends an SOS. */
+@ComponentV2
+struct FallAlert {
+  @Param @Require ctrl: WatchController;
+
+  build() {
+    Stack() {
+      Bezel({ mode: 'RING', color: Theme.ALERT, fraction: this.ctrl.fallCountdown / FALL_SECONDS })
+      Column({ space: 0 }) {
+        Caps({ text: 'FALL DETECTED', color: Theme.BRAND })
+        Text('Are you OK?').fontSize(Theme.TITLE + 2).fontWeight(FontWeight.Bolder).fontColor(Theme.TEXT)
+        Row({ space: 3 }) {
+          Text(`${this.ctrl.fallCountdown}`).fontSize(Theme.HERO - 6).fontWeight(FontWeight.Bolder)
+            .fontColor(Theme.TEXT)
+          Text('s').fontSize(Theme.TITLE + 2).fontWeight(FontWeight.Bolder).fontColor(Theme.TEXT).margin({ bottom: 12 })
+        }
+        .alignItems(VerticalAlign.Bottom)
+        .margin({ top: -6, bottom: -6 })
+        Text('No answer sends an SOS').fontSize(Theme.SMALL).fontColor(Theme.TEXT_2).margin({ bottom: 10 })
+        OkHelp({ onOk: () => this.ctrl.imOk(), onHelp: () => this.ctrl.needHelp() })
+      }
+    }
+    .width('100%')
+    .height('100%')
+    .backgroundColor(Theme.BG)
+  }
+}
+
 /**
- * W2 / W3 alert: ring in the zone colour, caps title with its shape, big number, context, I'm OK / Need help.
- * Also a fall (the ring drains over 30 s), irregular rhythm, low HRV / oxygen and slow recovery.
+ * 07-09 Alerts: ring in the zone colour, caps title with its shape, the value (or a word), unit + context, the limit
+ * and why (heart rate) or one line of advice (signals), and always I'm OK / Need help. Only a high heart rate is red;
+ * low heart rate and every signal alert are amber.
  */
 @ComponentV2
 export struct AlertScreen {
   @Param @Require ctrl: WatchController;
 
-  isFall(): boolean {
-    return this.ctrl.fallCountdown > 0;
+  kind(): string {
+    return this.ctrl.alertKind;
   }
 
-  /** Amber for a heart rate that is low or near-normal-but-flagged; red where it is a real alarm. */
   color(): string {
-    if (this.isFall()) {
-      return Theme.ELEVATED;
-    }
-    switch (this.ctrl.alertKind) {
-      case 'HIGH':
-      case 'RHYTHM':
-      case 'SPO2':
-        return Theme.ALERT;
-      default:
-        return Theme.ELEVATED;
-    }
-  }
-
-  shape(): Resource {
-    return this.color() === Theme.ALERT ? $r('app.media.ic_risk_known') : $r('app.media.ic_risk_possible');
-  }
-
-  ringPercent(): number {
-    return this.isFall() ? this.ctrl.fallCountdown / 30 * 100 : 100;
+    return this.kind() === 'HIGH' ? Theme.ALERT : Theme.ELEVATED;
   }
 
   title(): string {
-    if (this.isFall()) {
-      return 'FALL DETECTED';
-    }
-    switch (this.ctrl.alertKind) {
+    switch (this.kind()) {
       case 'HIGH':
         return 'HEART RATE HIGH';
       case 'LOW':
@@ -49,104 +61,126 @@ export struct AlertScreen {
       case 'RHYTHM':
         return 'IRREGULAR RHYTHM';
       case 'HRV':
-        return 'HRV LOW';
+        return 'LOW HRV';
       case 'SPO2':
-        return 'OXYGEN LOW';
+        return 'LOW OXYGEN';
       default:
         return 'SLOW RECOVERY';
     }
   }
 
-  bigNumber(): string {
-    return this.isFall() ? `${this.ctrl.fallCountdown}` : `${this.ctrl.alertBpm}`;
+  value(): string {
+    switch (this.kind()) {
+      case 'RHYTHM':
+        return 'Irregular';
+      case 'RECOVERY':
+        return `-${Math.max(0, this.ctrl.recoveryDrop)}`;
+      default:
+        return `${this.ctrl.alertBpm}`;
+    }
   }
 
-  stateWord(): string {
-    switch (this.ctrl.alertActivity) {
-      case 'REST':
-        return ' · at rest';
-      case 'ACTIVE':
-        return ' · active';
-      case 'ASLEEP':
-        return ' · asleep';
-      default:
-        return '';
-    }
+  /** "at rest" for the unit line; '' when the state is unknown. */
+  state(): string {
+    return stateWord(this.ctrl.alertActivity).toLowerCase();
   }
 
   unit(): string {
-    if (this.isFall()) {
-      return 'seconds to answer';
-    }
-    switch (this.ctrl.alertKind) {
-      case 'RECOVERY':
-        return 'bpm 1 min after exercise';
+    switch (this.kind()) {
       case 'HRV':
-        return `ms HRV${this.stateWord()}`;
+        return 'ms';
       case 'SPO2':
-        return `% oxygen${this.stateWord()}`;
+        return '%';
+      case 'RECOVERY':
+        return 'bpm in 1 min';
+      case 'RHYTHM':
+        return '';
       default:
-        return `bpm${this.stateWord()}`;
+        return 'bpm';
     }
   }
 
+  /** What follows the unit: "· at rest", or "· usual 45" for HRV. */
+  context(): string {
+    if (this.kind() === 'HRV') {
+      return `· usual ${HRV_USUAL_MS}`;
+    }
+    if (this.kind() === 'RECOVERY') {
+      return '';
+    }
+    return this.state().length > 0 ? `· ${this.state()}` : '';
+  }
+
+  simulated(): boolean {
+    return this.kind() === 'RHYTHM' || this.kind() === 'HRV' || this.kind() === 'SPO2';
+  }
+
+  /** Heart rate: the limit and why (from the rules). Signals: one line of advice. */
   note(): string {
-    if (this.isFall()) {
-      return 'No answer sends an SOS';
+    switch (this.kind()) {
+      case 'HIGH':
+      case 'LOW':
+        return this.ctrl.alertText;
+      case 'RHYTHM':
+        return 'Sit down and breathe slowly.';
+      case 'HRV':
+        return 'Rest for a few minutes.';
+      case 'SPO2':
+        return 'Sit up and breathe deeply.';
+      default:
+        return `Usually -${USUAL_RECOVERY_DROP_BPM} after exercise. Take it easy for now.`;
     }
-    if (this.ctrl.alertKind === 'LOW' && this.ctrl.alertActivity === 'ASLEEP') {
-      return 'Gentle wake-up tone';
-    }
-    return this.ctrl.alertText;
   }
 
-  isHeartRate(): boolean {
-    return !this.isFall() && (this.ctrl.alertKind === 'HIGH' || this.ctrl.alertKind === 'LOW');
+  gentleWake(): boolean {
+    return this.kind() === 'LOW' && this.ctrl.alertActivity === 'ASLEEP';
   }
 
   build() {
-    Stack() {
-      Ring({ percent: this.ringPercent(), color: this.color(), strokeWidth: 10 })
-      Column({ space: 0 }) {
-        Row({ space: 4 }) {
-          Icon({ src: this.isFall() ? $r('app.media.ic_zap') : this.shape(), color: this.color(), glyph: 12 })
-          Text(this.title())
-            .fontSize(Theme.CAPS)
-            .fontWeight(FontWeight.Bolder)
-            .letterSpacing(1)
-            .fontColor(this.color())
-        }
-        Row({ space: 4 }) {
-          Text(this.bigNumber())
-            .fontSize(Theme.HERO)
-            .fontWeight(FontWeight.Bolder)
-            .fontColor(this.color())
-          if (this.isHeartRate()) {
-            HeartBeat({ periodMs: 500, color: this.color(), glyph: 16 }).margin({ bottom: 16 })
+    if (this.ctrl.fallCountdown > 0) {
+      FallAlert({ ctrl: this.ctrl })
+    } else {
+      Stack() {
+        Bezel({ mode: 'RING', color: this.color(), strokeWidth: 10 })
+        Column({ space: 0 }) {
+          Row({ space: 4 }) {
+            StatusMark({ mark: this.kind() === 'LOW' ? 'DOWN' : 'UP', color: this.color(), dim: 10 })
+            Caps({ text: this.title(), color: this.color() })
           }
-        }
-        .alignItems(VerticalAlign.Bottom)
-        Text(this.unit()).fontSize(Theme.SMALL).fontColor(Theme.TEXT).margin({ top: -4 })
-        Text(this.note())
-          .fontSize(Theme.MICRO)
-          .fontColor(Theme.TEXT_2)
-          .maxLines(2)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
-          .textAlign(TextAlign.Center)
-          .width(150)
-          .margin({ top: 3, bottom: 8 })
-        Row({ space: 6 }) {
-          PillButton({ label: "I'm OK", pillWidth: 72, onTap: () => {
-            this.ctrl.imOk();
-          } })
-          PillButton({ label: 'Need help', bg: Theme.ALERT, pillWidth: 88, onTap: () => {
-            this.ctrl.needHelp();
-          } })
+          Text(this.value())
+            .fontSize(this.kind() === 'RHYTHM' ? Theme.NUMBER + 2 : this.gentleWake() ? Theme.HERO - 8 : Theme.HERO)
+            .fontWeight(FontWeight.Bolder)
+            .fontColor(this.color())
+            .maxLines(1)
+            .margin({ top: this.kind() === 'RHYTHM' ? 2 : -8, bottom: this.kind() === 'RHYTHM' ? 2 : -10 })
+          Row({ space: 4 }) {
+            if (this.unit().length > 0) {
+              Text(this.unit()).fontSize(Theme.BODY).fontWeight(FontWeight.Regular).fontColor(Theme.TEXT)
+            }
+            if (this.simulated()) {
+              OutlineBadge({ color: Theme.TEXT })
+            }
+            if (this.context().length > 0) {
+              Text(this.context()).fontSize(Theme.BODY).fontWeight(FontWeight.Regular).fontColor(Theme.TEXT)
+            }
+          }
+          Text(this.note())
+            .fontSize(Theme.SMALL)
+            .fontColor(Theme.TEXT_2)
+            .maxLines(2)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+            .textAlign(TextAlign.Center)
+            .width(160)
+            .margin({ top: 2 })
+          if (this.gentleWake()) {
+            Text('))) Gentle wake-up tone').fontSize(Theme.SMALL).fontColor(Theme.ELEVATED).margin({ top: 2 })
+          }
+          OkHelp({ onOk: () => this.ctrl.imOk(), onHelp: () => this.ctrl.needHelp() }).margin({ top: 8 })
         }
       }
+      .width('100%')
+      .height('100%')
+      .backgroundColor(Theme.BG)
     }
-    .width('100%')
-    .height('100%')
-    .backgroundColor(Theme.BG)
   }
 }

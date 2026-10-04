@@ -1,88 +1,81 @@
 import { ArcList, ArcListAttribute, ArcListItem, ArcListItemAttribute, LengthMetrics } from '@kit.ArkUI';
-import { WatchController } from '../controller/WatchController';
-import { Caps, Icon } from './Parts';
+import { ActivityOverride, WatchController } from '../controller/WatchController';
+import { Genotype } from '../model/WatchMetric';
+import { SCENARIOS, Scenario } from '../vitals/Scenarios';
+import { Icon, OutlineBadge } from './Parts';
 import { Theme } from './Theme';
 
-/** A setting the simulator cycles through on tap: label left, current value right. */
+/** An event stays in the running line this long, then the line goes back to the scenario. */
+const EVENT_LINE_MS: number = 6000;
+const SPEEDS: number[] = [1, 2, 4, 8];
+const STATES: ActivityOverride[] = ['AUTO', 'REST', 'ACTIVE', 'ASLEEP'];
+const GENOTYPES: Genotype[] = ['UNKNOWN', 'LQT1', 'LQT2', 'LQT3'];
+
+function stateLabel(o: ActivityOverride): string {
+  switch (o) {
+    case 'REST':
+      return 'Rest';
+    case 'ACTIVE':
+      return 'Active';
+    case 'ASLEEP':
+      return 'Asleep';
+    default:
+      return 'Auto';
+  }
+}
+
+function clock(sec: number): string {
+  const s = Math.max(0, sec);
+  const r = s % 60;
+  return `${Math.floor(s / 60)}:${r < 10 ? '0' : ''}${r}`;
+}
+
+/** Selected = white fill, dark text; the rest sit on `BUTTON`. */
 @ComponentV2
-struct SimSetting {
+struct SimChip {
   @Param @Require label: string;
-  @Param @Require value: string;
   @Param on: boolean = false;
   @Event onTap: () => void = () => {};
 
   build() {
-    Row({ space: 6 }) {
-      Text(this.label).fontSize(Theme.SMALL).fontColor(Theme.TEXT_2).maxLines(1)
-      Blank()
-      Text(this.value)
-        .fontSize(Theme.SMALL)
-        .fontWeight(FontWeight.Bold)
-        .fontColor(this.on ? Theme.ON_LIGHT : Theme.TEXT)
-        .maxLines(1)
-        .padding({ left: 8, right: 8 })
-        .height(24)
-        .borderRadius(12)
-        .backgroundColor(this.on ? Theme.ELEVATED : Theme.BUTTON)
-    }
-    .width(Theme.LIST_WIDTH)
-    .height(44)
-    .padding({ left: 14, right: 8 })
-    .borderRadius(22)
-    .backgroundColor(Theme.SURFACE)
-    .border({ width: 1, color: Theme.BORDER, style: BorderStyle.Dashed })
-    .accessibilityGroup(true)
-    .accessibilityText(`${this.label}: ${this.value}. Tap to change.`)
-    .onClick(() => this.onTap())
+    Text(this.label)
+      .fontSize(Theme.SMALL - 1)
+      .fontWeight(FontWeight.Bold)
+      .fontColor(this.on ? Theme.ON_LIGHT : Theme.TEXT)
+      .maxLines(1)
+      .height(26)
+      .padding({ left: 8, right: 8 })
+      .borderRadius(13)
+      .backgroundColor(this.on ? Theme.TEXT : Theme.BUTTON)
+      .accessibilityText(`${this.label}${this.on ? ', selected' : ''}`)
+      .onClick(() => this.onTap())
   }
 }
 
-/** A one-shot event (fall, irregular rhythm...): icon + verb. */
+/** A labelled group of chips that wraps. */
 @ComponentV2
-struct SimEvent {
-  @Param @Require icon: Resource;
-  @Param @Require label: string;
-  @Param active: boolean = false;
-  @Event onTap: () => void = () => {};
+struct SimGroup {
+  @Param label: string = '';
+  @BuilderParam chips: () => void;
 
   build() {
-    Row({ space: 8 }) {
-      Icon({ src: this.icon, color: this.active ? Theme.ON_LIGHT : Theme.ELEVATED, glyph: 16 })
-      Text(this.label)
-        .fontSize(Theme.BODY)
-        .fontWeight(FontWeight.Bold)
-        .fontColor(this.active ? Theme.ON_LIGHT : Theme.TEXT)
-        .maxLines(1)
+    Column({ space: 5 }) {
+      if (this.label.length > 0) {
+        Text(this.label).fontSize(Theme.SMALL).fontColor(Theme.TEXT_2)
+      }
+      Flex({ wrap: FlexWrap.Wrap, space: { main: LengthMetrics.vp(5), cross: LengthMetrics.vp(5) } }) {
+        this.chips()
+      }
     }
     .width(Theme.LIST_WIDTH)
-    .height(44)
-    .padding({ left: 16, right: 12 })
-    .borderRadius(22)
-    .backgroundColor(this.active ? Theme.ELEVATED : Theme.SURFACE)
-    .border({ width: 1, color: this.active ? Theme.ELEVATED : Theme.BORDER, style: BorderStyle.Dashed })
-    .accessibilityGroup(true)
-    .accessibilityText(`Simulate: ${this.label}`)
-    .onClick(() => this.onTap())
-  }
-}
-
-@ComponentV2
-struct SimSection {
-  @Param @Require title: string;
-
-  build() {
-    Row() {
-      Caps({ text: this.title, color: Theme.ELEVATED })
-    }
-    .width(Theme.LIST_WIDTH)
-    .padding({ left: 14, top: 8 })
+    .alignItems(HorizontalAlign.Start)
   }
 }
 
 /**
- * The simulator: every demo control in one panel, the last page, only in a DEMO_MODE build. It drives what the
- * emulator can't produce (a fall, the wear sensor, HRV / oxygen / rhythm, the phone's context) through the same
- * controller methods the real signals use.
+ * 06 Simulator: every demo control, the last page, only in a DEMO_MODE build. It drives what the emulator can't
+ * produce (a fall, the wear sensor, HRV / oxygen / rhythm, the phone's context) through the same controller methods
+ * the real signals use.
  */
 @ComponentV2
 export struct SimulatePage {
@@ -96,137 +89,158 @@ export struct SimulatePage {
     }
   }
 
-  stateValue(): string {
-    switch (this.ctrl.activityOverride) {
-      case 'REST':
-        return 'Rest';
-      case 'ACTIVE':
-        return 'Active';
-      case 'ASLEEP':
-        return 'Asleep';
-      default:
-        return 'Auto';
+  /** "LQT2 startle · 0:42" (after a play mark), or the event that just fired. Reads monitoringSec so it ticks every second. */
+  runningLine(): string {
+    const sec = this.ctrl.monitoringSec;
+    if (this.ctrl.simEvent.length > 0 && Date.now() - this.ctrl.simEventAt < EVENT_LINE_MS) {
+      return this.ctrl.simEvent;
     }
+    const what = this.ctrl.sourceKind === 'SIMULATED' ? this.ctrl.scenarioLabel : 'Sensor';
+    return `${what} · ${clock(sec)}`;
   }
 
   build() {
-    ArcList({ initialIndex: 2 }) {
+    ArcList({ initialIndex: 1 }) {
       ArcListItem() {
-        Column({ space: 2 }) {
+        Column({ space: 4 }) {
+          OutlineBadge({ label: 'SIMULATOR · DEMO BUILD', dashed: true, color: Theme.TEXT })
           Row({ space: 5 }) {
-            Icon({ src: $r('app.media.ic_flask'), color: Theme.ELEVATED, glyph: 14 })
-            Text('Simulator').fontSize(Theme.TITLE).fontWeight(FontWeight.Bold).fontColor(Theme.TEXT)
+            Icon({ src: $r('app.media.ic_tri_right'), color: Theme.ELEVATED, glyph: 10 })
+            Text(this.runningLine())
+              .fontSize(Theme.BODY)
+              .fontWeight(FontWeight.Bold)
+              .fontColor(Theme.ELEVATED)
+              .maxLines(1)
           }
-          Text('Demo build. Not real data.').fontSize(Theme.MICRO).fontColor(Theme.TEXT_3)
         }
         .width('100%')
-        .padding({ top: 4, bottom: 2 })
+        .padding({ top: 6 })
       }
-
+      .autoScale(false)
       ArcListItem() {
-        SimSection({ title: 'HEART RATE' })
-      }
-      ArcListItem() {
-        SimSetting({ label: 'Source', value: this.ctrl.sourceKind === 'SENSOR' ? 'Sensor' : 'Demo',
-          on: this.ctrl.sourceKind === 'SIMULATED', onTap: () => {
-            this.ctrl.cycleSource();
+        SimGroup({ label: 'Source' }) {
+          SimChip({ label: 'Sensor', on: this.ctrl.sourceKind === 'SENSOR', onTap: () => {
+            this.ctrl.setSource('SENSOR');
           } })
-      }
-      if (this.ctrl.sourceKind === 'SIMULATED') {
-        ArcListItem() {
-          SimSetting({ label: 'Scenario', value: this.ctrl.scenarioLabel, onTap: () => {
-            this.ctrl.cycleScenario();
-          } })
-        }
-        ArcListItem() {
-          SimSetting({ label: 'Speed', value: `${this.ctrl.demoSpeed}x`, onTap: () => {
-            this.ctrl.cycleDemoSpeed();
+          SimChip({ label: 'Demo', on: this.ctrl.sourceKind === 'SIMULATED', onTap: () => {
+            this.ctrl.setSource('SIMULATED');
           } })
         }
       }
-
+      .autoScale(false)
       ArcListItem() {
-        SimSection({ title: 'EVENTS' })
+        SimGroup({ label: 'Scenario' }) {
+          ForEach(SCENARIOS, (s: Scenario, i: number) => {
+            SimChip({ label: s.label, on: this.ctrl.sourceKind === 'SIMULATED' && this.ctrl.scenarioIdx === i,
+              onTap: () => {
+                this.ctrl.setScenario(i);
+                this.ctrl.setSource('SIMULATED');
+              } })
+          }, (s: Scenario) => s.id)
+        }
       }
+      .autoScale(false)
       ArcListItem() {
-        SimEvent({ icon: $r('app.media.ic_zap'), label: 'Fall', onTap: () => {
-          this.ctrl.simulateFall();
-        } })
+        SimGroup({ label: 'Speed' }) {
+          ForEach(SPEEDS, (n: number) => {
+            SimChip({ label: `${n}x`, on: this.ctrl.demoSpeed === n, onTap: () => {
+              this.ctrl.setDemoSpeed(n);
+            } })
+          }, (n: number) => `${n}`)
+        }
       }
+      .autoScale(false)
       ArcListItem() {
-        SimEvent({ icon: $r('app.media.ic_rhythm'), label: 'Irregular rhythm', active: this.ctrl.anomaly === 'rhythm',
-          onTap: () => {
+        SimGroup({ label: 'Events' }) {
+          SimChip({ label: 'Fall', onTap: () => {
+            this.ctrl.simulateFall();
+          } })
+          SimChip({ label: 'Irregular rhythm', on: this.ctrl.anomaly === 'rhythm', onTap: () => {
             this.ctrl.triggerAnomaly('rhythm');
           } })
-      }
-      ArcListItem() {
-        SimEvent({ icon: $r('app.media.ic_hrv'), label: 'Low HRV', active: this.ctrl.anomaly === 'hrv', onTap: () => {
-          this.ctrl.triggerAnomaly('hrv');
-        } })
-      }
-      ArcListItem() {
-        SimEvent({ icon: $r('app.media.ic_spo2'), label: 'Low oxygen', active: this.ctrl.anomaly === 'spo2',
-          onTap: () => {
+          SimChip({ label: 'Low HRV', on: this.ctrl.anomaly === 'hrv', onTap: () => {
+            this.ctrl.triggerAnomaly('hrv');
+          } })
+          SimChip({ label: 'Low oxygen', on: this.ctrl.anomaly === 'spo2', onTap: () => {
             this.ctrl.triggerAnomaly('spo2');
           } })
-      }
-      ArcListItem() {
-        SimEvent({ icon: $r('app.media.ic_watch'), label: this.ctrl.onWrist ? 'Take watch off' : 'Put watch on',
-          active: !this.ctrl.onWrist, onTap: () => {
+          SimChip({ label: this.ctrl.onWrist ? 'Take watch off' : 'Put watch on', on: !this.ctrl.onWrist, onTap: () => {
             this.ctrl.toggleWorn();
           } })
+        }
       }
-
+      .autoScale(false)
       ArcListItem() {
-        SimSection({ title: 'CONTEXT' })
+        SimGroup({ label: 'State' }) {
+          ForEach(STATES, (o: ActivityOverride) => {
+            SimChip({ label: stateLabel(o), on: this.ctrl.activityOverride === o, onTap: () => {
+              this.ctrl.setActivityOverride(o);
+            } })
+          }, (o: ActivityOverride) => o)
+        }
       }
+      .autoScale(false)
       ArcListItem() {
-        SimSetting({ label: 'State', value: this.stateValue(), on: this.ctrl.activityOverride !== 'AUTO',
-          onTap: () => {
-            this.ctrl.cycleActivityOverride();
+        SimGroup({ label: 'Genotype' }) {
+          ForEach(GENOTYPES, (g: Genotype) => {
+            SimChip({ label: g === 'UNKNOWN' ? 'None' : g, on: this.ctrl.genotype === g, onTap: () => {
+              this.ctrl.setGenotype(g);
+            } })
+          }, (g: Genotype) => g)
+        }
+      }
+      .autoScale(false)
+      ArcListItem() {
+        SimGroup({ label: 'Risky medicine' }) {
+          SimChip({ label: 'On', on: this.ctrl.riskyDrug.length > 0, onTap: () => {
+            this.ctrl.setRiskyDrugOn(true);
           } })
-      }
-      ArcListItem() {
-        SimSetting({ label: 'Genotype', value: this.ctrl.genotype === 'UNKNOWN' ? 'None' : this.ctrl.genotype,
-          onTap: () => {
-            this.ctrl.cycleGenotype();
+          SimChip({ label: 'Off', on: this.ctrl.riskyDrug.length === 0, onTap: () => {
+            this.ctrl.setRiskyDrugOn(false);
           } })
+        }
       }
+      .autoScale(false)
       ArcListItem() {
-        SimSetting({ label: 'Risky drug', value: this.ctrl.riskyDrug.length > 0 ? 'On' : 'Off',
-          on: this.ctrl.riskyDrug.length > 0, onTap: () => {
-            this.ctrl.toggleRiskyDrug();
+        SimGroup({ label: 'Beta-blocker' }) {
+          SimChip({ label: 'Taken', on: !this.ctrl.betaBlockerMissed, onTap: () => {
+            this.setMissed(false);
           } })
+          SimChip({ label: 'Missed', on: this.ctrl.betaBlockerMissed, onTap: () => {
+            this.setMissed(true);
+          } })
+        }
       }
+      .autoScale(false)
       ArcListItem() {
-        SimSetting({ label: 'Beta-blocker', value: this.ctrl.betaBlockerMissed ? 'Missed' : 'Taken',
-          on: this.ctrl.betaBlockerMissed, onTap: () => {
-            this.ctrl.toggleMissedBetaBlocker().then((ok: boolean) => {
-              if (!ok) {
-                this.toast('Server not ready (see log)');
-              }
+        SimGroup() {
+          SimChip({ label: 'Dose nudge now', onTap: () => {
+            this.ctrl.showDoseNudgeNow();
+          } })
+          SimChip({ label: 'Reminder in 10 s', onTap: () => {
+            this.ctrl.testMedicationReminder().then((ok: boolean) => {
+              this.toast(ok ? 'Reminder set. You can close the app.' : 'Reminder failed');
             });
           } })
+        }
       }
-      ArcListItem() {
-        SimEvent({ icon: $r('app.media.ic_pill'), label: 'Dose nudge', onTap: () => {
-          this.ctrl.showDoseNudgeNow();
-        } })
-      }
-      ArcListItem() {
-        SimEvent({ icon: $r('app.media.ic_bell'), label: 'Reminder in 10 s', onTap: () => {
-          this.ctrl.testMedicationReminder().then((ok: boolean) => {
-            this.toast(ok ? 'Reminder set. You can close the app.' : 'Reminder failed');
-          });
-        } })
-      }
+      .autoScale(false)
       ArcListItem() {
         Column().height(48)
       }
+      .autoScale(false)
     }
-    .space(LengthMetrics.vp(6))
-    .scrollBar(BarState.Off)
+    .space(LengthMetrics.vp(10))
+    .scrollBar(BarState.Auto)
     .width('100%')
     .height('100%')
+  }
+
+  setMissed(missed: boolean): void {
+    this.ctrl.setBetaBlockerMissed(missed).then((ok: boolean) => {
+      if (!ok) {
+        this.toast('Server not ready (see log)');
+      }
+    });
   }
 }

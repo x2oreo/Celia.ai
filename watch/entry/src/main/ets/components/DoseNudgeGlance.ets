@@ -1,8 +1,11 @@
 import { WatchController } from '../controller/WatchController';
-import { Caps, Icon, PillButton, Ring } from './Parts';
+import { Bezel, Caps, PillButton } from './Parts';
 import { Theme } from './Theme';
 
-/** Missed-dose nudge: no dose logged by the reminder time + 2 h. Amber, not red: a reminder, not an alarm. */
+/**
+ * 15 Missed dose: no dose logged by the reminder time + 2 h. Coral = a nudge from Celia, not a risk. "Not yet"
+ * snoozes 30 min; the last ask reads "Later".
+ */
 @ComponentV2
 export struct DoseNudgeGlance {
   @Param @Require ctrl: WatchController;
@@ -14,33 +17,26 @@ export struct DoseNudgeGlance {
 
   build() {
     Stack() {
-      Ring({ percent: 100, color: Theme.ELEVATED_TINT, strokeWidth: 10 })
-      Column({ space: 3 }) {
-        Stack() {
-          Icon({ src: $r('app.media.ic_pill'), color: Theme.ELEVATED, glyph: 20 })
-        }
-        .width(36)
-        .height(36)
-        .borderRadius(18)
-        .backgroundColor(Theme.ELEVATED_TINT)
-        Caps({ text: 'MISSED DOSE?', color: Theme.ELEVATED }).margin({ top: 2 })
+      Bezel({ mode: 'RING', color: Theme.BRAND })
+      Column({ space: 4 }) {
+        Caps({ text: 'DAILY DOSE', color: Theme.BRAND })
         Text(`Did you take ${this.name()}?`)
-          .fontSize(Theme.TITLE)
-          .fontWeight(FontWeight.Bold)
+          .fontSize(Theme.TITLE + 3)
+          .fontWeight(FontWeight.Bolder)
           .fontColor(Theme.TEXT)
           .textAlign(TextAlign.Center)
-          .width(170)
+          .width(160)
         Text('Skipped beta-blocker doses raise the risk.')
-          .fontSize(Theme.MICRO)
+          .fontSize(Theme.SMALL)
           .fontColor(Theme.TEXT_2)
           .textAlign(TextAlign.Center)
-          .width(150)
-          .margin({ bottom: 6 })
-        Row({ space: 6 }) {
-          PillButton({ label: 'Took it', bg: Theme.BRAND, fg: Theme.ON_LIGHT, pillWidth: 80, onTap: () => {
+          .width(160)
+          .margin({ bottom: 8 })
+        Row({ space: 8 }) {
+          PillButton({ label: 'Took it', bg: Theme.BRAND, pillWidth: 84, onTap: () => {
             this.ctrl.doseTaken();
           } })
-          PillButton({ label: this.ctrl.doseNudgeCanSnooze ? 'Not yet' : 'Later', pillWidth: 80, onTap: () => {
+          PillButton({ label: this.ctrl.doseNudgeCanSnooze ? 'Not yet' : 'Later', pillWidth: 84, onTap: () => {
             this.ctrl.doseNotYet();
           } })
         }

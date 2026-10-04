@@ -1,56 +1,48 @@
 import { ArcList, ArcListAttribute, ArcListItem, ArcListItemAttribute, LengthMetrics } from '@kit.ArkUI';
 import { WatchController } from '../controller/WatchController';
+import { limitsWhy } from '../vitals/WatchStatus';
 import { Icon } from './Parts';
 import { ListTitle } from './VitalsPage';
 import { Theme } from './Theme';
 
+/** Label, big value (optional check), one explaining line, divider. Rows that act are tappable as a whole. */
 @ComponentV2
 struct SettingRow {
-  @Param @Require icon: Resource;
   @Param @Require label: string;
   @Param @Require value: string;
+  @Param sub: string = '';
   @Param valueColor: string = Theme.TEXT;
+  @Param check: boolean = false;
   @Param tappable: boolean = false;
+  @Param divider: boolean = true;
   @Event onTap: () => void = () => {};
 
   build() {
-    Row({ space: 8 }) {
-      Stack() {
-        Icon({ src: this.icon, color: Theme.BRAND, glyph: 16 })
-      }
-      .width(30)
-      .height(30)
-      .borderRadius(15)
-      .backgroundColor(Theme.BUTTON)
-
-      Column({ space: 1 }) {
-        Text(this.label.toUpperCase())
-          .fontSize(9)
-          .fontWeight(FontWeight.Bold)
-          .letterSpacing(0.8)
-          .fontColor(Theme.TEXT_3)
-          .maxLines(1)
+    Column({ space: 1 }) {
+      Text(this.label).fontSize(Theme.SMALL).fontColor(Theme.TEXT_2).maxLines(1)
+      Row({ space: 4 }) {
+        if (this.check) {
+          Icon({ src: $r('app.media.ic_check'), color: this.valueColor, glyph: 16 })
+        }
         Text(this.value)
-          .fontSize(Theme.BODY)
-          .fontWeight(FontWeight.Bold)
+          .fontSize(Theme.TITLE + 1)
+          .fontWeight(FontWeight.Bolder)
           .fontColor(this.valueColor)
           .maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
       }
-      .alignItems(HorizontalAlign.Start)
-      .layoutWeight(1)
-
-      if (this.tappable) {
-        Text('›').fontSize(Theme.TITLE).fontColor(Theme.TEXT_3)
+      if (this.sub.length > 0) {
+        Text(this.sub).fontSize(Theme.SMALL).fontColor(Theme.TEXT_2).maxLines(2)
+      }
+      if (this.divider) {
+        Divider().color(Theme.BORDER).strokeWidth(1).margin({ top: 6 })
       }
     }
     .width(Theme.LIST_WIDTH)
-    .height(Theme.ROW_HEIGHT)
-    .padding({ left: 10, right: 12 })
-    .borderRadius(Theme.ROW_HEIGHT / 2)
-    .backgroundColor(Theme.SURFACE)
+    .alignItems(HorizontalAlign.Start)
+    .padding({ top: 2, bottom: 2 })
     .accessibilityGroup(true)
-    .accessibilityText(`${this.label}: ${this.value}`)
+    .accessibilityText(`${this.label}: ${this.value}. ${this.sub}`)
     .onClick(() => {
       if (this.tappable) {
         this.onTap();
@@ -59,10 +51,14 @@ struct SettingRow {
   }
 }
 
-/** Settings: the phone link, today's limits and where they come from. No demo controls (those are in Simulator). */
+/** 05 Settings: the phone link, today's limits and why, genotype, reminder, watch id. Demo controls live elsewhere. */
 @ComponentV2
 export struct SettingsPage {
   @Param @Require ctrl: WatchController;
+
+  paired(): boolean {
+    return this.ctrl.pairState === 'PAIRED';
+  }
 
   pairValue(): string {
     switch (this.ctrl.pairState) {
@@ -73,14 +69,28 @@ export struct SettingsPage {
       case 'ERROR':
         return 'Unavailable';
       default:
-        return 'Checking…';
+        return 'Checking...';
+    }
+  }
+
+  pairSub(): string {
+    switch (this.ctrl.pairState) {
+      case 'PAIRED':
+        return this.ctrl.syncState === 'OK' ? 'Your phone · synced' :
+          this.ctrl.syncState === 'PENDING' ? 'Your phone · syncing...' : 'Your phone · offline';
+      case 'NOT_PAIRED':
+        return 'Opens pairing';
+      case 'ERROR':
+        return "Can't reach Celia. Tap to try pairing.";
+      default:
+        return '';
     }
   }
 
   pairColor(): string {
     switch (this.ctrl.pairState) {
-      case 'PAIRED':
-        return Theme.CALM;
+      case 'NOT_PAIRED':
+        return Theme.BRAND;
       case 'ERROR':
         return Theme.ELEVATED;
       default:
@@ -88,9 +98,9 @@ export struct SettingsPage {
     }
   }
 
-  reminderValue(): string {
-    const t = this.ctrl.medReminderTime;
-    return t.length > 0 ? `${t} · ${this.ctrl.medicationName}` : 'Off';
+  medName(): string {
+    const n = this.ctrl.medicationName;
+    return `${n.charAt(0).toUpperCase()}${n.substring(1)}`;
   }
 
   pair(): void {
@@ -99,7 +109,7 @@ export struct SettingsPage {
         try {
           this.getUIContext().getPromptAction().showToast({ message: err, duration: 2000 });
         } catch (e) {
-          // Toast is cosmetic.
+          // Toast is cosmetic; the pairing screen shows the error too.
         }
       }
     });
@@ -110,41 +120,48 @@ export struct SettingsPage {
       ArcListItem() {
         ListTitle({ title: 'Settings' })
       }
+      .autoScale(false)
       ArcListItem() {
-        SettingRow({ icon: $r('app.media.ic_phone_link'), label: 'Phone', value: this.pairValue(),
-          valueColor: this.pairColor(), tappable: true, onTap: () => {
+        SettingRow({ label: 'Phone', value: this.pairValue(), sub: this.pairSub(), valueColor: this.pairColor(),
+          check: this.paired(), tappable: !this.paired(), onTap: () => {
             this.pair();
           } })
       }
+      .autoScale(false)
       ArcListItem() {
-        SettingRow({ icon: $r('app.media.ic_heart_fill'), label: 'Limits now',
-          value: `${this.ctrl.limitLow}-${this.ctrl.limitHigh} bpm` })
+        SettingRow({ label: 'Limits now', value: `${this.ctrl.limitLow}-${this.ctrl.limitHigh} bpm`,
+          sub: limitsWhy(this.ctrl.genotype, this.ctrl.activity, this.ctrl.riskyDrug) })
       }
+      .autoScale(false)
       ArcListItem() {
-        SettingRow({ icon: $r('app.media.ic_shield'), label: 'Why these limits',
-          value: this.ctrl.limitReason.length > 0 ? this.ctrl.limitReason : 'Standard' })
+        SettingRow({ label: 'Genotype',
+          value: this.ctrl.genotype === 'UNKNOWN' ? 'Not set on phone' : this.ctrl.genotype,
+          sub: this.ctrl.genotype === 'UNKNOWN' ? '' : 'From your phone' })
       }
+      .autoScale(false)
       ArcListItem() {
-        SettingRow({ icon: $r('app.media.ic_rhythm'), label: 'Genotype',
-          value: this.ctrl.genotype === 'UNKNOWN' ? 'Not set on phone' : this.ctrl.genotype })
+        SettingRow({ label: 'Dose reminder',
+          value: this.ctrl.medReminderTime.length > 0 ? `${this.ctrl.medReminderTime} · ${this.medName()}` : 'Off',
+          sub: this.ctrl.medReminderTime.length > 0 ? 'Daily, from your phone' : 'Set it on your phone' })
       }
+      .autoScale(false)
       ArcListItem() {
-        SettingRow({ icon: $r('app.media.ic_bell'), label: 'Dose reminder', value: this.reminderValue() })
+        SettingRow({ label: 'Watch ID', value: this.ctrl.deviceId.length > 0 ? this.ctrl.deviceId.toUpperCase() : '-',
+          divider: false })
       }
+      .autoScale(false)
       ArcListItem() {
-        SettingRow({ icon: $r('app.media.ic_watch'), label: 'This watch', value: this.ctrl.deviceId.slice(0, 12) })
-      }
-      ArcListItem() {
-        Text('Celia watch · Not a medical device. Heart rate only, never QT or an ECG.')
-          .fontSize(Theme.MICRO)
-          .fontColor(Theme.TEXT_3)
+        Text('Not a medical device. Heart rate only, never QT or an ECG.')
+          .fontSize(Theme.SMALL)
+          .fontColor(Theme.TEXT_2)
           .textAlign(TextAlign.Center)
           .width(170)
-          .padding({ top: 6, bottom: 48 })
+          .padding({ top: 8, bottom: 48 })
       }
+      .autoScale(false)
     }
-    .space(LengthMetrics.vp(6))
-    .scrollBar(BarState.Off)
+    .space(LengthMetrics.vp(8))
+    .scrollBar(BarState.Auto)
     .width('100%')
     .height('100%')
   }

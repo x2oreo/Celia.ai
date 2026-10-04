@@ -1,23 +1,25 @@
 import { WatchController } from '../controller/WatchController';
 import { drugBadgeText } from '../vitals/DrugBadge';
-import { Zone, beatPeriodMs, ringRatio, zoneFor, zoneWord } from '../vitals/WatchStatus';
-import { DashedRing, HeartBeat, Icon, Ring, SimBadge, zoneColor, zoneShape } from './Parts';
+import { Zone, contextLine, ringRatio, zoneFor, zoneWord } from '../vitals/WatchStatus';
+import { Bezel, Chip, NoNumber, OutlineBadge, StatusMark, zoneColor, zoneMark } from './Parts';
 import { Theme } from './Theme';
 
-/** W7: shown instead of Home while the watch is off the wrist. */
+/** 1.6: shown instead of Home while the watch is off the wrist. Alerts pause; SOS stays on the Log page. */
 @ComponentV2
 struct NotWorn {
   build() {
     Stack() {
-      DashedRing()
-      Column({ space: 6 }) {
-        Icon({ src: $r('app.media.ic_watch'), color: Theme.TEXT_3, glyph: 28 })
-        Text('Not on wrist').fontSize(Theme.TITLE).fontWeight(FontWeight.Bold).fontColor(Theme.TEXT)
+      Bezel({ mode: 'DASHED', color: Theme.BORDER })
+      Column({ space: 4 }) {
+        NoNumber()
+        Text('Not on wrist').fontSize(Theme.TITLE + 3).fontWeight(FontWeight.Bolder).fontColor(Theme.TEXT)
+          .margin({ top: 6 })
         Text('Put your watch back on to keep watching your heart.')
-          .fontSize(Theme.SMALL)
+          .fontSize(Theme.BODY)
+          .fontWeight(FontWeight.Regular)
           .fontColor(Theme.TEXT_2)
           .textAlign(TextAlign.Center)
-          .width(150)
+          .width(160)
       }
     }
     .width('100%')
@@ -27,7 +29,10 @@ struct NotWorn {
   }
 }
 
-/** W1 Home: ring = where the bpm sits between your min and max, status word + shape, bpm, context, link. */
+/**
+ * 01 Home: the gauge (where the bpm sits between your min and max), status mark + word, bpm, state + limit,
+ * genotype and phone chips. A risky medicine (or demo data) gets a badge on top.
+ */
 @ComponentV2
 export struct HeartPage {
   @Param @Require ctrl: WatchController;
@@ -36,30 +41,12 @@ export struct HeartPage {
     return zoneFor(this.ctrl.bpm, this.ctrl.limitLow, this.ctrl.limitHigh, this.ctrl.stress);
   }
 
-  statusWord(): string {
-    if (this.ctrl.bpm <= 0) {
-      return this.ctrl.statusText.length > 0 ? this.ctrl.statusText : 'Starting';
-    }
-    return this.ctrl.stress && this.zone() === 'NEAR' && this.ctrl.bpm < this.ctrl.limitHigh * 0.9 ?
-      'Stressed' : zoneWord(this.zone());
+  waiting(): boolean {
+    return this.ctrl.bpm <= 0;
   }
 
-  stateWord(): string {
-    switch (this.ctrl.activity) {
-      case 'REST':
-        return 'At rest';
-      case 'ACTIVE':
-        return 'Active';
-      case 'ASLEEP':
-        return 'Asleep';
-      default:
-        return '';
-    }
-  }
-
-  contextLine(): string {
-    const s = this.stateWord();
-    return s.length > 0 ? `${s} · max ${this.ctrl.limitHigh}` : `Max ${this.ctrl.limitHigh}`;
+  context(): string {
+    return contextLine(this.ctrl.activity, this.zone(), this.ctrl.limitLow, this.ctrl.limitHigh);
   }
 
   phoneText(): string {
@@ -67,22 +54,9 @@ export struct HeartPage {
       case 'OK':
         return 'Phone';
       case 'PENDING':
-        return 'Syncing';
-      case 'ERROR':
-        return 'Phone off';
+        return 'Syncing...';
       default:
         return 'Offline';
-    }
-  }
-
-  phoneColor(): string {
-    switch (this.ctrl.syncState) {
-      case 'OK':
-        return Theme.CALM;
-      case 'PENDING':
-        return Theme.TEXT_2;
-      default:
-        return Theme.ELEVATED;
     }
   }
 
@@ -90,12 +64,66 @@ export struct HeartPage {
     return drugBadgeText(this.ctrl.riskyDrug, this.ctrl.riskyDrugAt, Date.now());
   }
 
+  /** The badge uses the verdict colour of the medicine (DESIGN.md §3), on its dark tint. */
+  badgeColor(): string {
+    switch (this.ctrl.riskyDrugRisk) {
+      case 'POSSIBLE_RISK':
+        return Theme.RISK_POSSIBLE;
+      case 'CONDITIONAL_RISK':
+        return Theme.RISK_CONDITIONAL;
+      default:
+        return Theme.RISK_KNOWN;
+    }
+  }
+
+  badgeTint(): string {
+    return this.ctrl.riskyDrugRisk === 'KNOWN_RISK' || this.ctrl.riskyDrugRisk === '' ? Theme.ALERT_TINT :
+      Theme.ELEVATED_TINT;
+  }
+
+  badgeShape(): Resource {
+    switch (this.ctrl.riskyDrugRisk) {
+      case 'POSSIBLE_RISK':
+        return $r('app.media.ic_risk_possible');
+      case 'CONDITIONAL_RISK':
+        return $r('app.media.ic_risk_conditional');
+      default:
+        return $r('app.media.ic_risk_known');
+    }
+  }
+
+  isDemo(): boolean {
+    return this.ctrl.sourceKind === 'SIMULATED';
+  }
+
   /** One sentence for the screen reader instead of eight fragments. */
   spoken(): string {
-    if (this.ctrl.bpm <= 0) {
-      return `Heart rate not available. ${this.statusWord()}.`;
+    if (this.waiting()) {
+      return `Waiting for heart rate. ${this.context()}.`;
     }
-    return `Heart rate ${this.ctrl.bpm} beats per minute. ${this.statusWord()}. ${this.contextLine()}.`;
+    const demo = this.isDemo() ? ' Demo data.' : '';
+    return `Heart rate ${this.ctrl.bpm} beats per minute. ${zoneWord(this.zone())}. ${this.context()}.${demo}`;
+  }
+
+  @Builder
+  topBadge() {
+    if (this.badge().length > 0) {
+      Row({ space: 5 }) {
+        Image(this.badgeShape()).width(11).height(11).fillColor(this.badgeColor())
+        Text(this.badge())
+          .fontSize(Theme.SMALL - 1)
+          .fontWeight(FontWeight.Bold)
+          .fontColor(Theme.TEXT)
+          .maxLines(1)
+      }
+      .height(Theme.CHIP_HEIGHT)
+      .padding({ left: 8, right: 10 })
+      .borderRadius(Theme.CHIP_HEIGHT / 2)
+      .backgroundColor(this.badgeTint())
+      .margin({ bottom: 4 })
+    } else if (this.isDemo()) {
+      OutlineBadge({ label: 'DEMO DATA', color: Theme.TEXT }).margin({ bottom: 6 })
+    }
   }
 
   build() {
@@ -103,80 +131,53 @@ export struct HeartPage {
       NotWorn()
     } else {
       Stack() {
-        if (this.ctrl.bpm > 0) {
-          Ring({ percent: ringRatio(this.ctrl.bpm, this.ctrl.limitLow, this.ctrl.limitHigh) * 100,
-            color: zoneColor(this.zone()) })
+        if (this.waiting()) {
+          Bezel({ mode: 'DASHED', color: Theme.BORDER })
         } else {
-          DashedRing()
+          Bezel({ mode: 'GAUGE', color: zoneColor(this.zone()), dot: this.zone() === 'BELOW',
+            fraction: ringRatio(this.ctrl.bpm, this.ctrl.limitLow, this.ctrl.limitHigh) })
         }
         Column({ space: 0 }) {
+          this.topBadge()
+
           Row({ space: 5 }) {
-            Icon({ src: zoneShape(this.zone()), color: zoneColor(this.zone()), glyph: 14 })
-            Text(this.statusWord())
-              .fontSize(Theme.SMALL)
+            StatusMark({ mark: zoneMark(this.zone()), color: zoneColor(this.zone()), dim: 12 })
+            Text(zoneWord(this.zone()))
+              .fontSize(Theme.TITLE - 1)
               .fontWeight(FontWeight.Bold)
               .fontColor(zoneColor(this.zone()))
               .maxLines(1)
           }
 
-          Row({ space: 4 }) {
-            Text(this.ctrl.bpm > 0 ? `${this.ctrl.bpm}` : '--')
+          if (this.waiting()) {
+            NoNumber().margin({ top: 10, bottom: 6 })
+            Text('Waiting for heart rate').fontSize(Theme.BODY).fontWeight(FontWeight.Regular)
+              .fontColor(Theme.TEXT_2)
+          } else {
+            Text(`${this.ctrl.bpm}`)
               .fontSize(Theme.HERO)
               .fontWeight(FontWeight.Bolder)
               .fontColor(Theme.TEXT)
-            Column({ space: 2 }) {
-              HeartBeat({ periodMs: beatPeriodMs(this.zone()), beating: this.ctrl.bpm > 0,
-                color: this.zone() === 'ABOVE' ? Theme.ALERT : Theme.BRAND })
-              Text('bpm').fontSize(Theme.SMALL).fontColor(Theme.TEXT_2)
-            }
-            .margin({ bottom: 12 })
-          }
-          .alignItems(VerticalAlign.Bottom)
-          .margin({ top: -2 })
-
-          Text(this.contextLine())
-            .fontSize(Theme.SMALL)
-            .fontColor(Theme.TEXT_2)
-            .margin({ top: -4 })
-
-          // A QT-risk drug taken in the last 72 h: amber = watching more closely (red is for alerts).
-          if (this.badge().length > 0) {
-            Row({ space: 4 }) {
-              Text('!').fontSize(Theme.MICRO).fontWeight(FontWeight.Bolder).fontColor(Theme.ELEVATED)
-              Text(this.badge())
-                .fontSize(Theme.MICRO)
-                .fontWeight(FontWeight.Medium)
-                .fontColor(Theme.ELEVATED)
-                .maxLines(1)
-            }
-            .height(22)
-            .padding({ left: 8, right: 8 })
-            .borderRadius(11)
-            .backgroundColor(Theme.ELEVATED_TINT)
-            .margin({ top: 8 })
+              .margin({ top: -4, bottom: -8 })
+            Text('bpm').fontSize(Theme.BODY).fontWeight(FontWeight.Regular).fontColor(Theme.TEXT_2)
           }
 
-          Row({ space: 6 }) {
-            if (this.ctrl.genotype !== 'UNKNOWN') {
-              Text(this.ctrl.genotype).fontSize(Theme.MICRO).fontWeight(FontWeight.Bold).fontColor(Theme.TEXT)
-              Divider().vertical(true).height(10).color(Theme.BORDER).strokeWidth(1)
-            }
-            Row({ space: 3 }) {
-              Icon({ src: $r('app.media.ic_phone_link'), color: this.phoneColor(), glyph: 11 })
-              Text(this.phoneText()).fontSize(Theme.MICRO).fontWeight(FontWeight.Bold).fontColor(this.phoneColor())
-            }
-          }
-          .height(22)
-          .padding({ left: 10, right: 10 })
-          .borderRadius(11)
-          .backgroundColor(Theme.SURFACE)
-          .margin({ top: this.badge().length > 0 ? 4 : 10 })
+          Text(this.context())
+            .fontSize(Theme.BODY - 1)
+            .fontWeight(FontWeight.Medium)
+            .fontColor(Theme.TEXT)
+            .margin({ top: 6 })
 
-          if (this.ctrl.sourceKind === 'SIMULATED') {
-            SimBadge({ label: 'DEMO DATA' }).margin({ top: 6 })
+          Row({ space: 4 }) {
+            Chip({ label: this.ctrl.genotype === 'UNKNOWN' ? 'No genotype' : this.ctrl.genotype,
+              color: this.ctrl.genotype === 'UNKNOWN' ? Theme.TEXT_2 : Theme.TEXT })
+            Chip({ label: this.phoneText(), check: this.ctrl.syncState === 'OK',
+              color: this.ctrl.syncState === 'OK' ? Theme.TEXT : Theme.TEXT_2 })
           }
+          .margin({ top: 6 })
         }
         .alignItems(HorizontalAlign.Center)
+        .padding({ bottom: 8 })
       }
       .width('100%')
       .height('100%')

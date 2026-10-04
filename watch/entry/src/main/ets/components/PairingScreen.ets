@@ -1,9 +1,12 @@
 import { WatchController } from '../controller/WatchController';
 import { formatPairCode } from '../sync/PairingClient';
-import { Caps, EdgeButton, Icon, PillButton, Ring } from './Parts';
+import { Bezel, Caps, CheckDisc, PillButton } from './Parts';
 import { Theme } from './Theme';
 
-/** Shows a 6-digit code to type into the phone app; polls until the phone confirms (or the code expires). */
+/**
+ * 16 Pairing: a spinner while the code is fetched, the code with a draining coral ring, then Paired (green), Code
+ * expired (dashed grey: nothing is wrong with your heart) or Pairing failed (dashed amber + the reason).
+ */
 @ComponentV2
 export struct PairingScreen {
   @Param @Require ctrl: WatchController;
@@ -30,74 +33,73 @@ export struct PairingScreen {
     return `${m}:${s < 10 ? '0' : ''}${s}`;
   }
 
+  @Builder
+  bezel() {
+    if (this.ctrl.pairScreen === 'LOADING') {
+      Bezel({ mode: 'SPIN', color: Theme.BRAND })
+    } else if (this.ctrl.pairScreen === 'CODE') {
+      Bezel({ mode: 'RING', color: Theme.BRAND, fraction: this.ctrl.pairTotalSeconds > 0 ?
+        this.ctrl.pairSecondsLeft / this.ctrl.pairTotalSeconds : 1 })
+    } else if (this.ctrl.pairScreen === 'PAIRED') {
+      Bezel({ mode: 'RING', color: Theme.CALM })
+    } else {
+      Bezel({ mode: 'DASHED', color: this.ctrl.pairScreen === 'EXPIRED' ? Theme.BORDER : Theme.ELEVATED })
+    }
+  }
+
+  @Builder
+  title(text: string) {
+    Text(text).fontSize(Theme.TITLE + 3).fontWeight(FontWeight.Bolder).fontColor(Theme.TEXT)
+  }
+
+  @Builder
+  line(text: string) {
+    Text(text)
+      .fontSize(Theme.SMALL)
+      .fontColor(Theme.TEXT_2)
+      .textAlign(TextAlign.Center)
+      .maxLines(3)
+      .width(160)
+  }
+
   build() {
-    Stack({ alignContent: Alignment.Bottom }) {
-      if (this.ctrl.pairScreen === 'PAIRED') {
-        Ring({ percent: 100, color: Theme.CALM })
-      } else if (this.ctrl.pairScreen === 'CODE') {
-        Ring({ percent: Math.min(100, this.ctrl.pairSecondsLeft / 6), color: Theme.BRAND })
-      } else {
-        Ring({ percent: 0, color: Theme.BRAND })
-      }
-
-      Column({ space: 4 }) {
+    Stack() {
+      this.bezel()
+      Column({ space: 5 }) {
         if (this.ctrl.pairScreen === 'LOADING') {
-          LoadingProgress().width(36).height(36).color(Theme.BRAND)
-          Text('Getting a code').fontSize(Theme.SMALL).fontColor(Theme.TEXT_2)
+          this.title('Getting a code...')
+          this.line('Pair with phone')
+          PillButton({ label: 'Cancel', pillWidth: 90, onTap: () => this.ctrl.closePairing() }).margin({ top: 6 })
         } else if (this.ctrl.pairScreen === 'CODE') {
-          Row({ space: 4 }) {
-            Icon({ src: $r('app.media.ic_phone_link'), color: Theme.BRAND, glyph: 12 })
-            Caps({ text: 'PAIR WITH PHONE', color: Theme.BRAND })
-          }
+          Caps({ text: 'PAIR WITH PHONE' })
           Text(formatPairCode(this.ctrl.pairCode))
-            .fontSize(34)
-            .fontWeight(FontWeight.Bolder)
-            .letterSpacing(1)
+            .fontSize(Theme.CODE)
+            .fontWeight(FontWeight.Medium)
+            .letterSpacing(2)
             .fontColor(Theme.TEXT)
+            .accessibilityText(`Code ${this.ctrl.pairCode.split('').join(' ')}`)
           Text('Type this code in Celia on your phone')
-            .fontSize(Theme.SMALL)
-            .fontColor(Theme.TEXT_2)
-            .textAlign(TextAlign.Center)
-            .width(150)
-          Text(`Expires in ${this.timeLeft()}`).fontSize(Theme.MICRO).fontColor(Theme.TEXT_3)
-        } else if (this.ctrl.pairScreen === 'PAIRED') {
-          Icon({ src: $r('app.media.ic_circle_check'), color: Theme.CALM, glyph: 36 })
-          Text('Paired').fontSize(Theme.TITLE + 3).fontWeight(FontWeight.Bolder).fontColor(Theme.TEXT)
-          Text('Your phone now sees this watch.')
-            .fontSize(Theme.SMALL)
-            .fontColor(Theme.TEXT_2)
-            .textAlign(TextAlign.Center)
-            .width(150)
-        } else {
-          Icon({ src: $r('app.media.ic_risk_possible'), color: Theme.ELEVATED, glyph: 28 })
-          Text(this.ctrl.pairScreen === 'EXPIRED' ? 'Code expired' : 'Pairing failed')
-            .fontSize(Theme.TITLE)
-            .fontWeight(FontWeight.Bold)
+            .fontSize(Theme.BODY - 1)
             .fontColor(Theme.TEXT)
-          if (this.ctrl.pairScreen === 'ERROR') {
-            Text(this.ctrl.pairError)
-              .fontSize(Theme.MICRO)
-              .fontColor(Theme.TEXT_2)
-              .textAlign(TextAlign.Center)
-              .maxLines(2)
-              .width(150)
+            .textAlign(TextAlign.Center)
+            .width(160)
+          Text(`Expires in ${this.timeLeft()}`).fontSize(Theme.SMALL).fontColor(Theme.TEXT_2)
+          PillButton({ label: 'Cancel', pillWidth: 90, onTap: () => this.ctrl.closePairing() }).margin({ top: 4 })
+        } else if (this.ctrl.pairScreen === 'PAIRED') {
+          CheckDisc()
+          this.title('Paired')
+          this.line('Your phone')
+          PillButton({ label: 'Done', pillWidth: 90, onTap: () => this.ctrl.closePairing() }).margin({ top: 6 })
+        } else {
+          this.title(this.ctrl.pairScreen === 'EXPIRED' ? 'Code expired' : 'Pairing failed')
+          this.line(this.ctrl.pairScreen === 'EXPIRED' ? 'Get a new code and type it on your phone.' :
+            this.ctrl.pairError)
+          Row({ space: 8 }) {
+            PillButton({ label: 'New code', bg: Theme.BRAND, pillWidth: 96, onTap: () => this.newCode() })
+            PillButton({ label: 'Close', pillWidth: 72, onTap: () => this.ctrl.closePairing() })
           }
-          PillButton({ label: 'New code', bg: Theme.BRAND, fg: Theme.ON_LIGHT, pillWidth: 110, onTap: () => {
-            this.newCode();
-          } })
-            .margin({ top: 4 })
+          .margin({ top: 6 })
         }
-      }
-      .width('100%')
-      .height('100%')
-      .justifyContent(FlexAlign.Center)
-      .padding({ bottom: 36 })
-
-      if (this.ctrl.pairScreen !== 'LOADING') {
-        EdgeButton({ label: this.ctrl.pairScreen === 'PAIRED' ? 'Done' : this.ctrl.pairScreen === 'CODE' ? 'Cancel' :
-          'Close', onTap: () => {
-          this.ctrl.closePairing();
-        } })
       }
     }
     .width('100%')

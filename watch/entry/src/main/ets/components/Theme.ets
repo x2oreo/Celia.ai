@@ -30,19 +30,29 @@ export class Theme {
   static readonly RISK_POSSIBLE: string = '#F79009';
   static readonly RISK_CONDITIONAL: string = '#EAAA08';
   static readonly RISK_UNKNOWN: string = '#667085';
+  // Verdict words on black (the §3 text colours are for light tints)
+  static readonly RISK_KNOWN_TEXT: string = '#F97066';
+  static readonly RISK_POSSIBLE_TEXT: string = '#FDB022';
+  static readonly RISK_CONDITIONAL_TEXT: string = '#FAC515';
+
+  // Charts
+  static readonly CHART_BAR: string = '#4A423D';
 
   // Type (fp)
-  static readonly HERO: number = 52;
-  static readonly NUMBER: number = 22;
+  static readonly HERO: number = 64;
+  static readonly NUMBER: number = 34;
+  static readonly CODE: number = 40;
   static readonly TITLE: number = 17;
   static readonly BODY: number = 14;
   static readonly SMALL: number = 12;
   static readonly CAPS: number = 11;
-  static readonly MICRO: number = 10;
+  static readonly MICRO: number = 9;
 
   // Layout (vp)
   static readonly RING_STROKE: number = 8;
-  static readonly ROW_HEIGHT: number = 52;
-  static readonly PILL_HEIGHT: number = 44;
+  /** Gap between the screen edge and the bezel ring. */
+  static readonly RING_INSET: number = 6;
+  static readonly PILL_HEIGHT: number = 40;
+  static readonly CHIP_HEIGHT: number = 22;
   static readonly LIST_WIDTH: number = 184;
 }

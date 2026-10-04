@@ -5,6 +5,7 @@ import { CheckIn } from '../components/CheckIn';
 import { DoseNudgeGlance } from '../components/DoseNudgeGlance';
 import { PairingScreen } from '../components/PairingScreen';
 import { HeartPage } from '../components/HeartPage';
+import { LogPage } from '../components/LogPage';
 import { SettingsPage } from '../components/SettingsPage';
 import { TrendPage } from '../components/TrendPage';
 import { SimulatePage } from '../components/SimulatePage';
@@ -43,7 +44,7 @@ struct Index {
         HeartPage({ ctrl: this.ctrl })
         TrendPage({ ctrl: this.ctrl })
         VitalsPage({ ctrl: this.ctrl })
-        CheckIn({ ctrl: this.ctrl, asPage: true })
+        LogPage({ ctrl: this.ctrl })
         SettingsPage({ ctrl: this.ctrl })
         // The simulator panel (every demo control) exists only in a DEMO_MODE build, always as the last page.
         if (this.ctrl.demoMode) {
@@ -60,11 +61,11 @@ struct Index {
       .indicator(new DotIndicator()
         .itemWidth(5)
         .itemHeight(5)
-        .selectedItemWidth(5)
+        .selectedItemWidth(12)
         .selectedItemHeight(5)
-        .color(Theme.BORDER)
+        .color(Theme.TEXT_3)
         .selectedColor(Theme.TEXT)
-        .bottom(6))
+        .bottom(10))
       .width('100%')
       .height('100%')
 

@@ -1,15 +1,18 @@
 import { WatchController } from '../controller/WatchController';
 import { HrBucket, TREND_BUCKETS, TREND_BUCKET_MS, TrendScale, trendScale, trendY } from '../vitals/HrTrend';
-import { Caps, Icon } from './Parts';
+import { slotsOverMax } from '../vitals/WatchStatus';
+import { Caps, OutlineBadge, StatusMark } from './Parts';
 import { Theme } from './Theme';
 
-const PLOT_W: number = 172;
-const PLOT_H: number = 72;
-const MARK_W: number = 5;
+const PLOT_W: number = 150;
+const PLOT_H: number = 70;
+const LABEL_W: number = 22;
+const MARK_W: number = 4;
+const TICK_W: number = 7;
 
 /**
- * Heart rate over the last minutes (DESIGN.md §7 page 2): one range capsule per 30 s (lowest to highest reading,
- * average dot), your min-max limits as a band, the max as a dashed line. Never a trace.
+ * 02 Heart rate · 10 min: average, range and one capsule per 30 s from the lowest to the highest reading (grey, red
+ * where it crossed your max) with a white average tick. Dashed lines = your current min and max. Never a trace.
  */
 @ComponentV2
 export struct TrendPage {
@@ -24,130 +27,140 @@ export struct TrendPage {
   }
 
   x(i: number): number {
-    const step = (PLOT_W - MARK_W) / (TREND_BUCKETS - 1);
-    return i * step;
+    const step = (PLOT_W - TICK_W) / (TREND_BUCKETS - 1);
+    return i * step + (TICK_W - MARK_W) / 2;
   }
 
-  windowLabel(): string {
-    return `${Math.round(TREND_BUCKETS * TREND_BUCKET_MS / 60000)} MIN`;
+  minutes(): number {
+    return Math.round(TREND_BUCKETS * TREND_BUCKET_MS / 60000);
+  }
+
+  overMax(): number {
+    return slotsOverMax(this.ctrl.trendSlots, this.ctrl.limitHigh);
   }
 
   spoken(): string {
     const s = this.ctrl.trendSummary;
     if (s.filled === 0) {
-      return 'Heart rate trend. Collecting readings.';
+      return 'Heart rate, last 10 minutes. Collecting readings.';
     }
-    return `Heart rate over the last ${Math.round(TREND_BUCKETS * TREND_BUCKET_MS / 60000)} minutes: average ` +
-      `${s.avg}, lowest ${s.min}, highest ${s.max}. Your limits are ${this.ctrl.limitLow} to ${this.ctrl.limitHigh}.`;
+    const over = this.overMax() > 0 ? ` ${this.overMax()} times over your max.` : '';
+    return `Heart rate over the last ${this.minutes()} minutes: average ${s.avg}, range ${s.min} to ${s.max}.` +
+      `${over} Your limits are ${this.ctrl.limitLow} to ${this.ctrl.limitHigh}.`;
+  }
+
+  @Builder
+  limitLine(bpm: number) {
+    Line()
+      .startPoint([0, 0])
+      .endPoint([PLOT_W, 0])
+      .stroke(Theme.TEXT_3)
+      .strokeWidth(1)
+      .strokeDashArray([3, 3])
+      .width(PLOT_W)
+      .height(1)
+      .position({ x: 0, y: this.y(bpm) })
+    Text(`${bpm}`)
+      .fontSize(Theme.SMALL - 1)
+      .fontWeight(FontWeight.Medium)
+      .fontColor(Theme.TEXT_2)
+      .position({ x: PLOT_W + 5, y: this.y(bpm) - 8 })
   }
 
   @Builder
   plot() {
     Stack({ alignContent: Alignment.TopStart }) {
-      // Your limits: the band you should stay in.
-      Rect()
-        .width(PLOT_W)
-        .height(Math.max(2, this.y(this.ctrl.limitLow) - this.y(this.ctrl.limitHigh)))
-        .radius(4)
-        .fill(Theme.RING_TRACK)
-        .position({ x: 0, y: this.y(this.ctrl.limitHigh) })
-      Line()
-        .startPoint([0, 0])
-        .endPoint([PLOT_W, 0])
-        .stroke(Theme.ELEVATED)
-        .strokeOpacity(0.6)
-        .strokeWidth(1)
-        .strokeDashArray([3, 3])
-        .width(PLOT_W)
-        .height(1)
-        .position({ x: 0, y: this.y(this.ctrl.limitHigh) })
+      this.limitLine(this.ctrl.limitHigh)
+      this.limitLine(this.ctrl.limitLow)
 
       ForEach(this.ctrl.trendSlots, (b: HrBucket, i: number) => {
         if (b.count > 0) {
           Rect()
             .width(MARK_W)
-            .height(Math.max(MARK_W, this.y(b.min) - this.y(b.max)))
+            .height(Math.max(MARK_W + 2, this.y(b.min) - this.y(b.max)))
             .radius(MARK_W / 2)
-            .fill(i === TREND_BUCKETS - 1 ? Theme.BRAND : Theme.BRAND_SOFT)
-            .position({ x: this.x(i), y: Math.min(this.y(b.max), this.y(b.min) - MARK_W) })
-          Circle()
-            .width(MARK_W)
-            .height(MARK_W)
-            .fill(b.max > this.ctrl.limitHigh ? Theme.ALERT : Theme.BRAND)
-            .position({ x: this.x(i), y: this.y(b.avg()) - MARK_W / 2 })
+            .fill(b.max > this.ctrl.limitHigh ? Theme.ALERT : Theme.CHART_BAR)
+            .position({ x: this.x(i), y: Math.min(this.y(b.max), this.y(b.min) - MARK_W - 2) })
+          Rect()
+            .width(TICK_W)
+            .height(2)
+            .radius(1)
+            .fill(Theme.TEXT)
+            .position({ x: this.x(i) - (TICK_W - MARK_W) / 2, y: this.y(b.avg()) - 1 })
         }
       }, (b: HrBucket, i: number) => `${b.startMs}-${b.count}-${i}`)
-
-      Text(`${this.ctrl.limitHigh}`)
-        .fontSize(8)
-        .fontColor(Theme.ELEVATED)
-        .position({ x: PLOT_W + 3, y: this.y(this.ctrl.limitHigh) - 6 })
-      Text(`${this.ctrl.limitLow}`)
-        .fontSize(8)
-        .fontColor(Theme.TEXT_3)
-        .position({ x: PLOT_W + 3, y: this.y(this.ctrl.limitLow) - 6 })
     }
-    .width(PLOT_W)
+    .width(PLOT_W + LABEL_W)
     .height(PLOT_H)
   }
 
   build() {
     Column({ space: 0 }) {
-      Row({ space: 4 }) {
-        Icon({ src: $r('app.media.ic_heart_fill'), color: Theme.BRAND, glyph: 11 })
-        Caps({ text: `HEART · ${this.windowLabel()}` })
-      }
+      Caps({ text: `LAST ${this.minutes()} MIN` })
 
       if (this.ctrl.trendSummary.filled === 0) {
-        Column({ space: 6 }) {
-          Text('--').fontSize(Theme.NUMBER).fontWeight(FontWeight.Bold).fontColor(Theme.TEXT_3)
-          Text('Collecting your heart rate. The chart fills as readings come in.')
-            .fontSize(Theme.SMALL)
-            .fontColor(Theme.TEXT_2)
-            .textAlign(TextAlign.Center)
-            .width(160)
+        Stack() {
+          Text('Collecting readings...').fontSize(Theme.BODY).fontWeight(FontWeight.Regular).fontColor(Theme.TEXT_2)
         }
-        .height(PLOT_H + 60)
-        .justifyContent(FlexAlign.Center)
+        .width(146)
+        .height(72)
+        .borderRadius(10)
+        .border({ width: 1, color: Theme.BORDER, style: BorderStyle.Dashed })
+        .margin({ top: 14, bottom: 14 })
+        Text('Your chart fills in as readings arrive.')
+          .fontSize(Theme.BODY - 1)
+          .fontColor(Theme.TEXT)
+          .textAlign(TextAlign.Center)
+          .width(150)
       } else {
-        Row({ space: 4 }) {
+        Row({ space: 5 }) {
           Text(`${this.ctrl.trendSummary.avg}`)
-            .fontSize(Theme.NUMBER + 6)
+            .fontSize(Theme.NUMBER)
             .fontWeight(FontWeight.Bolder)
             .fontColor(Theme.TEXT)
-          Text('avg').fontSize(Theme.SMALL).fontColor(Theme.TEXT_2).margin({ bottom: 5 })
-          Text(`${this.ctrl.trendSummary.min}-${this.ctrl.trendSummary.max}`)
-            .fontSize(Theme.BODY)
-            .fontWeight(FontWeight.Bold)
-            .fontColor(Theme.TEXT)
-            .margin({ left: 8, bottom: 3 })
-          Text('range').fontSize(Theme.SMALL).fontColor(Theme.TEXT_2).margin({ bottom: 5 })
+          Text('avg bpm').fontSize(Theme.BODY).fontColor(Theme.TEXT_2).margin({ bottom: 6 })
         }
         .alignItems(VerticalAlign.Bottom)
-        .margin({ top: 2, bottom: 8 })
+        .margin({ top: -2 })
+
+        Row({ space: 4 }) {
+          Text(`Range ${this.ctrl.trendSummary.min}-${this.ctrl.trendSummary.max}`)
+            .fontSize(Theme.SMALL)
+            .fontWeight(FontWeight.Medium)
+            .fontColor(Theme.TEXT)
+          if (this.overMax() > 0) {
+            Text('·').fontSize(Theme.SMALL).fontColor(Theme.TEXT_2)
+            StatusMark({ mark: 'UP', color: Theme.ALERT, dim: 9 })
+            Text(`${this.overMax()} over max`).fontSize(Theme.SMALL).fontWeight(FontWeight.Bold).fontColor(Theme.ALERT)
+          }
+        }
+        .margin({ bottom: 10 })
 
         this.plot()
 
         Row() {
-          Text(`${this.windowLabel().toLowerCase()} ago`).fontSize(Theme.MICRO).fontColor(Theme.TEXT_3)
+          Text(`${this.minutes()} min ago`).fontSize(Theme.SMALL - 1).fontColor(Theme.TEXT_2)
           Blank()
-          Text('now').fontSize(Theme.MICRO).fontColor(Theme.TEXT_3)
+          Text('now').fontSize(Theme.SMALL - 1).fontColor(Theme.TEXT_2)
         }
         .width(PLOT_W)
-        .margin({ top: 4 })
+        .margin({ top: 4, right: LABEL_W })
       }
 
-      Row({ space: 4 }) {
-        Text('Resting').fontSize(Theme.SMALL).fontColor(Theme.TEXT_2)
-        Text(`${this.ctrl.restingBpm}`).fontSize(Theme.SMALL).fontWeight(FontWeight.Bold).fontColor(Theme.TEXT)
-        Text(this.ctrl.restingMeasured ? 'bpm' : 'bpm est').fontSize(Theme.SMALL).fontColor(Theme.TEXT_2)
+      if (this.ctrl.trendSummary.filled > 0 && this.ctrl.restingBpm > 0) {
+        Row({ space: 4 }) {
+          Text(`Resting ${this.ctrl.restingBpm} bpm`).fontSize(Theme.SMALL).fontColor(Theme.TEXT)
+          if (!this.ctrl.restingMeasured) {
+            OutlineBadge({ label: 'EST', color: Theme.TEXT_2 })
+          }
+        }
+        .margin({ top: 6 })
       }
-      .margin({ top: 10 })
     }
     .width('100%')
     .height('100%')
     .justifyContent(FlexAlign.Center)
-    .padding({ right: 8 })
+    .padding({ bottom: 6 })
     .accessibilityGroup(true)
     .accessibilityText(this.spoken())
   }

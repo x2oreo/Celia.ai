@@ -1,127 +1,136 @@
 import { WatchController } from '../controller/WatchController';
 import { SymptomKind } from '../model/WatchMetric';
-import { EdgeButton, Icon } from './Parts';
+import { Bezel, Icon, PillButton } from './Parts';
 import { Theme } from './Theme';
 
+/** One answer to "How do you feel?". */
+export class Feeling {
+  kind: SymptomKind = 'fine';
+  label: string = '';
+  color: string = '';
+  tint: string = '';
+
+  constructor(kind: SymptomKind, label: string, color: string, tint: string) {
+    this.kind = kind;
+    this.label = label;
+    this.color = color;
+    this.tint = tint;
+  }
+}
+
+/** Fine / Dizzy / Racing (Racing = palpitations). */
+export const FEELINGS: Feeling[] = [
+  new Feeling('fine', 'Fine', Theme.CALM, Theme.CALM_TINT),
+  new Feeling('dizziness', 'Dizzy', Theme.ELEVATED, Theme.ELEVATED_TINT),
+  new Feeling('palpitations', 'Racing', Theme.ALERT, Theme.ALERT_TINT)
+];
+
+export function feelingLabel(kind: SymptomKind): string {
+  for (const f of FEELINGS) {
+    if (f.kind === kind) {
+      return f.label;
+    }
+  }
+  return '';
+}
+
+/** A 52 vp feel circle: tint fill + ring; `chosen` = solid fill, `dimmed` = faded after another one was picked. */
 @ComponentV2
-struct FeelButton {
-  @Param @Require icon: Resource;
-  @Param @Require label: string;
-  @Param @Require color: string;
-  @Param @Require fill: string;
+export struct FeelButton {
+  @Param @Require feeling: Feeling;
+  @Param chosen: boolean = false;
+  @Param dimmed: boolean = false;
   @Event onTap: () => void = () => {};
 
-  build() {
-    Column({ space: 2 }) {
-      Icon({ src: this.icon, color: this.color, glyph: 18 })
-      Text(this.label).fontSize(Theme.MICRO + 1).fontWeight(FontWeight.Bold).fontColor(Theme.TEXT)
+  @Builder
+  glyph(color: string) {
+    if (this.feeling.kind === 'fine') {
+      Icon({ src: $r('app.media.ic_check'), color: color, glyph: 15 })
+    } else if (this.feeling.kind === 'palpitations') {
+      Icon({ src: $r('app.media.ic_heart_fill'), color: color, glyph: 14 })
+    } else {
+      Text('≈').fontSize(16).fontWeight(FontWeight.Bolder).fontColor(color).height(15)
     }
-    .width(56)
-    .height(56)
+  }
+
+  build() {
+    Column({ space: 1 }) {
+      this.glyph(Theme.TEXT)
+      Text(this.feeling.label).fontSize(Theme.SMALL).fontWeight(FontWeight.Bold).fontColor(Theme.TEXT)
+    }
+    .width(52)
+    .height(52)
     .justifyContent(FlexAlign.Center)
-    .borderRadius(28)
-    .border({ width: 2, color: this.color })
-    .backgroundColor(this.fill)
+    .borderRadius(26)
+    .border({ width: 1.5, color: this.feeling.color })
+    .backgroundColor(this.chosen ? this.feeling.color : this.feeling.tint)
+    .opacity(this.dimmed ? 0.4 : 1)
     .accessibilityGroup(true)
-    .accessibilityText(this.label)
+    .accessibilityText(this.feeling.kind === 'palpitations' ? 'Racing heart' : this.feeling.label)
     .onClick(() => this.onTap())
   }
 }
 
+/** The three feel circles in a row. */
+@ComponentV2
+export struct Feelings {
+  @Param chosen: SymptomKind | undefined = undefined;
+  @Event onPick: (kind: SymptomKind) => void = (kind: SymptomKind) => {};
+
+  build() {
+    Row({ space: 7 }) {
+      ForEach(FEELINGS, (f: Feeling) => {
+        FeelButton({ feeling: f, chosen: this.chosen === f.kind,
+          dimmed: this.chosen !== undefined && this.chosen !== f.kind, onTap: () => this.onPick(f.kind) })
+      }, (f: Feeling) => f.kind)
+    }
+  }
+}
+
 /**
- * W4 check-in: "How do you feel?" Fine / Dizzy / Racing. As a swiper page it also logs the daily medicine and starts
- * a manual SOS; as an overlay (after "I'm OK" on an alert) it offers "Not now".
+ * 11 Check-in after "I'm OK": a coral ring (Celia asking, not an alarm). Fine closes it; Dizzy or Racing logs it and
+ * then offers Need help next to Done.
  */
 @ComponentV2
 export struct CheckIn {
   @Param @Require ctrl: WatchController;
-  @Param asPage: boolean = false;
+  @Local logged: SymptomKind | undefined = undefined;
 
-  toast(msg: string): void {
-    try {
-      this.getUIContext().getPromptAction().showToast({ message: msg, duration: 1500 });
-    } catch (e) {
-      // A missing toast is harmless; the metric is already queued.
+  pick(kind: SymptomKind): void {
+    if (kind === 'fine') {
+      this.ctrl.checkIn(kind);
+      return;
     }
-  }
-
-  answer(kind: SymptomKind, msg: string): void {
-    this.ctrl.checkIn(kind);
-    this.toast(msg);
-  }
-
-  medLabel(): string {
-    const n = this.ctrl.medicationName;
-    return `Took ${n.charAt(0).toUpperCase()}${n.substring(1)}`;
-  }
-
-  @Builder
-  feelings() {
-    Row({ space: 8 }) {
-      FeelButton({ icon: $r('app.media.ic_check'), label: 'Fine', color: Theme.CALM, fill: Theme.CALM_TINT,
-        onTap: () => {
-          this.answer('fine', 'Glad to hear it');
-        } })
-      FeelButton({ icon: $r('app.media.ic_breath'), label: 'Dizzy', color: Theme.ELEVATED,
-        fill: Theme.ELEVATED_TINT, onTap: () => {
-          this.answer('dizziness', 'Sit down. Logged for your doctor');
-        } })
-      FeelButton({ icon: $r('app.media.ic_heart_fill'), label: 'Racing', color: Theme.ALERT, fill: Theme.ALERT_TINT,
-        onTap: () => {
-          this.answer('palpitations', 'Sit down. Logged for your doctor');
-        } })
-    }
+    this.ctrl.logSymptom(kind);
+    this.logged = kind;
   }
 
   build() {
-    Stack({ alignContent: Alignment.Bottom }) {
+    Stack() {
+      Bezel({ mode: 'RING', color: Theme.BRAND })
       Column({ space: 8 }) {
-        Text('How do you feel?').fontSize(Theme.TITLE).fontWeight(FontWeight.Bold).fontColor(Theme.TEXT)
-        this.feelings()
-        Text('"Racing" = palpitations').fontSize(Theme.MICRO).fontColor(Theme.TEXT_3)
-        if (this.asPage) {
-          Row({ space: 6 }) {
-            Row({ space: 5 }) {
-              Icon({ src: $r('app.media.ic_pill'), color: Theme.BRAND, glyph: 14 })
-              Text(this.medLabel()).fontSize(Theme.SMALL).fontWeight(FontWeight.Bold).fontColor(Theme.TEXT)
-                .maxLines(1)
-            }
-            .height(Theme.PILL_HEIGHT)
-            .padding({ left: 12, right: 14 })
-            .borderRadius(Theme.PILL_HEIGHT / 2)
-            .backgroundColor(Theme.BUTTON)
-            .accessibilityGroup(true)
-            .accessibilityText(`Log ${this.ctrl.medicationName} as taken`)
-            .onClick(() => {
-              this.ctrl.logMedication();
-              this.toast('Dose logged');
-            })
-            // Manual SOS: the same 10 s cancellable countdown an alert's "Need help" starts.
-            Column({ space: 0 }) {
-              Text('SOS').fontSize(Theme.SMALL).fontWeight(FontWeight.Bolder).fontColor(Theme.TEXT)
-            }
-            .width(Theme.PILL_HEIGHT)
-            .height(Theme.PILL_HEIGHT)
-            .justifyContent(FlexAlign.Center)
-            .borderRadius(Theme.PILL_HEIGHT / 2)
-            .backgroundColor(Theme.ALERT)
-            .accessibilityText('Start S O S countdown')
-            .onClick(() => {
+        Text(this.logged === undefined ? 'How do you feel?' : `Logged: ${feelingLabel(this.logged)}`)
+          .fontSize(Theme.TITLE + 2)
+          .fontWeight(FontWeight.Bolder)
+          .fontColor(Theme.TEXT)
+        Feelings({ chosen: this.logged, onPick: (k: SymptomKind) => this.pick(k) })
+        if (this.logged === undefined) {
+          Text('Racing = palpitations').fontSize(Theme.SMALL).fontColor(Theme.TEXT_2)
+          PillButton({ label: 'Not now', pillWidth: 96, onTap: () => {
+            this.ctrl.closeCheckIn();
+          } })
+        } else {
+          Text('Sit down. Sent to your phone.').fontSize(Theme.SMALL).fontColor(Theme.TEXT_2)
+          Row({ space: 8 }) {
+            PillButton({ label: 'Done', pillWidth: 72, onTap: () => {
+              this.ctrl.closeCheckIn();
+            } })
+            PillButton({ label: 'Need help', bg: Theme.ALERT, pillWidth: 94, onTap: () => {
+              this.ctrl.closeCheckIn();
               this.ctrl.needHelp();
-            })
+            } })
           }
-          .margin({ top: 2 })
         }
-      }
-      .width('100%')
-      .height('100%')
-      .justifyContent(FlexAlign.Center)
-      .padding({ bottom: this.asPage ? 0 : 30 })
-
-      if (!this.asPage) {
-        EdgeButton({ label: 'Not now', onTap: () => {
-          this.ctrl.closeCheckIn();
-        } })
       }
     }
     .width('100%')
