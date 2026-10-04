@@ -1,119 +1,101 @@
 import { WatchController } from '../controller/WatchController';
-import { Ring } from './Ring';
-import { Theme } from './Theme';
 import { drugBadgeText } from '../vitals/DrugBadge';
+import { Zone, beatPeriodMs, ringRatio, zoneFor, zoneWord } from '../vitals/WatchStatus';
+import { DashedRing, HeartBeat, Icon, Ring, SimBadge, zoneColor, zoneShape } from './Parts';
+import { Theme } from './Theme';
 
 /** W7: shown instead of Home while the watch is off the wrist. */
 @ComponentV2
 struct NotWorn {
   build() {
     Stack() {
-      Circle()
-        .width('94%')
-        .height('94%')
-        .fill(Theme.TRACK)
-        .stroke(Theme.DASH)
-        .strokeWidth(4)
-        .strokeDashArray([14, 10])
+      DashedRing()
       Column({ space: 6 }) {
-        Text('– –').fontSize(28).fontWeight(FontWeight.Bold).fontColor(Theme.DASH)
-        Text('Not on wrist').fontSize(16).fontWeight(FontWeight.Bold).fontColor(Theme.TEXT)
+        Icon({ src: $r('app.media.ic_watch'), color: Theme.TEXT_3, glyph: 28 })
+        Text('Not on wrist').fontSize(Theme.TITLE).fontWeight(FontWeight.Bold).fontColor(Theme.TEXT)
         Text('Put your watch back on to keep watching your heart.')
-          .fontSize(11)
-          .fontColor(Theme.MUTED)
+          .fontSize(Theme.SMALL)
+          .fontColor(Theme.TEXT_2)
           .textAlign(TextAlign.Center)
           .width(150)
       }
     }
     .width('100%')
     .height('100%')
+    .accessibilityGroup(true)
+    .accessibilityText('Not on wrist. Put your watch back on to keep watching your heart.')
   }
 }
 
-/** W1 Home: status, big bpm, genotype + phone link, ring = bpm relative to the current max. */
+/** W1 Home: ring = where the bpm sits between your min and max, status word + shape, bpm, context, link. */
 @ComponentV2
 export struct HeartPage {
   @Param @Require ctrl: WatchController;
 
-  /** Ring fill: where the current bpm sits between your min (empty) and max (full) limit. */
-  ratio(): number {
-    const span = this.ctrl.limitHigh - this.ctrl.limitLow;
-    if (span <= 0 || this.ctrl.bpm <= 0) {
-      return 0;
-    }
-    return Math.max(0.03, Math.min(1, (this.ctrl.bpm - this.ctrl.limitLow) / span));
+  zone(): Zone {
+    return zoneFor(this.ctrl.bpm, this.ctrl.limitLow, this.ctrl.limitHigh, this.ctrl.stress);
   }
 
-  status(): string {
+  statusWord(): string {
     if (this.ctrl.bpm <= 0) {
-      return this.ctrl.statusText.length > 0 ? this.ctrl.statusText : 'Starting…';
+      return this.ctrl.statusText.length > 0 ? this.ctrl.statusText : 'Starting';
     }
-    if (this.ctrl.bpm > this.ctrl.limitHigh) {
-      return 'Above your max';
-    }
-    if (this.ctrl.bpm < this.ctrl.limitLow) {
-      return 'Below your min';
-    }
-    if (this.ctrl.bpm >= this.ctrl.limitHigh * 0.9 || this.ctrl.stress) {
-      return 'Elevated';
-    }
-    return 'All good';
-  }
-
-  statusColor(): string {
-    if (this.ctrl.bpm <= 0) {
-      return Theme.MUTED;
-    }
-    if (this.ctrl.bpm > this.ctrl.limitHigh) {
-      return Theme.DANGER;
-    }
-    if (this.ctrl.bpm < this.ctrl.limitLow) {
-      return Theme.LOW;
-    }
-    if (this.ctrl.bpm >= this.ctrl.limitHigh * 0.9 || this.ctrl.stress) {
-      return Theme.WARN;
-    }
-    return Theme.OK;
-  }
-
-  phoneMark(): string {
-    switch (this.ctrl.syncState) {
-      case 'OK':
-        return 'Phone ✓';
-      case 'PENDING':
-        return 'Phone ↑';
-      case 'ERROR':
-        return 'Phone ✕';
-      default:
-        return 'Offline';
-    }
-  }
-
-  pillText(): string {
-    const g = this.ctrl.genotype === 'UNKNOWN' ? '' : `${this.ctrl.genotype} · `;
-    return `${g}${this.phoneMark()}`;
+    return this.ctrl.stress && this.zone() === 'NEAR' && this.ctrl.bpm < this.ctrl.limitHigh * 0.9 ?
+      'Stressed' : zoneWord(this.zone());
   }
 
   stateWord(): string {
     switch (this.ctrl.activity) {
       case 'REST':
-        return 'at rest';
+        return 'At rest';
       case 'ACTIVE':
-        return 'active';
+        return 'Active';
       case 'ASLEEP':
-        return 'asleep';
+        return 'Asleep';
       default:
         return '';
     }
   }
 
+  contextLine(): string {
+    const s = this.stateWord();
+    return s.length > 0 ? `${s} · max ${this.ctrl.limitHigh}` : `Max ${this.ctrl.limitHigh}`;
+  }
+
+  phoneText(): string {
+    switch (this.ctrl.syncState) {
+      case 'OK':
+        return 'Phone';
+      case 'PENDING':
+        return 'Syncing';
+      case 'ERROR':
+        return 'Phone off';
+      default:
+        return 'Offline';
+    }
+  }
+
+  phoneColor(): string {
+    switch (this.ctrl.syncState) {
+      case 'OK':
+        return Theme.CALM;
+      case 'PENDING':
+        return Theme.TEXT_2;
+      default:
+        return Theme.ELEVATED;
+    }
+  }
+
+  badge(): string {
+    return drugBadgeText(this.ctrl.riskyDrug, this.ctrl.riskyDrugAt, Date.now());
+  }
+
   /** One sentence for the screen reader instead of eight fragments. */
   spoken(): string {
     if (this.ctrl.bpm <= 0) {
-      return `Heart rate not available. ${this.status()}`;
+      return `Heart rate not available. ${this.statusWord()}.`;
     }
-    return `Heart rate ${this.ctrl.bpm} beats per minute ${this.stateWord()}. ${this.status()}. ` +
-      `Your maximum is ${this.ctrl.limitHigh}.`;
+    return `Heart rate ${this.ctrl.bpm} beats per minute. ${this.statusWord()}. ${this.contextLine()}.`;
   }
 
   build() {
@@ -121,61 +103,80 @@ export struct HeartPage {
       NotWorn()
     } else {
       Stack() {
-        Ring({ percent: this.ratio() * 100, color: this.statusColor() })
-        Column({ space: 2 }) {
-          Row({ space: 4 }) {
-            Circle().width(7).height(7).fill(this.statusColor())
-            Text(this.status()).fontSize(11).fontWeight(FontWeight.Bold).fontColor(this.statusColor()).maxLines(1)
-          }
-
-          Text(this.ctrl.bpm > 0 ? `${this.ctrl.bpm}` : '--')
-            .fontSize(56)
-            .fontWeight(FontWeight.Bolder)
-            .fontColor(Theme.TEXT)
-
-          Text(this.stateWord().length > 0 ? `bpm · ${this.stateWord()} · max ${this.ctrl.limitHigh}` : 'bpm')
-            .fontSize(11)
-            .fontColor(Theme.MUTED)
-
-          Row({ space: 4 }) {
-            Text('HRV').fontSize(11).fontColor(Theme.MUTED)
-            Text(this.ctrl.hrvMs > 0 ? `${this.ctrl.hrvMs} ms` : '-')
-              .fontSize(15)
+        if (this.ctrl.bpm > 0) {
+          Ring({ percent: ringRatio(this.ctrl.bpm, this.ctrl.limitLow, this.ctrl.limitHigh) * 100,
+            color: zoneColor(this.zone()) })
+        } else {
+          DashedRing()
+        }
+        Column({ space: 0 }) {
+          Row({ space: 5 }) {
+            Icon({ src: zoneShape(this.zone()), color: zoneColor(this.zone()), glyph: 14 })
+            Text(this.statusWord())
+              .fontSize(Theme.SMALL)
               .fontWeight(FontWeight.Bold)
-              .fontColor(this.ctrl.hrvMs > 0 && this.ctrl.hrvMs < 20 ? Theme.DANGER : Theme.TEXT)
-            Text('sim').fontSize(10).fontColor(Theme.WARN)
+              .fontColor(zoneColor(this.zone()))
+              .maxLines(1)
           }
-          .margin({ top: 2 })
+
+          Row({ space: 4 }) {
+            Text(this.ctrl.bpm > 0 ? `${this.ctrl.bpm}` : '--')
+              .fontSize(Theme.HERO)
+              .fontWeight(FontWeight.Bolder)
+              .fontColor(Theme.TEXT)
+            Column({ space: 2 }) {
+              HeartBeat({ periodMs: beatPeriodMs(this.zone()), beating: this.ctrl.bpm > 0,
+                color: this.zone() === 'ABOVE' ? Theme.ALERT : Theme.BRAND })
+              Text('bpm').fontSize(Theme.SMALL).fontColor(Theme.TEXT_2)
+            }
+            .margin({ bottom: 12 })
+          }
+          .alignItems(VerticalAlign.Bottom)
+          .margin({ top: -2 })
+
+          Text(this.contextLine())
+            .fontSize(Theme.SMALL)
+            .fontColor(Theme.TEXT_2)
+            .margin({ top: -4 })
 
           // A QT-risk drug taken in the last 72 h: amber = watching more closely (red is for alerts).
-          if (drugBadgeText(this.ctrl.riskyDrug, this.ctrl.riskyDrugAt, Date.now()).length > 0) {
+          if (this.badge().length > 0) {
             Row({ space: 4 }) {
-              Text('!').fontSize(10).fontWeight(FontWeight.Bolder).fontColor(Theme.WARN)
-              Text(drugBadgeText(this.ctrl.riskyDrug, this.ctrl.riskyDrugAt, Date.now()))
-                .fontSize(10)
+              Text('!').fontSize(Theme.MICRO).fontWeight(FontWeight.Bolder).fontColor(Theme.ELEVATED)
+              Text(this.badge())
+                .fontSize(Theme.MICRO)
                 .fontWeight(FontWeight.Medium)
-                .fontColor(Theme.WARN)
+                .fontColor(Theme.ELEVATED)
                 .maxLines(1)
             }
-            .padding({ left: 8, right: 8, top: 3, bottom: 3 })
-            .borderRadius(10)
-            .backgroundColor(Theme.WARN_DARK)
-            .margin({ top: 4 })
+            .height(22)
+            .padding({ left: 8, right: 8 })
+            .borderRadius(11)
+            .backgroundColor(Theme.ELEVATED_TINT)
+            .margin({ top: 8 })
           }
 
-          Text(this.pillText())
-            .fontSize(10)
-            .fontWeight(FontWeight.Medium)
-            .fontColor(Theme.TEXT)
-            .padding({ left: 8, right: 8, top: 3, bottom: 3 })
-            .borderRadius(10)
-            .backgroundColor(Theme.CARD)
-            .margin({ top: 4 })
+          Row({ space: 6 }) {
+            if (this.ctrl.genotype !== 'UNKNOWN') {
+              Text(this.ctrl.genotype).fontSize(Theme.MICRO).fontWeight(FontWeight.Bold).fontColor(Theme.TEXT)
+              Divider().vertical(true).height(10).color(Theme.BORDER).strokeWidth(1)
+            }
+            Row({ space: 3 }) {
+              Icon({ src: $r('app.media.ic_phone_link'), color: this.phoneColor(), glyph: 11 })
+              Text(this.phoneText()).fontSize(Theme.MICRO).fontWeight(FontWeight.Bold).fontColor(this.phoneColor())
+            }
+          }
+          .height(22)
+          .padding({ left: 10, right: 10 })
+          .borderRadius(11)
+          .backgroundColor(Theme.SURFACE)
+          .margin({ top: this.badge().length > 0 ? 4 : 10 })
 
           if (this.ctrl.sourceKind === 'SIMULATED') {
-            Text(`DEMO · ${this.ctrl.scenarioLabel}`).fontSize(10).fontColor(Theme.WARN).margin({ top: 2 })
+            SimBadge({ label: 'DEMO DATA' }).margin({ top: 6 })
           }
         }
+        .alignItems(HorizontalAlign.Center)
       }
       .width('100%')
       .height('100%')

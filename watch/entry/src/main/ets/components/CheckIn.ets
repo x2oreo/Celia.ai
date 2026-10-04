@@ -1,25 +1,25 @@
 import { WatchController } from '../controller/WatchController';
 import { SymptomKind } from '../model/WatchMetric';
-import { Ring } from './Ring';
+import { EdgeButton, Icon } from './Parts';
 import { Theme } from './Theme';
 
 @ComponentV2
 struct FeelButton {
-  @Param @Require icon: string;
+  @Param @Require icon: Resource;
   @Param @Require label: string;
   @Param @Require color: string;
   @Param @Require fill: string;
   @Event onTap: () => void = () => {};
 
   build() {
-    Column({ space: 0 }) {
-      Text(this.icon).fontSize(14).fontWeight(FontWeight.Bold).fontColor(Theme.TEXT)
-      Text(this.label).fontSize(10).fontWeight(FontWeight.Bold).fontColor(Theme.TEXT)
+    Column({ space: 2 }) {
+      Icon({ src: this.icon, color: this.color, glyph: 18 })
+      Text(this.label).fontSize(Theme.MICRO + 1).fontWeight(FontWeight.Bold).fontColor(Theme.TEXT)
     }
-    .width(54)
-    .height(54)
+    .width(56)
+    .height(56)
     .justifyContent(FlexAlign.Center)
-    .borderRadius(27)
+    .borderRadius(28)
     .border({ width: 2, color: this.color })
     .backgroundColor(this.fill)
     .accessibilityGroup(true)
@@ -28,11 +28,13 @@ struct FeelButton {
   }
 }
 
-/** W4 check-in: "How do you feel?" Fine / Dizzy / Racing. Used as a page and after "I'm OK" on an alert. */
+/**
+ * W4 check-in: "How do you feel?" Fine / Dizzy / Racing. As a swiper page it also logs the daily medicine and starts
+ * a manual SOS; as an overlay (after "I'm OK" on an alert) it offers "Not now".
+ */
 @ComponentV2
 export struct CheckIn {
   @Param @Require ctrl: WatchController;
-  /** As a swiper page it also offers medication logging. */
   @Param asPage: boolean = false;
 
   toast(msg: string): void {
@@ -48,50 +50,78 @@ export struct CheckIn {
     this.toast(msg);
   }
 
+  medLabel(): string {
+    const n = this.ctrl.medicationName;
+    return `Took ${n.charAt(0).toUpperCase()}${n.substring(1)}`;
+  }
+
+  @Builder
+  feelings() {
+    Row({ space: 8 }) {
+      FeelButton({ icon: $r('app.media.ic_check'), label: 'Fine', color: Theme.CALM, fill: Theme.CALM_TINT,
+        onTap: () => {
+          this.answer('fine', 'Glad to hear it');
+        } })
+      FeelButton({ icon: $r('app.media.ic_breath'), label: 'Dizzy', color: Theme.ELEVATED,
+        fill: Theme.ELEVATED_TINT, onTap: () => {
+          this.answer('dizziness', 'Sit down. Logged for your doctor');
+        } })
+      FeelButton({ icon: $r('app.media.ic_heart_fill'), label: 'Racing', color: Theme.ALERT, fill: Theme.ALERT_TINT,
+        onTap: () => {
+          this.answer('palpitations', 'Sit down. Logged for your doctor');
+        } })
+    }
+  }
+
   build() {
-    Stack() {
-      Ring({ percent: 30, color: Theme.DANGER })
+    Stack({ alignContent: Alignment.Bottom }) {
       Column({ space: 8 }) {
-        Text('How do you feel?').fontSize(16).fontWeight(FontWeight.Bolder).fontColor(Theme.TEXT)
-        Row({ space: 6 }) {
-          FeelButton({ icon: '✓', label: 'Fine', color: Theme.OK, fill: Theme.OK_DARK, onTap: () => {
-            this.answer('fine', 'Glad to hear it');
-          } })
-          FeelButton({ icon: '≈', label: 'Dizzy', color: Theme.WARN, fill: Theme.WARN_DARK, onTap: () => {
-            this.answer('dizziness', 'Sit down. Logged for your doctor');
-          } })
-          FeelButton({ icon: '♥', label: 'Racing', color: Theme.DANGER, fill: Theme.DANGER_DARK, onTap: () => {
-            this.answer('palpitations', 'Sit down. Logged for your doctor');
-          } })
-        }
-        Text('"Racing" = palpitations').fontSize(10).fontColor(Theme.MUTED)
+        Text('How do you feel?').fontSize(Theme.TITLE).fontWeight(FontWeight.Bold).fontColor(Theme.TEXT)
+        this.feelings()
+        Text('"Racing" = palpitations').fontSize(Theme.MICRO).fontColor(Theme.TEXT_3)
         if (this.asPage) {
           Row({ space: 6 }) {
-            Text(`Took ${this.ctrl.medicationName}`)
-              .fontSize(11)
-              .fontColor(Theme.OK)
-              .padding({ left: 10, right: 10, top: 8, bottom: 8 })
-              .borderRadius(14)
-              .backgroundColor(Theme.CARD)
-              .accessibilityText(`Log ${this.ctrl.medicationName} as taken`)
-              .onClick(() => {
-                this.ctrl.logMedication();
-                this.toast('Medication logged');
-              })
+            Row({ space: 5 }) {
+              Icon({ src: $r('app.media.ic_pill'), color: Theme.BRAND, glyph: 14 })
+              Text(this.medLabel()).fontSize(Theme.SMALL).fontWeight(FontWeight.Bold).fontColor(Theme.TEXT)
+                .maxLines(1)
+            }
+            .height(Theme.PILL_HEIGHT)
+            .padding({ left: 12, right: 14 })
+            .borderRadius(Theme.PILL_HEIGHT / 2)
+            .backgroundColor(Theme.BUTTON)
+            .accessibilityGroup(true)
+            .accessibilityText(`Log ${this.ctrl.medicationName} as taken`)
+            .onClick(() => {
+              this.ctrl.logMedication();
+              this.toast('Dose logged');
+            })
             // Manual SOS: the same 10 s cancellable countdown an alert's "Need help" starts.
-            Text('SOS')
-              .fontSize(11)
-              .fontWeight(FontWeight.Bolder)
-              .fontColor(Theme.TEXT)
-              .padding({ left: 12, right: 12, top: 8, bottom: 8 })
-              .borderRadius(14)
-              .backgroundColor(Theme.DANGER)
-              .accessibilityText('Start S O S countdown')
-              .onClick(() => {
-                this.ctrl.needHelp();
-              })
+            Column({ space: 0 }) {
+              Text('SOS').fontSize(Theme.SMALL).fontWeight(FontWeight.Bolder).fontColor(Theme.TEXT)
+            }
+            .width(Theme.PILL_HEIGHT)
+            .height(Theme.PILL_HEIGHT)
+            .justifyContent(FlexAlign.Center)
+            .borderRadius(Theme.PILL_HEIGHT / 2)
+            .backgroundColor(Theme.ALERT)
+            .accessibilityText('Start S O S countdown')
+            .onClick(() => {
+              this.ctrl.needHelp();
+            })
           }
+          .margin({ top: 2 })
         }
+      }
+      .width('100%')
+      .height('100%')
+      .justifyContent(FlexAlign.Center)
+      .padding({ bottom: this.asPage ? 0 : 30 })
+
+      if (!this.asPage) {
+        EdgeButton({ label: 'Not now', onTap: () => {
+          this.ctrl.closeCheckIn();
+        } })
       }
     }
     .width('100%')

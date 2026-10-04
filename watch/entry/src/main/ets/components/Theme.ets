@@ -1,19 +1,48 @@
-/** Round AMOLED palette from the Watch companion design (W1–W7). */
+/**
+ * Watch tokens: the phone's dark mode on true black (docs/design/DESIGN.md §2.3 and §7). Screens use these names,
+ * never a hex.
+ */
 export class Theme {
+  // Neutrals
   static readonly BG: string = '#000000';
-  static readonly CARD: string = '#1C1C1E';
-  static readonly BUTTON: string = '#2C2C2E';
-  static readonly TEXT: string = '#FFFFFF';
-  static readonly MUTED: string = '#8E8E93';
-  static readonly TRACK: string = '#00000000';
-  static readonly OK: string = '#1DB954';
-  static readonly OK_DARK: string = '#0F3D24';
-  static readonly WARN: string = '#FF9500';
-  static readonly WARN_DARK: string = '#3D2A0A';
-  static readonly LOW: string = '#FFC229';
-  static readonly DANGER: string = '#E8453C';
-  static readonly DANGER_DARK: string = '#3D1210';
-  static readonly HEART: string = '#E8453C';
-  static readonly INFO: string = '#0A84FF';
-  static readonly DASH: string = '#3A3A3C';
+  static readonly RING_TRACK: string = '#1A1614';
+  static readonly SURFACE: string = '#1F1A17';
+  static readonly BUTTON: string = '#2A2421';
+  static readonly BORDER: string = '#332C28';
+  static readonly TEXT: string = '#F5F0EC';
+  static readonly TEXT_2: string = '#B8AEA8';
+  static readonly TEXT_3: string = '#8A817B';
+  static readonly ON_LIGHT: string = '#1F1A17';
+  static readonly TRANSPARENT: string = '#00000000';
+
+  // Brand and zones
+  static readonly BRAND: string = '#F26B6F';
+  static readonly BRAND_SOFT: string = '#66F26B6F';
+  static readonly CALM: string = '#12B76A';
+  static readonly CALM_TINT: string = '#0B2A1C';
+  static readonly ELEVATED: string = '#FDB022';
+  static readonly ELEVATED_TINT: string = '#33240A';
+  static readonly ALERT: string = '#F04438';
+  static readonly ALERT_TINT: string = '#33100D';
+
+  // Risk solids (§3), for verdict shapes
+  static readonly RISK_KNOWN: string = '#D92D20';
+  static readonly RISK_POSSIBLE: string = '#F79009';
+  static readonly RISK_CONDITIONAL: string = '#EAAA08';
+  static readonly RISK_UNKNOWN: string = '#667085';
+
+  // Type (fp)
+  static readonly HERO: number = 52;
+  static readonly NUMBER: number = 22;
+  static readonly TITLE: number = 17;
+  static readonly BODY: number = 14;
+  static readonly SMALL: number = 12;
+  static readonly CAPS: number = 11;
+  static readonly MICRO: number = 10;
+
+  // Layout (vp)
+  static readonly RING_STROKE: number = 8;
+  static readonly ROW_HEIGHT: number = 52;
+  static readonly PILL_HEIGHT: number = 44;
+  static readonly LIST_WIDTH: number = 184;
 }

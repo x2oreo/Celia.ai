@@ -1,7 +1,6 @@
 import { WatchController } from '../controller/WatchController';
 import { formatPairCode } from '../sync/PairingClient';
-import { Pill } from './Pill';
-import { Ring } from './Ring';
+import { Caps, EdgeButton, Icon, PillButton, Ring } from './Parts';
 import { Theme } from './Theme';
 
 /** Shows a 6-digit code to type into the phone app; polls until the phone confirms (or the code expires). */
@@ -32,57 +31,73 @@ export struct PairingScreen {
   }
 
   build() {
-    Stack() {
+    Stack({ alignContent: Alignment.Bottom }) {
       if (this.ctrl.pairScreen === 'PAIRED') {
-        Ring({ percent: 100, color: Theme.OK })
+        Ring({ percent: 100, color: Theme.CALM })
       } else if (this.ctrl.pairScreen === 'CODE') {
-        Ring({ percent: Math.min(100, this.ctrl.pairSecondsLeft / 6), color: Theme.INFO })
+        Ring({ percent: Math.min(100, this.ctrl.pairSecondsLeft / 6), color: Theme.BRAND })
+      } else {
+        Ring({ percent: 0, color: Theme.BRAND })
       }
+
       Column({ space: 4 }) {
         if (this.ctrl.pairScreen === 'LOADING') {
-          Text('Getting a code…').fontSize(14).fontColor(Theme.MUTED)
+          LoadingProgress().width(36).height(36).color(Theme.BRAND)
+          Text('Getting a code').fontSize(Theme.SMALL).fontColor(Theme.TEXT_2)
         } else if (this.ctrl.pairScreen === 'CODE') {
-          Text('PAIR WITH PHONE').fontSize(10).fontWeight(FontWeight.Bolder).letterSpacing(1).fontColor(Theme.INFO)
-          Text(formatPairCode(this.ctrl.pairCode)).fontSize(38).fontWeight(FontWeight.Bolder).fontColor(Theme.TEXT)
-          Text('Enter this code in the Celia phone app')
-            .fontSize(10)
-            .fontColor(Theme.MUTED)
-            .textAlign(TextAlign.Center)
-            .width(150)
-          Text(`Expires in ${this.timeLeft()}`).fontSize(11).fontColor(Theme.TEXT).margin({ bottom: 4 })
-          Pill({ label: 'Cancel', pillWidth: 90, pillHeight: 30, fontSize: 12, onTap: () => {
-            this.ctrl.closePairing();
-          } })
-        } else if (this.ctrl.pairScreen === 'PAIRED') {
-          Text('✓').fontSize(36).fontWeight(FontWeight.Bold).fontColor(Theme.OK)
-          Text('Paired').fontSize(20).fontWeight(FontWeight.Bolder).fontColor(Theme.TEXT)
-          Text('Your phone now receives this watch.')
-            .fontSize(11)
-            .fontColor(Theme.MUTED)
-            .textAlign(TextAlign.Center)
-            .width(150)
-            .margin({ bottom: 6 })
-          Pill({ label: 'Done', bg: Theme.OK, fg: '#000000', pillWidth: 90, pillHeight: 30, fontSize: 12, onTap: () => {
-            this.ctrl.closePairing();
-          } })
-        } else {
-          Text(this.ctrl.pairScreen === 'EXPIRED' ? 'Code expired' : 'Pairing failed')
-            .fontSize(18)
+          Row({ space: 4 }) {
+            Icon({ src: $r('app.media.ic_phone_link'), color: Theme.BRAND, glyph: 12 })
+            Caps({ text: 'PAIR WITH PHONE', color: Theme.BRAND })
+          }
+          Text(formatPairCode(this.ctrl.pairCode))
+            .fontSize(34)
             .fontWeight(FontWeight.Bolder)
+            .letterSpacing(1)
+            .fontColor(Theme.TEXT)
+          Text('Type this code in Celia on your phone')
+            .fontSize(Theme.SMALL)
+            .fontColor(Theme.TEXT_2)
+            .textAlign(TextAlign.Center)
+            .width(150)
+          Text(`Expires in ${this.timeLeft()}`).fontSize(Theme.MICRO).fontColor(Theme.TEXT_3)
+        } else if (this.ctrl.pairScreen === 'PAIRED') {
+          Icon({ src: $r('app.media.ic_circle_check'), color: Theme.CALM, glyph: 36 })
+          Text('Paired').fontSize(Theme.TITLE + 3).fontWeight(FontWeight.Bolder).fontColor(Theme.TEXT)
+          Text('Your phone now sees this watch.')
+            .fontSize(Theme.SMALL)
+            .fontColor(Theme.TEXT_2)
+            .textAlign(TextAlign.Center)
+            .width(150)
+        } else {
+          Icon({ src: $r('app.media.ic_risk_possible'), color: Theme.ELEVATED, glyph: 28 })
+          Text(this.ctrl.pairScreen === 'EXPIRED' ? 'Code expired' : 'Pairing failed')
+            .fontSize(Theme.TITLE)
+            .fontWeight(FontWeight.Bold)
             .fontColor(Theme.TEXT)
           if (this.ctrl.pairScreen === 'ERROR') {
-            Text(this.ctrl.pairError).fontSize(11).fontColor(Theme.MUTED).textAlign(TextAlign.Center).width(150)
+            Text(this.ctrl.pairError)
+              .fontSize(Theme.MICRO)
+              .fontColor(Theme.TEXT_2)
+              .textAlign(TextAlign.Center)
+              .maxLines(2)
+              .width(150)
           }
-          Row({ space: 4 }) {
-            Pill({ label: 'New code', bg: Theme.INFO, pillWidth: 80, pillHeight: 30, fontSize: 12, onTap: () => {
-              this.newCode();
-            } })
-            Pill({ label: 'Close', pillWidth: 64, pillHeight: 30, fontSize: 12, onTap: () => {
-              this.ctrl.closePairing();
-            } })
-          }
-          .margin({ top: 6 })
+          PillButton({ label: 'New code', bg: Theme.BRAND, fg: Theme.ON_LIGHT, pillWidth: 110, onTap: () => {
+            this.newCode();
+          } })
+            .margin({ top: 4 })
         }
+      }
+      .width('100%')
+      .height('100%')
+      .justifyContent(FlexAlign.Center)
+      .padding({ bottom: 36 })
+
+      if (this.ctrl.pairScreen !== 'LOADING') {
+        EdgeButton({ label: this.ctrl.pairScreen === 'PAIRED' ? 'Done' : this.ctrl.pairScreen === 'CODE' ? 'Cancel' :
+          'Close', onTap: () => {
+          this.ctrl.closePairing();
+        } })
       }
     }
     .width('100%')

@@ -1,39 +1,48 @@
 import { WatchController } from '../controller/WatchController';
-import { Pill } from './Pill';
-import { Ring } from './Ring';
+import { Caps, Icon, PillButton, Ring } from './Parts';
 import { Theme } from './Theme';
 
-/** Missed-dose nudge: no dose logged by the reminder time + 2 h. */
+/** Missed-dose nudge: no dose logged by the reminder time + 2 h. Amber, not red: a reminder, not an alarm. */
 @ComponentV2
 export struct DoseNudgeGlance {
   @Param @Require ctrl: WatchController;
 
+  name(): string {
+    const n = this.ctrl.medicationName;
+    return `${n.charAt(0).toUpperCase()}${n.substring(1)}`;
+  }
+
   build() {
     Stack() {
-      Ring({ percent: 35, color: Theme.WARN })
-      Column({ space: 4 }) {
-        Text('MISSED DOSE?').fontSize(10).fontWeight(FontWeight.Bolder).letterSpacing(1).fontColor(Theme.WARN)
-        Text(`Did you take ${this.ctrl.medicationName}?`)
-          .fontSize(18)
-          .fontWeight(FontWeight.Bolder)
+      Ring({ percent: 100, color: Theme.ELEVATED_TINT, strokeWidth: 10 })
+      Column({ space: 3 }) {
+        Stack() {
+          Icon({ src: $r('app.media.ic_pill'), color: Theme.ELEVATED, glyph: 20 })
+        }
+        .width(36)
+        .height(36)
+        .borderRadius(18)
+        .backgroundColor(Theme.ELEVATED_TINT)
+        Caps({ text: 'MISSED DOSE?', color: Theme.ELEVATED }).margin({ top: 2 })
+        Text(`Did you take ${this.name()}?`)
+          .fontSize(Theme.TITLE)
+          .fontWeight(FontWeight.Bold)
           .fontColor(Theme.TEXT)
           .textAlign(TextAlign.Center)
           .width(170)
-        Text('Skipping beta-blocker doses raises the risk.')
-          .fontSize(10)
-          .fontColor(Theme.MUTED)
+        Text('Skipped beta-blocker doses raise the risk.')
+          .fontSize(Theme.MICRO)
+          .fontColor(Theme.TEXT_2)
           .textAlign(TextAlign.Center)
           .width(150)
           .margin({ bottom: 6 })
-        Row({ space: 4 }) {
-          Pill({ label: 'Took it', bg: Theme.OK, fg: '#000000', pillWidth: 70, pillHeight: 32, fontSize: 13,
-            onTap: () => {
-              this.ctrl.doseTaken();
-            } })
-          Pill({ label: this.ctrl.doseNudgeCanSnooze ? 'Not yet' : 'Later', pillWidth: 70, pillHeight: 32,
-            fontSize: 13, onTap: () => {
-              this.ctrl.doseNotYet();
-            } })
+        Row({ space: 6 }) {
+          PillButton({ label: 'Took it', bg: Theme.BRAND, fg: Theme.ON_LIGHT, pillWidth: 80, onTap: () => {
+            this.ctrl.doseTaken();
+          } })
+          PillButton({ label: this.ctrl.doseNudgeCanSnooze ? 'Not yet' : 'Later', pillWidth: 80, onTap: () => {
+            this.ctrl.doseNotYet();
+          } })
         }
       }
     }

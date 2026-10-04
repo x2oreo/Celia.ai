@@ -6,11 +6,15 @@ import { DoseNudgeGlance } from '../components/DoseNudgeGlance';
 import { PairingScreen } from '../components/PairingScreen';
 import { HeartPage } from '../components/HeartPage';
 import { SettingsPage } from '../components/SettingsPage';
+import { TrendPage } from '../components/TrendPage';
 import { SimulatePage } from '../components/SimulatePage';
 import { SosScreen } from '../components/SosScreen';
 import { Theme } from '../components/Theme';
 import { VerdictGlance } from '../components/VerdictGlance';
 import { VitalsPage } from '../components/VitalsPage';
+
+/** Swiper index of the Settings page (Home, Heart, Vitals, Log, Settings, Simulator). */
+const SETTINGS_PAGE: number = 4;
 
 @Entry
 @ComponentV2
@@ -37,10 +41,11 @@ struct Index {
     Stack() {
       Swiper() {
         HeartPage({ ctrl: this.ctrl })
+        TrendPage({ ctrl: this.ctrl })
         VitalsPage({ ctrl: this.ctrl })
         CheckIn({ ctrl: this.ctrl, asPage: true })
         SettingsPage({ ctrl: this.ctrl })
-        // Demo triggers (fall, risky drug, missed dose) exist only in a DEMO_MODE build.
+        // The simulator panel (every demo control) exists only in a DEMO_MODE build, always as the last page.
         if (this.ctrl.demoMode) {
           SimulatePage({ ctrl: this.ctrl })
         }
@@ -48,7 +53,7 @@ struct Index {
       .loop(false)
       .onChange((index: number) => {
         // Settings page: show the current pairing state when it opens.
-        if (index === 3) {
+        if (index === SETTINGS_PAGE) {
           this.ctrl.refreshPairState();
         }
       })
@@ -57,7 +62,7 @@ struct Index {
         .itemHeight(5)
         .selectedItemWidth(5)
         .selectedItemHeight(5)
-        .color(Theme.DASH)
+        .color(Theme.BORDER)
         .selectedColor(Theme.TEXT)
         .bottom(6))
       .width('100%')
