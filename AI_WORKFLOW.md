@@ -1263,3 +1263,22 @@ The tap-to-talk fallback is also untested end to end.
 - **Live backend:** the migration was applied to the live project in one transaction and recorded with
   `supabase migration repair` (the owner ran both; Claude Code's permission check blocked the production write).
   The demo watch now serves 57 days from 6 Aug, and the phone's Health tab shows full 14-day lines, marked SIM.
+
+### 2026-10-04 - Kaloyan + Claude Code: watch readings per account, kept on the phone (branch `kaloyan/agent-home`)
+
+- **Asked:** check the watch ↔ phone link end to end, explain pairing and data transfer, fix the gaps found, and stop
+  the app from starting empty when there is no test data.
+- **Found:** reads were gated on the watch's *current* owner, so a watch that changed hands showed the new owner the
+  previous owner's history (`accounts_rls.sql` even asserted it); unpairing was phone-only, so the old account kept
+  reading the watch; history was tied to the device id; the live chart skipped every existing row at start.
+- **What the AI did:** migration `20261004130000_watch_metrics_owner.sql`: a trigger stamps `user_id` on every
+  upload from the pairing (clients cannot set it), reads go by `user_id = auth.uid()`, an ownership period
+  (`owned_from`) keeps late uploads from the previous period out, rows uploaded while unbound go to the account that
+  binds that pairing, `pairing_unbind(token)` ends a pairing on the server, deleting an account deletes its readings.
+  Phone: `WatchPairing.unpair()` calls it; `WatchCloudSource` backfills the last 5 minutes of `hr_live` into the
+  chart history (no alerts replayed); `data/HistoryCache.ets` saves real days from the daily summary and daily vitals
+  per account in the encrypted store and merges them into later fetches (server wins per day, simulated days never
+  cached, demo watch never cached).
+- **Validated:** `tests/run-rls.sh` passes with 13 new checks (previous owner, late upload, unbind, first owner keeps
+  pre-pairing rows, account delete); 407 phone tests (6 new); phone HAP builds.
+- **Not validated:** the migration is not applied to the live project yet; not run on the emulators.
