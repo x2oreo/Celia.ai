@@ -1302,3 +1302,25 @@ The tap-to-talk fallback is also untested end to end.
 - **Validated:** phone HAP builds; 407 phone tests pass; on the emulator: Settings, Your profile, Emergency
   contacts, the add sheet, and number search + pick (saved, shown on the row).
 - **Not validated:** adding and removing a contact end to end on the emulator; the signed-out consent card.
+
+### 2026-10-04 - Kaloyan + Claude Code: layered emergency card with more about LQTS (branch `kaloyan/agent-home`)
+
+- **Asked:** a better design and UX for the emergency card, more data about LQTS, looking at how HeartBeat (our earlier
+  web app, design reference only) does its card.
+- **Found:** three surfaces with two content sets (a flat Emergency tab card, a richer English responder view, the web
+  card), no "about LQTS" anywhere, and a 17-group "Do not give" list that pushed contacts three screens down.
+  HeartBeat's order (patient header, critical info, clinician protocol, condition reference) worked well, but it had
+  the model write the card, and two of its claims are wrong for congenital long QT (isoproterenol as a bridge in
+  torsades; "avoid lidocaine").
+- **What the AI did:** proposed a layered card (glance, critical, for clinicians, about long QT); the owner chose drug
+  names only (no doses) and an initial avatar. DESIGN.md §11 first, then `emergency/LqtsFacts.ets` (fixed, sourced:
+  protocol steps, torsades list, do-not-use lines, genotype facts with gene, share, triggers, ECG pattern, treatment
+  and emergency notes, general precautions), `components/EmergencyCardParts.ets` shared by the Emergency tab and the
+  responder view, cardiologist first in contacts, a "takes a QT-prolonging medicine" notice, first 4 drug groups with
+  "Show all". The owner found the first pass too decorated (coloured bands, side rule); it was redone in plain
+  design-system shapes (caps labels, 1 vp cards, the Known-risk notice with shape + word).
+- **Validated:** 407 phone tests (7 new: every genotype complete, genes match the domain table, no em dash and no
+  doses, local emergency number in the protocol, no lidocaine or congenital isoproterenol advice); HAP builds from a
+  clean checkout; on the emulator: Emergency tab card, full card scrolled end to end, Show all, About opened.
+- **Not validated:** the web card in `site/card/` still has the old layout; the card in other languages beyond the
+  glance layer (layers 3 and 4 stay English by design until a checked translation exists).
