@@ -73,7 +73,10 @@ export class HeartRules {
   @Trace breathingRate: number = 0;
   @Trace irregularRhythm: boolean = false;
   @Trace lastRecovery: string = '';
-  /** Signal currently forced abnormal from the Vitals page. */
+  /** Drop in bpm 1 min after the last exercise bout; -1 until the first one. */
+  @Trace recoveryDrop: number = -1;
+  @Trace recoverySlow: boolean = false;
+  /** Signal currently forced abnormal from the Simulator page. */
   @Trace anomaly: Anomaly = 'none';
 
   private host: RulesHost;
@@ -137,7 +140,7 @@ export class HeartRules {
     this.windowStartMs = nowMs;
   }
 
-  /** Vitals page tile tapped: that simulated signal drifts abnormal, holds and recovers. */
+  /** Simulator event: that simulated signal drifts abnormal, holds and recovers. */
   startAnomaly(kind: Anomaly, now: number): void {
     this.anomaly = kind;
     this.anomalyStartMs = now;
@@ -234,6 +237,8 @@ export class HeartRules {
 
   private onRecovery(rec: HrRecoveryValues, now: number): void {
     this.host.record('hr_recovery', rec, now);
+    this.recoveryDrop = rec.dropBpm;
+    this.recoverySlow = rec.slow;
     this.lastRecovery = `${rec.peakBpm}→${rec.bpmAfter60s} (−${rec.dropBpm})${rec.slow ? ' slow' : ''}`;
     if (rec.slow) {
       this.host.showAlert('RECOVERY', rec.bpmAfter60s,

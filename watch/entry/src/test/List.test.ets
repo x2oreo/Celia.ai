@@ -14,6 +14,7 @@ import scenariosTest from './Scenarios.test';
 import sessionStatsTest from './SessionStats.test';
 import trackersTest from './Trackers.test';
 import drugBadgeTest from './DrugBadge.test';
+import watchUiTest from './WatchUi.test';
 
 export default function testsuite() {
   alarmRulesTest();
@@ -32,4 +33,5 @@ export default function testsuite() {
   syncEngineTest();
   heartRulesTest();
   accelRateTest();
+  watchUiTest();
 }

@@ -24,6 +24,7 @@ import {
 import { BaseLimits, HrLimits, limitsFor } from '../vitals/Limits';
 import { ANOMALY_RAMP_MS, Anomaly, MOCKED_FIELDS } from '../vitals/MockedVitals';
 import { SCENARIOS } from '../vitals/Scenarios';
+import { HrBucket, HrTrend, TrendSummary } from '../vitals/HrTrend';
 import { MetricOutbox } from '../sync/MetricOutbox';
 import { PatientContext, PatientContextClient } from '../sync/PatientContextClient';
 import { PreferencesOutboxStore } from '../sync/PreferencesOutboxStore';
@@ -116,6 +117,9 @@ export class WatchController implements RulesHost {
   /** This watch's id (first 8 chars shown in Settings). */
   @Trace deviceId: string = '';
   @Trace deviceIdOverridden: boolean = false;
+  /** Trend page: the last minutes of heart rate as range buckets (vitals/HrTrend). */
+  @Trace trendSlots: HrBucket[] = [];
+  @Trace trendSummary: TrendSummary = { min: 0, max: 0, avg: 0, filled: 0 };
 
   private ctx: common.UIAbilityContext | undefined = undefined;
   private cfg: AppConfigData = AppConfig.defaults();
@@ -137,6 +141,7 @@ export class WatchController implements RulesHost {
   private monitoringSinceMs: number = 0;
   private scenarioFallDone: boolean = false;
   private sos: SosFlow = new SosFlow();
+  private trend: HrTrend = new HrTrend();
   private rules: HeartRules = new HeartRules(this, Math.random);
   private tickTimer: number = -1;
   private syncTimer: number = -1;
@@ -283,7 +288,15 @@ export class WatchController implements RulesHost {
     return this.rules.lastRecovery;
   }
 
-  /** Signal currently forced abnormal from the Vitals page. */
+  get recoveryDrop(): number {
+    return this.rules.recoveryDrop;
+  }
+
+  get recoverySlow(): boolean {
+    return this.rules.recoverySlow;
+  }
+
+  /** Signal currently forced abnormal from the Simulator page. */
   get anomaly(): Anomaly {
     return this.rules.anomaly;
   }
@@ -294,6 +307,11 @@ export class WatchController implements RulesHost {
 
   get medicationName(): string {
     return this.cfg.medicationName;
+  }
+
+  /** Daily reminder "HH:MM", '' when off. */
+  get medReminderTime(): string {
+    return this.cfg.medReminderTime;
   }
 
   /** App became visible: (re)start monitoring and refresh the patient context. */
@@ -335,7 +353,7 @@ export class WatchController implements RulesHost {
   }
 
   /**
-   * Vitals page: tap a simulated tile to make that signal drift abnormal (2.5 s, refreshed every 250 ms), hold, and
+   * Simulator page: an event makes that simulated signal drift abnormal (2.5 s, refreshed every 250 ms), hold, and
    * recover. The alert fires through the threshold rule with a 1 s demo sustain, ~3 s after the tap.
    */
   triggerAnomaly(kind: Anomaly): void {
@@ -527,6 +545,10 @@ export class WatchController implements RulesHost {
 
   private restart(): void {
     this.statusText = '';
+    // A new source or scenario is a new story: the trend page starts empty instead of mixing the two.
+    this.trend.clear();
+    this.trendSlots = [];
+    this.trendSummary = { min: 0, max: 0, avg: 0, filled: 0 };
     if (this.running) {
       this.stopSource();
       this.startSource();
@@ -664,6 +686,9 @@ export class WatchController implements RulesHost {
       riskyDrug: this.riskyDrug
     };
     this.rules.process(r);
+    this.trend.add(this.bpm, r.logicMs);
+    this.trendSlots = this.trend.slots();
+    this.trendSummary = this.trend.summary();
   }
 
   /** RulesHost: the `vitals` row, every input in one snapshot. */
