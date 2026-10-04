@@ -240,6 +240,8 @@ a { color: inherit; }
   .no-print { display: none !important; }
   .print-only { display: block !important; }
   .play.print-only { display: flex !important; }
+  /* Chrome prints blurred box-shadows as soft-masked layers that macOS Preview draws as grey boxes */
+  .fchip, .wimg, .sp-call { box-shadow: none !important; }
 }
 .print-only { display: none; }
 

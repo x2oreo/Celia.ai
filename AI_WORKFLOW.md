@@ -289,6 +289,7 @@ Entries are in the order they were appended, not strictly by time (several peopl
 | 52 | 2026-10-04 | [Launch film on the v2 design, with sound](#2026-10-04---georgi--claude-code-launch-film-on-the-v2-design-with-sound) |
 | 53 | 2026-10-04 | [Submission deck (`deck/`)](#2026-10-04---georgi--claude-code-submission-deck-deck) |
 | 54 | 2026-10-04 | [Sport & Healthcare deck (`deck/sport-health.html`)](#2026-10-04---georgi--claude-code-sport--healthcare-deck-decksport-healthhtml) |
+| 57 | 2026-10-04 | [Launch film v3: two minutes, stakes and market](#2026-10-04---georgi--claude-code-launch-film-v3-two-minutes-stakes-and-market) |
 
 **Submission hardening and documentation (Georgi)**
 
@@ -1712,6 +1713,60 @@ The tap-to-talk fallback is also untested end to end.
 - **Not validated:** nobody has listened to the mix yet; the score's taste and the TTS voices need a human ear.
   Not watched on the deployed landing page.
 
+### 2026-10-04 - Georgi + Claude Code: launch film v3, two minutes, stakes and market
+
+- **Asked:** the problem should show that people can die from this; show doctor visits and the emergency card; the
+  watch buttons were too big; the heart-rate climb looked fake; add the business and market opportunity; go to about
+  2 minutes; and replace the coral dot in the opening with the app's own orb, so it looks designed rather than
+  AI-generated. "Ola is good - we can not say that she died but that she could die or say some statistics."
+- **Plan (AI, approved):** a 13-scene, 2-minute cut: cold open with Ola, stakes, reveal, the existing product
+  beats, then doctor visit + pharmacy card, built on HarmonyOS (Celia + watch), privacy, market + model, close.
+- **Research (Claude Code sub-agent, web search):** death and risk figures, prevalence, market size, Huawei
+  wearable share and comparable pricing, each with a source and a confidence. Used on screen: up to 4,000 US deaths
+  a year (SADS Foundation), 1 in 10 first sign is cardiac arrest (Victor Chang Institute), 1 in 2,000 (Schwartz et
+  al., Circulation 2009), wearable cardiac devices $4.2B in 2025 to $8.7B by 2033 (Grand View Research), Huawei #1 in
+  wrist-worn shipments (IDC, Q1-Q3 2025). Counts of people (~4M / ~225k / ~19k) and the prices are the deck's (slides
+  8 and 9). Dropped as weak or unsourced: a combined LQTS + Brugada + CPVT figure, "% of adults on QT drugs", a
+  HarmonyOS 6 device count, and the single-centre 42% figure.
+- **Produced (picture):**
+  - Cold open (`scenes/Hook.tsx`): the silk orb is Ola's heart. One swell and ripple per beat, erratic as the voice
+    reaches the antibiotic, then the Muted look and stillness. Beats come from `timeline.json` `hookBeats`, shared
+    with the score.
+  - New scenes: `Stakes.tsx` (three sourced numbers, "Most of these deaths are preventable."), `Visit.tsx` (doctor
+    brief built from DoctorPrep copy + the real PharmacyCardPage text), `Celia.tsx` (Celia answers "can I take
+    ibuprofen?" with the app's NOT_LISTED verdict via CheckDrugIntent; the watch check-in lands on the phone),
+    `Market.tsx`.
+  - Reveal: the same orb wakes (Muted → Connecting → Speaking) and speaks the reveal line.
+  - Watch: alert pills now use the watch's `OkHelp` sizes (66 / 82 × 32 vp at 13) and sit inside the ring. Heart
+    rate arrives in steps, one sensor reading at a time with a small wobble, instead of a smooth count; the ring and
+    the phone gauge ease to each reading; the status mark beats at the current rate.
+- **Produced (sound):** new narrator lines (stakes, visit, celia, market; hook and watch rewritten), regenerated with
+  Kokoro. The score adds sections for the new scenes, a thump per orb beat, and real silence when the orb goes still.
+- **Design system:** DESIGN.md §10.2d "Launch film" added first, including the one film-only exception to §6.6 (the
+  orb beats once per beat in the cold open, never a double beat or a trace).
+- **Validated:** `tsc --noEmit` passes. Hero contact sheet checked frame by frame (stats wrapped and market numbers
+  collided on the first pass; fixed). Hero about 117 s, vertical about 35 s.
+- **Not validated:** nobody has listened to the new mix or watched the full cut yet.
+
+- **Second pass (asked):** "the beginning is not engaging... like you are talking on top of a presentation. It
+  should be a video... show visual elements"; the market "can just show the whole slide normally".
+  - **Plan (AI):** an 8-shot cold open with a cut every 2-3 s on the voice, then built:
+    - Hook (`scenes/Hook.tsx`), four shots: Ola's name card with her life drifting past; the orb with a recharge
+      ring; a CSS-3D medicine box under a key light with the prescription sliding in; the orb turning erratic as the
+      camera closes in, then a hard cut to black.
+    - Stakes (`scenes/Stakes.tsx`), one canvas field of 2,000 dots: pull back from Ola's dot; dots go dark while a
+      counter runs to 4,000; ten dots with one going dark; a coral wave relights the field.
+  - Hook and stakes narration rewritten to give each shot its own phrase. The brand glow is gone from the opening;
+    a warm key light is the only light.
+  - Market is now one slide that settles in at once. DESIGN.md §10.2d updated first.
+  - Validated: typecheck, stills of all 16 opening shots checked (chips and dot contrast fixed on a second pass).
+    Hero about 2:02.
+  - Follow-up: the first shot is now a profile card (person avatar, "Ola, 24", condition, details as chips)
+    instead of a big name with floating chips.
+  - Follow-up: a QT-interval shot after the recharge orb ("Doctors call it a long QT interval."): a schematic beat,
+    typical beside Long QT, the T wave sliding later and the QT bracket stretching, labelled as an illustration.
+    DESIGN.md §10.2d records it as the only trace-like line in the film. Hero about 2:05.
+
 ### 2026-10-04 - Georgi + Claude Code: submission deck (`deck/`)
 
 - **Asked:** a clean pitch deck in the style of an earlier pitch (cream, big type, mono eyebrows) but on our design
@@ -1839,3 +1894,51 @@ The tap-to-talk fallback is also untested end to end.
   mermaid diagrams were checked by reading, not rendered; older session entries above still mention
   `watch/README.md` and other removed READMEs, as a record of what was written at the time.
 
+
+### 2026-10-04 - Georgi + Claude Code: team photo in the decks and on the landing page
+
+- **Asked:** use our HackYeah stage photo as the team image in every presentation and on the landing page.
+- **Produced:** the iPhone photo cropped to 16:9 around the three of us, resized to 2400x1350 and saved without
+  EXIF (the original carried GPS) as `deck/media/team.jpg` and `site/media/team.jpg`, the paths the existing team
+  slots already load. No HTML or CSS changes. Slide 10 re-printed from headless Chrome and swapped into
+  `deck/Celia-ai-deck.pdf`, `deck/Celia-ai-deck-AI.pdf` and `deck/Celia-ai-deck-sport-health.pdf` (pypdf), so the
+  other pages and the embedded demo video stay untouched.
+- **Validated:** slide 10 rendered in Chrome and page 10 of each PDF rendered and checked by eye; each PDF still has
+  10 pages, the same link and video annotations and the `demo.mp4` attachment; the saved JPEG has no EXIF.
+
+### 2026-10-04 - Georgi + Claude Code: new demo video in the decks, the PDFs and the landing page
+
+- **Asked:** put the new demo cut into the presentations and the landing page, make sure it plays in both and also
+  plays from the downloaded PDFs.
+- **Produced:** the HTML decks and the landing page already load `site/media/demo.mp4`, which the video render
+  overwrote (new cut, 2:05), so no source paths changed. The "Click to play" label in all three decks now says 2:05.
+  New `deck/build-pdf.py` makes the PDF step reproducible (the earlier embed was a one-off): it prints each deck with
+  headless Chrome, finds the "Demo" slide, and embeds the MP4 with pypdf as a Screen annotation + Rendition action
+  over the video frame (plays inline in Adobe Acrobat / Reader), a FileAttachment on the "Click to play" button and
+  the attachments panel (opens in the system player). The AI deck PDF had no video before; it has it now. The
+  button hotspot was measured from the print layout and widened to cover the whole button.
+- **Validated:** in Chromium (Playwright, local server) the video loads and plays in the landing page and all three
+  decks (duration 124.6 s, readyState 4, no media error). Each PDF: 10 pages, the two video annotations on the Demo
+  page, the embedded file byte-identical to `site/media/demo.mp4` (SHA-256), Demo pages rendered and checked by eye.
+- **Not validated / open:** playback inside Acrobat was not tested on this machine (structure matches the earlier
+  embed); browsers and macOS Preview cannot play video inside a PDF and show the poster. Each PDF is now 35-39 MB
+  because of the embedded video.
+- **Revision (same day):** the downloaded PDFs did not play the video: Preview and browser PDF viewers ignore
+  embedded multimedia (only Acrobat plays it). `deck/build-pdf.py` now puts a plain link over the whole video frame
+  to the landing page's hosted copy (`https://celia-share.vercel.app/media/demo.mp4`), which every viewer opens in
+  the browser; the MP4 stays attached as an offline copy. The button sublabel now shows that URL instead of
+  "Video embedded in this PDF". Verified: one URI link on each Demo page, 10 pages each, button rendered. The site was then redeployed to Vercel production; the hosted MP4
+  is the new cut (same size, 27 190 916 B) and answers range requests (206).
+- **Revision (size):** each deck PDF must be under 10 MB. `deck/build-pdf.py` no longer attaches the MP4 (the link
+  plays it) and recompresses images: longest side capped at 1400 px, colour stored as JPEG (quality 82), alpha
+  masks kept lossless; content streams compressed and duplicate objects removed. Result: main 4.5 MB, AI 3.5 MB,
+  Sport & Healthcare 4.1 MB (were 35-39 MB). Validated: all 30 pages rendered and checked by eye (transparency
+  intact), a phone screenshot checked at 1.5x zoom, the video link on each Demo page and the GitHub links on the
+  main deck still present, hosted MP4 returns 200.
+- **Revision (Preview boxes):** in macOS Preview the title slides showed grey rectangles behind the floating chips
+  and the watch, and the Sport deck's chart callouts had them too. Cause: Chrome prints blurred CSS `box-shadow` as
+  soft-masked layers that Preview (CoreGraphics) draws as boxes; pdfium renders them fine, which is why the earlier
+  check missed it. It was in the raw Chrome print, not caused by the image compression. Fix: print-only rule in
+  `deck/deck.css` removes the shadow on `.fchip`, `.wimg` and `.sp-call` (screen unchanged). Validated: every page
+  of all three PDFs rendered with CoreGraphics (a small Swift renderer, the engine Preview uses) and checked; sizes
+  4.3 / 3.4 / 4.0 MB.

@@ -771,9 +771,9 @@ the v2 design system; voices come from a local TTS model (Kokoro-82M), score and
 
 | Output | Shape | Length |
 |---|---|---|
-| `site/media/demo.mp4` (`Hero16x9`) | 1920 × 1080, 30 fps, H.264, AAC at -16 LUFS | about 72.6 s |
-| `site/media/demo-poster.jpg` | 1920 × 1080, frame 960 (verdict sheet) | - |
-| `video/out/celia-vertical.mp4` (`Vertical9x16`) | 1080 × 1920 | about 30 s |
+| `site/media/demo.mp4` (`Hero16x9`) | 1920 × 1080, 30 fps, H.264, AAC at -16 LUFS | about 2 min 5 s |
+| `site/media/demo-poster.jpg` | 1920 × 1080, frame 1570 (verdict sheet) | - |
+| `video/out/celia-vertical.mp4` (`Vertical9x16`) | 1080 × 1920 | about 35 s |
 
 ```bash
 cd video && npm install
@@ -981,7 +981,7 @@ hackathon. Our team's earlier LQTS web app (HeartBeat) was read as design refere
 | Figtree font, GSAP 3.13 + ScrollTrigger, Lenis 1.3, Lucide (`lucide-static` 0.544) | Landing page `site/assets/vendor/` | SIL OFL 1.1 / GSAP no-charge / MIT / ISC |
 | Remotion 4.0 + React 19, Figtree, JetBrains Mono | Launch film in `video/` | Remotion licence (free for teams up to 3) / MIT / SIL OFL 1.1 |
 | Kokoro-82M via `kokoro-onnx`; numpy, scipy, soundfile; Whisper (local check only, not shipped) | Film voices generated locally; music and effects synthesized in `video/scripts/audio/` | Apache-2.0 / MIT / BSD |
-| Playwright / headless Chrome, pypdf; Figtree | Rendering the pitch deck in `deck/` to PDF | Apache-2.0 / BSD / SIL OFL 1.1 |
+| Playwright / headless Chrome, pypdf; Figtree | Rendering the pitch decks in `deck/` to PDF with the demo video embedded (`deck/build-pdf.py`) | Apache-2.0 / BSD / SIL OFL 1.1 |
 | macOS system voice (`say`) | Demo voice clips in `app/entry/src/main/resources/rawfile/voice/` | Generated locally |
 
 **Data sources:** drug risk categories follow the public CredibleMeds QTdrugs lists (crediblemeds.org); brand names

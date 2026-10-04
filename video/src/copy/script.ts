@@ -4,7 +4,20 @@
 // v2-watches). No em dashes (DESIGN §9). Frames are at 30 fps.
 import timeline from './timeline.json';
 
-export type SceneId = 'hook' | 'reveal' | 'ask' | 'verdict' | 'scan' | 'watch' | 'emergency' | 'trust' | 'end';
+export type SceneId =
+  | 'hook'
+  | 'stakes'
+  | 'reveal'
+  | 'ask'
+  | 'verdict'
+  | 'scan'
+  | 'watch'
+  | 'emergency'
+  | 'visit'
+  | 'celia'
+  | 'trust'
+  | 'market'
+  | 'end';
 
 export interface SceneCopy {
   id: SceneId;
@@ -17,7 +30,13 @@ export const scenes: Record<SceneId, SceneCopy> = {
   hook: {
     id: 'hook',
     kicker: 'LONG QT SYNDROME',
-    lines: ['1 in 2,000 people have Long QT syndrome.', 'Hundreds of everyday medicines can trigger it.'],
+    lines: ['Her heart takes longer to recharge.', 'One pill could stop her heart.'],
+  },
+  stakes: {
+    id: 'stakes',
+    kicker: 'LONG QT SYNDROME',
+    lines: ['Most of these deaths are preventable.', 'She is 1 in 2,000.', 'For 1 in 10, the first sign is cardiac arrest.'],
+    caption: 'Sources: SADS Foundation (US deaths) · Victor Chang Institute (first sign) · Schwartz et al., Circulation 2009 (prevalence).',
   },
   reveal: {
     id: 'reveal',
@@ -51,10 +70,26 @@ export const scenes: Record<SceneId, SceneCopy> = {
     kicker: 'EMERGENCY',
     lines: ['If you can’t answer,', 'it speaks for you. In 13 languages.'],
   },
+  visit: {
+    id: 'visit',
+    kicker: 'EVERY DAY, NOT ONLY EMERGENCIES',
+    lines: ['A brief for every doctor visit.', 'One card for the pharmacy.'],
+  },
+  celia: {
+    id: 'celia',
+    kicker: 'BUILT ON HARMONYOS',
+    lines: ['Ask Celia from anywhere.', 'Watch and phone, as one.'],
+  },
   trust: {
     id: 'trust',
     kicker: 'PRIVACY',
     lines: ['Your safety core runs on your phone.'],
+  },
+  market: {
+    id: 'market',
+    kicker: 'MARKET + MODEL',
+    lines: ['Safety stays free.', 'The care around it pays.'],
+    caption: 'Estimates at 1 in 2,000. Market: Grand View Research 2025. Shipments: IDC, Q1-Q3 2025.',
   },
   end: {
     id: 'end',
@@ -64,7 +99,7 @@ export const scenes: Record<SceneId, SceneCopy> = {
   },
 };
 
-// Scene lengths (frames) from timeline.json. Hero ≈ 74.5 s, vertical ≈ 29.9 s.
+// Scene lengths (frames) from timeline.json. Hero ≈ 117 s, vertical ≈ 35 s.
 export const HERO_XFADE = timeline.hero.xfade;
 export const heroOrder = timeline.hero.scenes as { id: SceneId; frames: number }[];
 export const VERT_XFADE = timeline.vertical.xfade;
@@ -72,6 +107,26 @@ export const vertOrder = timeline.vertical.scenes as { id: SceneId; frames: numb
 
 export const totalFrames = (order: { frames: number }[], xfade: number): number =>
   order.reduce((sum, s) => sum + s.frames, 0) - xfade * (order.length - 1);
+
+// The cold open's heartbeat (scene frames): steady, then erratic from `chaos`, then nothing from `stop`.
+// scripts/audio/score.py builds the same list for its thumps.
+export const hookBeats = (cut: 'hero' | 'vertical'): { beats: number[]; chaos: number; stop: number } => {
+  const b = timeline.hookBeats[cut];
+  const gaps = timeline.hookBeats.chaosGaps;
+  const beats: number[] = [];
+  let f = b.start;
+  while (f < b.chaos) {
+    beats.push(f);
+    f += b.period;
+  }
+  let i = 0;
+  while (f < b.stop) {
+    beats.push(f);
+    f += gaps[i % gaps.length] ?? 9;
+    i++;
+  }
+  return { beats, chaos: b.chaos, stop: b.stop };
+};
 
 // ---- In-app copy -------------------------------------------------------------------------------------------
 
@@ -243,4 +298,91 @@ export const endCard = {
   built: 'Built natively on HarmonyOS',
   event: 'HackYeah 2026',
   url: '',
+};
+
+// Cold open (Hook.tsx): who Ola is, and the prescription. Ola, her city and the doctor are fictional.
+export const ola = {
+  name: 'Ola',
+  age: '24',
+  condition: 'Long QT syndrome',
+  life: ['Kraków', 'Runs on Sundays', 'LQT2', 'Nadolol 40 mg', 'Final year, law'],
+  // The QT shot: a textbook schematic of one beat, never a reading of anyone's heart.
+  qt: { caps: 'THE QT INTERVAL', typical: 'Typical heart', long: 'Long QT', label: 'QT', note: 'Illustration, not a reading.' },
+  rx: {
+    caps: 'PRESCRIPTION',
+    doctor: 'Dr. A. Kowalska · GP',
+    drug: 'Klacid (clarithromycin)',
+    dose: '125 mg / 5 ml · 2× a day · 7 days',
+    reason: 'Sinus infection',
+  },
+};
+
+// Stakes (cold open, part 2). Figures from the research notes in AI_WORKFLOW.md; each one has its source in the caption.
+export const stakes = {
+  // Order: deaths, first sign, prevalence (prevalence shows first, the other two land with the voice).
+  stats: [
+    { value: '4,000', unit: 'lives a year, up to', note: 'lost to Long QT in the US alone' },
+    { value: '1 in 10', unit: 'first sign', note: 'is a cardiac arrest' },
+    { value: '1 in 2,000', unit: 'people', note: 'live with Long QT' },
+  ],
+};
+
+// Doctor-visit brief (DoctorVisitPage / DoctorPrep.ets) and the pharmacy card (PharmacyCardPage). Ola is fictional.
+export const visit = {
+  title: 'Doctor visit',
+  who: 'Cardiologist · Tue 14 Oct',
+  sinceCaps: 'SINCE YOUR LAST VISIT',
+  since: [
+    { k: 'Resting heart rate', v: '64 avg · steady' },
+    { k: 'Heart alerts', v: '1 · 3 Oct, at rest' },
+    { k: 'Flagged medicine', v: 'Klacid · known risk' },
+    { k: 'Doses taken', v: '27 of 28' },
+  ],
+  askCaps: 'QUESTIONS TO ASK',
+  ask: ['Is my beta-blocker dose still right? When is my next ECG / Holter?', 'Are the flagged medicines above safe for me, or is there an alternative?'],
+  share: 'Share brief',
+  sim: 'SIMULATED',
+  // PharmacyCardPage: the card in the country's language, English under it, then the medicines.
+  pharmacy: {
+    title: 'Pharmacy card',
+    headline: 'Mam zespół długiego QT.',
+    body: 'Proszę sprawdzić ryzyko wydłużenia QT każdego leku, zanim mi go Pani/Pan wyda (crediblemeds.org).',
+    enHeadline: 'I have long QT syndrome.',
+    enBody: 'Please check the QT risk of any medicine before you give it to me (crediblemeds.org).',
+    meds: 'Nadolol 40 mg · 2× a day',
+    country: 'Poland · 112',
+  },
+};
+
+// Celia (the system assistant) calling the app's intents (insightintents/CheckDrugIntent.ets and friends).
+export const celia = {
+  ask: 'Celia, can I take ibuprofen?',
+  answerTitle: 'Not on the QT lists',
+  answer: "Ibuprofen isn't on the QT lists. Not listed doesn't guarantee safety, so ask your pharmacist about the dose.",
+  from: 'Celia.ai',
+  // Watch check-in (watch CheckIn.ets, screen 11): coral ring, Fine / Dizzy / Racing, then "Logged".
+  watchAsk: 'How do you feel?',
+  feelings: ['Fine', 'Dizzy', 'Racing'],
+  watchDone: 'Logged: Fine',
+  watchSub: 'Sent to your phone.',
+  chips: ['Check a medicine', 'Show my emergency card', 'Log a dose', 'Log a symptom'],
+  platform: ['ArkTS + ArkUI', 'Phone + watch', 'Intents for Celia', 'Offline core'],
+};
+
+// Market + model. Counts are estimates at 1 in 2,000 (deck/sport-health.html, slide 8); prices from slide 9.
+export const market = {
+  people: [
+    { value: '~4M', label: 'worldwide' },
+    { value: '~225k', label: 'in the EU · next' },
+    { value: '~19k', label: 'in Poland · first' },
+  ],
+  why: [
+    { value: '#1', label: 'Huawei in wrist-worn devices, worldwide (IDC, 2025)' },
+    { value: '$4.2B → $8.7B', label: 'wearable cardiac devices by 2033' },
+  ],
+  tiers: [
+    { price: 'Free', who: 'Every patient', what: 'Medicine check, card, SOS, watch alerts' },
+    { price: '€4.99 / mo', who: 'Celia+ for families', what: 'Family view, history, unlimited briefs' },
+    { price: '€2 / person', who: 'Clinics + clubs', what: 'Brief inbox, team cards' },
+  ],
 };

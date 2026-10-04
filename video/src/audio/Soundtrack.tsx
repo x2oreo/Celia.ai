@@ -4,9 +4,11 @@ import React from 'react';
 import { Audio, Sequence, interpolate, staticFile } from 'remotion';
 import type { SceneId } from '../copy/script';
 import { heroTimeline, tallTimeline, type Timeline } from '../scenes/conversation';
+import { celiaTimes } from '../scenes/Celia';
 import { emergencyTimes } from '../scenes/Emergency';
 import { SCAN } from '../scenes/Scan';
 import { TRUST_ROWS } from '../scenes/Trust';
+import { visitTimes } from '../scenes/Visit';
 import { watchTimes } from '../scenes/WatchGuard';
 import { clampOpts } from '../theme/motion';
 import { heroVo, vertVo, type VoCue } from './cues';
@@ -82,6 +84,24 @@ const sfxFor = (id: SceneId, fast: boolean, askFrames: number, xfade: number): S
         ...ticks,
         { sfx: 'chime', at: e.QR, gain: 0.3 },
         { sfx: 'whoosh', at: e.SECOND, gain: 0.22 },
+      ];
+    }
+    case 'visit': {
+      const v = visitTimes();
+      return [
+        ...v.ROWS.map((at) => ({ sfx: 'ledger_tick' as const, at, gain: 0.2 })),
+        { sfx: 'card_in', at: v.ASK, gain: 0.3 },
+        { sfx: 'whoosh', at: v.CARD, gain: 0.22 },
+      ];
+    }
+    case 'celia': {
+      const c = celiaTimes();
+      return [
+        { sfx: 'orb_on', at: c.ASK - 4, gain: 0.35 },
+        { sfx: 'sheet', at: c.ASK, gain: 0.3 },
+        { sfx: 'card_in', at: c.ANSWER, gain: 0.4 },
+        { sfx: 'tap', at: c.PICK, gain: 0.35 },
+        { sfx: 'chime', at: c.TOAST, gain: 0.25 },
       ];
     }
     case 'trust':

@@ -1,7 +1,8 @@
 """Original score for each cut, built from src/copy/timeline.json so the music follows the picture.
 
-D major / B minor, 96 BPM pulse. Hook: a dark B-minor drone with soft low thumps on the ripples. Reveal: a riser
-into a bright D bloom with bell shimmer. Ask → scan: pad chords and a kalimba arpeggio. Watch: the same pulse turns
+D major / B minor, 96 BPM pulse. Hook: a dark B-minor drone with a low thump on every beat of the orb, erratic
+when the orb is, then true silence when it goes still. Stakes: the drone creeps back in, a riser into the reveal.
+Reveal: a bright D bloom with bell shimmer. Ask → scan: pad chords and a kalimba arpeggio. Watch: the same pulse turns
 minor and drops away at the alert. Emergency: warm and lifting. Trust: piano and pad. End: the D chord resolves with
 a piano motif and a long tail.
 
@@ -38,19 +39,37 @@ CH = {
 
 SECTION = {
     'hook': {'chords': ['Bm9'], 'arp': 0.0, 'pad': 0.55, 'bass': 0.5},
+    'stakes': {'chords': ['Bm9', 'Em7'], 'arp': 0.0, 'pad': 0.4, 'bass': 0.4},
     'reveal': {'chords': ['Dadd9'], 'arp': 0.0, 'pad': 0.8, 'bass': 0.7},
     'ask': {'chords': ['Dadd9', 'A/C#', 'Bm7'], 'arp': 1.0, 'pad': 0.6, 'bass': 0.6},
     'verdict': {'chords': ['Gmaj7', 'Asus'], 'arp': 1.0, 'pad': 0.6, 'bass': 0.6},
     'scan': {'chords': ['Dadd9', 'A/C#'], 'arp': 1.0, 'pad': 0.6, 'bass': 0.6},
     'watch': {'chords': ['Bm7', 'Gmaj7', 'Em7', 'F#sus'], 'arp': 0.85, 'pad': 0.65, 'bass': 0.75},
     'emergency': {'chords': ['Gmaj7', 'D/F#', 'Em7', 'Asus'], 'arp': 0.6, 'pad': 0.8, 'bass': 0.7},
+    'visit': {'chords': ['Gmaj7', 'D/F#'], 'arp': 0.7, 'pad': 0.6, 'bass': 0.6},
+    'celia': {'chords': ['Em7', 'Asus'], 'arp': 0.9, 'pad': 0.65, 'bass': 0.6},
     'trust': {'chords': ['Gmaj7', 'Dmaj7'], 'arp': 0.0, 'pad': 0.6, 'bass': 0.5},
+    'market': {'chords': ['Dadd9', 'A/C#', 'Bm7', 'Gmaj7'], 'arp': 0.8, 'pad': 0.65, 'bass': 0.65},
     'end': {'chords': ['Dadd9'], 'arp': 0.0, 'pad': 0.85, 'bass': 0.7},
 }
 
 BEAT = 60 / 96
-HOOK_BEAT_FRAMES = 33  # scenes/Hook.tsx BEAT: one ripple pair per beat, the second 7 frames later
-WATCH_ALERT = {'hero': 110, 'vertical': 77}  # scenes/WatchGuard.tsx ALERT (× 0.7 in the vertical cut)
+WATCH_ALERT = {'hero': 246, 'vertical': 172}  # scenes/WatchGuard.tsx watchTimes().ALERT (× 0.7 in the vertical cut)
+
+
+def hook_beats(cut: str):
+    # Same list as hookBeats() in src/copy/script.ts: steady, erratic from chaos, nothing from stop.
+    b = TL['hookBeats'][cut]
+    gaps = TL['hookBeats']['chaosGaps']
+    out, f, i = [], b['start'], 0
+    while f < b['chaos']:
+        out.append((f, False))
+        f += b['period']
+    while f < b['stop']:
+        out.append((f, True))
+        f += gaps[i % len(gaps)]
+        i += 1
+    return out, b['stop']
 
 
 def placed(cut: str):
@@ -106,18 +125,17 @@ def render(cut: str) -> np.ndarray:
                     k += 1
 
         if sid == 'hook':
-            # Low thumps with the ripples (lub-dub), fading before the reveal.
-            b = 6
-            while b < frames - 30:
-                fade = max(0.0, 1 - b / (frames - 30)) ** 0.6
-                for off, v in ((0, 1.0), (7, 0.55)):
-                    place(dry, pan(thump(0.5, 58, v), 0), (start_f + b + off) / FPS, 0.5 * fade)
-                b += HOOK_BEAT_FRAMES
-            # Sparse felt piano: B minor motif.
-            for i, (m, t) in enumerate([(78, 1.4), (74, 3.1), (71, 4.6), (73, 6.2), (66, 7.8)]):
-                if t < dur - 0.6:
-                    place(send, pan(piano(m, 4.0, 0.7), -0.2 + 0.1 * i), start + t, 0.12)
-                    place(dry, pan(piano(m, 4.0, 0.7), -0.2 + 0.1 * i), start + t, 0.1)
+            # One low thump per beat of the orb; erratic beats are lighter and a little higher.
+            beats, stop_f = hook_beats(cut)
+            for f, erratic in beats:
+                place(dry, pan(thump(0.45 if erratic else 0.5, 66 if erratic else 58, 0.7 if erratic else 1.0), 0),
+                      (start_f + f) / FPS, 0.5)
+            # Sparse felt piano: B minor motif, only while the heart beats steadily.
+            for i, (m, t) in enumerate([(78, 1.4), (74, 3.1), (71, 4.6), (73, 6.2)]):
+                place(send, pan(piano(m, 4.0, 0.7), -0.2 + 0.1 * i), start + t, 0.12)
+                place(dry, pan(piano(m, 4.0, 0.7), -0.2 + 0.1 * i), start + t, 0.1)
+
+        if sid == 'stakes':
             # Riser into the reveal.
             r = noise_sweep(2.2, 300, 6000, rise=True)
             place(dry, r, start + dur - xf - 2.2, 0.05)
@@ -156,6 +174,16 @@ def render(cut: str) -> np.ndarray:
     mix = dry + wet * 0.9
     # Gentle glue: soft saturation, then fade the very end.
     mix = np.tanh(mix * 1.6) / 1.6
+    # The cold open's silence: everything drops out when the orb goes still, and comes back slowly in the stakes.
+    hook_start = scenes[0][1]
+    _, stop_f = hook_beats(cut)
+    still = (hook_start + stop_f) / FPS
+    back = scenes[1][1] / FPS + 0.6 if len(scenes) > 1 else still + 2.0
+    g = np.ones(len(mix))
+    tt = np.arange(len(mix)) / SR
+    g = np.where(tt >= still, np.clip(1 - (tt - still) / 0.35, 0, 1), g)
+    g = np.where(tt >= back, np.clip((tt - back) / 2.5, 0, 1) ** 2, g)
+    mix *= g[:, None]
     end_n = int((total / FPS) * SR)
     fade = int(1.6 * SR)
     mix = mix[: end_n]

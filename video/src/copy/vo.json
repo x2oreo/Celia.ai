@@ -10,7 +10,12 @@
     {
       "id": "hook",
       "voice": "narrator",
-      "text": "One in two thousand people live with Long QT syndrome. For them, hundreds of everyday medicines can trigger a dangerous heart rhythm."
+      "text": "Ola is twenty-four. She has Long QT syndrome. Her heart takes a little longer to recharge between beats. Doctors call it a long QT interval. Yesterday, her doctor gave her a common antibiotic. For Ola, that one pill could be enough to stop her heart."
+    },
+    {
+      "id": "stakes",
+      "voice": "narrator",
+      "text": "She is one in two thousand. In the US alone, Long QT takes up to four thousand lives a year. For one in ten, the first sign is cardiac arrest. Most of these deaths are preventable."
     },
     {
       "id": "reveal",
@@ -40,7 +45,7 @@
     {
       "id": "watch",
       "voice": "narrator",
-      "text": "Your watch keeps an eye on your heart rate. When something looks off, the agent checks in."
+      "text": "Your watch keeps an eye on your heart rate. When it climbs while you're resting, the agent checks in."
     },
     {
       "id": "emergency",
@@ -48,9 +53,24 @@
       "text": "And if you can't answer, it speaks for you. In thirteen languages."
     },
     {
+      "id": "visit",
+      "voice": "narrator",
+      "text": "Before a doctor's visit, it writes the brief: what happened, which medicines were flagged, and what to ask. At the pharmacy, one card says it all."
+    },
+    {
+      "id": "celia",
+      "voice": "narrator",
+      "text": "It's built natively on HarmonyOS. Ask Celia by voice, from anywhere. And your watch and phone work as one."
+    },
+    {
       "id": "trust",
       "voice": "narrator",
       "text": "The safety core runs on your phone. And you see everything that leaves it."
+    },
+    {
+      "id": "market",
+      "voice": "narrator",
+      "text": "Four million people live with Long QT. We start in Poland, then Europe. Safety stays free. Families and clinics pay for the care around it."
     },
     {
       "id": "end",
@@ -60,7 +80,7 @@
     {
       "id": "hook_v",
       "voice": "narrator",
-      "text": "One in two thousand people have Long QT syndrome. Everyday medicines can trigger it."
+      "text": "Ola has Long QT syndrome. One common antibiotic could stop her heart."
     },
     {
       "id": "watch_v",

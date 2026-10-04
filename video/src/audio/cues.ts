@@ -9,14 +9,18 @@ export interface VoCue {
 }
 
 export const heroVo: Partial<Record<SceneId, VoCue[]>> = {
-  hook: [{ line: 'hook', at: 10 }],
-  reveal: [{ line: 'reveal', at: 14 }],
+  hook: [{ line: 'hook', at: 12 }],
+  stakes: [{ line: 'stakes', at: 14 }],
+  reveal: [{ line: 'reveal', at: 20 }],
   // ask: Ola and the agent speak on the conversation clock (scenes/conversation.ts), see Soundtrack.
   verdict: [{ line: 'verdict', at: 24 }],
   scan: [{ line: 'scan', at: 14 }],
   watch: [{ line: 'watch', at: 14 }],
   emergency: [{ line: 'emergency', at: 18 }],
+  visit: [{ line: 'visit', at: 14 }],
+  celia: [{ line: 'celia', at: 14 }],
   trust: [{ line: 'trust', at: 14 }],
+  market: [{ line: 'market', at: 14 }],
   end: [{ line: 'end', at: 22 }],
 };
 

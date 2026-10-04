@@ -2,7 +2,8 @@
 // HeartPage.ets, AlertScreen.ets and SosScreen.ets. 466 px = 233 vp, so every vp size below is doubled.
 // True black, warm neutrals. Heart rate only, never QT, never a trace.
 import React from 'react';
-import { watch as copy } from '../copy/script';
+import { useCurrentFrame } from 'remotion';
+import { celia, watch as copy } from '../copy/script';
 import { color, fontFamily, size } from '../theme/tokens';
 import { Icon } from '../primitives/Icon';
 
@@ -69,8 +70,9 @@ const OutlinedBadge: React.FC<{ text: string }> = ({ text }) => (
   </span>
 );
 
-const Pill: React.FC<{ text: string; fill: string; ink?: string }> = ({ text, fill, ink = color.watchText }) => (
-  <span style={{ height: 40 * VP, padding: `0 ${18 * VP}px`, borderRadius: 20 * VP, background: fill, color: ink, fontSize: 14 * VP, fontWeight: 700, display: 'inline-flex', alignItems: 'center' }}>{text}</span>
+// PillButton (Parts.ets): capsule, 84 × 40 by default; OkHelp sizes its pair 66 / 82 × 32 at 13 so they sit inside the ring.
+const Pill: React.FC<{ text: string; fill: string; ink?: string; w?: number; h?: number; fs?: number }> = ({ text, fill, ink = color.watchText, w = 84, h = 40, fs = 14 }) => (
+  <span style={{ width: w * VP, height: h * VP, padding: `0 ${6 * VP}px`, boxSizing: 'border-box', borderRadius: (h / 2) * VP, background: fill, color: ink, fontSize: fs * VP, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', whiteSpace: 'nowrap' }}>{text}</span>
 );
 
 const Face: React.FC<{ children: React.ReactNode; opacity?: number; y?: number }> = ({ children, opacity = 1, y = 0 }) => (
@@ -83,12 +85,17 @@ const MIN = 45;
 const MAX = 110;
 
 /** Home (1.1 / 1.2) blending into the heart-rate-high alert (7) as `alert` goes 0 → 1. */
-export const WatchLive: React.FC<{ bpm: number; alert: number }> = ({ bpm, alert }) => {
+export const WatchLive: React.FC<{ bpm: number; alert: number; ring?: number }> = ({ bpm, alert, ring = bpm }) => {
+  const frame = useCurrentFrame();
   const near = bpm >= MAX * 0.9 && bpm < MAX;
   const above = bpm >= MAX;
   const zone: WatchZone = above ? 'ALERT' : near ? 'ELEVATED' : 'CALM';
   const zc = zoneColor(zone);
-  const fill = above ? 1 : (bpm - MIN) / (MAX - MIN);
+  const fill = ring >= MAX ? 1 : (ring - MIN) / (MAX - MIN);
+  // The status mark beats once per heartbeat at the current rate (a single beat, never a trace).
+  const period = (60 / Math.max(40, bpm)) * 30;
+  const t = (frame % period) / period;
+  const beat = 1 + 0.22 * Math.max(0, 1 - t * 5);
   return (
     <>
       <div style={{ position: 'absolute', inset: 0, opacity: 1 - alert }}>
@@ -100,7 +107,9 @@ export const WatchLive: React.FC<{ bpm: number; alert: number }> = ({ bpm, alert
       <Face opacity={1 - alert}>
         <OutlinedBadge text={copy.demo} />
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 * VP, marginTop: 8 * VP, fontSize: 15 * VP, fontWeight: 700, color: zc }}>
-          <StatusMark kind={zone === 'CALM' ? 'dot' : 'up'} markColor={zc} />
+          <span style={{ display: 'inline-flex', transform: `scale(${beat})` }}>
+            <StatusMark kind={zone === 'CALM' ? 'dot' : 'up'} markColor={zc} />
+          </span>
           {zone === 'CALM' ? copy.calmLabel : above ? copy.aboveLabel : copy.nearLabel}
         </div>
         <div style={{ fontSize: 64 * VP, lineHeight: 1, fontWeight: 800, letterSpacing: '-0.03em', color: color.watchText, fontVariantNumeric: 'tabular-nums' }}>{Math.round(bpm)}</div>
@@ -112,17 +121,17 @@ export const WatchLive: React.FC<{ bpm: number; alert: number }> = ({ bpm, alert
           ))}
         </div>
       </Face>
-      <Face opacity={alert} y={(1 - alert) * 10}>
+      <Face opacity={alert} y={(1 - alert) * 10 - 10 * VP}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 * VP, fontSize: 11 * VP, fontWeight: 700, letterSpacing: `${VP}px`, color: color.alert }}>
           <StatusMark kind="up" markColor={color.alert} />
           {copy.alertTitle}
         </div>
-        <div style={{ fontSize: 64 * VP, lineHeight: 1.05, fontWeight: 800, letterSpacing: '-0.03em', color: color.alert, fontVariantNumeric: 'tabular-nums' }}>{Math.round(bpm)}</div>
+        <div style={{ fontSize: 60 * VP, lineHeight: 1, margin: `${-2 * VP}px 0 ${-2 * VP}px`, fontWeight: 800, letterSpacing: '-0.03em', color: color.alert, fontVariantNumeric: 'tabular-nums' }}>{Math.round(bpm)}</div>
         <div style={{ fontSize: 14 * VP, fontWeight: 600, color: color.watchText }}>{copy.alertSub}</div>
         <div style={{ fontSize: 12 * VP, color: color.watchText2, marginTop: 2 * VP }}>{copy.alertLimit}</div>
-        <div style={{ display: 'flex', gap: 6 * VP, marginTop: 10 * VP }}>
-          <Pill text={copy.ok} fill={color.watchButton} />
-          <Pill text={copy.help} fill={color.alert} />
+        <div style={{ display: 'flex', gap: 8 * VP, marginTop: 8 * VP }}>
+          <Pill text={copy.ok} fill={color.watchButton} w={66} h={32} fs={13} />
+          <Pill text={copy.help} fill={color.alert} w={82} h={32} fs={13} />
         </div>
       </Face>
     </>
@@ -148,3 +157,47 @@ export const WatchSosSent: React.FC = () => (
     </Face>
   </>
 );
+
+/** Check-in (11): coral ring, "How do you feel?", Fine / Dizzy / Racing; `chosen` 0..1 picks Fine and logs it. */
+export const WatchCheckIn: React.FC<{ chosen: number }> = ({ chosen }) => {
+  const tones = [
+    { fill: color.calm, tint: color.calmTint },
+    { fill: color.elevated, tint: color.elevatedTint },
+    { fill: color.alert, tint: color.alertTint },
+  ];
+  return (
+    <>
+      <RingBezel ringColor={color.watchBrand} />
+      <Face>
+        <div style={{ fontSize: 19 * VP, fontWeight: 800, color: color.watchText }}>{chosen >= 0.5 ? celia.watchDone : celia.watchAsk}</div>
+        <div style={{ display: 'flex', gap: 6 * VP, marginTop: 8 * VP }}>
+          {celia.feelings.map((f, i) => {
+            const on = i === 0 && chosen > 0;
+            const tone = tones[i] ?? tones[0]!;
+            return (
+              <span
+                key={f}
+                style={{
+                  width: 52 * VP,
+                  height: 52 * VP,
+                  borderRadius: 26 * VP,
+                  display: 'grid',
+                  placeItems: 'center',
+                  fontSize: 12 * VP,
+                  fontWeight: 700,
+                  background: on ? tone.fill : tone.tint,
+                  color: on ? color.black : tone.fill,
+                  opacity: chosen >= 0.5 && i > 0 ? 0.35 : 1,
+                  transform: `scale(${on ? 1 + 0.08 * Math.sin(Math.PI * Math.min(1, chosen * 2)) : 1})`,
+                }}
+              >
+                {f}
+              </span>
+            );
+          })}
+        </div>
+        <div style={{ fontSize: 12 * VP, color: color.watchText2, marginTop: 8 * VP, opacity: chosen >= 0.5 ? 1 : 0 }}>{celia.watchSub}</div>
+      </Face>
+    </>
+  );
+};

@@ -100,6 +100,12 @@ export const color = {
   boxInk: '#23302F',
   barcode: '#111111',
 
+  // Film-only light: a warm key light on dark (cold open), never a brand wash
+  keyLight: 'rgba(255, 246, 240, 0.12)',
+  keyLightClear: 'rgba(255, 246, 240, 0)',
+  dotIdle: 'rgba(245, 240, 236, 0.38)',
+  dotLost: 'rgba(245, 240, 236, 0.05)',
+
   // Scrim and shadows (DESIGN §5.3)
   scrim: 'rgba(31, 26, 23, 0.45)',
   white: '#FFFFFF',

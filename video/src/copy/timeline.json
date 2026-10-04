@@ -1,16 +1,20 @@
 {
-  "note": "Scene order and lengths in frames at 30 fps. Neighbouring scenes overlap by xfade. Read by src/copy/script.ts and scripts/audio/score.py, so picture and score share one timeline.",
+  "note": "Scene order and lengths in frames at 30 fps. Neighbouring scenes overlap by xfade. hookBeats drives the orb's heartbeat in the cold open (steady, then erratic from chaos, still from stop); the score places its thumps from the same numbers. Read by src/copy/script.ts and scripts/audio/score.py, so picture and score share one timeline.",
   "fps": 30,
   "hero": {
     "xfade": 15,
     "scenes": [
       {
         "id": "hook",
-        "frames": 285
+        "frames": 555
+      },
+      {
+        "id": "stakes",
+        "frames": 410
       },
       {
         "id": "reveal",
-        "frames": 150
+        "frames": 180
       },
       {
         "id": "ask",
@@ -26,15 +30,27 @@
       },
       {
         "id": "watch",
-        "frames": 285
+        "frames": 370
       },
       {
         "id": "emergency",
         "frames": 285
       },
       {
+        "id": "visit",
+        "frames": 300
+      },
+      {
+        "id": "celia",
+        "frames": 240
+      },
+      {
         "id": "trust",
-        "frames": 180
+        "frames": 165
+      },
+      {
+        "id": "market",
+        "frames": 300
       },
       {
         "id": "end",
@@ -47,7 +63,7 @@
     "scenes": [
       {
         "id": "hook",
-        "frames": 150
+        "frames": 190
       },
       {
         "id": "ask",
@@ -55,7 +71,7 @@
       },
       {
         "id": "watch",
-        "frames": 180
+        "frames": 260
       },
       {
         "id": "emergency",
@@ -66,5 +82,33 @@
         "frames": 105
       }
     ]
+  },
+  "hookBeats": {
+    "chaosGaps": [
+      10,
+      8,
+      13,
+      7,
+      9,
+      6,
+      12,
+      8,
+      11,
+      7,
+      9,
+      14
+    ],
+    "hero": {
+      "start": 14,
+      "period": 25,
+      "chaos": 401,
+      "stop": 520
+    },
+    "vertical": {
+      "start": 10,
+      "period": 25,
+      "chaos": 110,
+      "stop": 150
+    }
   }
 }

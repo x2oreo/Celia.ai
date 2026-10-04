@@ -7,8 +7,8 @@ import { mkdirSync } from 'node:fs';
 import path from 'node:path';
 
 const KEY = {
-  Hero16x9: [200, 360, 485, 705, 785, 960, 1185, 1350, 1460, 1580, 1730, 1890, 2100],
-  Vertical9x16: [100, 288, 448, 591, 769, 860],
+  Hero16x9: [120, 215, 300, 565, 750, 1125, 1380, 1635, 1880, 2010, 2235, 2525, 2790, 2935, 3230, 3415],
+  Vertical9x16: [60, 180, 403, 676, 766, 904, 1017],
 };
 
 const [id = 'Hero16x9', ...rest] = process.argv.slice(2);

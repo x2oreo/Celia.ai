@@ -10,7 +10,7 @@
     "studio": "remotion studio",
     "typecheck": "tsc --noEmit",
     "render:hero": "remotion render Hero16x9 out/demo-raw.mp4 --codec=h264 --crf=20 --pixel-format=yuv420p --audio-codec=aac --audio-bitrate=320k && node scripts/loudnorm.mjs out/demo-raw.mp4 ../site/media/demo.mp4",
-    "render:poster": "remotion still Hero16x9 out/demo-poster.png --frame=960 && ffmpeg -y -loglevel error -i out/demo-poster.png -q:v 3 ../site/media/demo-poster.jpg",
+    "render:poster": "remotion still Hero16x9 out/demo-poster.png --frame=1570 && ffmpeg -y -loglevel error -i out/demo-poster.png -q:v 3 ../site/media/demo-poster.jpg",
     "render:vertical": "remotion render Vertical9x16 out/vertical-raw.mp4 --codec=h264 --crf=20 --pixel-format=yuv420p --audio-codec=aac --audio-bitrate=320k && node scripts/loudnorm.mjs out/vertical-raw.mp4 out/celia-vertical.mp4",
     "render": "npm run typecheck && npm run render:hero && npm run render:poster && npm run render:vertical",
     "contact": "node scripts/stills.mjs Hero16x9 && node scripts/stills.mjs Vertical9x16",

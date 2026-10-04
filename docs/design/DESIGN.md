@@ -56,6 +56,7 @@ Units: lengths in `vp`, font sizes in `fp` (ArkUI). The design file uses px/dp, 
   - [10.2a Shared web pages (opened from a link on any device)](#102a-shared-web-pages-opened-from-a-link-on-any-device)
   - [10.2b Landing page (`site/index.html`)](#102b-landing-page-siteindexhtml)
   - [10.2c Submission deck (`deck/index.html`)](#102c-submission-deck-deckindexhtml)
+  - [10.2d Launch film (`video/`)](#102d-launch-film-video)
   - [10.3 Still open](#103-still-open)
   - [10.4 Extra resource names](#104-extra-resource-names)
 - [11. Workstream B screens](#11-workstream-b-screens)
@@ -346,6 +347,7 @@ Four tabs and the agent in the middle: **Today · Medicines · (orb) · Health �
 - Sizes: **104** in the stage dock, **56** tab bar (animated, four bands per group).
   **28 / 40** inline (`components/AgentAvatar.ets`): a still Dawn gradient with the sheen, no bands.
 - Idle: one slow breath (4 s). Never a double beat that could read as a pulse; nothing that looks like an ECG.
+  One film-only exception, in the launch film's cold open (10.2d).
 
 ### 6.6a Voice orb (hero of the conversation)
 
@@ -1071,6 +1073,39 @@ allowed, and it still reads as Celia: same tokens, silk orb, risk language and v
 - **Sport & Healthcare variant** (`deck/sport-health.html`, `deck/sport.css`): the same deck reframed for the
   category. Order: title · problem · solution · sport (run chart with the moving limit) · medicine check · demo ·
   watch + emergency · market + fit (rings, gap table) · business model + go-to-market · team + close. Extra styles only in `sport.css`, tokens only.
+
+### 10.2d Launch film (`video/`)
+
+The product film, built as code (Remotion). It reads as Celia: same tokens, silk orb, risk language, voice and v2
+screens, drawn at app size and scaled.
+
+- **Order (hero, about 2 min)**: cold open (Ola) · stakes · reveal · ask · verdict · scan · watch · emergency ·
+  doctor visit + pharmacy card · built on HarmonyOS (Celia + watch) · privacy · market + model · close.
+- **Rhythm of surfaces**: warm dark for the cold open, stakes, HarmonyOS beat and close; true black for the watch;
+  `bg` for everything else.
+- **Cold open, cut like a film**: short shots on the voice, never one screen with narration over it. Ola's profile
+  card (a plain person avatar whose ring beats with her heart, "Ola, 24", the condition in coral, her details as
+  chips); the orb as her heart with a ring refilling slowly after each beat
+  ("takes longer to recharge"); a textbook schematic of one beat, typical beside Long QT, the T wave sliding
+  later and the QT bracket stretching (labelled "Illustration, not a reading.": the one place a trace-like line
+  appears, and never anyone's data); the medicine box turning under a warm key light while the prescription slides in;
+  the orb again, beats turning erratic and the camera closing in, then a hard cut to black and silence. The stakes
+  are one field of 2,000 dots (Ola is the coral one): the camera pulls back from her dot, dots go dark while a
+  counter runs, ten big dots with one going dark, then a coral wave relights the field. The only light is a warm key
+  light; no brand wash. Cuts are hard, on the beat.
+- **The one exception to 6.6**: in the cold open the silk orb stands in for Ola's heart. It swells **once** per beat
+  with a thin coral ripple (never a lub-dub, never a trace), turns erratic, then fades to the Muted look and goes
+  still. In the reveal the same orb wakes (Muted → Connecting → Speaking) and says the reveal line, so the heart
+  becomes the agent. Nowhere else does the orb beat.
+- **Slides are allowed once**: the market scene is a finished slide that settles in at once and holds while the
+  voice talks; nothing builds piece by piece.
+- **Numbers**: big statement numbers in ink, at most one coral number per scene, a source caption on every medical or
+  market number. Counts at 1 in 2,000 are labelled as estimates.
+- **Watch**: the v2 faces from §7 at 466 px. Heart rate arrives in steps, one sensor reading at a time (never a
+  counter rolling up); the ring and the phone gauge ease to each new reading. The alert's I'm OK / Need help are the
+  watch's `OkHelp` sizes (66 / 82 × 32 vp at 13), inside the ring.
+- **Honesty**: scripted heart data carries `DEMO DATA` / `SIMULATED`; the assistant sheet is drawn neutral (a label,
+  the request, the app's own answer card), never a copy of a system UI.
 
 ### 10.3 Still open
 

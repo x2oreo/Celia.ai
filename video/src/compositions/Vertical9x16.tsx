@@ -1,4 +1,4 @@
-// Social cut: 9:16, 1080 × 1920, ≈ 27 s. Beats 1, 3+4 merged, 6, 7, 9, re-laid out (not cropped).
+// Social cut: 9:16, 1080 × 1920, ≈ 35 s. Beats 1, 3+4 merged, 6, 7, 9, re-laid out (not cropped).
 // Captions are the big headlines, burned in; it works with the sound off.
 import React from 'react';
 import { VERT_XFADE, totalFrames, vertOrder, type SceneId } from '../copy/script';
