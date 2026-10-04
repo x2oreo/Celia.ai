@@ -12,7 +12,7 @@ CONFIG="$APP_DIR/entry/src/main/ets/common/LocalConfig.ets"
 
 IP="$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || hostname -I 2>/dev/null | awk '{print $1}')"
 if [ -z "$IP" ]; then
-  echo "No LAN IP found — connect to Wi-Fi first." >&2
+  echo "No LAN IP found - connect to Wi-Fi first." >&2
   exit 1
 fi
 URL="http://$IP:$PORT/card/"

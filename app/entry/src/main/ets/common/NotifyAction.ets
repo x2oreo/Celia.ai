@@ -1,4 +1,4 @@
-// What a notification is and what its buttons do (B7). Pure — unit tested. Publishing lives in common/Notify.ets,
+// What a notification is and what its buttons do (B7). Pure - unit tested. Publishing lives in common/Notify.ets,
 // acting on a tap in entryability/EntryAbility.ets.
 //
 // Every button opens the app (WantAgent START_ABILITY) with `notifyAction` in the want parameters. A third-party app

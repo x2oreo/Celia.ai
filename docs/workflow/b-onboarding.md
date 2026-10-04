@@ -1,8 +1,8 @@
 # S3 onboarding
 
 ## AI_WORKFLOW entry
-### 2026-10-03 — Georgi + Claude Code: 8-step onboarding (branch `georgi/b-onboarding`)
-- Asked: brief B3 — a simple onboarding that still gathers everything: welcome + consent, account, about you,
+### 2026-10-03 - Georgi + Claude Code: 8-step onboarding (branch `georgi/b-onboarding`)
+- Asked: brief B3 - a simple onboarding that still gathers everything: welcome + consent, account, about you,
   medicines, emergency contacts, emergency details, permissions, watch. Progress shown, Skip on optional steps,
   nothing lost when going back, under 2 minutes; move the launch-time notification ask into the permissions step.
 - Produced: `onboarding/OnboardingFlow.ets` (pure step rules and profile-draft helpers), `onboarding/Permissions.ets`
@@ -26,7 +26,7 @@
     (+ `onboarding-7a-notification-dialog.jpeg`).
 - Found and fixed while testing: the last step still said "Continue". `components/Common.ets` `PrimaryButton`
   passes its label to a by-value `@Builder`, which does not re-render when the label changes; the page now uses two
-  button instances. Every other caller of `PrimaryButton` with a changing label has the same bug (not fixed here —
+  button instances. Every other caller of `PrimaryButton` with a changing label has the same bug (not fixed here -
   Common.ets is Workstream A's; fix: pass `$$`-style by-reference params or rebuild the label in the struct).
 - Not validated: the account step and the emergency-details step run against S1's `AuthForm` and S2's
   `EmergencyDetailsForm` stubs; the real forms arrive at merge. The returning-user skip

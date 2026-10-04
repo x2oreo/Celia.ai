@@ -1,4 +1,4 @@
-# Celia.ai — the idea
+# Celia.ai - the idea
 
 > Working name. **Naming risk:** "Celia" is the international name of Huawei's own system assistant (小艺 / Xiaoyi).
 > Using it for our product is ambiguous (judges are Huawei). Options: keep `Celia.ai` as repo name and give our agent
@@ -19,9 +19,9 @@ features are optional and every request the phone makes is listed in an on-phone
 - Triggers are known and preventable: **hundreds of common drugs prolong QT** (antibiotics, antiemetics,
   antidepressants, antihistamines…), low potassium/magnesium (vomiting, diarrhoea), and genotype-specific triggers
   (LQT1 exercise/swimming, LQT2 sudden noise/emotion, LQT3 rest/sleep).
-- Patients have to remember all this alone, at the pharmacy, abroad, or at the ER — where staff may not know LQTS.
+- Patients have to remember all this alone, at the pharmacy, abroad, or at the ER - where staff may not know LQTS.
 
-## Solution — an agent at the centre, the ecosystem around it
+## Solution - an agent at the centre, the ecosystem around it
 
 | Layer | What it does | HarmonyOS capability |
 |---|---|---|
@@ -47,9 +47,9 @@ from Settings; without one they never leave the phone, and nothing personal ever
 
 ## Challenge areas (task asks for ≥1; combining is a plus)
 
-- **Human-Centric Technology** — quality of life, safety for a vulnerable group. *Primary.*
-- **Intelligent Experiences** — agent, on-device OCR, contextual (vitals-aware) proactive help. *Primary.*
-- **Spatial** — light touch only (location sent with SOS). Don't force it.
+- **Human-Centric Technology** - quality of life, safety for a vulnerable group. *Primary.*
+- **Intelligent Experiences** - agent, on-device OCR, contextual (vitals-aware) proactive help. *Primary.*
+- **Spatial** - light touch only (location sent with SOS). Don't force it.
 
 ## Scope rules (from the judging criteria)
 
@@ -64,7 +64,7 @@ from Settings; without one they never leave the phone, and nothing personal ever
 
 ## MVP features (priority)
 
-**P0 — must work in the demo**
+**P0 - must work in the demo**
 1. Onboarding: condition (LQTS + genotype LQT1/2/3/unknown), current meds, ICE contacts, emergency notes.
 2. Agent chat (text; voice if Core Speech works in English) with tools: `check_drug`, `get_my_meds`,
    `add_med`, `get_vitals_summary`, `show_emergency_card`, `start_emergency`, `explain_condition`.
@@ -74,13 +74,13 @@ from Settings; without one they never leave the phone, and nothing personal ever
 5. Vitals: live HR from watch (real device) **or** simulated scenarios (emulator); rules engine → alert → agent
    proactive message.
 
-**P1 — strong extras**
-6. **Intents Kit**: `CheckDrugSafety`, `ShowEmergencyCard` — "Celia, can I take ibuprofen?"
+**P1 - strong extras**
+6. **Intents Kit**: `CheckDrugSafety`, `ShowEmergencyCard` - "Celia, can I take ibuprofen?"
 7. Home-screen **widget**: emergency card / last med check.
-8. Watch notification via Wear Engine on alarm ("Heart rate high — open the app").
+8. Watch notification via Wear Engine on alarm ("Heart rate high - open the app").
 9. Doctor report (event log + meds + flagged drugs) as shareable page/PDF.
 
-**P2 — only if ahead**
+**P2 - only if ahead**
 10. A2A agent (AgentExtensionAbility) so Celia can hold a conversation with our agent.
 11. Caregiver tablet: distributed alert / app continuation.
 12. Brugada/CPVT condition pack (data + 1 rule).

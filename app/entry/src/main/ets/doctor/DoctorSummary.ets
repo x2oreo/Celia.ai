@@ -1,6 +1,6 @@
 // Optional AI summary at the top of the doctor brief (T13 LLM part, backend /doctor-summary). The brief is
 // deterministic and complete without it. Only non-personal lines of the brief go out (medicines with their risk
-// words, interactions, flagged checks, counts) — never the Patient section (name, notes) or symptom notes. For a
+// words, interactions, flagged checks, counts) - never the Patient section (name, notes) or symptom notes. For a
 // visit, the fixed purpose titles and the known-risk medicine names of its plan go too. The reply is checked again
 // here (same rules as doctor-summary/logic.ts) and dropped when it fails.
 // `visit` (optional) adds the typed reason and worries after doctor/Redact.ets has removed names, phone numbers,

@@ -1,5 +1,5 @@
 // App lock (F-45): optional face / fingerprint / PIN gate over the app's private data (meds, history, events).
-// The emergency card and bystander help stay reachable from the lock screen — they are meant for strangers.
+// The emergency card and bystander help stay reachable from the lock screen - they are meant for strangers.
 // Data at rest is already encrypted (RDB encrypt: true, data/LocalStore.ets).
 
 import { userAuth } from '@kit.UserAuthenticationKit';
@@ -100,7 +100,7 @@ export class AppLock {
   static unlock(onDone: (ok: boolean) => void): void {
     if (!AppLock.available()) {
       // The screen lock was removed: never lock the user out of their own data.
-      log.warn('no screen lock on the device — unlocking');
+      log.warn('no screen lock on the device - unlocking');
       AppLock.set('UNLOCKED');
       onDone(true);
       return;

@@ -169,7 +169,7 @@ Add `font_display`, `font_title_1`, `font_title_3`, `font_headline`, `font_body_
 | 20 | Chat bubbles, showcase cards | `radius_ml` |
 | 24 | Cards, widgets | `radius_l` |
 | 28 | Bottom sheet top corners | `radius_sheet` |
-| pill | Chips, input bar (use `height / 2`) | — |
+| pill | Chips, input bar (use `height / 2`) | - |
 
 ### 5.3 Elevation
 
@@ -737,7 +737,7 @@ from deterministic payloads only.
   "Defibrillator (AED)" that open a map search around the phone. "Remove this link" asks first (dialog, danger).
 - **Emergency (active / SOS)**: `bg` surface, `EMERGENCY` label, "Are you OK?" (`title-1`), a 200 vp ring in
   `risk_known` draining linearly, big seconds number, white secondary `I'm OK` (52) and danger `Send now`.
-- **Onboarding**: 8 steps — see 11 "Onboarding (S3, B3)" (progress segments in `brand`, orb 96 on step 1,
+- **Onboarding**: 8 steps - see 11 "Onboarding (S3, B3)" (progress segments in `brand`, orb 96 on step 1,
   `title-1` per step, primary `Continue`).
 - **Doctor report**: specialty chips (6.3), sections as `surface` cards with bullets, primary `Share`, secondary `Copy`.
 - **Medicines empty**: dashed empty card "No medicines yet. Add one or scan a box." + primary `Add a medicine`.
@@ -803,7 +803,7 @@ the browser; the page itself never sees anything until the key in the link's `#`
   `border` and `radius_l`: Current medicines (each row with the risk badge: colour + shape + word, never colour
   alone), Interactions, Flagged checks (dated rows), Resting heart rate (SVG line in `brand` over 30 days, dashed
   `border_strong` guides at 60 and 120, the median as a caption, `SIMULATED` mono badge when any day is
-  simulated, and "Heart rate only — this is not an ECG"), Heart alerts & SOS and Symptoms as a dated timeline,
+  simulated, and "Heart rate only - this is not an ECG"), Heart alerts & SOS and Symptoms as a dated timeline,
   Dose adherence (taken / skipped of scheduled, last 14 days), For the {specialist} (watch-outs), Questions.
   Footer: "Prepared with Celia from the patient's own records. Not a medical device." Print: white background, no
   shadows, cards become bordered blocks, URL and expiry printed in the footer, sections avoid page breaks.
@@ -841,7 +841,7 @@ components as above; no new colours or sizes.
   `surface_alt`, privacy caption in `ink_3`, primary `Save and build the brief`, quiet `Cancel`.
 - **Doctor report on a visit**: title "{Specialty} · {date}", no specialty chips, the visit sections first; the AI
   block caption says the summary is saved with the visit.
-- **How are you feeling?** (route `feeling`): intro, five mood chips (44 vp, pill, ink when selected — moods are
+- **How are you feeling?** (route `feeling`): intro, five mood chips (44 vp, pill, ink when selected - moods are
   not verdicts, never risk colours), a neutral `surface` card offering `Log a symptom` for Low / Unwell, note
   area on `surface_alt`, primary `Save to diary` (inactive until a mood is picked), `RECENT` rows like the symptom log.
 - **Feeling widget (2×2)**: `surface` card, `CELIA` caption in `ink_3`, "How are you feeling?" in `headline`, ink
@@ -852,7 +852,7 @@ components as above; no new colours or sizes.
 **SOS sent state** (extends 10.2 "Emergency (active / SOS)"): after the countdown (or straight away for a watch SOS)
 the page shows the title (`title-1`; "Your watch sent an SOS" when the watch sent it, else "Get help now"), the
 subtitle in `ink_3`, then a **status card**: `surface`, 1 vp `border`, `radius_m`, padding `space_m`, three rows
-separated by `divider` — caps label (`font_caption`, bold, `ink_3`: WHAT WAS SENT · TO WHOM · STILL NEEDS A TAP) over
+separated by `divider` - caps label (`font_caption`, bold, `ink_3`: WHAT WAS SENT · TO WHOM · STILL NEEDS A TAP) over
 `font_small` `ink_2` text. Never a risk colour on the card: it is a report, not a verdict. Below it: danger "Call
 ambulance", secondary "Send SOS message", one secondary "Call {name}" per contact, secondary **For first
 responders** (doctor icon), the location line and the message preview.
@@ -868,10 +868,10 @@ responders** (doctor icon), the location line and the message preview.
   labelled 48 vp inputs on `surface_alt` (`radius_m`), primary button (inactive until both fields have text), a
   `brand_text` link to switch mode, disclaimer caption. Errors use the amber 6.7 strip in plain words, never red;
   "check your email" uses the neutral strip. While working: `LoadingProgress` 28 in `brand_accent` + "One moment…".
-- **Account** (Settings → Account): signed in — `surface` card with "Signed in as" caption, email in `headline`, the
+- **Account** (Settings → Account): signed in - `surface` card with "Signed in as" caption, email in `headline`, the
   backup line (`font_small`; offline → neutral strip, failure → amber strip), secondary `Back up now`; secondary
   `Sign out` (dialog: keep data / delete from this phone, the latter in `risk_known` text); "WHERE YOUR DATA IS" card;
-  a centred `risk_known` text action "Delete my data from my account" with a confirm dialog. Signed out — one body
+  a centred `risk_known` text action "Delete my data from my account" with a confirm dialog. Signed out - one body
   line, primary `Log in`, secondary `Create an account`, the same data card.
 
 ### Emergency details and first-responder view (S2, B4/B5)

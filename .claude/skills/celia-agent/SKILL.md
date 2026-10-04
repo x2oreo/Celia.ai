@@ -1,9 +1,9 @@
 ---
 name: celia-agent
-description: Making the app agent-native on HarmonyOS so Celia (Huawei's system assistant; 小艺/Xiaoyi in China) is the centre of the experience — Agent Framework Kit (HMAF) FunctionComponent/FunctionController to open an agent from our UI, AgentExtensionAbility + createA2AServer to expose our app as an A2A agent with an agent card, Intents Kit @InsightIntentEntry so Celia/search can call our features ("Celia, can I take ibuprofen?"), plus the in-app LLM-agent fallback and AI-safety rules. Use when designing or coding anything agent/assistant/voice/intent related.
+description: Making the app agent-native on HarmonyOS so Celia (Huawei's system assistant; 小艺/Xiaoyi in China) is the centre of the experience - Agent Framework Kit (HMAF) FunctionComponent/FunctionController to open an agent from our UI, AgentExtensionAbility + createA2AServer to expose our app as an A2A agent with an agent card, Intents Kit @InsightIntentEntry so Celia/search can call our features ("Celia, can I take ibuprofen?"), plus the in-app LLM-agent fallback and AI-safety rules. Use when designing or coding anything agent/assistant/voice/intent related.
 ---
 
-# Celia at the centre — agent integration
+# Celia at the centre - agent integration
 
 **Celia** = international name of Huawei's system AI assistant (Chinese docs: **小艺 / Xiaoyi**, "小艺开放平台" =
 Xiaoyi Open Platform). HarmonyOS 6 ships **HMAF** (HarmonyOS Agent Framework). Docs are CN-first → search
@@ -12,7 +12,7 @@ Context7 with both "Celia" and "Xiaoyi/小艺". Verify every signature in Contex
 `hmaf-a2a-dev-guide`, `agent-extension-ability`, `agent-extension-configuration`,
 `insight-intent-decorator-development`, `intents-local-rec-access-programme`).
 
-## Availability risk — decide in the first hours
+## Availability risk - decide in the first hours
 
 - Agents for FunctionComponent must be **created and published on the Xiaoyi Open Platform** (gives `agentId`).
   EU/overseas account access, emulator support, and Celia's language support for these flows are **unconfirmed** →
@@ -24,7 +24,7 @@ Context7 with both "Celia" and "Xiaoyi/小艺". Verify every signature in Contex
 
 ## Three integration levels (from cheapest to most "wow")
 
-### 1. Intents Kit — Celia calls our features (`@kit.AbilityKit`)
+### 1. Intents Kit - Celia calls our features (`@kit.AbilityKit`)
 
 Declare capabilities with an LLM description + JSON-schema params; system assistant/search matches the user's
 utterance and runs our executor, then turns the result into natural language.
@@ -72,7 +72,7 @@ Execute modes: `UI_ABILITY_FOREGROUND` (open a page), `UI_ABILITY_BACKGROUND` (a
 Older non-decorator style: `InsightIntentExecutor.onExecuteInUIAbilityForegroundMode(name, param, pageLoader)`.
 Test locally: DevEco has intent debugging; also call the same executor logic from a unit test.
 
-### 2. Expose the app as an agent — A2A server (`AgentExtensionAbility`)
+### 2. Expose the app as an agent - A2A server (`AgentExtensionAbility`)
 
 `module.json5`:
 ```json5
@@ -115,9 +115,9 @@ export default class AgentExtAbility extends AgentExtensionAbility {
   onDestroy() { this.server?.stop(); }
 }
 ```
-(Docs sample passes `want=want` — that's a typo in the doc; pass `want`. Confirm param list in references.)
+(Docs sample passes `want=want` - that's a typo in the doc; pass `want`. Confirm param list in references.)
 
-### 3. Open an agent inside our UI — FunctionComponent (`@kit.AgentFrameworkKit`)
+### 3. Open an agent inside our UI - FunctionComponent (`@kit.AgentFrameworkKit`)
 
 ```ts
 import { FunctionComponent, FunctionController } from '@kit.AgentFrameworkKit';
@@ -125,12 +125,12 @@ import { BusinessError } from '@kit.BasicServicesKit';
 private controller: FunctionController = new FunctionController();
 // aboutToAppear: this.isSupported = await this.controller.isAgentSupport(ctx, AGENT_ID)
 FunctionComponent({
-  agentId: AGENT_ID,                       // from Xiaoyi Open Platform — not a secret but keep in config
+  agentId: AGENT_ID,                       // from Xiaoyi Open Platform - not a secret but keep in config
   onError: (err: BusinessError) => { /* fall back to in-app agent */ },
   options: { title: 'Ask Celia', queryText: 'Is ibuprofen safe for me?' },
   controller: this.controller
 })
-// controller.on('agentDialogOpened' | 'agentDialogClosed', cb) — remove with off() in aboutToDisappear
+// controller.on('agentDialogOpened' | 'agentDialogClosed', cb) - remove with off() in aboutToDisappear
 ```
 
 ## In-app agent (always-works path)

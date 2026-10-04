@@ -342,7 +342,7 @@
     r.resting = cleanResting(r.resting);
     var root = $('report');
     var p = r.patient;
-    document.title = 'Long QT safety report' + (p.name ? ' — ' + p.name : '');
+    document.title = 'Long QT safety report' + (p.name ? ' - ' + p.name : '');
 
     var head = el('header', 'head');
     head.setAttribute('data-reveal', '');
@@ -405,7 +405,7 @@
       r.flagged.forEach(function (f) {
         var li = el('li');
         var main = el('div', 'main');
-        main.appendChild(el('div', 'name', f.text.split(' — ')[0]));
+        main.appendChild(el('div', 'name', f.text.split(' - ')[0]));
         main.appendChild(el('div', 'sub', shortDate(f.ts) + (f.text.indexOf('interaction') >= 0 ? ' · interacts with current medicines' : '')));
         li.appendChild(main);
         li.appendChild(riskBadge(f.level));

@@ -1,4 +1,4 @@
-// POST /functions/v1/agent — one model step of the Celia.ai agent loop.
+// POST /functions/v1/agent - one model step of the Celia.ai agent loop.
 //
 // The loop itself runs ON THE DEVICE (AgentCore). This function is a thin, stateless relay:
 //   request  { context, messages, continuation? }
@@ -56,7 +56,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
   const body: Record<string, unknown> = {
     model: env('OPENAI_MODEL', 'gpt-6.1-sol'),
     reasoning: { effort: env('OPENAI_REASONING_EFFORT', 'low') }, // routing + short explanations need little thought
-    instructions: buildInstructions(parsed.context), // not inherited via previous_response_id — always resend
+    instructions: buildInstructions(parsed.context), // not inherited via previous_response_id - always resend
     input,
     tools: TOOLS,
     tool_choice: 'auto',

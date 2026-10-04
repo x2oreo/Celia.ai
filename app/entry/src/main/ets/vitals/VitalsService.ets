@@ -50,7 +50,7 @@ export class VitalsService {
     if (source === 'WATCH' && !WatchSource.available()) {
       // The watch reaches the phone through Supabase; without a project to read (no backend, or the local AI-only
       // dev backend with no SHARE_ANON_KEY) fall back, clearly labelled.
-      log.warn('WATCH source needs a Supabase project (LocalConfig.ets) — using SIMULATED');
+      log.warn('WATCH source needs a Supabase project (LocalConfig.ets) - using SIMULATED');
     }
     // The user's pick on the Health tab (WatchSource) wins over the requested source.
     this.source = source === 'WATCH' ? WatchSource.active() : 'SIMULATED';

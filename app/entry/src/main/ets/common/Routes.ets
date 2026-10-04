@@ -80,7 +80,7 @@ export class DoctorPrepParam {
 
 export class SosParam {
   test: boolean;
-  reason: string;   // e.g. "heart rate 165 at rest" — shown on screen and in the message
+  reason: string;   // e.g. "heart rate 165 at rest" - shown on screen and in the message
   auto: boolean;    // started by a vitals alert (true) or by the user (false)
 
   // 'WATCH': the watch already sent the SOS (SosController.watchSent), so the page opens in its sent state with no

@@ -1,7 +1,7 @@
 # S5 doctor
 
 ## AI_WORKFLOW entry
-### 2026-10-03 — Georgi + Claude Code: doctor visits with questions (B6) and feeling diary (B15) (branch `georgi/b-doctor`)
+### 2026-10-03 - Georgi + Claude Code: doctor visits with questions (B6) and feeling diary (B15) (branch `georgi/b-doctor`)
 - Asked: saved doctor visits (specialty, date, reason, worries → deterministic brief → AI summary), names and
   contacts stripped from free text before it leaves the phone, request validation in `/doctor-summary` extended
   with the banned-word / dose rejection kept, agent tile still opening prep on a specialty; a "How are you feeling?"
@@ -56,7 +56,7 @@
   `surface_alt`, privacy caption in `ink_3`, primary `Save and build the brief`, quiet `Cancel`.
 - **Doctor report on a visit**: title "{Specialty} · {date}", no specialty chips, the visit sections first; the AI
   block caption says the summary is saved with the visit.
-- **How are you feeling?** (route `feeling`): intro, five mood chips (44 vp, pill, ink when selected — moods are
+- **How are you feeling?** (route `feeling`): intro, five mood chips (44 vp, pill, ink when selected - moods are
   not verdicts, never risk colours), a neutral `surface` card offering `Log a symptom` for Low / Unwell, note
   area on `surface_alt`, primary `Save to diary` (inactive until a mood is picked), `RECENT` rows like the symptom log.
 - **Feeling widget (2×2)**: `surface` card, `CELIA` caption in `ink_3`, "How are you feeling?" in `headline`, ink

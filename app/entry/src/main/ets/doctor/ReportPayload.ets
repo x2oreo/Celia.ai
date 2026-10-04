@@ -1,5 +1,5 @@
 // Doctor report as structured data for the shareable web report (site/report). Same deterministic sources as the
-// text brief (DoctorPrep.ets) — no AI — plus the resting heart-rate trend and dose adherence. Pure, unit tested.
+// text brief (DoctorPrep.ets) - no AI - plus the resting heart-rate trend and dose adherence. Pure, unit tested.
 // Field names are short-ish but readable; the viewer page mirrors them (site/report/index.html).
 
 import { Profile } from '../model/Profile';

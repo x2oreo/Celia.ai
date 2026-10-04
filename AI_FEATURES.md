@@ -1,4 +1,4 @@
-# AI features — Celia.ai
+# AI features - Celia.ai
 
 Celia.ai's agent is decision support for people with congenital Long QT syndrome (LQTS). It is **not a medical device**.
 The app's main design rule is that **verdicts come from deterministic data and the AI only explains them.**
@@ -19,7 +19,7 @@ The app's main design rule is that **verdicts come from deterministic data and t
 | Celia system assistant | none | Intents `CheckDrugSafety`, `ShowEmergencyCard`, `LogSymptom`, `TakeDose`, `ShowPharmacyCard`, `AddMedication`, `ReadEmergencyCard` call the deterministic paths directly (no LLM) |
 | Chat history and new chats | Optional: the model may call `start_new_chat` (with a name the user gave) | Chats are saved on the phone (encrypted RDB) message by message. Short commands ("new chat", "start over", "save this chat") are matched on device after `SafetyGate`, so they work offline. Reopened chats keep display cards only (verdict, medicines, alternatives, emergency card); confirm, quick-reply and SOS cards are dropped |
 | Symptom logging in chat (T27) | Optional: the model may call `log_symptom` with an enum symptom, severity 1–5, activity and a few of the user's words | Symptom enum and severity are validated on the phone; the heart-rate window (±10 min) is attached on the phone; a red-flag symptom (fainting, chest pain, severe breathlessness) starts the SOS countdown by rule (`isRedFlag`), not by the model. Unknown symptom → error back to the model, nothing logged |
-| Doctor brief summary (T13) | Optional `/doctor-summary`: 2–3 sentences atop the brief | The brief itself is deterministic and complete. The model gets only the brief's medicine lines with their risk words, interactions, flagged checks and counts — never the Patient section, notes, contacts or symptom notes. Output checked on server and phone: 20–420 chars, no "safe / harmless / no risk", no doses, no start/stop advice → otherwise dropped and the brief stands alone. Shown under `AI SUMMARY` |
+| Doctor brief summary (T13) | Optional `/doctor-summary`: 2–3 sentences atop the brief | The brief itself is deterministic and complete. The model gets only the brief's medicine lines with their risk words, interactions, flagged checks and counts - never the Patient section, notes, contacts or symptom notes. Output checked on server and phone: 20–420 chars, no "safe / harmless / no risk", no doses, no start/stop advice → otherwise dropped and the brief stands alone. Shown under `AI SUMMARY` |
 | Read the emergency card aloud (T25) | Cloud `/speak` (TTS) for non-English cards or when no on-device voice exists | Text is the pre-translated card (`CardStrings`), built by `emergency/CardSpeech.ets`: medical part only, never name, contacts or notes |
 | Emergency hand-off | **none** | Any agent emergency (typed, spoken, unanswered check-in) opens the app's SOS countdown; the agent quotes the same ambulance number and countdown that screen uses |
 
@@ -72,7 +72,7 @@ genotype):
 - a one-line heart-rate summary
 - the local emergency number
 - the locale
-- recent chat text (the last 12 messages of the open chat only — other saved chats are never sent)
+- recent chat text (the last 12 messages of the open chat only - other saved chats are never sent)
 
 `/med-info` receives only a medicine name and its active ingredient, through the privacy-ledger path
 (`common/Net.ets`), and only when the user taps "Explain it in plain words".
@@ -88,7 +88,7 @@ address, location) is blocked before it is sent (`BackendClient` / `Net`).
 
 The AI paths never send names, phone numbers, emergency contacts or device IDs. (Separately, and only when the user taps
 "Send report link" or opens the card QR, the card/report is uploaded **encrypted on the phone** to `/share`; the server
-stores ciphertext only and the key stays in the link — no AI is involved in that path.) Request validation in `_shared/validate.ts`
+stores ciphertext only and the key stays in the link - no AI is involved in that path.) Request validation in `_shared/validate.ts`
 rejects anything outside that shape.
 
 The relay uses `previous_response_id` within a turn, so OpenAI keeps the response under its standard API retention.
@@ -104,7 +104,7 @@ project as `watch_metrics` rows keyed by a device id (heart rate, alerts, sympto
 simulated vitals, and an `sos` row with location when allowed). The phone writes `watch_context` (genotype, last
 risky medicine and time) so the watch can tighten its limits, and reads the metrics back. The phone's requests show
 in the ledger; the watch app has no ledger of its own. These rows are guarded by a shared anon key plus the device
-id, not per-user auth — a known limit of this build.
+id, not per-user auth - a known limit of this build.
 
 ## 4. Validation of model output (`app/.../agent/ResponseValidator.ets`)
 

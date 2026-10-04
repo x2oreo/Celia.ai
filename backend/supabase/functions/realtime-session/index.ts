@@ -1,4 +1,4 @@
-// POST /functions/v1/realtime-session — mints a short-lived OpenAI Realtime client secret for speech-to-speech.
+// POST /functions/v1/realtime-session - mints a short-lived OpenAI Realtime client secret for speech-to-speech.
 // The session gets the SAME instructions and tool schemas as /agent; tools still execute on the device.
 // Request: { context }. Response: { clientSecret, expiresAt, model, promptVersion }.
 // The client secret is single-purpose and expires in 2 minutes (only needed to open the WebSocket).

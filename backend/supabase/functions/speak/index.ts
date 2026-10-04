@@ -1,4 +1,4 @@
-// POST /functions/v1/speak — text-to-speech fallback when on-device Core Speech has no English/Polish voice.
+// POST /functions/v1/speak - text-to-speech fallback when on-device Core Speech has no English/Polish voice.
 // Request: { text }. Response: raw PCM, 24 kHz, 16-bit, mono, little-endian (application/octet-stream),
 // which the app plays directly with AudioRenderer.
 

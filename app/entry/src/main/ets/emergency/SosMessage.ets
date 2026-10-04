@@ -28,7 +28,7 @@ export function sosMessage(p: Profile, meds: Medication[], where: GeoPoint | und
   test: boolean): string {
   const lines: string[] = [];
   if (test) {
-    lines.push('*** TEST — NOT A REAL EMERGENCY ***');
+    lines.push('*** TEST - NOT A REAL EMERGENCY ***');
   }
   const who: string = p.name !== undefined && p.name.length > 0 ? p.name : 'I';
   lines.push(`SOS: ${who} may be having a heart rhythm emergency${reason.length > 0 ? ` (${reason})` : ''}.`);

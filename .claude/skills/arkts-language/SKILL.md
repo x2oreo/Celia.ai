@@ -1,6 +1,6 @@
 ---
 name: arkts-language
-description: ArkTS language rules for HarmonyOS (.ets files) — the strict, statically-typed TypeScript dialect. Use whenever writing or fixing ArkTS code, porting TS/JS logic into a HarmonyOS app, or when the compiler reports `arkts-no-*` / 106050xx errors. Covers what TS features are banned and the idiomatic replacement, async/concurrency (TaskPool, Worker), error handling, and JSON.
+description: ArkTS language rules for HarmonyOS (.ets files) - the strict, statically-typed TypeScript dialect. Use whenever writing or fixing ArkTS code, porting TS/JS logic into a HarmonyOS app, or when the compiler reports `arkts-no-*` / 106050xx errors. Covers what TS features are banned and the idiomatic replacement, async/concurrency (TaskPool, Worker), error handling, and JSON.
 ---
 
 # ArkTS language
@@ -24,7 +24,7 @@ Docs: `typescript-to-arkts-migration-guide`, `arkts-more-cases` (see `harmonyos-
 | `var` (arkts-no-var) | `let` / `const` |
 | `function () {}` expressions (arkts-no-func-expressions) | Arrow functions |
 | `this` in standalone functions (arkts-no-standalone-this) | Class methods |
-| Structural typing — assigning unrelated class with same shape (arkts-no-structural-typing) | Common `interface` both implement / explicit conversion |
+| Structural typing - assigning unrelated class with same shape (arkts-no-structural-typing) | Common `interface` both implement / explicit conversion |
 | `delete obj.x` (arkts-no-delete) | Optional field set to `undefined`, or `Map.delete` |
 | `for (k in obj)` (arkts-no-for-in) | `for...of` over arrays / `Object.keys()` / `Map.forEach` |
 | `in` operator (arkts-no-in) | `instanceof`, or a discriminator field |

@@ -53,7 +53,7 @@ export function boxLabel(box: BoxInfo): string {
 export class CheckService {
   private static riskyChecks: Listeners<CheckOutcome> = new Listeners<CheckOutcome>();
 
-  // Fires for KNOWN_RISK verdicts and any interaction — used to buzz the watch (F-33).
+  // Fires for KNOWN_RISK verdicts and any interaction - used to buzz the watch (F-33).
   static onRiskyCheck(cb: Listener<CheckOutcome>): () => void {
     return CheckService.riskyChecks.add(cb);
   }
@@ -76,7 +76,7 @@ export class CheckService {
     const v: DrugVerdict = offline.risk === 'UNKNOWN_DRUG' ? await checkOnline(box.ingredients, offline) : offline;
     v.query = boxLabel(box);
     if (v.risk === 'UNKNOWN_DRUG') {
-      // We know the box, just not (all of) its ingredients — say so precisely.
+      // We know the box, just not (all of) its ingredients - say so precisely.
       v.reason = `We know this box, but ${box.ingredients} is not in our QT list yet, so we cannot say it is ` +
         'safe. Ask your pharmacist before taking it.';
     }

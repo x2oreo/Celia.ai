@@ -1,4 +1,4 @@
-// POST /functions/v1/box-identify — barcode of a box the app does not know → brand + English ingredients.
+// POST /functions/v1/box-identify - barcode of a box the app does not know → brand + English ingredients.
 // Never a safety verdict: the app runs the normal deterministic check on the ingredients after the user confirms.
 //   { gtin, stage: 'fast' }  cache → every deterministic source in parallel (openFDA, CIMA, UPCitemdb, Open Facts)
 //   { gtin, stage: 'deep', hint? }  AI web search (only after a fast miss; skipped without OPENAI_API_KEY)

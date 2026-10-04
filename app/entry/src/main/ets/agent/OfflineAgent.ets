@@ -27,7 +27,7 @@ const DRUG_PATTERNS: RegExp[] = [
   /\bczy mogę (wziąć|brać|przyjąć)\s+(.+)/
 ];
 
-// "Is it safe?" — a pronoun is never a medicine name; keep looking (or fall through to UNKNOWN).
+// "Is it safe?" - a pronoun is never a medicine name; keep looking (or fall through to UNKNOWN).
 const PRONOUNS: string[] = ['it', 'this', 'that', 'they', 'them', 'these', 'those', 'he', 'she'];
 
 const TRAILING: RegExp = /\b(for me|please|now|today|with my (meds|medicines|medication))\b.*$/;
@@ -217,7 +217,7 @@ export class OfflineAgent {
         return reply('Your resting heart rate, doses and symptoms by day are one tap away.', turn.actions);
       }
       default:
-        return reply(`${prefix} I can still check medicines — try "Can I take ibuprofen?" — show your emergency ` +
+        return reply(`${prefix} I can still check medicines - try "Can I take ibuprofen?" - show your emergency ` +
           'card, scan a medicine box, or open your reminders, symptom log and trends.', []);
     }
   }

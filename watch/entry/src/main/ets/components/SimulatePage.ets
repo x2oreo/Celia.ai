@@ -61,7 +61,7 @@ export struct SimulatePage {
         SimButton({ label: this.activityLabel(), onTap: () => {
           this.ctrl.cycleActivityOverride();
         } })
-        SimButton({ label: `Genotype: ${this.ctrl.genotype === 'UNKNOWN' ? '—' : this.ctrl.genotype}`, onTap: () => {
+        SimButton({ label: `Genotype: ${this.ctrl.genotype === 'UNKNOWN' ? '-' : this.ctrl.genotype}`, onTap: () => {
           this.ctrl.cycleGenotype();
         } })
         SimButton({ label: this.ctrl.riskyDrug.length > 0 ? 'Risky drug: on' : 'Risky drug: off', onTap: () => {

@@ -1,4 +1,4 @@
-// Dose schedule and today's doses (F-38). Pure — unit tested.
+// Dose schedule and today's doses (F-38). Pure - unit tested.
 
 export interface DoseReminder {
   id: number;
@@ -51,7 +51,7 @@ export function timeLabel(r: DoseReminder): string {
 }
 
 // The dose a "I took my medicine" (Celia TakeDose intent, notification button) refers to: the one due now, else the
-// earliest missed one today. Never an upcoming dose — that would log a dose before it is due.
+// earliest missed one today. Never an upcoming dose - that would log a dose before it is due.
 export function nextDoseToTake(reminders: DoseReminder[], logs: DoseLog[], now: number): DoseReminder | undefined {
   const sorted: DoseReminder[] = reminders.slice().sort((a: DoseReminder, b: DoseReminder) =>
     (a.hour * 60 + a.minute) - (b.hour * 60 + b.minute));

@@ -1,4 +1,4 @@
-// Tool schemas for the Celia.ai agent — single source of truth for /agent and /realtime-session.
+// Tool schemas for the Celia.ai agent - single source of truth for /agent and /realtime-session.
 // The tools are EXECUTED ON THE DEVICE (AgentCore → ToolRegistry). The backend only advertises them to the model.
 // Every name here must have an executor in app/entry/src/main/ets/agent/tools/. Keep both lists in sync.
 //

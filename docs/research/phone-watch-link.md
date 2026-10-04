@@ -54,7 +54,7 @@ What it offers (`@hms.health.wearEngine.d.ts`, `wearEngine.*`):
 | `getNotifyClient` | `notify()` template notifications with 0-3 buttons, button feedback | Message notification | Individuals and enterprises |
 | `getMonitorClient` | `subscribeEvent(EVENT_HEART_RATE_ALARM / wearStatus / connectionStatus / lowPower …)` | `USER_STATUS` | **Enterprise** only |
 | `getSensorClient` | `subscribeSensor(HEART_RATE / PPG / ECG / ACC …)` | `HEALTH_SENSOR`, `MOTION_SENSOR` | HEALTH: "qualified research institutions" only; MOTION: enterprise |
-| `getAuthClient` | `requestAuthorization({permissions})` (user consent screen) | — | — |
+| `getAuthClient` | `requestAuthorization({permissions})` (user consent screen) | - | - |
 
 Constraints ([we-business_introduction]): phones and tablets, wearables since 5.1.0(18); **phones only in the
 Chinese mainland**; **no emulator**. Testing needs Huawei Health installed on the phone, signed in with a HUAWEI ID,
@@ -121,12 +121,12 @@ Kit and S6's watch app signed with that profile.
 
 ## Sources
 
-- [we-business_introduction] Wear Engine: About the Service (capabilities, regions, emulator) — https://developer.huawei.com/consumer/en/doc/harmonyos-guides/we-business_introduction
-- [wearengine_apply] Applying for Wear Engine — https://developer.huawei.com/consumer/en/doc/harmonyos-guides/wearengine_apply
-- [wearengine_verification] Debugging and Verification — https://developer.huawei.com/consumer/en/doc/harmonyos-guides/wearengine_verification
-- Watch-side P2P — https://developer.huawei.com/consumer/en/doc/harmonyos-guides/watch_p2p_communication
-- Wear Engine API reference — https://developer.huawei.com/consumer/en/doc/harmonyos-references/wearengine_api
-- [data-sync-of-distributed-data-object] Cross-Device Sync of Distributed Data Objects — https://developer.huawei.com/consumer/en/doc/harmonyos-guides/data-sync-of-distributed-data-object
-- [uiability-cross-device-interaction] Cross-device call invocation — https://developer.huawei.com/consumer/en/doc/harmonyos-guides/uiability-cross-device-interaction
-- Push Kit regions and wearables — https://developer.huawei.com/consumer/en/doc/harmonyos-guides/push-kit-introduction
+- [we-business_introduction] Wear Engine: About the Service (capabilities, regions, emulator) - https://developer.huawei.com/consumer/en/doc/harmonyos-guides/we-business_introduction
+- [wearengine_apply] Applying for Wear Engine - https://developer.huawei.com/consumer/en/doc/harmonyos-guides/wearengine_apply
+- [wearengine_verification] Debugging and Verification - https://developer.huawei.com/consumer/en/doc/harmonyos-guides/wearengine_verification
+- Watch-side P2P - https://developer.huawei.com/consumer/en/doc/harmonyos-guides/watch_p2p_communication
+- Wear Engine API reference - https://developer.huawei.com/consumer/en/doc/harmonyos-references/wearengine_api
+- [data-sync-of-distributed-data-object] Cross-Device Sync of Distributed Data Objects - https://developer.huawei.com/consumer/en/doc/harmonyos-guides/data-sync-of-distributed-data-object
+- [uiability-cross-device-interaction] Cross-device call invocation - https://developer.huawei.com/consumer/en/doc/harmonyos-guides/uiability-cross-device-interaction
+- Push Kit regions and wearables - https://developer.huawei.com/consumer/en/doc/harmonyos-guides/push-kit-introduction
 - Repo: `watch/README.md`, `vitals/WatchCloudSource.ets`, `backend/supabase/functions/sos/`, `docs/hackathon/conditions-research.md` §3

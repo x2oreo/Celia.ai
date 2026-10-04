@@ -1,4 +1,4 @@
-// Privacy (F-45, F-46): app lock switch and "What left my phone" — the ledger of every outbound request.
+// Privacy (F-45, F-46): app lock switch and "What left my phone" - the ledger of every outbound request.
 
 import { Ledger, LedgerEntry, ledgerReport } from '../privacy/Ledger';
 import { common } from '@kit.AbilityKit';

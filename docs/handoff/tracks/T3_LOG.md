@@ -1,4 +1,4 @@
-# T3 — Screens: log
+# T3 - Screens: log
 
 Branch `kaloyan/t3-screens`. Session of 4 October 2026 (emulator "Pura 90", 127.0.0.1:5555).
 
@@ -76,7 +76,7 @@ Tap counts from Home:
 "My medicines · N", "✓ Found: …", "… · interaction", "N / 5", message counts, barcode lines, expanded / collapsed,
 "Not available yet", the "ask about this medicine" prompt. `trends_offline` copy now says "try again".
 
-### A6 — Trends data path
+### A6 - Trends data path
 
 - Path before: `loadTrends` → `Config.hasWatchCloud()` → false whenever `BACKEND_URL` is `127.0.0.1` → demo data.
   Requests used `Config.BACKEND_URL` + `Config.SUPABASE_ANON_KEY` (`'local-dev'` with the local AI proxy).

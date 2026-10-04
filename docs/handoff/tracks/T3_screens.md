@@ -1,4 +1,4 @@
-# T3 — Screens (A5, then A6)
+# T3 - Screens (A5, then A6)
 
 Read `docs/handoff/tracks/README.md` first (scope change, rules, emulator lock), then sections 3-7 of
 `docs/handoff/KALOYAN_agent_and_ui.md`. Tasks A5 and A6 there are yours.
@@ -14,7 +14,7 @@ Not yours: `AgentPage`, `components/agent/*`, `MainTabs`, `HomePage`, `VoiceOrb`
 `AgentCards.ets`, `agent/*`, `voice/*`, `backend/*` (T2); every page owned by Workstream B (Onboarding, Emergency,
 Responder, Settings, Privacy, Doctor prep, SOS, Bystander, Pharmacy card, Pair watch, Lock screen).
 
-## 1. A5 — UX pass, structure only
+## 1. A5 - UX pass, structure only
 
 The look is out of scope (see the scope change in the README): same tokens, same components, no restyle. Per page:
 
@@ -36,7 +36,7 @@ Go page by page: change, build, look at it on the emulator, commit. Screenshots 
 `docs/handoff/tracks/shots/t3/`. Put the before / after tap counts for Doctor prep, Symptom log and Reminders in
 your log.
 
-## 2. A6 — Trends with real data
+## 2. A6 - Trends with real data
 
 `Config.SHARE_BACKEND_URL` already defaults to the deployed Supabase project; `LocalConfig.BACKEND_URL` points at
 `127.0.0.1` for the AI proxy. Find out which URL and key the Trends data path uses (`vitals/Trends.ets`,

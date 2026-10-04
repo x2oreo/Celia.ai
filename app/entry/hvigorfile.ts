@@ -3,7 +3,7 @@ import * as path from 'path';
 import { hapTasks } from '@ohos/hvigor-ohos-plugin';
 
 // LocalConfig.ets is gitignored (per-developer backend URL/key). Create it from the template so a fresh
-// clone builds — in the terminal and in DevEco alike.
+// clone builds - in the terminal and in DevEco alike.
 const commonDir: string = path.resolve(__dirname, 'src/main/ets/common');
 const localConfig: string = path.join(commonDir, 'LocalConfig.ets');
 const template: string = fs.readFileSync(path.join(commonDir, 'LocalConfig.example.ets'), 'utf8');

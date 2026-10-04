@@ -325,7 +325,7 @@ export struct HeartPage {
           RiskShape({ risk: a.severity === 'CRITICAL' ? 'KNOWN_RISK' : (a.severity === 'WARN' ? 'POSSIBLE_RISK' :
             'UNKNOWN_DRUG'), dim: 18 })
             .accessibilityLevel('no-hide-descendants')
-          Text(a.hr > 0 ? $r('app.string.heart_bpm_value', Math.round(a.hr)) : '—')
+          Text(a.hr > 0 ? $r('app.string.heart_bpm_value', Math.round(a.hr)) : '-')
             .accessibilityText(this.alertWord(a))
             .fontSize($r('app.float.font_badge'))
             .fontWeight(FontWeight.Bold)

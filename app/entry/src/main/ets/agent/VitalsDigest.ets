@@ -1,5 +1,5 @@
 // Keeps a short rolling window of vitals so the agent can summarise them (get_vitals_summary, context line)
-// without touching VitalsService internals. Labels simulated data as simulated — never presents it as real.
+// without touching VitalsService internals. Labels simulated data as simulated - never presents it as real.
 
 import { VitalsAlert, VitalsSample } from '../model/Vitals';
 import { VitalsService } from '../vitals/VitalsService';

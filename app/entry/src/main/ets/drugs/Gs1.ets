@@ -1,5 +1,5 @@
 // Medicine-box barcodes (F-36): EAN-13 / GTIN-14 and GS1 DataMatrix (EU Falsified Medicines Directive codes
-// carry the GTIN in AI (01)). Pure parsing + check-digit validation — unit tested.
+// carry the GTIN in AI (01)). Pure parsing + check-digit validation - unit tested.
 //
 // GTIN → product: real Polish boxes come from the bundled register (GtinCatalog.ets); boxes from other
 // countries are taught once by the user (BarcodeService). A small DEMO table in the GS1 restricted-circulation

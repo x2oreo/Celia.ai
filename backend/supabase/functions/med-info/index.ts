@@ -1,7 +1,7 @@
-// POST /functions/v1/med-info — plain-language explanation of what a medicine is, for the medicine detail sheet.
+// POST /functions/v1/med-info - plain-language explanation of what a medicine is, for the medicine detail sheet.
 // The model ONLY explains what the medicine is, what it contains and general patient-leaflet tips. It never judges
 // heart / QT safety and never gives doses: the app's verdict comes from its own dataset and is shown separately.
-// No personal data is sent — only the medicine name (and its active ingredient when the app knows it).
+// No personal data is sent - only the medicine name (and its active ingredient when the app knows it).
 // Request: { medicine, ingredient }. Response: { recognised, summary, contains, usedFor, tips[], dropped? }.
 
 import { env, json, openaiJson, outputText } from '../_shared/openai.ts';

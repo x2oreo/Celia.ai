@@ -524,7 +524,7 @@ export struct HomePage {
     })
   }
 
-  // Tip of the day (F-39): static, sourced genotype tips — never AI, never a risk colour. Collapsed by default.
+  // Tip of the day (F-39): static, sourced genotype tips - never AI, never a risk colour. Collapsed by default.
   @Builder
   tip() {
     Column({ space: 8 }) {

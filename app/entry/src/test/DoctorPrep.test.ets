@@ -165,7 +165,7 @@ export default function doctorPrepTest() {
       expect(text.includes('clarithromycin')).assertTrue();
       expect(text.includes('Allergic to penicillin')).assertTrue();
       expect(text.includes('dizziness, severity 3/5, during stairs')).assertTrue();
-      expect(text.includes('Cipralex — known risk of torsades')).assertTrue();
+      expect(text.includes('Cipralex - known risk of torsades')).assertTrue();
     });
 
     it('oldScansAreLeftOut', 0, () => {

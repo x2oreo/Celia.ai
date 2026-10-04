@@ -1,4 +1,4 @@
-// Phase 4 — Realtime smoke test. Mints a client secret through the local /realtime-session function, opens the
+// Phase 4 - Realtime smoke test. Mints a client secret through the local /realtime-session function, opens the
 // OpenAI Realtime WebSocket with it (like app/.../voice/RealtimeSession.ets), runs one check_drug round trip with a
 // fixture output, logs every server event type, and checks the event names the device code depends on.
 //

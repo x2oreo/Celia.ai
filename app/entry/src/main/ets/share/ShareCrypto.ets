@@ -1,6 +1,6 @@
 // End-to-end encryption for shared links (emergency card, doctor report): AES-256-GCM with a fresh random key per
 // share. Output layout matches WebCrypto (iv | ciphertext | tag), so the viewer page decrypts it with
-// crypto.subtle in any browser. The key only ever travels in the link's #fragment — never to a server.
+// crypto.subtle in any browser. The key only ever travels in the link's #fragment - never to a server.
 
 import { cryptoFramework } from '@kit.CryptoArchitectureKit';
 import { base64UrlDecode, base64UrlEncode, utf8Decode, utf8Encode } from '../common/Base64Url';

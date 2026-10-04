@@ -1,6 +1,6 @@
 # S4 notify-sos
 
-## Notification Kit — what was confirmed before coding (2026-10-03)
+## Notification Kit - what was confirmed before coding (2026-10-03)
 
 Sources: the SDK's own declaration files in DevEco Studio (`sdk/default/openharmony/ets/api`, SDK API 24, each
 member carries `@since`), Context7 (`/websites/developer_huawei_consumer_cn_doc_harmonyos-guides` and
@@ -45,7 +45,7 @@ WantAgent to fake a tap (the system answers "caller unfocused / PERMISSION_DENIE
 delivering the exact Want its WantAgent carries (`aa start … --ps notifyAction … --pi notifyId …`).
 
 ## AI_WORKFLOW entry
-### 2026-10-03 — Georgi + Claude Code: actionable notifications and an honest watch SOS (branch `georgi/b-notify-sos`)
+### 2026-10-03 - Georgi + Claude Code: actionable notifications and an honest watch SOS (branch `georgi/b-notify-sos`)
 - Asked: B7 (notification slots per kind, action buttons, taps open the right page) and B8 (a watch SOS must not
   start a second countdown; the SOS page says what was sent, to whom, and what still needs a tap; a "For first
   responders" button once the countdown ends).
@@ -76,7 +76,7 @@ delivering the exact Want its WantAgent carries (`aa start … --ps notifyAction
 **SOS sent state** (extends 10.2 "Emergency (active / SOS)"): after the countdown (or straight away for a watch SOS)
 the page shows the title (`title-1`; "Your watch sent an SOS" when the watch sent it, else "Get help now"), the
 subtitle in `ink_3`, then a **status card**: `surface`, 1 vp `border`, `radius_m`, padding `space_m`, three rows
-separated by `divider` — caps label (`font_caption`, bold, `ink_3`: WHAT WAS SENT · TO WHOM · STILL NEEDS A TAP) over
+separated by `divider` - caps label (`font_caption`, bold, `ink_3`: WHAT WAS SENT · TO WHOM · STILL NEEDS A TAP) over
 `font_small` `ink_2` text. Never a risk colour on the card: it is a report, not a verdict. Below it: danger "Call
 ambulance", secondary "Send SOS message", one secondary "Call {name}" per contact, secondary **For first
 responders** (doctor icon), the location line and the message preview.
@@ -99,7 +99,7 @@ responders** (doctor icon), the location line and the message preview.
 - `SosParam` has a fourth argument `sentBy` ('PHONE' default | 'WATCH').
 
 ## Found, not mine to fix
-- Emergency tab row "Start SOS countdown — Alerts your contacts if you don't answer" and the countdown text "…call the
+- Emergency tab row "Start SOS countdown - Alerts your contacts if you don't answer" and the countdown text "…call the
   ambulance and alert your contacts" overstate what happens (nothing is sent automatically). Strings in `string.json`
   / `EmergencyPage.ets` (S2). Suggest "Opens the call and message buttons if you don't answer."
 
@@ -108,7 +108,7 @@ responders** (doctor icon), the location line and the message preview.
 # Phase 2: B13 Live View + lock screen, B12 Push Kit (built from `docs/research/live-view.md` and `push-kit.md` on `georgi/b-research`)
 
 ## AI_WORKFLOW entry
-### 2026-10-04 — Georgi + Claude Code: Live View, lock-screen medical ID and Push Kit (branch `georgi/b-notify-sos`)
+### 2026-10-04 - Georgi + Claude Code: Live View, lock-screen medical ID and Push Kit (branch `georgi/b-notify-sos`)
 - Asked: implement what S7's research says is possible without approvals; list the rest as blocked.
 - Produced:
   - `emergency/LiveStatus.ets` + pure `emergency/SosLiveText.ets`: one `startLiveView` with a countdown `timer`
@@ -172,5 +172,5 @@ responders** (doctor icon), the location line and the message preview.
 - Coordinator (after Georgi's OK): apply `20261004110000_push_tokens.sql`; redeploy `sos` (`--no-verify-jwt`
   unchanged); later set `HUAWEI_PUSH_PROJECT_ID` / `HUAWEI_PUSH_SA_KEY`.
 - S1: call `PushToken.forget()` before `Session.signOut()` (the row is deleted with the user's token); B9 should add
-  `watch_pairings.user_id` — `sos/index.ts` `pushToPatient` already reads it.
+  `watch_pairings.user_id` - `sos/index.ts` `pushToPatient` already reads it.
 - S2: the lock-screen card reuses `hiddenOnCard` and the widget snapshot (`WidgetData` got four `mid*` keys).

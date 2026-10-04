@@ -1,4 +1,4 @@
-// The one path for an agent-side medicine check: CheckService (main's UI path — barcode, offline dataset, online
+// The one path for an agent-side medicine check: CheckService (main's UI path - barcode, offline dataset, online
 // fallback, history log, watch buzz) plus ComboRules against the user's current medicines. Shared by the
 // check_drug tool, the offline agent and the Celia intent, so the chat and the check screen never disagree.
 

@@ -1,6 +1,6 @@
 -- One confirmation per device for AI-found boxes (box-identify): an AI web answer is shared with everyone only
 -- after AI_CONFIRMATIONS_NEEDED distinct devices said "yes, this is my box". voter_hash = sha256(secret salt |
--- gtin | client address) — nothing personal in clear. Only the edge function (service role) reads or writes it.
+-- gtin | client address) - nothing personal in clear. Only the edge function (service role) reads or writes it.
 
 create table if not exists box_confirmations (
   gtin        text not null references box_cache (gtin) on delete cascade,

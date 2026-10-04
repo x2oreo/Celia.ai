@@ -1,4 +1,4 @@
-// What we know about a scanned medicine box (F-36). Facts from the national register or from the user — never
+// What we know about a scanned medicine box (F-36). Facts from the national register or from the user - never
 // a safety statement; the verdict (DrugVerdict) stays the only safety answer.
 
 // ONLINE: identified by /box-identify (any country) and confirmed by the user; kept on this phone like LEARNED.
@@ -8,7 +8,7 @@ export interface BoxInfo {
   gtin: string;            // 13-digit GTIN from the barcode
   brand: string;           // name on the box, e.g. "Klacid"
   substance: string;       // active substance as registered (Latin INN in PL), e.g. "Clarithromycinum"
-  ingredients: string;     // English INNs joined by " + " — what DrugChecker checks
+  ingredients: string;     // English INNs joined by " + " - what DrugChecker checks
   strength: string;        // e.g. "500 mg"
   form: string;            // e.g. "Film-coated tablets"
   pack: string;            // e.g. "14 tabl."

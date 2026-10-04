@@ -1,4 +1,4 @@
-# Workstream A — Agent experience and UI/UX redesign (Kaloyan)
+# Workstream A - Agent experience and UI/UX redesign (Kaloyan)
 
 You are an agent working in the Celia.ai repo. This file is your whole brief. Read it fully, then read `CLAUDE.md`
 and `docs/design/DESIGN.md` before touching code. A second agent works in parallel on Workstream B
@@ -91,7 +91,7 @@ All phone paths are under `app/entry/src/main/ets/`.
 
 ## 5. Tasks
 
-### Phase 1 — must work and be verified on the emulator before the deadline
+### Phase 1 - must work and be verified on the emulator before the deadline
 
 **A1. Agent is home.**
 Tab 0 becomes the agent itself, not a dashboard that links to it.
@@ -159,7 +159,7 @@ feature is merged.
 Point `LocalConfig` at the deployed Supabase project (not `127.0.0.1`) and confirm the page with real watch rows:
 14 and 30 days, gaps, insights list, offline empty state.
 
-### Phase 2 — more. Build after Phase 1 is merged; may ship unverified if labelled so
+### Phase 2 - more. Build after Phase 1 is merged; may ship unverified if labelled so
 
 - **A7. Watch UI redesign** (look only; internals belong to B): colours from resources instead of `Theme.ets` hex
   strings, minimum 11 fp text, one action per screen, crown rotation and Arc components (`ArcButton`, `ArcList`;

@@ -31,7 +31,7 @@ export const PHARMACY_TEXTS: PharmacyText[] = [
     'prima di darmelo (crediblemeds.org). Devo evitare i farmaci che allungano il QT. I miei farmaci attuali ' +
     'sono qui sotto.'),
   p('uk', 'У мене синдром подовженого QT.', 'Будь ласка, перевірте ризик подовження QT для будь-яких ліків, перш ' +
-    'ніж видати їх мені (crediblemeds.org). Я маю уникати препаратів, що подовжують QT. Мої поточні ліки — нижче.'),
+    'ніж видати їх мені (crediblemeds.org). Я маю уникати препаратів, що подовжують QT. Мої поточні ліки - нижче.'),
   p('ro', 'Am sindromul de QT lung.', 'Vă rog verificați riscul de prelungire a QT al oricărui medicament înainte ' +
     'de a mi-l da (crediblemeds.org). Trebuie să evit medicamentele care prelungesc QT. Medicația mea actuală ' +
     'este mai jos.'),

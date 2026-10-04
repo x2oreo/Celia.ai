@@ -1,6 +1,6 @@
 // Bottom tab bar hosted inside the root Navigation (pages/Index.ets): Today · Medicines · (orb) · Health · Emergency
 // (DESIGN.md §6.5, §10.1a). The orb in the middle is not a tab: it opens the agent stage. Any descendant can switch
-// tabs through @Consumer('tabIndex') — see TabIndex in common/Routes.ets. Pushed pages use TabRequest instead.
+// tabs through @Consumer('tabIndex') - see TabIndex in common/Routes.ets. Pushed pages use TabRequest instead.
 
 import { HomePage } from '../pages/HomePage';
 import { MedicinesPage } from '../pages/MedicinesPage';

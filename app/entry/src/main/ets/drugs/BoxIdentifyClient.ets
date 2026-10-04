@@ -1,5 +1,5 @@
 // Online identification of a box the phone does not know (Supabase /box-identify, any country). Only the barcode
-// leaves the phone (privacy ledger via common/Net.ets). The answer only names the product and its ingredients —
+// leaves the phone (privacy ledger via common/Net.ets). The answer only names the product and its ingredients -
 // never a verdict: after the user confirms, CheckService runs the usual deterministic check on the ingredients.
 // Two stages so the screen never waits on AI: 'fast' (registries and product databases, ~0.3-4 s) and, only on
 // a miss, 'deep' (AI web search, up to ~25 s).
@@ -29,7 +29,7 @@ export interface BoxCandidate {
 
 export class IdentifyReply {
   candidate: BoxCandidate | undefined;
-  hint: string;            // product name a database knew without ingredients — helps the web search
+  hint: string;            // product name a database knew without ingredients - helps the web search
 
   constructor(candidate: BoxCandidate | undefined, hint: string) {
     this.candidate = candidate;

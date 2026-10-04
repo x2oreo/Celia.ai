@@ -1,4 +1,4 @@
-// OWNER: Kaloyan — on-device text recognition (Core Vision Kit). The photo never leaves the phone on this path.
+// OWNER: Kaloyan - on-device text recognition (Core Vision Kit). The photo never leaves the phone on this path.
 // Returns '' when OCR is unavailable (e.g. not supported on the emulator) so callers fall back gracefully.
 
 import { textRecognition } from '@kit.CoreVisionKit';

@@ -56,7 +56,7 @@ async function ingredientsOf(rxcui: string): Promise<string[]> {
 // came back from RxNav are kept (misses are not, so a network blip is retried next time).
 const memo = new Map<string, string[]>();
 
-// [] when RxNav does not know the name (or is unreachable) — the caller then stays UNKNOWN_DRUG.
+// [] when RxNav does not know the name (or is unreachable) - the caller then stays UNKNOWN_DRUG.
 export async function normaliseToIngredients(name: string): Promise<string[]> {
   const clean = name.trim().slice(0, 80);
   if (clean.length < 3) {

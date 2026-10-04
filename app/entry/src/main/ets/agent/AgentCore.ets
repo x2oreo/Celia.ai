@@ -1,4 +1,4 @@
-// OWNER: Kaloyan — the agent loop. Runs on the device; the backend is a stateless model relay.
+// OWNER: Kaloyan - the agent loop. Runs on the device; the backend is a stateless model relay.
 //
 //   user text ─► SafetyGate ─(emergency)──────────────────────────► deterministic emergency reply
 //                    │
@@ -152,7 +152,7 @@ export class AgentCore {
     return this.chatChanged.add(cb);
   }
 
-  // Saves the open chat (it already is — every message is stored) and opens an empty one.
+  // Saves the open chat (it already is - every message is stored) and opens an empty one.
   newChat(): void {
     this.slot = new ChatSlot(-1);
     this.history = [];
@@ -336,7 +336,7 @@ export class AgentCore {
     const gate0: GateResult = SafetyGate.classify(input, this.checkInPending);
     if (gate0 === 'NONE' && ChatCommands.isNewChat(input)) {
       // Not stored: the command would otherwise become the saved chat's last message (or its title).
-      return this.switchChat('') ? this.say('Saved. This is a new chat — what would you like to talk about?', [], true)
+      return this.switchChat('') ? this.say('Saved. This is a new chat - what would you like to talk about?', [], true)
         : this.say('This is already a new chat. What would you like to talk about?', [], true);
     }
     this.remember('user', input);
@@ -455,7 +455,7 @@ export class AgentCore {
       log.warn(`logEvent failed: ${String(e)}`);
     }
     return this.say(`This could be serious. Sit or lie down now. In ${EMERGENCY_COUNTDOWN_SEC} seconds I'll show ` +
-      `one-tap buttons to call ${num} and message your emergency contacts — tap "I\'m OK" if you are fine.`,
+      `one-tap buttons to call ${num} and message your emergency contacts - tap "I\'m OK" if you are fine.`,
       [action('START_EMERGENCY', payload)], true);
   }
 
@@ -475,7 +475,7 @@ export class AgentCore {
     if (alert.severity === 'CRITICAL' && SosController.get().canAutoStart(Date.now())) {
       // Index opens the SOS countdown for this alert; don't start a second emergency path.
       this.cancelCheckIn();
-      this.proactive.emit(this.say(`${text} I've started the SOS countdown — tap "I'm OK" on that screen if you ` +
+      this.proactive.emit(this.say(`${text} I've started the SOS countdown - tap "I'm OK" on that screen if you ` +
         'are fine.', [], true));
       return;
     }
@@ -486,7 +486,7 @@ export class AgentCore {
     this.checkInPending = true;
     this.checkInTimer = setTimeout(() => {
       if (this.checkInPending) {
-        log.warn('check-in unanswered — starting emergency flow');
+        log.warn('check-in unanswered - starting emergency flow');
         this.emergency('No answer to heart-rate check-in').then((r: AgentReply) => this.proactive.emit(r));
       }
     }, CHECK_IN_TIMEOUT_MS);

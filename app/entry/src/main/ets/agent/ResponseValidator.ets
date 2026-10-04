@@ -1,4 +1,4 @@
-// OWNER: Kaloyan — every byte from the model passes through here before the user sees it.
+// OWNER: Kaloyan - every byte from the model passes through here before the user sees it.
 //   1. parseRelay: the /agent response must match the contract, otherwise → fallback.
 //   2. parseArgs: tool arguments must be a JSON object, otherwise the tool returns an error to the model.
 //   3. checkFinalText: the model's words must not contradict the deterministic verdicts of this turn.
@@ -47,7 +47,7 @@ const REASSURANCE: RegExp[] = [
 
 // The words right before a match negate it ("not safe", "nie jest bezpieczny").
 const NEGATION: RegExp = /(not|n't|never|no longer|(^|\s)nie)\s*((jest|są)\s*)?$/;
-// "That does not mean it is safe." — the match is inside a clause that denies it. Checked up to the sentence end.
+// "That does not mean it is safe." - the match is inside a clause that denies it. Checked up to the sentence end.
 const DENIAL: RegExp = /((not|n't)\s+(necessarily\s+)?(mean|means|guarantee|guarantees)|\bnie\s+(oznacza|znaczy|gwarantuje))\b[^.!?;]*$/;
 
 const RISK_WORDS: RegExp =
@@ -149,7 +149,7 @@ export function checkFinalText(text: string, verdicts: VerdictCardPayload[]): Te
     const r: TextCheck = { issue: 'EMPTY', text: replacement(verdicts) };
     return r;
   }
-  // The model must never reassure about a medicine — not after a verdict, and not without one ("X is safe" from
+  // The model must never reassure about a medicine - not after a verdict, and not without one ("X is safe" from
   // its own knowledge). Reassurance about other things ("your heart rate is fine") is allowed.
   const lower: string = normalizeText(trimmed);
   const aboutMedicine: boolean = verdicts.length > 0 || mentionsMedicine(lower);

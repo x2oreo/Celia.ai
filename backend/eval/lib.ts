@@ -441,12 +441,12 @@ const FACTS: Record<string, string> = {
     'fainting or cardiac arrest. It affects about 1 in 2,000 people. With beta-blockers, avoiding QT-prolonging ' +
     'medicines and keeping potassium and magnesium normal, most people live full lives.',
   triggers: 'Common triggers: medicines that prolong the QT interval; low potassium or magnesium (often after ' +
-    'vomiting, diarrhoea or diuretics); fever; and genotype-specific triggers — exercise and swimming for LQT1, ' +
+    'vomiting, diarrhoea or diuretics); fever; and genotype-specific triggers - exercise and swimming for LQT1, ' +
     'sudden loud noises (like alarm clocks) and strong emotions for LQT2, and rest or sleep with a slow heart rate ' +
     'for LQT3.',
   sick_day: 'Sick-day rules: vomiting, diarrhoea, fever or not eating can lower potassium and magnesium and make the ' +
     'QT longer. Drink fluids with electrolytes, keep taking your beta-blocker, and contact your doctor early. Many ' +
-    'anti-sickness medicines (for example ondansetron and domperidone) prolong the QT — check before taking any.',
+    'anti-sickness medicines (for example ondansetron and domperidone) prolong the QT - check before taking any.',
   emergency: 'Warning signs: fainting (especially during exercise, after a sudden noise, or in sleep), seizure-like ' +
     'episodes, or palpitations with dizziness. Call the emergency number straight away. Bystanders should start CPR ' +
     'if the person is unresponsive and not breathing normally, and use an AED (defibrillator) as soon as one is ' +

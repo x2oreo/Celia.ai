@@ -4,7 +4,7 @@
 // Possible Risk, Conditional Risk, plus the "Drugs to Avoid in Congenital Long QT" list (adrenergic
 // stimulants). Brand names: public national medicine registers (URPL for Poland, BDA for Bulgaria) and
 // common EU brands. CYP data: public drug-interaction tables (FDA "Drug Development and Drug
-// Interactions"). This is a demo subset for decision support, not a complete list — verify before relying
+// Interactions"). This is a demo subset for decision support, not a complete list - verify before relying
 // on it. Generic names are listed in English, Polish and Bulgarian (Cyrillic) where they differ.
 //
 // Rules checked by test/DrugData.test.ets: every alias maps to exactly one ingredient, every alternative is
@@ -15,7 +15,7 @@ import { RiskLevel } from '../model/DrugVerdict';
 export const DATA_SOURCE: string = 'CredibleMeds QTdrugs categories (crediblemeds.org), curated demo subset';
 
 export interface DrugEntry {
-  ingredient: string;        // INN, lower case — the canonical key
+  ingredient: string;        // INN, lower case - the canonical key
   risk: RiskLevel;           // never UNKNOWN_DRUG here
   drugClass: string;         // short, human readable
   aliases: string[];         // brands + other-language generic names, lower case
@@ -224,7 +224,7 @@ export const DRUGS: DrugEntry[] = [
   d('ritonavir', NL, 'HIV protease inhibitor / booster', ['norvir', 'ритонавир'], ['CYP3A4'], ['CYP3A4', 'CYP2D6'],
     NONE, false),
 
-  // ── Avoid in congenital long QT (adrenergic stimulants — not QT drugs, but can trigger events) ─
+  // ── Avoid in congenital long QT (adrenergic stimulants - not QT drugs, but can trigger events) ─
   d('salbutamol', CR, 'Asthma reliever (beta-2 agonist)', ['albuterol', 'ventolin', 'buventol', 'salbutamolum',
     'салбутамол', 'вентолин'], NONE, NONE, NONE, true),
   d('salmeterol', CR, 'Long-acting asthma inhaler', ['serevent', 'salmeterolum', 'салметерол'],

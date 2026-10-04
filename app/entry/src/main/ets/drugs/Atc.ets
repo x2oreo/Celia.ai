@@ -1,4 +1,4 @@
-// WHO Anatomical Therapeutic Chemical (ATC) classification — level 1 (anatomical main group) and level 2
+// WHO Anatomical Therapeutic Chemical (ATC) classification - level 1 (anatomical main group) and level 2
 // (therapeutic subgroup) names in English, from the public WHO Collaborating Centre ATC index (whocc.no).
 // Used only to say "what kind of medicine" a scanned box is; never for safety decisions.
 

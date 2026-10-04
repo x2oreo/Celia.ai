@@ -1,7 +1,7 @@
 # S1 accounts
 
 ## AI_WORKFLOW entry
-### 2026-10-04 — Georgi + Claude Code: accounts and profile backup (branch `georgi/b-accounts`)
+### 2026-10-04 - Georgi + Claude Code: accounts and profile backup (branch `georgi/b-accounts`)
 - Asked: brief B1 (sign up, log in, stay signed in offline) and B2 (profile saved under the account), plus the §8
   privacy docs. Supabase Auth over plain HTTPS, no supabase-js.
 - Produced:
@@ -20,7 +20,7 @@
     offline / 5xx / 429 keep the session, so an expired token offline still opens the app signed in.
   - `account/ProfileSync.ets`: last-write-wins on the document time (newer of `Profile.updatedAt` and the last
     medicine change), at sign-in, at launch and 3 s after a local edit; every run reads the account copy first.
-  - `common/Net.ets`: `NetTarget.bearer` and `authHeaders()` — the one place that puts the user's JWT in
+  - `common/Net.ets`: `NetTarget.bearer` and `authHeaders()` - the one place that puts the user's JWT in
     `Authorization` (the anon key stays in `apikey`); `accountTarget()`; `requestJson()` for nested JSON bodies.
   - `privacy/Ledger.ets`: `PersonalDataException` with exactly two named entries, `ACCOUNT_AUTH` (`/auth/v1/`,
     `email`) and `PROFILE_SYNC` (`/rest/v1/profiles`, the profile's personal fields). `FORBIDDEN_FIELDS` is unchanged;
@@ -44,7 +44,7 @@
   not available in this session; the encrypted RDB and `@kit.NetworkKit` http calls reuse the patterns already in
   `data/LocalStore.ets` and `common/Net.ets`.
 
-### 2026-10-04 — Georgi + Claude Code: SOS contacts under the account and RLS by account (B10, B9; branch `georgi/b-accounts`)
+### 2026-10-04 - Georgi + Claude Code: SOS contacts under the account and RLS by account (B10, B9; branch `georgi/b-accounts`)
 - Asked: B10 (contacts and first name reach the server with consent; show the dispatch status) and B9 (close the
   open RLS on watch data through the device ↔ account binding; give the watch its own secret).
 - Produced:
@@ -103,10 +103,10 @@
   labelled 48 vp inputs on `surface_alt` (`radius_m`), primary button (inactive until both fields have text), a
   `brand_text` link to switch mode, disclaimer caption. Errors use the amber 6.7 strip in plain words, never red;
   "check your email" uses the neutral strip. While working: `LoadingProgress` 28 in `brand_accent` + "One moment…".
-- **Account** (Settings → Account): signed in — `surface` card with "Signed in as" caption, email in `headline`, the
+- **Account** (Settings → Account): signed in - `surface` card with "Signed in as" caption, email in `headline`, the
   backup line (`font_small`; offline → neutral strip, failure → amber strip), secondary `Back up now`; secondary
   `Sign out` (dialog: keep data / delete from this phone, the latter in `risk_known` text); "WHERE YOUR DATA IS" card;
-  a centred `risk_known` text action "Delete my data from my account" with a confirm dialog. Signed out — one body
+  a centred `risk_known` text action "Delete my data from my account" with a confirm dialog. Signed out - one body
   line, primary `Log in`, secondary `Create an account`, the same data card.
 
 ## ARCHITECTURE notes
@@ -138,7 +138,7 @@
 - Requests made as the user: `accountTarget(await Session.freshToken())` from `common/Net.ets`.
 
 ## B9 plan and deploy order
-1. Apply `20261004100000` (accounts) and `20261004100100` (contacts, binding) — compatible with every current build.
+1. Apply `20261004100000` (accounts) and `20261004100100` (contacts, binding) - compatible with every current build.
 2. Install the new phone build (sends the JWT on `/rest/v1/`, binds pairings). Sign in, re-open Pair watch: an
    existing pairing is bound automatically after sign-in (or pair again).
 3. Apply `20261004100200` (owner-only reads). Retest: phone paired + signed in sees live heart rate and Trends;
@@ -163,5 +163,5 @@
 - One emulator command chained `emu.sh lock … | tail -1 && …`; the pipe hid the lock timeout, so the app was
   uninstalled and reinstalled on the phone emulator while the `emergency` stream held the lock (around 00:00). Their
   install may have been replaced; they may need to reinstall. Later runs check the lock first and pass
-  `-t 127.0.0.1:5555` (a second target, the watch emulator on 5557, makes plain `hdc` refuse to pick one —
+  `-t 127.0.0.1:5555` (a second target, the watch emulator on 5557, makes plain `hdc` refuse to pick one -
   `app/scripts/run.sh` and `ui.sh` fail in that state).

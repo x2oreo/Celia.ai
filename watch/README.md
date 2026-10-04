@@ -95,7 +95,7 @@ Full-screen flows, most urgent wins (SOS > fall/alert > check-in > drug verdict)
 | W4 How do you feel? | after *I'm OK*, and as a page | Fine / Dizzy / Racing → `symptom` |
 | W5 SOS countdown (10 s) → SOS sent | *Need help* or unanswered fall | *Cancel*; at 0 an `sos` row is sent |
 | W6 drug verdict glance | a new QT-risk drug arrives via `watch_context` (or Simulate) | *Got it* |
-| W7 not on wrist | wear sensor / Simulate | — |
+| W7 not on wrist | wear sensor / Simulate | - |
 
 **The watch never dials 112 itself** (auto-dialling emergency services from a test build is unsafe). The `sos` row
 is the trigger: the phone app / agent alerts emergency contacts and offers the 112 call.
@@ -188,7 +188,7 @@ and what would it need?
    Connect, restricted scopes such as heart rate and blood oxygen are **manually reviewed**, and the kit is
    "available only in the Chinese mainland" [H1][H2]. The HarmonyOS atomic-service page lists phones and tablets
    and says it is not supported on the emulator [H1]; the HMS page lists WATCH 3/4 on HarmonyOS 3.0+ [H2]. We could
-   not load the current HarmonyOS-app guide page to confirm wearable support for API 20+ — **unverified**.
+   not load the current HarmonyOS-app guide page to confirm wearable support for API 20+ - **unverified**.
 8. **Already works without approval:** system reminders (`reminderAgentManager`) fire while the app is frozen or
    closed (verified on the emulator, see *Notifications and reminders*); the sensor and alarm logic runs while the
    app is on screen.
@@ -221,7 +221,7 @@ and what would it need?
 - [S1] same repo, `en/application-dev/device/sensor/sensor-guidelines.md` and
   `reference/apis-sensor-service-kit/js-apis-sensor.md` (`Options.interval`)
 - [S2] same repo, `en/application-dev/reference/apis-network-kit/js-apis-http.md`
-- [H1] Huawei, *Health Service Kit — About This Kit* (atomic services),
+- [H1] Huawei, *Health Service Kit - About This Kit* (atomic services),
   https://developer.huawei.com/consumer/en/doc/atomic-guides/health-service-kit-ability-as
 - [H2] Huawei, *Introduction to Health Service Kit*,
   https://developer.huawei.com/consumer/en/doc/HMSCore-Guides/description-0000001558389985

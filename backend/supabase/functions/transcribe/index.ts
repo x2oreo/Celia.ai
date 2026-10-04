@@ -1,4 +1,4 @@
-// POST /functions/v1/transcribe — push-to-talk speech-to-text fallback when on-device Core Speech
+// POST /functions/v1/transcribe - push-to-talk speech-to-text fallback when on-device Core Speech
 // cannot recognise English/Polish. Request: { audioBase64: <WAV 16 kHz mono PCM16>, language: 'en' | 'pl' | '' }
 // Response: { text }. Audio is not stored or logged.
 

@@ -52,7 +52,7 @@ export struct CheckInSheet {
         RiskShape({ risk: 'POSSIBLE_RISK', dim: 32 })
           .accessibilityLevel('no-hide-descendants')
         Column() {
-          Text(this.bpm > 0 ? $r('app.string.heart_bpm_value', this.bpm) : '—')
+          Text(this.bpm > 0 ? $r('app.string.heart_bpm_value', this.bpm) : '-')
             .fontSize($r('app.float.font_title'))
             .fontWeight(800)
             .fontColor($r('app.color.risk_possible_text'))

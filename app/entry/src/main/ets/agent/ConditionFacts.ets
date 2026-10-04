@@ -1,4 +1,4 @@
-// Verified plain-language LQTS facts for the explain_condition tool (source: lqts-domain skill — ESC 2022
+// Verified plain-language LQTS facts for the explain_condition tool (source: lqts-domain skill - ESC 2022
 // ventricular arrhythmia guideline, CredibleMeds, Schwartz et al.). The model may only rephrase these.
 
 import { Genotype } from '../model/Profile';
@@ -13,13 +13,13 @@ const OVERVIEW: string =
 
 const TRIGGERS: string =
   'Common triggers: medicines that prolong the QT interval; low potassium or magnesium (often after vomiting, ' +
-    'diarrhoea or diuretics); fever; and genotype-specific triggers — exercise and swimming for LQT1, sudden loud ' +
+    'diarrhoea or diuretics); fever; and genotype-specific triggers - exercise and swimming for LQT1, sudden loud ' +
     'noises (like alarm clocks) and strong emotions for LQT2, and rest or sleep with a slow heart rate for LQT3.';
 
 const SICK_DAY: string =
   'Sick-day rules: vomiting, diarrhoea, fever or not eating can lower potassium and magnesium and make the QT ' +
     'longer. Drink fluids with electrolytes, keep taking your beta-blocker, and contact your doctor early. Many ' +
-    'anti-sickness medicines (for example ondansetron and domperidone) prolong the QT — check before taking any.';
+    'anti-sickness medicines (for example ondansetron and domperidone) prolong the QT - check before taking any.';
 
 const EMERGENCY: string =
   'Warning signs: fainting (especially during exercise, after a sudden noise, or in sleep), seizure-like episodes, ' +

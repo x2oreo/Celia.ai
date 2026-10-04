@@ -177,7 +177,7 @@ export struct EmergencyPage {
     });
   }
 
-  // NFC handover (B14): writes the same link as the QR to a tag. Built, unverified — no NFC on the emulator.
+  // NFC handover (B14): writes the same link as the QR to a tag. Built, unverified - no NFC on the emulator.
   private writeNfc(): void {
     if (NfcCard.availability() === 'OFF') {
       toast(this.getUIContext(), $r('app.string.em_nfc_off'));

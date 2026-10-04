@@ -205,7 +205,7 @@ export function cautionNames(groups: PlanGroup[]): string[] {
 export function visitText(s: Specialty, doctor: string, reason: string, groups: PlanGroup[],
   sections: BriefSection[], now: number): string {
   const parts: string[] = [`Long QT safety brief for ${specialtyName(s)}${doctor.length > 0 ? ` (${doctor})` : ''}` +
-    ` — ${fullDate(now)}`];
+    ` - ${fullDate(now)}`];
   if (reason.trim().length > 0) {
     parts.push('');
     parts.push('REASON FOR THE VISIT');

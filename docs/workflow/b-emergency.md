@@ -1,14 +1,14 @@
 # S2 emergency
 
 ## AI_WORKFLOW entry
-### 2026-10-04 — Georgi + Claude Code: configurable emergency profile and first-responder view (branch `georgi/b-emergency`)
+### 2026-10-04 - Georgi + Claude Code: configurable emergency profile and first-responder view (branch `georgi/b-emergency`)
 - Asked: brief B4 (configurable emergency profile, card, versioned share payload) and B5 (first-responder view with
   "do not give", "use instead", care notes, reachable from the Emergency tab, lock screen, alert widget and SOS).
 - Produced:
   - `LocalStore.parseStoredProfile`: defaults applied when a stored profile is read, so profiles saved before B4
     still load (lists default to `[]`, missing text stays absent, corrupt values fall back).
   - `emergency/Responder.ets` (pure): `doNotGive` (every Known-risk drug by class plus the avoid-in-congenital list;
-    antiemetics first, then "Stimulants and catecholamines — avoid unless life-saving"), `useInstead` (dataset
+    antiemetics first, then "Stimulants and catecholamines - avoid unless life-saving"), `useInstead` (dataset
     `alternatives[]` grouped by the option set, with the drugs and classes they replace), `careNotes` (lqts-domain
     emergency facts; ICD, beta-blocker and genotype trigger follow the profile), `ageYears`, `medRows`,
     `recentRiskyIntake` (72 h watch window).
@@ -39,7 +39,7 @@
 - Not validated: the physical tap on the alert widget from a home screen (the want it sends was replayed instead);
   the lock-screen button with the app lock on (the emulator has no screen lock to enable it); "show on card"
   switches on the emulator (unit-tested only).
-### 2026-10-04 — Georgi + Claude Code: NFC handover of the emergency card, B14 (branch `georgi/b-emergency`)
+### 2026-10-04 - Georgi + Claude Code: NFC handover of the emergency card, B14 (branch `georgi/b-emergency`)
 - Asked: brief B14, write the card link as an NDEF URI record to a tag from a "Write to NFC tag" action next to the
   QR; guard on NFC availability; mark built, unverified.
 - Produced: `emergency/NfcCard.ets` (foreground `tag.on('readerMode')` for NDEF and NDEF-formatable tags, one
@@ -51,7 +51,7 @@
   else the in-link card (NTAG215/216, or refused when too long).
 - Validated: 4 unit tests (NDEF size layout, tag fit, error mapping). Emulator: the action is hidden because the
   emulator reports no `SystemCapability.Communication.NFC.Tag` (`emergency-nfc-guard-emulator.jpeg`).
-- Not validated: **built, unverified** — no real tag written, reader mode and the write path never ran. Known limit:
+- Not validated: **built, unverified** - no real tag written, reader mode and the write path never ran. Known limit:
   editing the card replaces the encrypted link, so a written tag must be written again (the UI says so).
 
 ## README "How to verify" rows

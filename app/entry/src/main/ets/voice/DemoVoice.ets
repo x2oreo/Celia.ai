@@ -1,4 +1,4 @@
-// OWNER: Kaloyan — voice input without a microphone (the emulator has none).
+// OWNER: Kaloyan - voice input without a microphone (the emulator has none).
 //
 // With LocalConfig.DEMO_VOICE_INPUT = 'on', a live voice session does not open the microphone. It streams a
 // bundled clip (rawfile/voice/*.pcm, 24 kHz PCM16 mono, made with the macOS system voice) into the same

@@ -1,5 +1,5 @@
-// "About this medicine" (F-36): what a scanned box is — kind of medicine, active substance, strength, form,
-// pack, prescription status, maker, ATC code, source — plus the official patient leaflet. Facts only, from the
+// "About this medicine" (F-36): what a scanned box is - kind of medicine, active substance, strength, form,
+// pack, prescription status, maker, ATC code, source - plus the official patient leaflet. Facts only, from the
 // national register or what the user typed; the verdict card above stays the only safety statement.
 
 import { common } from '@kit.AbilityKit';

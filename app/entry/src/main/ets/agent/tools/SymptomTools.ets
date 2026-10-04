@@ -1,7 +1,7 @@
 // log_symptom (T27): the user describes a symptom in chat ("I felt dizzy after the alarm") and the model logs it.
 // Validation is deterministic: unknown symptom → error back to the model (it asks the user), severity clamped,
 // heart-rate window attached on the phone. A red-flag symptom (fainting, chest pain, severe breathlessness) also
-// starts the emergency flow — decided by isRedFlag(), never by the model.
+// starts the emergency flow - decided by isRedFlag(), never by the model.
 
 import { AgentTool, TurnState, toolError } from '../ToolTypes';
 import { argString } from '../ResponseValidator';

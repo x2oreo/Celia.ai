@@ -139,7 +139,7 @@ export struct HeartPage {
 
           Row({ space: 4 }) {
             Text('HRV').fontSize(11).fontColor(Theme.MUTED)
-            Text(this.ctrl.hrvMs > 0 ? `${this.ctrl.hrvMs} ms` : '—')
+            Text(this.ctrl.hrvMs > 0 ? `${this.ctrl.hrvMs} ms` : '-')
               .fontSize(15)
               .fontWeight(FontWeight.Bold)
               .fontColor(this.ctrl.hrvMs > 0 && this.ctrl.hrvMs < 20 ? Theme.DANGER : Theme.TEXT)

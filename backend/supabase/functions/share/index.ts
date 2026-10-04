@@ -218,7 +218,7 @@ async function create(body: unknown): Promise<Response> {
   try {
     await sweepExpiredReports(now);
   } catch {
-    // housekeeping only — never fail the create
+    // housekeeping only - never fail the create
   }
   return json(200, { id, revokeToken, expiresAt: share.expiresAt });
 }

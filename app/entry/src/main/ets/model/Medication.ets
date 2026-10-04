@@ -1,4 +1,4 @@
-// Shared contract — see docs/ARCHITECTURE.md.
+// Shared contract - see docs/ARCHITECTURE.md.
 
 export interface Medication {
   id: number;

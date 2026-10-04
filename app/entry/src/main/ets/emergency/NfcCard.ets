@@ -3,11 +3,11 @@
 // taps the tag opens the card viewer.
 //
 // APIs (checked against the API 20 SDK declarations, @ohos.nfc.tag / tag/nfctech / @ohos.nfc.controller):
-//   canIUse('SystemCapability.Communication.NFC.Tag')          — device has NFC tag support
-//   nfcController.isNfcOpen()                                 — NFC switched on
-//   tag.on('readerMode', element, [NDEF, NDEF_FORMATABLE], cb) — foreground reader mode (ohos.permission.NFC_TAG)
+//   canIUse('SystemCapability.Communication.NFC.Tag')          - device has NFC tag support
+//   nfcController.isNfcOpen()                                 - NFC switched on
+//   tag.on('readerMode', element, [NDEF, NDEF_FORMATABLE], cb) - foreground reader mode (ohos.permission.NFC_TAG)
 //   tag.getNdef(info) → connect() → isNdefWritable() → writeNdef(msg)
-//   tag.getNdefFormatable(info) → connect() → format(msg)      — blank tags
+//   tag.getNdefFormatable(info) → connect() → format(msg)      - blank tags
 //   tag.ndef.makeUriRecord(uri), tag.ndef.createNdefMessage([record])
 
 import { nfcController, tag } from '@kit.ConnectivityKit';
@@ -59,7 +59,7 @@ export function smallestTagFor(uri: string): string {
 /** Maps a write failure to what the user can do about it. Pure, for tests. */
 export function resultForError(code: number): NfcWriteResult {
   // 3100204 "The tag I/O operation failed" (moved away too early, or the tag is too small) and 3100201 "tag running
-  // state is abnormal" (lost contact) — both fixed by holding a big enough tag still and trying again.
+  // state is abnormal" (lost contact) - both fixed by holding a big enough tag still and trying again.
   return code === 3100204 || code === 3100201 ? 'IO_FAILED' : 'ERROR';
 }
 

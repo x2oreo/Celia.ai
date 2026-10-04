@@ -1,5 +1,5 @@
 // AI-safety tests: deterministic interaction rules, emergency pre-filter, model-output validation.
-// Pure logic — runs locally without a device (app/scripts/test.sh).
+// Pure logic - runs locally without a device (app/scripts/test.sh).
 
 import { describe, it, expect } from '@ohos/hypium';
 import { DrugVerdict, RiskLevel } from '../main/ets/model/DrugVerdict';

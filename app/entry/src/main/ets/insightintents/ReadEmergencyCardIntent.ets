@@ -1,5 +1,5 @@
 // Celia → "Read my emergency card": opens the Emergency tab and reads the medical part of the card aloud in the
-// card's language (emergency/CardSpeech.ets — no name or contacts). Static pre-translated text, no LLM.
+// card's language (emergency/CardSpeech.ets - no name or contacts). Static pre-translated text, no LLM.
 
 import { InsightIntentEntryExecutor, insightIntent, InsightIntentEntry } from '@kit.AbilityKit';
 import { LocalStore } from '../data/LocalStore';

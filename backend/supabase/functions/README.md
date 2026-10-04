@@ -1,4 +1,4 @@
-# Edge Functions — Celia.ai agent
+# Edge Functions - Celia.ai agent
 
 | Function | Owner | Purpose |
 |---|---|---|
@@ -19,7 +19,7 @@ Shared code lives in `_shared/` (`prompt.ts` system prompt + `PROMPT_VERSION`, `
 ## Contract: `POST /functions/v1/agent`
 
 ```jsonc
-// request — first step of a turn
+// request - first step of a turn
 { "context": { "condition": "LQTS", "genotype": "LQT2", "meds": ["nadolol"],
                "vitals": "HR 72 at rest, no alerts (simulated)", "emergencyNumber": "112", "locale": "en-GB" },
   "messages": [{ "role": "user", "text": "Can I take Klacid?" }] }
@@ -29,7 +29,7 @@ Shared code lives in `_shared/` (`prompt.ts` system prompt + `PROMPT_VERSION`, `
   "toolCalls": [{ "callId": "call_…", "name": "check_drug", "arguments": "{\"name\":\"Klacid\",\"dosage\":null}" }],
   "text": "" }
 
-// request — after the device ran the tools
+// request - after the device ran the tools
 { "context": { … }, "messages": [],
   "continuation": { "previousResponseId": "resp_…",
                     "toolOutputs": [{ "callId": "call_…", "output": "{…tool result JSON…}" }] } }

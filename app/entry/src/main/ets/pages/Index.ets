@@ -1,5 +1,5 @@
 // App root: Navigation + NavPathStack hosting the bottom tabs. Full-screen flows (onboarding, check result,
-// history, SOS, …) are pushed as NavDestinations by route name — see common/Routes.ets.
+// history, SOS, …) are pushed as NavDestinations by route name - see common/Routes.ets.
 
 import { TravelService } from '../emergency/TravelService';
 import { common } from '@kit.AbilityKit';
@@ -159,7 +159,7 @@ struct Index {
     if (a.severity !== 'CRITICAL' || !SosController.get().canAutoStart(Date.now())) {
       return;
     }
-    const reason: string = a.hr > 0 ? `heart rate ${Math.round(a.hr)} — ${a.kind.toLowerCase().replace(/_/g, ' ')}` :
+    const reason: string = a.hr > 0 ? `heart rate ${Math.round(a.hr)} - ${a.kind.toLowerCase().replace(/_/g, ' ')}` :
       a.kind.toLowerCase().replace(/_/g, ' ');
     this.checkIn = false;
     this.navStack.pushPathByName(Routes.SOS, new SosParam(false, reason, true));

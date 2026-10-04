@@ -2,7 +2,7 @@
 // Contract: docs/ARCHITECTURE.md. Unknown input must return UNKNOWN_DRUG, never "safe".
 // Safety rules:
 //   - every token is resolved; the worst risk found wins (a risky drug is never hidden by a harmless one);
-//   - NOT_LISTED only when every drug token is recognised — any unrecognised token makes it UNKNOWN_DRUG;
+//   - NOT_LISTED only when every drug token is recognised - any unrecognised token makes it UNKNOWN_DRUG;
 //   - typo matching only for long words and only when exactly one ingredient is that close.
 
 import { ComboVerdict, DrugVerdict, LookupStep, LookupStepKind, RiskLevel } from '../model/DrugVerdict';
@@ -93,7 +93,7 @@ export function reasonFor(e: DrugEntry): string {
   let base: string;
   if (e.avoidCongenital && e.risk === 'CONDITIONAL_RISK') {
     base = `${e.drugClass}. Not a QT-prolonging drug, but on the list of drugs to avoid in congenital long QT ` +
-      `(adrenergic stimulant — can trigger arrhythmias).`;
+      `(adrenergic stimulant - can trigger arrhythmias).`;
     return base;
   }
   switch (e.risk) {
@@ -104,7 +104,7 @@ export function reasonFor(e: DrugEntry): string {
       base = `${e.drugClass}. Can prolong the QT interval; risk of torsades not established.`;
       break;
     case 'CONDITIONAL_RISK':
-      base = `${e.drugClass}. Risk of torsades under certain conditions — high dose, low potassium or ` +
+      base = `${e.drugClass}. Risk of torsades under certain conditions - high dose, low potassium or ` +
         `magnesium, or together with other QT drugs.`;
       break;
     default:
@@ -315,7 +315,7 @@ export class DrugChecker {
             drugs: [a.ingredient, b.ingredient],
             enzyme: enzyme,
             reason: `${inhibitor.ingredient} slows down how your body clears ${substrate.ingredient} ` +
-              `(${enzyme}). Its level — and the QT risk — can rise.`
+              `(${enzyme}). Its level - and the QT risk - can rise.`
           };
           return combo;
         }
@@ -327,7 +327,7 @@ export class DrugChecker {
   private matchToken(token: string): Match {
     const exact: DrugEntry | undefined = this.byIngredient.get(token);
     if (exact !== undefined) {
-      return new Match(exact, 'EXACT', 1, `${token} — generic name`);
+      return new Match(exact, 'EXACT', 1, `${token} - generic name`);
     }
     const alias: DrugEntry | undefined = this.byAlias.get(token);
     if (alias !== undefined) {
@@ -360,6 +360,6 @@ export class DrugChecker {
           `${token} looks like ${best.ingredient} (spelling corrected)`);
       }
     }
-    return new Match(undefined, 'NOT_FOUND', 0, `${token} — not in our list`);
+    return new Match(undefined, 'NOT_FOUND', 0, `${token} - not in our list`);
   }
 }

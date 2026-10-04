@@ -1,4 +1,4 @@
-# insightintents/ — OWNER: Kaloyan
+# insightintents/ - OWNER: Kaloyan
 
 Intents Kit entry points so Celia (Huawei's system assistant) can call the app. Registered in
 `resources/base/profile/insight_intent.json`. Neither intent uses the LLM.

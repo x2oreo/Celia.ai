@@ -1,4 +1,4 @@
-// Lock-screen medical ID card (B13, docs/research/live-view.md §2). Pure — unit tested. Anyone holding the locked
+// Lock-screen medical ID card (B13, docs/research/live-view.md §2). Pure - unit tested. Anyone holding the locked
 // phone can read this card, so it carries only what a paramedic needs and what the user has not hidden from the
 // shared card (Profile.hiddenOnCard). Never contacts' phone numbers, notes or extras. Facts come from the profile
 // and medicine list; the "do not give" line is fixed copy (string em_avoid), not model text.

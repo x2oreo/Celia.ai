@@ -1,5 +1,5 @@
 // Someone else's emergency card, scanned from their QR with Celia's scanner (F-30). Decoded on device from the
-// link's #fragment — works offline, nothing is stored. Same high-contrast look as our own card.
+// link's #fragment - works offline, nothing is stored. Same high-contrast look as our own card.
 // Param: CardPayload (emergency/CardLink.ets).
 
 import { CardPayload, payloadDetailRows } from '../emergency/CardLink';

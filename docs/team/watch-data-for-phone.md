@@ -26,7 +26,7 @@ and the agent can use with one GET each (anon key, filter by `device_id`, demo d
 The texts are fixed in SQL (`20261003250000_watch_insights.sql`). The agent may explain them but must not change
 the verdict or severity.
 
-## Phone (Georgi) — suggested wiring
+## Phone (Georgi) - suggested wiring
 
 1. **Heart tab:** poll `watch_status`; on `OFF_WRIST` show "Watch off wrist" and don't raise `WATCH_DISCONNECTED`.
 2. **Dose log:** for each `watch_doses` row whose `name` matches a med's ingredient or brand, store a `DoseLog`
@@ -36,7 +36,7 @@ the verdict or severity.
    `watch_daily_summary` for the report's last 28 days (dose adherence = days with `doses_taken > 0`).
 4. **Insights:** show `watch_insights` as cards (CRITICAL first). CRITICAL → offer "Call my cardiologist" / 112.
 
-## Agent (Kaloyan) — suggested tools
+## Agent (Kaloyan) - suggested tools
 
 - `get_watch_summary(days)` → `watch_daily_summary` rows, so "how was my week?" has real numbers.
 - `get_watch_insights()` → `watch_insights`; on a CRITICAL insight start the conversation proactively

@@ -8,7 +8,7 @@ export const MAX_TEXT = 300;   // reason / worries, same limit as the app (docto
 export interface SummaryInput {
   specialty: string;
   genotype: string;
-  medicines: string[];      // "Name dose — risk word" lines from the deterministic brief
+  medicines: string[];      // "Name dose - risk word" lines from the deterministic brief
   interactions: string[];
   flagged: string[];
   heartAlerts: number;

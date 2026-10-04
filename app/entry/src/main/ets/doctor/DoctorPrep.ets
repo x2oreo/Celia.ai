@@ -1,5 +1,5 @@
 // Doctor visit prep (F-14, F-31): a safety brief for a specific specialist, built only from on-device data and a
-// curated table — no AI. Pure functions, unit tested. Watch-outs follow standard long-QT guidance (avoid QT drugs,
+// curated table - no AI. Pure functions, unit tested. Watch-outs follow standard long-QT guidance (avoid QT drugs,
 // keep potassium/magnesium normal, beta-blocker continuity, ICD management, avoid adrenergic triggers).
 
 import { Profile } from '../model/Profile';
@@ -55,7 +55,7 @@ export function watchOuts(s: Specialty): string[] {
       return ['Local anaesthetic with adrenaline (epinephrine): discuss the lowest dose or an adrenaline-free option.',
         'Antibiotics: avoid macrolides (azithromycin, clarithromycin, erythromycin) and quinolones; amoxicillin ' +
           'is not on the QT lists.',
-        'Pain and anxiety are triggers — plan good pain control.'];
+        'Pain and anxiety are triggers - plan good pain control.'];
     case 'SURGEON':
       return ['Plan anaesthesia with the anaesthetist; many antiemetics prolong QT (ondansetron, droperidol).',
         'Keep potassium and magnesium normal before and after surgery; continue the beta-blocker.',
@@ -169,7 +169,7 @@ export function buildBrief(p: Profile, meds: Medication[], scans: ScanRecord[], 
 
   const medLines: string[] = meds.map((m: Medication) => {
     const v: DrugVerdict = DrugChecker.get().checkSync(m.ingredient !== '' ? m.ingredient : m.name);
-    return `${m.name}${m.dose === '' ? '' : ` ${m.dose}`} — ${RiskUi.plain(v.risk)}`;
+    return `${m.name}${m.dose === '' ? '' : ` ${m.dose}`} - ${RiskUi.plain(v.risk)}`;
   });
   out.push(new BriefSection('Current medicines', medLines.length === 0 ? ['None recorded.'] : medLines));
 
@@ -187,7 +187,7 @@ export function buildBrief(p: Profile, meds: Medication[], scans: ScanRecord[], 
   const heart: string[] = heartEvents(events, since).map((h: ReportItem) => `${fullDate(h.ts)}: ${h.text}`);
   const symptoms: string[] = symptomEvents(events, since).map((h: ReportItem) => `${fullDate(h.ts)}: ${h.text}`);
   if (heart.length > 0) {
-    out.push(new BriefSection('Heart alerts and SOS (watch data — simulated on the emulator)',
+    out.push(new BriefSection('Heart alerts and SOS (watch data - simulated on the emulator)',
       heart.slice(-10)));
   }
   if (symptoms.length > 0) {
@@ -217,7 +217,7 @@ export function flaggedChecks(scans: ScanRecord[], since: number): ReportItem[] 
   for (const sc of scans) {
     if (sc.ts >= since && isRiskyScan(sc)) {
       const name: string = sc.ingredient === '' ? sc.query : sc.ingredient;
-      const text: string = `${name} — ${RiskUi.plain(sc.risk)}` +
+      const text: string = `${name} - ${RiskUi.plain(sc.risk)}` +
         `${sc.combo !== 'NONE' ? ', interaction with current medicines' : ''}`;
       const key: string = `${fullDate(sc.ts)}|${text}`;
       if (!seen.includes(key)) {
@@ -287,7 +287,7 @@ export function questions(s: Specialty, flagged: boolean): string[] {
       q.push('Is this medicine on the QT lists? Do I need an ECG before starting?');
       break;
     default:
-      q.push('Can you add "long QT — avoid QT-prolonging drugs" to my record?');
+      q.push('Can you add "long QT - avoid QT-prolonging drugs" to my record?');
       break;
   }
   return q;
@@ -311,11 +311,11 @@ function symptomLine(detail: string): string {
 
 function sosOutcome(detail: string): string {
   const d: SosDetail = JSON.parse(detail) as SosDetail;
-  return d.outcome === 'ACKED' ? 'cancelled — I was OK' : 'sent to contacts';
+  return d.outcome === 'ACKED' ? 'cancelled - I was OK' : 'sent to contacts';
 }
 
 export function briefText(sections: BriefSection[], s: Specialty, now: number): string {
-  const parts: string[] = [`Long QT safety brief for ${specialtyName(s)} — ${fullDate(now)}`];
+  const parts: string[] = [`Long QT safety brief for ${specialtyName(s)} - ${fullDate(now)}`];
   for (const sec of sections) {
     parts.push('');
     parts.push(sec.title.toUpperCase());

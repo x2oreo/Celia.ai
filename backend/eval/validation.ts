@@ -56,7 +56,7 @@ async function call(fn: RunningFn, c: Check): Promise<{ status: number; text: st
 }
 
 async function runValidation(): Promise<number> {
-  console.log('\n## Phase 0.5 — request validation (key = invalid, so any leak would be a non-400)\n');
+  console.log('\n## Phase 0.5 - request validation (key = invalid, so any leak would be a non-400)\n');
   let failures = 0;
   const byFn = new Map<string, Check[]>();
   for (const c of VALIDATION) byFn.set(c.fn, [...(byFn.get(c.fn) ?? []), c]);
@@ -79,7 +79,7 @@ async function runValidation(): Promise<number> {
 const validRequest = { context: ctx, messages: user };
 
 async function runRobustness(): Promise<number> {
-  console.log('\n## Phase 5 — relay robustness\n');
+  console.log('\n## Phase 5 - relay robustness\n');
   let failures = 0;
   const realKey = Deno.env.get('OPENAI_API_KEY') ?? '';
   const allLogs: string[] = [];

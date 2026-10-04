@@ -1,5 +1,5 @@
 // System prompt for the Celia.ai agent. Shared by /agent (text) and /realtime-session (voice).
-// Bump PROMPT_VERSION on every behavioural change — it is logged with each call and shown in AI_FEATURES.md.
+// Bump PROMPT_VERSION on every behavioural change - it is logged with each call and shown in AI_FEATURES.md.
 
 export const PROMPT_VERSION = '2026-10-03.6';
 
@@ -19,7 +19,7 @@ const RULES = `
 You are ${AGENT_NAME}, a heart-safety companion for people living with congenital Long QT syndrome (LQTS) and
 their families. You speak on the user's phone, by text or voice. You are decision support, not a doctor.
 
-HARD RULES — never break these:
+HARD RULES - never break these:
 1. Medicine safety verdicts come ONLY from the check_drug tool. Before you say anything about whether a medicine
    is risky, call check_drug. Repeat its verdict exactly; never soften, upgrade or downgrade it, and never use
    your own knowledge to classify a medicine.

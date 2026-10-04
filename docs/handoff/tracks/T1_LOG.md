@@ -1,6 +1,6 @@
-# T1 log — Agent home
+# T1 log - Agent home
 
-## A3 — split `AgentPage.ets` (2026-10-04)
+## A3 - split `AgentPage.ets` (2026-10-04)
 
 **Asked:** pure refactor of `pages/AgentPage.ets` (1,110 lines) into `components/agent/`, behaviour unchanged.
 
@@ -23,12 +23,12 @@ tap-to-talk), `send`, `resolve`, `pickAndScan`, `openSos`, `loadChat` (`keepOnRe
 
 - `app/scripts/test.sh`: 215 pass (211 + 4 new in `AgentLogic.test.ets`). `assembleHap` builds.
 - Emulator, local backend, `DEMO_VOICE_INPUT = 'on'`:
-  - Restored chat: compact orb, demo badge, findings box, `OPEN_PAGE` doctor-prep tile —
+  - Restored chat: compact orb, demo badge, findings box, `OPEN_PAGE` doctor-prep tile -
     `shots/t1/a3_voice_idle.jpeg`
-  - Text turn ("Can I take ibuprofen?"): tool step, reply, verdict card, input cleared —
+  - Text turn ("Can I take ibuprofen?"): tool step, reply, verdict card, input cleared -
     `shots/t1/a3_text_turn.jpeg`
   - Demo-voice turn (ondansetron clip): user transcript, live agent text, "Speaking" label, halos, Known-risk
-    verdict card with findings, dock switches keyboard → end — `shots/t1/a3_voice_live.jpeg`,
+    verdict card with findings, dock switches keyboard → end - `shots/t1/a3_voice_live.jpeg`,
     `shots/t1/a3_voice_reply.jpeg`
   - End button returns the stage to "Tap to talk".
 
@@ -38,7 +38,7 @@ notice, starters on an empty thread, opening with an `AskParam` question. Code p
 
 **README verify-table rows:** none (no new or moved feature).
 
-## A1 — the agent is tab 0 (2026-10-04)
+## A1 - the agent is tab 0 (2026-10-04)
 
 **Asked:** tab 0 renders the agent conversation; old Home content stays reachable; one conversation state; live
 voice ends when the tab is left; accessibility texts; greeting fix.
@@ -64,14 +64,14 @@ voice ends when the tab is left; accessibility texts; greeting fix.
 
 **Validated** (216 tests pass, `assembleHap` builds; emulator, local backend, demo voice):
 
-- Cold start lands on the orb with the restored chat — `shots/t1/a1_cold_start.jpeg`. Empty chat —
+- Cold start lands on the orb with the restored chat - `shots/t1/a1_cold_start.jpeg`. Empty chat -
   `shots/t1/a1_empty.jpeg`.
 - One tap on the mic starts the session ("Listening…"). The microphone did not open by itself.
 - Live session ends on tab switch (Medicines and back: "Tap to talk") and when a page is pushed (Log how I feel
   and back: "Tap to talk").
-- Notes strip opens: alarm chip, tip — `shots/t1/a1_notes_open.jpeg`.
+- Notes strip opens: alarm chip, tip - `shots/t1/a1_notes_open.jpeg`.
 - Chats button → Chats → New chat lands on tab 0 with an empty thread (redirect route).
-- Medicines → Cipralex → "Ask the agent" lands on tab 0 with the question sent and a verdict card —
+- Medicines → Cipralex → "Ask the agent" lands on tab 0 with the question sent and a verdict card -
   `shots/t1/a1_ask_from_medicine.jpeg`.
 
 **Not validated:** travel banner (needs a foreign location), interaction rows in the notes (profile has none),
@@ -104,7 +104,7 @@ settings gear tap, Doctor prep / Trends / Scan chips (same push as the tested on
 | Notes strip (greeting, tip, alarm, travel) | tab 0, under the status strip | greeting, tip, alarm verified; travel unverified |
 | Live voice ends when leaving the agent | tab switch, pushed page | verified on emulator |
 
-## A2 — the orb as a stage (2026-10-04)
+## A2 - the orb as a stage (2026-10-04)
 
 **Asked:** full-height stage while live and nothing said; confirm the level wiring; real reduced-motion setting;
 labels on every state; no change to the look.

@@ -1,4 +1,4 @@
-// Feeling diary (B15): a quick "How are you feeling?" entry — a mood and an optional note — stored as an AppEvent
+// Feeling diary (B15): a quick "How are you feeling?" entry - a mood and an optional note - stored as an AppEvent
 // of kind FEELING next to the symptoms. Manual, no AI, never leaves the phone. Pure and unit-tested.
 
 export type Mood = 'GREAT' | 'GOOD' | 'OKAY' | 'LOW' | 'UNWELL';

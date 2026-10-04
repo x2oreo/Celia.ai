@@ -14,7 +14,7 @@ app/scripts/device.sh         # build → install → launch → screenshot
 
 | Requirement | Why |
 |---|---|
-| **HarmonyOS 6.0 or newer** (API 20+) | `compatibleSdkVersion` is `6.0.0(20)` — a hard task requirement. Phones on HarmonyOS 4.x / EMUI (Android-based) cannot install the app at all. Check: Settings → About phone → HarmonyOS version. |
+| **HarmonyOS 6.0 or newer** (API 20+) | `compatibleSdkVersion` is `6.0.0(20)` - a hard task requirement. Phones on HarmonyOS 4.x / EMUI (Android-based) cannot install the app at all. Check: Settings → About phone → HarmonyOS version. |
 | Developer mode on | Settings → About phone → tap **Build number** 7× → back → System → **Developer options** → **USB debugging** on. |
 | USB cable that carries data | Accept the "Allow USB debugging?" prompt on the phone when it appears. |
 | A screen lock (PIN) | Only for App lock (F-46); the rest works without it. |
@@ -31,7 +31,7 @@ app/scripts/device.sh         # build → install → launch → screenshot
    Nothing listed → replug, re-accept the prompt, or `hdc kill && hdc start`.
    Wireless instead of USB: Developer options → Wireless debugging → `hdc tconn <ip>:<port>`.
 
-2. **Sign the app** (a real phone refuses unsigned HAPs — the emulator does not, which is why it worked there)
+2. **Sign the app** (a real phone refuses unsigned HAPs - the emulator does not, which is why it worked there)
    - Open `app/` in DevEco Studio, sign in with a Huawei ID (top right). Overseas accounts need identity
      verification before signing works.
    - With the phone connected: File → Project Structure → Signing Configs → **Automatically generate signature**.
@@ -52,7 +52,7 @@ app/scripts/device.sh         # build → install → launch → screenshot
    static readonly BACKEND_URL: string = 'https://<project-ref>.supabase.co';   // no trailing slash, no /functions/v1
    static readonly SUPABASE_ANON_KEY: string = '<publishable key>';             // SUPABASE_PUBLISHABLE_KEY in .env.local
    ```
-   Use the publishable key only — never the secret key or the OpenAI key; those stay in Supabase function secrets.
+   Use the publishable key only - never the secret key or the OpenAI key; those stay in Supabase function secrets.
    Leaving both empty is fine: the app then runs fully offline. A placeholder key such as `local-dev` also breaks
    share links (card QR, doctor report), because they fall back to the same key.
 
@@ -75,20 +75,20 @@ hdc -t <serial> shell aa start -a EntryAbility -b com.celiaai.app
 
 ## 4. What to test on the phone
 
-Works the same as on the emulator — run the [README feature table](../README.md#how-to-verify-each-feature-emulator)
+Works the same as on the emulator - run the [README feature table](../README.md#how-to-verify-each-feature-emulator)
 once. The items below are the ones a real phone adds or changes:
 
 | Area | On a real phone |
 |---|---|
 | Barcode / box scan (F-36) | Real camera. Scan a Polish medicine box; an unknown box opens "teach this barcode". |
-| Voice (agent, live voice) | Real microphone — grant the permission on first use. Needs the backend. |
+| Voice (agent, live voice) | Real microphone - grant the permission on first use. Needs the backend. |
 | Read the card aloud (T25) | On-device voice if the phone has an English TTS voice, cloud `/speak` otherwise. |
-| Location / travel banner (T23) | Real position — grant "while in use". The country is resolved on the phone; nothing is uploaded. |
+| Location / travel banner (T23) | Real position - grant "while in use". The country is resolved on the phone; nothing is uploaded. |
 | App lock (F-46) | Fingerprint / face / PIN via the system prompt. Needs a screen lock set. |
 | Haptics | CPR metronome (110/min) and alert vibration are only felt on hardware. |
 | SOS call | **The call button opens the real dialler with the real emergency number. Do not place the call.** Use Settings → Test SOS. |
 | Widgets (F-12) | Long-press the home screen → add "Check a medicine" (2×2) and "Medical alert" (2×4). |
-| Celia intents (F-11) | Only testable here: ask Celia/Xiaoyi "can I take ibuprofen". Needs a region and system version where Celia routes to third-party intents — not guaranteed. |
+| Celia intents (F-11) | Only testable here: ask Celia/Xiaoyi "can I take ibuprofen". Needs a region and system version where Celia routes to third-party intents - not guaranteed. |
 | Reminders (F-38) | System agent reminders need an AppGallery Connect quota; without it the in-app fallback notifies while the app runs. |
 | Emergency card QR | Scan it with a second phone on mobile data to prove the link works off the local network. |
 | Watch pairing | Heart data stays `SIMULATED` unless a paired watch app uploads to the same Supabase project. |
@@ -101,11 +101,11 @@ once. The items below are the ones a real phone adds or changes:
 | Only `entry-default-unsigned.hap` is built | No signing config (§2.2). |
 | `install failed due to the signature is invalid` / `no signature file` | Unsigned HAP, or the profile does not contain this phone's UDID → regenerate the signature with this phone connected. |
 | `signature mismatch` / `install failed due to check signature` | An older build signed with another identity is installed → `hdc uninstall com.celiaai.app`, install again (this wipes app data). |
-| `compatibleSdkVersion ... higher than the device` | Phone is below HarmonyOS 6.0. No workaround — the minimum API is a task rule. |
+| `compatibleSdkVersion ... higher than the device` | Phone is below HarmonyOS 6.0. No workaround - the minimum API is a task rule. |
 | Installs, white screen | Crash at launch: `hdc hilog \| grep -i celiaai`, crash files in `/data/log/faultlog/faultlogger/`. |
 | Agent says it is offline | `BACKEND_URL` empty or `127.0.0.1`, or the phone has no internet. |
 | Share link / card QR fails to upload | `SUPABASE_ANON_KEY` is a placeholder (§2.3). |
-| A feature returns error `201` | Permission denied — grant it in Settings → Apps → Celia. |
+| A feature returns error `201` | Permission denied - grant it in Settings → Apps → Celia. |
 
 ## 6. Verified before a phone was attached (3 Oct 2026)
 

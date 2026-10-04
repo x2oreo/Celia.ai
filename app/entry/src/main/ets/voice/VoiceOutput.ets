@@ -1,4 +1,4 @@
-// OWNER: Kaloyan — speaks agent replies.
+// OWNER: Kaloyan - speaks agent replies.
 //   ON_DEVICE: Core Speech Kit textToSpeech (en-US) when the engine supports it.
 //   CLOUD:     /speak → PCM16 24 kHz mono → AudioRenderer.
 // Speech is best-effort: the text is always on screen, so any failure is logged and ignored.
@@ -101,7 +101,7 @@ export class VoiceOutput {
   }
 
   // Read a fixed text aloud in a given card language (T25, emergency card). English uses the on-device engine when
-  // it exists; other languages (and English without it) use cloud /speak. Returns false when neither can speak —
+  // it exists; other languages (and English without it) use cloud /speak. Returns false when neither can speak -
   // the caller hides its button then. Independent of the agent's voice mode.
   async say(text: string, lang: string): Promise<boolean> {
     const clean: string = text.trim();

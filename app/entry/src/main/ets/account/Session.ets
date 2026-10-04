@@ -148,7 +148,7 @@ export class Session {
   }
 
   // Access token for a request made now: refreshed first when due. '' when signed out. May still be expired when
-  // the refresh could not reach the server — the request then fails like any offline request.
+  // the refresh could not reach the server - the request then fails like any offline request.
   static async freshToken(): Promise<string> {
     await Session.load();
     if (Session.current !== undefined && needsRefresh(Session.current, Date.now())) {

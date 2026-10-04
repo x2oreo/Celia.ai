@@ -1,7 +1,7 @@
 // Pure parts of the `share` function: request validation, ids, tokens and expiry. Unit tested in logic.test.ts.
 //
 // The app encrypts the emergency card / doctor report on the phone (AES-256-GCM) and uploads only the ciphertext.
-// The key stays in the link's #fragment, which browsers never send to a server — so this function, the Storage
+// The key stays in the link's #fragment, which browsers never send to a server - so this function, the Storage
 // bucket and the viewer host can never read what is shared.
 
 export type ShareKind = 'card' | 'report';
@@ -60,7 +60,7 @@ export function isExpired(s: StoredShare, now: number): boolean {
 }
 
 export function newShareId(rand: (n: number) => Uint8Array): string {
-  // 62^16 ≈ 4.7e28 — unguessable; rejection sampling keeps the alphabet uniform.
+  // 62^16 ≈ 4.7e28 - unguessable; rejection sampling keeps the alphabet uniform.
   let out = '';
   while (out.length < 16) {
     for (const b of rand(32)) {
@@ -103,7 +103,7 @@ export function objectPath(kind: ShareKind, id: string): string {
 }
 
 /**
- * Write access (create/revoke) needs one of the project's public client keys — the app sends it. Reading stays
+ * Write access (create/revoke) needs one of the project's public client keys - the app sends it. Reading stays
  * open: the unguessable id plus the key in the link's # are the access control for viewers.
  * Empty `allowed` (local dev without keys configured) allows everything.
  */
@@ -135,7 +135,7 @@ export function staleReports(items: StoredObject[], now: number, reportTtlMs: nu
 
 export { clientIp } from '../_shared/clientIp.ts';
 
-// Fixed-window counter per key. In-memory, so it limits per isolate — a speed bump against scripted uploads, not a
+// Fixed-window counter per key. In-memory, so it limits per isolate - a speed bump against scripted uploads, not a
 // quota. Pure apart from the Map it owns; `now` is passed in for tests.
 export class RateLimiter {
   private hits = new Map<string, { start: number; count: number }>();

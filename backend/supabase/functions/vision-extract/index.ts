@@ -1,4 +1,4 @@
-// POST /functions/v1/vision-extract — fallback when on-device OCR finds no known medicine on a box photo.
+// POST /functions/v1/vision-extract - fallback when on-device OCR finds no known medicine on a box photo.
 // The model ONLY reads medicine names off the image; it never judges risk. Every name it returns goes through
 // DrugChecker on the device and the user confirms the drug before seeing a verdict.
 // Request: { imageBase64: <JPEG> }. Response: { drugs: [{ name, strength, confidence }], imageQuality }.

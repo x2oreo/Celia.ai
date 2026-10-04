@@ -186,7 +186,7 @@
     },
     {
       "name": "verdict_copied",
-      "value": "Question copied — paste it to your doctor or pharmacist."
+      "value": "Question copied - paste it to your doctor or pharmacist."
     },
     {
       "name": "combo_cyp_title",
@@ -202,7 +202,7 @@
     },
     {
       "name": "verdict_dont_stop",
-      "value": "Never stop a prescribed medicine on your own — talk to your doctor first."
+      "value": "Never stop a prescribed medicine on your own - talk to your doctor first."
     },
     {
       "name": "verdict_how_we_know",
@@ -238,7 +238,7 @@
     },
     {
       "name": "meds_not_recognised",
-      "value": "Not recognised — we will treat it as unchecked"
+      "value": "Not recognised - we will treat it as unchecked"
     },
     {
       "name": "meds_dose_hint",
@@ -502,11 +502,11 @@
     },
     {
       "name": "emergency_card_copied",
-      "value": "Card link copied — paste it in any browser or chat."
+      "value": "Card link copied - paste it in any browser or chat."
     },
     {
       "name": "emergency_qr_hint",
-      "value": "Scan with any phone camera to open this card in the reader's language. The card is inside the link — nothing is uploaded."
+      "value": "Scan with any phone camera to open this card in the reader's language. The card is inside the link - nothing is uploaded."
     },
     {
       "name": "emergency_qr_hint_encrypted",
@@ -682,7 +682,7 @@
     },
     {
       "name": "settings_test_sos_hint",
-      "value": "Practise the SOS flow — marked as TEST"
+      "value": "Practise the SOS flow - marked as TEST"
     },
     {
       "name": "settings_clear",
@@ -718,7 +718,7 @@
     },
     {
       "name": "sos_test_banner",
-      "value": "TEST — no real emergency"
+      "value": "TEST - no real emergency"
     },
     {
       "name": "sos_question",
@@ -758,7 +758,7 @@
     },
     {
       "name": "sos_no_location",
-      "value": "Location unavailable — the message says so."
+      "value": "Location unavailable - the message says so."
     },
     {
       "name": "sos_location_ok",
@@ -798,11 +798,11 @@
     },
     {
       "name": "by_subtitle",
-      "value": "Follow these steps. Stay calm — you are doing the right thing."
+      "value": "Follow these steps. Stay calm - you are doing the right thing."
     },
     {
       "name": "by_subtitle_generic",
-      "value": "Follow these steps. Stay calm — you are doing the right thing."
+      "value": "Follow these steps. Stay calm - you are doing the right thing."
     },
     {
       "name": "by_step2_title",
@@ -834,7 +834,7 @@
     },
     {
       "name": "by_icd",
-      "value": "Has an implanted defibrillator (ICD) — still do CPR; an AED is safe to use."
+      "value": "Has an implanted defibrillator (ICD) - still do CPR; an AED is safe to use."
     },
     {
       "name": "dp_intro",
@@ -918,7 +918,7 @@
     },
     {
       "name": "sym_subtitle",
-      "value": "Note how you felt — it goes into your doctor brief"
+      "value": "Note how you felt - it goes into your doctor brief"
     },
     {
       "name": "sym_saved",
@@ -1062,7 +1062,7 @@
     },
     {
       "name": "teach_title",
-      "value": "New box — teach Celia once"
+      "value": "New box - teach Celia once"
     },
     {
       "name": "teach_barcode",
@@ -1086,7 +1086,7 @@
     },
     {
       "name": "teach_unrecognised",
-      "value": "Not in our QT list — it will be checked as unknown"
+      "value": "Not in our QT list - it will be checked as unknown"
     },
     {
       "name": "teach_save",
@@ -1118,7 +1118,7 @@
     },
     {
       "name": "cardview_note",
-      "value": "Scanned from a Celia QR code. Read on this phone only — nothing was saved."
+      "value": "Scanned from a Celia QR code. Read on this phone only - nothing was saved."
     },
     {
       "name": "mic_reason",
@@ -2222,7 +2222,7 @@
     },
     {
       "name": "share_removed",
-      "value": "Link removed — it no longer opens"
+      "value": "Link removed - it no longer opens"
     },
     {
       "name": "dp_send_link",

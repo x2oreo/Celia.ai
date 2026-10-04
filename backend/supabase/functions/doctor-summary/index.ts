@@ -1,4 +1,4 @@
-// POST /functions/v1/doctor-summary — a 2-3 sentence summary at the top of the doctor brief (T13, F-31).
+// POST /functions/v1/doctor-summary - a 2-3 sentence summary at the top of the doctor brief (T13, F-31).
 // The brief itself is deterministic and complete without this. The model only condenses what the app sends:
 // specialty, genotype, the brief's medicine lines with their risk words, interactions, flagged checks, counts, and
 // the visit plan's fixed purpose titles and known-risk medicine names.

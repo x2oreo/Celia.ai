@@ -1,4 +1,4 @@
-# T2 log — Agent brain
+# T2 log - Agent brain
 
 Branch `kaloyan/t2-agent-brain`. Newest entry last. The integrator folds this into `AI_WORKFLOW.md` and `README.md`.
 
@@ -48,7 +48,7 @@ without a button (the action is ignored, nothing breaks).
 - The accessibility grouping was not checked with a screen reader.
 - The `log_symptom` eval fixture was added after the run above and has not been exercised.
 
-## 4. A10 — `log_dose` as a confirmed write, quick replies after a verdict (done before §2, which is blocked)
+## 4. A10 - `log_dose` as a confirmed write, quick replies after a verdict (done before §2, which is blocked)
 
 **Asked:** `log_dose` through the confirm-card pattern only; tests for confirm, cancel and a restored chat not
 replaying the write; richer quick replies after a verdict, deterministic.
@@ -125,7 +125,7 @@ gitignored, on this Mac)
 - Barge-in with a human voice. The demo clip proves the `speech_started` → clear-playback path, nothing more.
 - Symptom log and reminders with real entries (the emulator profile has none).
 
-## 2. Tiles and camera — BLOCKED
+## 2. Tiles and camera - BLOCKED
 
 `components/agent/*` exists on `origin/kaloyan/t1-agent-home` but is not merged into `origin/kaloyan/agent-home`
 (checked 2026-10-03 23:10). Not started: the `SYMPTOM_LOG` tile, the `LOG_DOSE` card, the camera picker.

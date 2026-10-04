@@ -102,7 +102,7 @@ private static async build(seconds: number, reason: string): Promise<liveViewMan
     timer: { time: seconds * 1000, isCountdown: true, isPaused: false },
     liveViewData: {
       primary: {
-        title: 'SOS in ${placeholder.timer} — tap if you are OK',
+        title: 'SOS in ${placeholder.timer} - tap if you are OK',
         content: [{ text: reason.length > 0 ? reason : 'Emergency contacts will be alerted' }],
         keepTime: 60,
         clickAction: tap,
@@ -224,14 +224,14 @@ private static async build(seconds: number, reason: string): Promise<liveViewMan
 
 ## Sources
 
-- [liveview-introduction] About Live View Kit (regions, scenarios, limits, emulator) — https://developer.huawei.com/consumer/en/doc/harmonyos-guides/liveview-introduction
-- [liveview-rights] Enabling Live View Kit — https://developer.huawei.com/consumer/en/doc/harmonyos-guides/liveview-rights
-- [liveview-create-locally] Creating a Local Live View (capsule, timer, tap action) — https://developer.huawei.com/consumer/en/doc/harmonyos-guides/liveview-create-locally
-- [liveview-design-formula] Live View Design Specifications — https://developer.huawei.com/consumer/en/doc/harmonyos-guides/liveview-design-formula
-- [liveview-liveviewmanager] `liveViewManager` reference — https://developer.huawei.com/consumer/en/doc/harmonyos-references/liveview-liveviewmanager
-- [liveview-error-code] Live View error codes — https://developer.huawei.com/consumer/en/doc/harmonyos-references/liveview-error-code
-- `LiveViewLockScreenExtensionAbility` — https://developer.huawei.com/consumer/en/doc/harmonyos-references/liveview-lock-screen-ability
-- [push-punishment-standards] Violation penalty criteria — https://developer.huawei.com/consumer/en/doc/harmonyos-guides/push-punishment-standards
-- [arkts-ui-widget-configuration] Widget configuration (`renderingMode`, sizes) — https://developer.huawei.com/consumer/en/doc/harmonyos-guides/arkts-ui-widget-configuration
-- Form Kit overview ("home screen and system apps such as the lock screen") — https://developer.huawei.com/consumer/en/doc/harmonyos-guides/formkit-overview
-- Live View sample — https://gitcode.com/HarmonyOS_Samples/live-view-kit_-sample-code_-clientdemo_-arkts
+- [liveview-introduction] About Live View Kit (regions, scenarios, limits, emulator) - https://developer.huawei.com/consumer/en/doc/harmonyos-guides/liveview-introduction
+- [liveview-rights] Enabling Live View Kit - https://developer.huawei.com/consumer/en/doc/harmonyos-guides/liveview-rights
+- [liveview-create-locally] Creating a Local Live View (capsule, timer, tap action) - https://developer.huawei.com/consumer/en/doc/harmonyos-guides/liveview-create-locally
+- [liveview-design-formula] Live View Design Specifications - https://developer.huawei.com/consumer/en/doc/harmonyos-guides/liveview-design-formula
+- [liveview-liveviewmanager] `liveViewManager` reference - https://developer.huawei.com/consumer/en/doc/harmonyos-references/liveview-liveviewmanager
+- [liveview-error-code] Live View error codes - https://developer.huawei.com/consumer/en/doc/harmonyos-references/liveview-error-code
+- `LiveViewLockScreenExtensionAbility` - https://developer.huawei.com/consumer/en/doc/harmonyos-references/liveview-lock-screen-ability
+- [push-punishment-standards] Violation penalty criteria - https://developer.huawei.com/consumer/en/doc/harmonyos-guides/push-punishment-standards
+- [arkts-ui-widget-configuration] Widget configuration (`renderingMode`, sizes) - https://developer.huawei.com/consumer/en/doc/harmonyos-guides/arkts-ui-widget-configuration
+- Form Kit overview ("home screen and system apps such as the lock screen") - https://developer.huawei.com/consumer/en/doc/harmonyos-guides/formkit-overview
+- Live View sample - https://gitcode.com/HarmonyOS_Samples/live-view-kit_-sample-code_-clientdemo_-arkts

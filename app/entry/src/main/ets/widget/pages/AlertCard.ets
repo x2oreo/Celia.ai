@@ -77,7 +77,7 @@ struct AlertCard {
             .borderRadius($r('app.float.radius_s'))
             .backgroundColor($r('app.color.card_fixed_border'))
             .onClick(() => this.open(this.ice === '' ? 'emergency' : 'ice'))
-          // Bystander guide (T24): call, CPR, AED — opens without unlocking personal data.
+          // Bystander guide (T24): call, CPR, AED - opens without unlocking personal data.
           Text($r('app.string.widget_help'))
             .fontSize($r('app.float.font_caption'))
             .fontWeight(FontWeight.Bold)

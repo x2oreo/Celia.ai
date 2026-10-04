@@ -1,6 +1,6 @@
 // Medication reminders (F-38, DESIGN.md §10.2 "Reminders"): today's progress, a timeline of doses (taken / due /
-// missed / later) with what each medicine is for, and a quick "new reminder" card — pick a medicine, pick a time.
-// Reminders are soft (no sudden loud alarm — LQT2 rule), and fire even when the app is closed.
+// missed / later) with what each medicine is for, and a quick "new reminder" card - pick a medicine, pick a time.
+// Reminders are soft (no sudden loud alarm - LQT2 rule), and fire even when the app is closed.
 // Dose status colours are neutral/brand/amber, never risk red: a missed dose is not a QT verdict.
 
 import { LocalStore } from '../data/LocalStore';
@@ -416,7 +416,7 @@ export struct RemindersPage {
           .layoutWeight(1)
       }
       .width('100%')
-      Text(medClass(m) === '' ? (m.dose === '' ? '—' : m.dose) : medClass(m))
+      Text(medClass(m) === '' ? (m.dose === '' ? '-' : m.dose) : medClass(m))
         .fontSize($r('app.float.font_micro'))
         .fontColor($r('app.color.ink_3'))
         .maxLines(1)

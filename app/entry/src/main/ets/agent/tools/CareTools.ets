@@ -1,4 +1,4 @@
-// prepare_doctor_visit, get_dose_status, get_trends, open_symptom_log, open_reminders — features that used to be
+// prepare_doctor_visit, get_dose_status, get_trends, open_symptom_log, open_reminders - features that used to be
 // several taps away, one sentence away. All are read-only and deterministic: the content comes from
 // doctor/DoctorPrep.ets, reminders/DoseSchedule.ets, vitals/Trends.ets and the symptom entries in the event log.
 

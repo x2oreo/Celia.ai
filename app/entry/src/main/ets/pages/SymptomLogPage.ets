@@ -1,4 +1,4 @@
-// Symptom log (F-44, manual — no AI): what, how bad, what you were doing. The heart-rate range of the last
+// Symptom log (F-44, manual - no AI): what, how bad, what you were doing. The heart-rate range of the last
 // minutes is attached automatically. Fainting / chest pain / breathlessness → offer SOS right away.
 
 import { LocalStore } from '../data/LocalStore';

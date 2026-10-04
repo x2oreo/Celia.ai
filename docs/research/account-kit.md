@@ -224,18 +224,18 @@ Test steps: Settings on the emulator → sign in with a HUAWEI ID → app → We
 
 ## Sources
 
-- [account-introduction] About Account Kit (emulator support, devices) — https://developer.huawei.com/consumer/en/doc/harmonyos-guides/account-introduction
-- [account-appendix-support-regions] Supported Countries/Regions — https://developer.huawei.com/consumer/en/doc/harmonyos-guides/account-appendix-support-regions
-- [account-config-permissions] Requesting Scopes — https://developer.huawei.com/consumer/en/doc/harmonyos-guides/account-config-permissions
-- [account-sign-fingerprints] Signing information and fingerprint — https://developer.huawei.com/consumer/en/doc/harmonyos-guides/account-sign-fingerprints
-- [account-client-id] Configuring the Client ID — https://developer.huawei.com/consumer/en/doc/harmonyos-guides/account-client-id
-- [account-unionid-login-api] Sign-in with a custom button — https://developer.huawei.com/consumer/en/doc/harmonyos-guides/account-unionid-login-api
-- Sign-in with the HUAWEI ID button — https://developer.huawei.com/consumer/en/doc/harmonyos-guides/account-unionid-login-button
-- [account-faq-12] When and how to use the ID token (claims, JWKS, verification) — https://developer.huawei.com/consumer/en/doc/harmonyos-guides/account-faq-12
-- [account-api-obtain-user-token] Obtaining a user-level credential — https://developer.huawei.com/consumer/en/doc/harmonyos-references/account-api-obtain-user-token
-- [account-api-get-token-info] Parsing a credential — https://developer.huawei.com/consumer/en/doc/harmonyos-references/account-api-get-token-info
-- [account-detailedrules] Sign-in management rules — https://developer.huawei.com/consumer/en/doc/harmonyos-guides/account-detailedrules
-- Huawei OIDC discovery — https://accounts.huawei.com/.well-known/openid-configuration
-- Supabase `signInWithIdToken` (supported providers) — https://supabase.com/docs/reference/javascript/auth-signinwithidtoken
-- Supabase Custom OIDC providers (2026-04-08) — https://supabase.com/blog/custom-oauth-oidc-providers
-- Account Kit sample — https://gitcode.com/HarmonyOS_Samples/accountkit-samplecode-clientdemo-arkts
+- [account-introduction] About Account Kit (emulator support, devices) - https://developer.huawei.com/consumer/en/doc/harmonyos-guides/account-introduction
+- [account-appendix-support-regions] Supported Countries/Regions - https://developer.huawei.com/consumer/en/doc/harmonyos-guides/account-appendix-support-regions
+- [account-config-permissions] Requesting Scopes - https://developer.huawei.com/consumer/en/doc/harmonyos-guides/account-config-permissions
+- [account-sign-fingerprints] Signing information and fingerprint - https://developer.huawei.com/consumer/en/doc/harmonyos-guides/account-sign-fingerprints
+- [account-client-id] Configuring the Client ID - https://developer.huawei.com/consumer/en/doc/harmonyos-guides/account-client-id
+- [account-unionid-login-api] Sign-in with a custom button - https://developer.huawei.com/consumer/en/doc/harmonyos-guides/account-unionid-login-api
+- Sign-in with the HUAWEI ID button - https://developer.huawei.com/consumer/en/doc/harmonyos-guides/account-unionid-login-button
+- [account-faq-12] When and how to use the ID token (claims, JWKS, verification) - https://developer.huawei.com/consumer/en/doc/harmonyos-guides/account-faq-12
+- [account-api-obtain-user-token] Obtaining a user-level credential - https://developer.huawei.com/consumer/en/doc/harmonyos-references/account-api-obtain-user-token
+- [account-api-get-token-info] Parsing a credential - https://developer.huawei.com/consumer/en/doc/harmonyos-references/account-api-get-token-info
+- [account-detailedrules] Sign-in management rules - https://developer.huawei.com/consumer/en/doc/harmonyos-guides/account-detailedrules
+- Huawei OIDC discovery - https://accounts.huawei.com/.well-known/openid-configuration
+- Supabase `signInWithIdToken` (supported providers) - https://supabase.com/docs/reference/javascript/auth-signinwithidtoken
+- Supabase Custom OIDC providers (2026-04-08) - https://supabase.com/blog/custom-oauth-oidc-providers
+- Account Kit sample - https://gitcode.com/HarmonyOS_Samples/accountkit-samplecode-clientdemo-arkts

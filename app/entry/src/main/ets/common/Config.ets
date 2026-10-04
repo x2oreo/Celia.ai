@@ -1,5 +1,5 @@
 // App configuration. Only public values belong here.
-// The Supabase anon key is public by design (RLS protects data); the LLM API key never ships in the app —
+// The Supabase anon key is public by design (RLS protects data); the LLM API key never ships in the app -
 // it lives in Supabase Edge Function secrets. Per-developer values live in the gitignored LocalConfig.ets.
 
 import { LocalConfig } from './LocalConfig';

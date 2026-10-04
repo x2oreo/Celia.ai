@@ -61,7 +61,7 @@ async function labelFinding(ingredient: string, deps: Tier2Deps): Promise<Findin
     return { ...unknown(ingredient), named: true };
   }
   const reason = v.risk === 'NOT_LISTED'
-    ? 'Not in our QT list and the FDA label has no QT warning — still ask your pharmacist'
+    ? 'Not in our QT list and the FDA label has no QT warning - still ask your pharmacist'
     : `The FDA label mentions QT prolongation in its ${SECTION_NAMES[v.section] ?? v.section}`;
   return { ingredient, risk: v.risk, method: 'FDA_LABEL', reason, snippet: v.snippet, setId: v.set_id };
 }
@@ -95,7 +95,7 @@ function words(phrase: string): string[] {
 
 // "aspirin + ascorbic acid" → phrases ["aspirin", "ascorbic acid"]. Each phrase: curated list per word; if any
 // word is unknown, the whole phrase goes to RxNav first ("ascorbic acid", "Nurofen Cold and Flu" → all its
-// ingredients), and only then word by word — a lone "acid" must never be fuzzy-matched to some product.
+// ingredients), and only then word by word - a lone "acid" must never be fuzzy-matched to some product.
 export async function checkQuery(query: string, tier1: (word: string) => Promise<Finding | null>,
   deps: Tier2Deps): Promise<Finding[]> {
   const phrases = query.split(/\+|,|;|\s(?:and|with|i|и)\s/i).map(words).filter((w) => w.length > 0).slice(0, 6);
@@ -105,7 +105,7 @@ export async function checkQuery(query: string, tier1: (word: string) => Promise
       return listed as Finding[];
     }
     const whole = ws.length > 1 ? await checkByLabel(ws.join(' '), deps) : null;
-    // RxNav knows the phrase: its answer stands even when it is UNKNOWN (no label) — splitting "sodium valproate"
+    // RxNav knows the phrase: its answer stands even when it is UNKNOWN (no label) - splitting "sodium valproate"
     // into "sodium" + "valproate" would check the wrong thing.
     if (whole && (whole.risk !== 'UNKNOWN_DRUG' || whole.named)) {
       return [...listed.filter((f): f is Finding => f !== null), whole];

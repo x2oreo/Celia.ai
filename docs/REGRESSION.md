@@ -1,4 +1,4 @@
-# Regression pass — 3 Oct 2026 (branch `app_development`)
+# Regression pass - 3 Oct 2026 (branch `app_development`)
 
 After finishing the features the docs still listed as missing (TASKS T7, T11–T13, T15, T20, T22, T23, T25–T27, T29,
 T30), we checked that nothing else broke. Several Claude Code sessions worked in the same tree that afternoon (box
@@ -16,13 +16,13 @@ barcode identification, encrypted share links, medicine info); this pass covers 
 The 5 failures at the start came from the tests themselves: the "offline" agent suites called the real backend set
 in the developer's `LocalConfig.ets`. `Config.forceOffline(true)` in `test/List.test.ets` makes them independent.
 
-## On the emulator (Pura 90, API 24) — screenshots in `app/build/regression/` (not committed)
+## On the emulator (Pura 90, API 24) - screenshots in `app/build/regression/` (not committed)
 
 | Flow | Result |
 |---|---|
 | Launch → Home | ✅ ring, status chips, agent card, interactions, **tip of the day** card (`TIP FOR LQT2`) |
 | Medicines → medicine sheet | ✅ risk band, what it's for, tips, interactions with my medicines (DESIGN §6.9) |
-| Emergency → nearby help, card language, read aloud | ✅ chips for 13 languages, Polish card renders; **bug found and fixed:** card labels (Genotype, Medicines…) stayed in the old language — `@Builder` params are by value, the card is now keyed on the language |
+| Emergency → nearby help, card language, read aloud | ✅ chips for 13 languages, Polish card renders; **bug found and fixed:** card labels (Genotype, Medicines…) stayed in the old language - `@Builder` params are by value, the card is now keyed on the language |
 | Emergency → QR → encrypted short link | ✅ `celia-share.vercel.app/card/#<id>.<key>` generated live; **bug found and fixed:** the hint said "nothing is uploaded" for the encrypted link |
 | Remove this link → confirm dialog | ✅ dialog with Cancel / Remove link (danger) |
 | Card language persists | ✅ Polish still selected after reinstall |
@@ -47,7 +47,7 @@ is covered by the unit tests above; run them with `app/scripts/run.sh` + `app/sc
 2. The agent greets "Morning, Anna" at 01:10 (greeting by hour looks off at night).
 3. Card viewer: the one-line explanation under "This card link was replaced or removed" is still English.
 4. The 13-language page strings in `site/card/index.html` and the medicine tips in `drugs/DrugInfo.ets` were written
-   by AI — have a native speaker / the team review them before the demo.
+   by AI - have a native speaker / the team review them before the demo.
 5. Needs approvals or a real device: Live View HR/verdict updates (AGC scenario), "Taken" button on system reminders
    (AGC quota), Wear Engine, Map Kit in-app map, Celia routing of the 7 intents, on-device English TTS.
 6. Not built by decision: SOS SMS from the phone via the backend (contacts would leave the phone), F-17 caregiver

@@ -1,4 +1,4 @@
-# Georgi — Mobile app & features
+# Georgi - Mobile app & features
 
 **You own:** the DevEco project, app shell, navigation, every screen, visual design, the onboarding flow,
 the emergency card + SOS UX, and the home-screen widget. You are the integrator: other people's services plug
@@ -10,7 +10,7 @@ Skills to load before coding: `arkui-development`, `arkts-language`, `harmonyos-
 ## First 2 hours (in order)
 
 1. **Create the project** in `app/` with DevEco Studio: *Empty Ability*, Stage model, ArkTS.
-   - Bundle name: agree it with the team **now** — agreed: `com.celiaai.app` (`app/AppScope/app.json5`). Mark needs it for the Wear Engine
+   - Bundle name: agree it with the team **now** - agreed: `com.celiaai.app` (`app/AppScope/app.json5`). Mark needs it for the Wear Engine
      application, and it is hard to change later.
    - `compatibleSdkVersion` / `targetSdkVersion` = **API 20** (task requirement).
    - Builds and runs on the emulator → commit + push to `main` **before anything else**. Everyone branches from this.

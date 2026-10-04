@@ -9,7 +9,7 @@
 --   * pairing_start for a watch that has a secret needs that secret (nobody else can take over its pairing code);
 --   * simulate_missed_beta_blocker needs the secret (or the demo watch).
 --
--- DEPLOY ORDER: apply only together with the watch build that sends `x-watch-secret` — an older watch build loses
+-- DEPLOY ORDER: apply only together with the watch build that sends `x-watch-secret` - an older watch build loses
 -- its context reads and, once it has paired again, its uploads. Retest both emulators (pair, upload, context, SOS).
 
 alter table public.watch_pairings add column if not exists watch_secret_hash text;

@@ -1,6 +1,6 @@
 // Plain-English "about this medicine" facts for every ingredient in DrugDataset: what it is used for, how it works
 // in one line, and up to three general tips from public patient leaflets (EMA / national registers). General
-// information only — never a safety verdict (that comes from DrugDataset) and never a dose instruction.
+// information only - never a safety verdict (that comes from DrugDataset) and never a dose instruction.
 //
 // Rules checked by test/MedInfo.test.ets (DrugInfo suite): every DRUGS ingredient has an entry, at most three tips, each line short.
 
@@ -22,23 +22,23 @@ function i(ingredient: string, usedFor: string, howItWorks: string, tips: string
 // Shared tips, worded once.
 const T_COURSE: string = 'Finish the full course, even if you feel better.';
 const T_QT_STACK: string = 'Tell every doctor you have long QT before a new prescription.';
-const T_K_MG: string = 'Vomiting or diarrhoea lowers potassium — ask about checking it.';
+const T_K_MG: string = 'Vomiting or diarrhoea lowers potassium - ask about checking it.';
 const T_ALCOHOL: string = 'Avoid alcohol while taking it.';
-const T_DROWSY: string = 'May make you drowsy — take care driving.';
+const T_DROWSY: string = 'May make you drowsy - take care driving.';
 const T_NO_STOP: string = 'Do not stop suddenly; your doctor will taper the dose.';
 const T_WEEKS: string = 'Takes a few weeks to work fully.';
 const T_FOOD: string = 'Take with food to protect your stomach.';
 const T_STOMACH: string = 'Can irritate the stomach; avoid if you have ulcers.';
-const T_SUN: string = 'Can make skin sensitive to sun — use sunscreen.';
+const T_SUN: string = 'Can make skin sensitive to sun - use sunscreen.';
 const T_GRAPEFRUIT: string = 'Avoid grapefruit juice.';
 const T_HOSPITAL: string = 'Given in hospital under monitoring.';
 const T_ECG: string = 'Usually started with ECG checks.';
 const T_LYTES: string = 'Can lower potassium and magnesium; blood tests may be needed.';
-const T_COLD: string = 'Often hidden in cold and flu mixes — read the label.';
+const T_COLD: string = 'Often hidden in cold and flu mixes - read the label.';
 const T_STIM: string = 'Stimulant: can raise heart rate.';
 const T_EMPTY: string = 'Take on an empty stomach, 30 minutes before food.';
 const T_MORNING: string = 'Take in the morning so it does not keep you up at night.';
-const T_BB_STOP: string = 'Never stop suddenly — it can trigger a fast heart rate.';
+const T_BB_STOP: string = 'Never stop suddenly - it can trigger a fast heart rate.';
 const T_BB_DAILY: string = 'Take at the same time every day; missed doses matter in LQTS.';
 const T_DIZZY: string = 'Stand up slowly at first; it can make you dizzy.';
 const T_SUGAR: string = 'Can hide signs of low blood sugar.';
@@ -46,8 +46,8 @@ const T_SUGAR: string = 'Can hide signs of low blood sugar.';
 const BETA_TIPS: string[] = [T_BB_DAILY, T_BB_STOP, T_DIZZY];
 const MACROLIDE_TIPS: string[] = [T_COURSE, T_QT_STACK, T_K_MG];
 const QUINOLONE_TIPS: string[] = [T_COURSE, 'Stop and call a doctor if a tendon (heel, ankle) hurts.', T_QT_STACK];
-const AZOLE_TIPS: string[] = ['Interacts with many medicines — show your list to the pharmacist.', T_QT_STACK];
-const SETRON_TIPS: string[] = ['Often given before surgery or chemotherapy — mention your long QT.', T_K_MG];
+const AZOLE_TIPS: string[] = ['Interacts with many medicines - show your list to the pharmacist.', T_QT_STACK];
+const SETRON_TIPS: string[] = ['Often given before surgery or chemotherapy - mention your long QT.', T_K_MG];
 const PPI_TIPS: string[] = [T_EMPTY, 'Long use can lower magnesium; ask about a blood test.'];
 const SSRI_TIPS: string[] = [T_WEEKS, T_NO_STOP, T_ALCOHOL];
 const TCA_TIPS: string[] = [T_DROWSY, T_NO_STOP, T_ALCOHOL];
@@ -224,7 +224,7 @@ export const DRUG_INFO: DrugInfo[] = [
   i('atomoxetine', 'ADHD', 'Raises noradrenaline (not a stimulant).',
     ['Can raise heart rate slightly.', T_WEEKS]),
   i('ritonavir', 'HIV; boosts other antivirals', 'Blocks the enzyme that breaks many drugs down.',
-    ['Interacts with many medicines — always show your list.']),
+    ['Interacts with many medicines - always show your list.']),
 
   // ── Asthma and stimulants ───────────────────────────────────────────────────────────────────
   i('salbutamol', 'Asthma and COPD attacks (reliever)', 'Opens the airways quickly.', BETA2_TIPS),
@@ -245,7 +245,7 @@ export const DRUG_INFO: DrugInfo[] = [
   i('ibuprofen', 'Pain, fever, inflammation', 'Blocks the enzymes that cause inflammation.', NSAID_TIPS),
   i('naproxen', 'Pain and inflammation', 'Blocks the enzymes that cause inflammation.', NSAID_TIPS),
   i('metamizole', 'Strong pain and fever', 'Lowers pain signals and fever.',
-    ['Rarely lowers white blood cells — report fever or sore throat.']),
+    ['Rarely lowers white blood cells - report fever or sore throat.']),
   i('aspirin', 'Pain; low dose to prevent clots', 'Blocks inflammation and makes platelets less sticky.',
     [T_FOOD, T_STOMACH]),
 
@@ -256,7 +256,7 @@ export const DRUG_INFO: DrugInfo[] = [
   i('doxycycline', 'Chest infections, acne, Lyme disease', 'Stops bacteria making proteins.',
     [T_SUN, 'Take with a full glass of water, sitting up.', T_COURSE]),
   i('nitrofurantoin', 'Bladder infections', 'Damages bacteria in the urine.',
-    ['Take with food.', 'Can turn urine dark yellow — harmless.']),
+    ['Take with food.', 'Can turn urine dark yellow - harmless.']),
 
   // ── Antihistamines (non-sedating) ───────────────────────────────────────────────────────────
   i('cetirizine', 'Hay fever, hives, allergies', 'Blocks histamine.', AH_TIPS),
@@ -264,7 +264,7 @@ export const DRUG_INFO: DrugInfo[] = [
   i('loratadine', 'Hay fever, hives, allergies', 'Blocks histamine.', AH_TIPS),
   i('desloratadine', 'Hay fever, hives, allergies', 'Blocks histamine.', AH_TIPS),
   i('fexofenadine', 'Hay fever, hives, allergies', 'Blocks histamine.',
-    ['Avoid fruit juice within 4 hours — it lowers absorption.']),
+    ['Avoid fruit juice within 4 hours - it lowers absorption.']),
 
   // ── Beta blockers and LQTS-friendly heart medicines ─────────────────────────────────────────
   i('nadolol', 'Long QT protection, blood pressure, angina',

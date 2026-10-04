@@ -1,4 +1,4 @@
-// Shared contract — see docs/ARCHITECTURE.md.
+// Shared contract - see docs/ARCHITECTURE.md.
 
 export type VitalsSourceKind = 'WATCH' | 'SIMULATED';
 
@@ -11,7 +11,7 @@ export interface VitalsSample {
   restingHr?: number;
   asleep?: boolean;
   irregular?: boolean;   // irregular rhythm flag from the watch
-  steps?: number;        // steps in the last minute — > 60 counts as exertion
+  steps?: number;        // steps in the last minute - > 60 counts as exertion
 }
 
 export type AlertKind = 'TACHY_AT_REST' | 'BRADY' | 'HR_ALARM_FROM_WATCH' | 'WATCH_DISCONNECTED' |

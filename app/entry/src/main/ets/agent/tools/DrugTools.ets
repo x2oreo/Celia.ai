@@ -1,4 +1,4 @@
-// check_drug, get_my_meds, suggest_alternatives — all answers come from DrugChecker + ComboRules.
+// check_drug, get_my_meds, suggest_alternatives - all answers come from DrugChecker + ComboRules.
 
 import { AgentTool, TurnState, action, toolError } from '../ToolTypes';
 import { argString } from '../ResponseValidator';
@@ -72,7 +72,7 @@ export class GetMyMedsTool implements AgentTool {
 }
 
 // Candidate alternatives per risky ingredient. Every candidate is re-checked with DrugChecker at runtime and only
-// returned if it is NOT_LISTED — so this table can never introduce a QT-risk drug, even if it is wrong.
+// returned if it is NOT_LISTED - so this table can never introduce a QT-risk drug, even if it is wrong.
 interface AltGroup {
   members: string[];
   candidates: string[];
@@ -83,7 +83,7 @@ const ALT_GROUPS: AltGroup[] = [
   {
     members: ['clarithromycin', 'erythromycin', 'azithromycin', 'ciprofloxacin', 'levofloxacin', 'moxifloxacin'],
     candidates: ['amoxicillin', 'cefalexin', 'doxycycline'],
-    note: 'Antibiotic choice depends on the infection and allergies — only a doctor can switch.'
+    note: 'Antibiotic choice depends on the infection and allergies - only a doctor can switch.'
   },
   {
     members: ['diphenhydramine', 'hydroxyzine'],
@@ -138,7 +138,7 @@ export class SuggestAlternativesTool implements AgentTool {
       alternatives: verified,
       note: verified.length > 0
         ? `${group !== undefined ? group.note + ' ' : ''}Mention only these, and only as options to discuss with a doctor.`
-        : `${group !== undefined ? group.note + ' ' : ''}No verified alternatives in the list — do not suggest any.`
+        : `${group !== undefined ? group.note + ' ' : ''}No verified alternatives in the list - do not suggest any.`
     };
     return JSON.stringify(out);
   }

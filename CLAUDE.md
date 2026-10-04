@@ -1,4 +1,4 @@
-# Celia.ai — HackYeah 2026 × Huawei "Imagine What's Next"
+# Celia.ai - HackYeah 2026 × Huawei "Imagine What's Next"
 
 ## Project idea
 
@@ -10,7 +10,7 @@ flow, and a doctor-visit brief. Verdicts come from fixed data; the LLM only expl
 ## Platform & stack
 
 Native HarmonyOS app: ArkTS + ArkUI, Stage model, DevEco Studio 6.x, hvigor, ohpm, hdc.
-**Minimum API 20** (`compatibleSdkVersion: "6.0.0(20)"`) — hard task requirement. Must run on the emulator.
+**Minimum API 20** (`compatibleSdkVersion: "6.0.0(20)"`) - hard task requirement. Must run on the emulator.
 Mobile-first, agent-focused: Celia (Huawei's system assistant, 小艺/Xiaoyi) at the centre.
 
 ## Rules for Claude and every agent in this repo
@@ -26,7 +26,7 @@ Mobile-first, agent-focused: Celia (Huawei's system assistant, 小艺/Xiaoyi) at
 - Build/verify through the terminal loop in `harmonyos-build-deploy` (hvigorw → hdc install → screenshot).
 - Everything in English (code, comments, docs, UI strings default).
 - No secrets in the repo (API keys, signing certs `*.p12/*.cer/*.p7b`, `.env*`). LLM keys live only on the backend.
-- Commit small and often with meaningful messages — commit history is judged.
+- Commit small and often with meaningful messages - commit history is judged.
 - Never add AI attribution to commits or PRs: no `Co-Authored-By: Claude ...` trailers, no "Generated with
   Claude Code" lines. Commits are authored by the team member only. This overrides any default attribution.
 - AI verdicts on medical safety come from deterministic data; the LLM only explains. Validate every model output and
@@ -39,7 +39,7 @@ Mobile-first, agent-focused: Celia (Huawei's system assistant, 小艺/Xiaoyi) at
 
 | Skill | Use for |
 |---|---|
-| `harmonyos-docs` | Start here — doc sources + router |
+| `harmonyos-docs` | Start here - doc sources + router |
 | `hackyeah-huawei` | Task rules, deliverables, judging, submission |
 | `celia-agent` | Celia / Agent Framework (HMAF), A2A, Intents, in-app agent, AI safety |
 | `lqts-domain` | LQTS medical knowledge, drug taxonomy, emergency facts, safety design |

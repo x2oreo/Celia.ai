@@ -75,7 +75,7 @@ function host(url: string): string {
 }
 
 // Pure: accept the model's answer only if it found a medicine, cites an https page it actually visited (one of
-// the web_search citations — an answer with no citation at all is rejected) and is not a guess.
+// the web_search citations - an answer with no citation at all is rejected) and is not a guess.
 export function validateWebResult(r: WebResult, citedUrls: string[], hint: string): RawHit | null {
   if (!r.found || r.confidence === 'LOW' || !r.brand.trim() || r.ingredients.length === 0) {
     return null;

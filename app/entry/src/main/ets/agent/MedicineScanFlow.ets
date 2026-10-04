@@ -1,4 +1,4 @@
-// OWNER: Kaloyan — "show Celia the medicine box".
+// OWNER: Kaloyan - "show Celia the medicine box".
 //   1. On-device OCR (Core Vision) → every word is looked up in DrugChecker → known medicines become candidates.
 //   2. Nothing recognised (or OCR unavailable) → downscaled JPEG → /vision-extract, which only READS names.
 //   3. The user confirms one candidate; only then does the agent check it (confirmCandidate → AgentCore).

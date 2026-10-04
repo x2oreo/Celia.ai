@@ -1,4 +1,4 @@
-// OWNER: Kaloyan — hands-free speech-to-speech with the OpenAI Realtime API, on the SAME on-device tools.
+// OWNER: Kaloyan - hands-free speech-to-speech with the OpenAI Realtime API, on the SAME on-device tools.
 //
 //   mic (AudioCapturer 24 kHz) ─► input_audio_buffer.append ─► OpenAI Realtime (server VAD)
 //   response.output_audio.delta ─► PcmStreamPlayer
@@ -415,7 +415,7 @@ export class RealtimeSession {
     const aboutMedicine: boolean = (turn !== undefined && turn.verdicts.length > 0) ||
       mentionsMedicine(this.transcript);
     if (aboutMedicine && hasReassurance(this.transcript)) {
-      log.warn('realtime: model reassured about a medicine — cancelling response');
+      log.warn('realtime: model reassured about a medicine - cancelling response');
       this.cancelResponse();
       const verdicts: VerdictCardPayload[] = turn !== undefined ? turn.verdicts : [];
       const fix: string = verdicts.length > 0

@@ -1,4 +1,4 @@
-# T2 — Agent brain (A4, then A10)
+# T2 - Agent brain (A4, then A10)
 
 Read `docs/handoff/tracks/README.md` first (scope change, rules, emulator lock), then sections 3-7 of
 `docs/handoff/KALOYAN_agent_and_ui.md`. Task A4 there is yours, then A10.
@@ -46,7 +46,7 @@ calls are approved by the owner.
 - Fix what breaks in `voice/*`, the prompt or the tools. A wrong or unsafe answer is a prompt / validator fix with
   an eval case added, never a UI patch.
 
-## 4. A10 — `log_dose` as a confirmed write
+## 4. A10 - `log_dose` as a confirmed write
 
 Confirm-card pattern only: `PendingKind` in `agent/ToolTypes.ets`, `AgentCore.resolveAction`. The model proposes,
 the user confirms on the card, only then the dose is written. Tests for confirm, cancel, and a restored chat not

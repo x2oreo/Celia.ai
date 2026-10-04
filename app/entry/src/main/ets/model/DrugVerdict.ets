@@ -1,4 +1,4 @@
-// Shared contract — see docs/ARCHITECTURE.md.
+// Shared contract - see docs/ARCHITECTURE.md.
 // Verdicts are deterministic (curated dataset). The LLM may only explain them.
 
 export type RiskLevel = 'KNOWN_RISK' | 'POSSIBLE_RISK' | 'CONDITIONAL_RISK' | 'NOT_LISTED' | 'UNKNOWN_DRUG';
@@ -29,7 +29,7 @@ export interface DrugVerdict {
   reason: string;       // short deterministic reason from the dataset
   source: string;       // e.g. 'Curated from CredibleMeds categories (cited)'
   // Optional extras (F-20, F-21). Absent on verdicts built by older code.
-  confidence?: number;  // 0..1 — 1 exact name, lower for typo matches, 0 for unknown
+  confidence?: number;  // 0..1 - 1 exact name, lower for typo matches, 0 for unknown
   trace?: LookupStep[];
   alternatives?: string[];   // curated NOT_LISTED ingredients to ask the doctor about
 }

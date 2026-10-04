@@ -1,4 +1,4 @@
-// Deterministic heart-rate alarm rules, tuned per LQTS genotype. Pure logic — unit tested, no timers.
+// Deterministic heart-rate alarm rules, tuned per LQTS genotype. Pure logic - unit tested, no timers.
 // Thresholds are conservative demo values for decision support, not clinical alarm limits.
 
 import { AlertKind, AlertSeverity, VitalsAlert, VitalsSample } from '../model/Vitals';
@@ -23,7 +23,7 @@ export class AlarmRules {
     this.lastFired.clear();
   }
 
-  // Returns at most one alert per sample — the most severe rule that fires and is not debounced.
+  // Returns at most one alert per sample - the most severe rule that fires and is not debounced.
   evaluate(s: VitalsSample): VitalsAlert | undefined {
     const candidates: VitalsAlert[] = this.candidates(s);
     candidates.sort((a: VitalsAlert, b: VitalsAlert) => rank(b.severity) - rank(a.severity));
@@ -46,7 +46,7 @@ export class AlarmRules {
     }
     this.lastFired.set('WATCH_DISCONNECTED', ts);
     return alert(ts, 'WATCH_DISCONNECTED', 0, 'INFO',
-      'No heart-rate data from the watch. Heart monitoring is paused — check that the watch is on and connected.');
+      'No heart-rate data from the watch. Heart monitoring is paused - check that the watch is on and connected.');
   }
 
   private candidates(s: VitalsSample): VitalsAlert[] {
@@ -72,7 +72,7 @@ export class AlarmRules {
 
     if (exertion && s.hr >= 170) {
       const why: string = this.genotype === 'LQT1' ?
-        ' Exertion is the typical LQT1 trigger — slow down now and rest.' : ' Slow down and rest.';
+        ' Exertion is the typical LQT1 trigger - slow down now and rest.' : ' Slow down and rest.';
       out.push(alert(s.ts, 'HIGH_HR_EXERTION', s.hr, this.genotype === 'LQT1' ? 'CRITICAL' : 'WARN',
         `Heart rate ${Math.round(s.hr)} during activity.${why}`));
     }
@@ -84,7 +84,7 @@ export class AlarmRules {
 
     if (s.hrv !== undefined && s.hrv < 12 && !exertion) {
       out.push(alert(s.ts, 'HRV_DROP', s.hr, 'INFO',
-        'Heart-rate variability is unusually low — a sign of stress. Take a few slow breaths.'));
+        'Heart-rate variability is unusually low - a sign of stress. Take a few slow breaths.'));
     }
     return out;
   }

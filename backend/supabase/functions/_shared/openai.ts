@@ -1,4 +1,4 @@
-// Minimal OpenAI client over fetch (no SDK — keeps the Edge Function small and the dependency list empty).
+// Minimal OpenAI client over fetch (no SDK - keeps the Edge Function small and the dependency list empty).
 // The key is read from Supabase secrets: `supabase secrets set OPENAI_API_KEY=...`. It never reaches the app.
 
 const OPENAI_BASE = 'https://api.openai.com/v1';

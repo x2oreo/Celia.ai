@@ -1,6 +1,6 @@
 // Emergency numbers by country (F-26). Two numbers matter: the medical/ambulance line (what to call for a
 // cardiac event) and the general emergency number. Sources: EU 112 information pages and national
-// regulators — verify locally when travelling. Unknown country → 112 (works in the EU and on most GSM phones).
+// regulators - verify locally when travelling. Unknown country → 112 (works in the EU and on most GSM phones).
 
 import { i18n } from '@kit.LocalizationKit';
 

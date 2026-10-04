@@ -1,4 +1,4 @@
-# Architecture — big picture
+# Architecture - big picture
 
 Read this first. It defines **who owns what** and the **contracts between parts**, so we can build in parallel
 without blocking each other. Change a contract → tell the team on Discord + update this file in the same commit.
@@ -105,7 +105,7 @@ Celia.ai/
 └─ docs/                     # this folder
 ```
 
-## Shared contracts (put in `app/entry/src/main/ets/model/`, strict ArkTS — classes/interfaces, no `any`)
+## Shared contracts (put in `app/entry/src/main/ets/model/`, strict ArkTS - classes/interfaces, no `any`)
 
 ```ts
 // model/Profile.ets
@@ -139,7 +139,7 @@ export interface VitalsAlert { ts: number; kind: AlertKind; hr: number; message:
 
 // model/AgentTypes.ets
 export interface ChatMessage { role: 'user' | 'assistant'; text: string; ts: number; actions?: UiAction[]; }
-// model/Chat.ets — saved chats (LocalStore tables chats + chat_messages, schema v2)
+// model/Chat.ets - saved chats (LocalStore tables chats + chat_messages, schema v2)
 export interface ChatSummary { id: number; title: string; createdAt: number; updatedAt: number; messageCount: number; }
 export type UiActionType = 'SHOW_VERDICT' | 'SHOW_EMERGENCY_CARD' | 'START_EMERGENCY' | 'OPEN_MED_SCAN' | 'ADD_MED'
   | 'SHARE_EMERGENCY_CARD' | 'QUICK_REPLIES' | 'SHOW_MEDS' | 'SHOW_ALTERNATIVES';
@@ -151,7 +151,7 @@ export interface AgentReply { text: string; actions: UiAction[]; fallback: boole
 Services each owner exposes (stub them on day 1 so others can call them immediately):
 
 ```ts
-// drugs/DrugChecker.ets            (Mark — Kaloyan's tools + Georgie's UI + intents call it)
+// drugs/DrugChecker.ets            (Mark - Kaloyan's tools + Georgie's UI + intents call it)
 check(query: string): Promise<DrugVerdict>
 // drugs/OcrService.ets             (Kaloyan)
 recognize(pixelMap: image.PixelMap): Promise<string>
@@ -160,7 +160,7 @@ getProfile / saveProfile / listMeds / addMed / removeMed / logEvent / listEvents
 listChats / createChat / listChatMessages / addChatMessage / renameChat / deleteChat   (≤ 50 chats × 200 messages)
 // vitals/VitalsService.ets         (Mark)
 start(source: 'WATCH' | 'SIMULATED') / stop() / onSample(cb) / onAlert(cb) / runScenario(name: string)
-// agent/AgentCore.ets              (Kaloyan — Georgie's chat UI calls it)
+// agent/AgentCore.ets              (Kaloyan - Georgie's chat UI calls it)
 send(text: string): Promise<AgentReply>
 onProactive(cb: (reply: AgentReply) => void)   // triggered by VitalsAlert
 resolveAction(actionId: string, accepted: boolean): Promise<AgentReply>   // confirm-card tap (ADD_MED, SHARE_…)
@@ -171,7 +171,7 @@ currentChatId(): number / onChatChanged(cb)    // -1 = new chat without messages
 
 ## Backend API
 
-`/functions/v1/share` — end-to-end encrypted links for the emergency card and the doctor report (deploy with
+`/functions/v1/share` - end-to-end encrypted links for the emergency card and the doctor report (deploy with
 `--no-verify-jwt`). The phone encrypts the JSON with a fresh AES-256-GCM key (`share/ShareCrypto.ets`) and uploads only
 ciphertext; blobs live in the private Storage bucket `shares`, readable only by the function's service key.
 `POST {kind:'card'|'report', ciphertext}` → `{id, revokeToken, expiresAt}` (report: 48 h, card: until revoked; needs the
@@ -187,8 +187,8 @@ Viewer pages are static (`site/`, Vercel) because Supabase rewrites HTML respons
 `POST /functions/v1/drug-check` → `{ "query": "clarithromycin" }` →
 `{ "query": "...", "ingredient": "clarithromycin", "risk": "KNOWN_RISK", "reason": "...", "source": "...",
 "method": "LIST" | "FDA_LABEL" | "NONE", "confidence": 0..1, "snippet": "..." }`. Deterministic, no AI:
-- **Tier 1** — each word against the curated `drugs` / `drug_aliases` tables (same data as the app bundle).
-- **Tier 2** — words tier 1 does not know: NLM RxNav name → ingredient(s) (exact match; fuzzy only when the name
+- **Tier 1** - each word against the curated `drugs` / `drug_aliases` tables (same data as the app bundle).
+- **Tier 2** - words tier 1 does not know: NLM RxNav name → ingredient(s) (exact match; fuzzy only when the name
   starts with what was typed) → curated list again (via aliases, so US names like `acetaminophen` hit `paracetamol`)
   → otherwise the openFDA label QT rule (`_shared/labelRisk.ts`): QT/torsades wording in the boxed warning →
   KNOWN_RISK, in warnings/precautions → POSSIBLE_RISK, only in side effects/interactions → CONDITIONAL_RISK, label
@@ -201,7 +201,7 @@ Viewer pages are static (`site/`, Vercel) because Supabase rewrites HTML respons
   base ingredient. A 4.3 s budget answers UNKNOWN_DRUG in time for the app's 5 s timeout and finishes the lookup in
   the background so the next check hits `label_cache`.
 
-`POST /functions/v1/box-identify` — a barcode the phone does not know (any country) → brand + English ingredients.
+`POST /functions/v1/box-identify` - a barcode the phone does not know (any country) → brand + English ingredients.
 Never a verdict: after the user confirms, the app runs the usual `CheckService` check on the ingredients.
 - `{gtin, stage:'fast'}` → `box_cache` (~0.3 s) → in parallel, awaited in trust order: openFDA label by UPC (US),
   AEMPS CIMA by Código Nacional (Spain, `847000…`), UPCitemdb, Open Food/Products/Beauty Facts. Ingredients are
@@ -216,7 +216,7 @@ Never a verdict: after the user confirms, the app runs the usual `CheckService` 
 - App: `drugs/BoxIdentifyClient.ets` (validated parse), `components/BoxCandidateSheet.ets` ("Is this your box?"),
   `pages/ScanPage.ets` (fast → deep → teach form), confirmed boxes stored on the phone as `BoxSource 'ONLINE'`.
 
-`POST /functions/v1/agent` — **one model step** (OpenAI Responses API). The tool loop runs **in the app**
+`POST /functions/v1/agent` - **one model step** (OpenAI Responses API). The tool loop runs **in the app**
 (`AgentCore`): the function returns tool calls, the app executes them on-device and calls again with the outputs.
 Full contract: `backend/supabase/functions/README.md`.
 ```json
@@ -240,9 +240,9 @@ key is an Edge Function secret. Timeouts: app 20 s per step → fallback.
 2. Validate every reply against `AgentReply` schema; unknown action types dropped; parse error → fallback.
 3. Emergency keywords ("faint", "chest pain", "passed out", "can't breathe") → deterministic emergency path
    **before** calling the LLM.
-4. Log (hilog) every fallback with reason — we show it in the demo and in tests.
+4. Log (hilog) every fallback with reason - we show it in the demo and in tests.
 
-## Platform capabilities we claim (keep this list honest — judges check the code)
+## Platform capabilities we claim (keep this list honest - judges check the code)
 
 | Capability | Kit | Where | Runs on emulator? |
 |---|---|---|---|
@@ -250,7 +250,7 @@ key is an Edge Function secret. Timeouts: app 20 s per step → fallback.
 | On-device OCR of medicine boxes | `@kit.CoreVisionKit` (+ `/vision-extract` names-only fallback) | `drugs/OcrService.ets`, `agent/MedicineScanFlow.ets` | ⚠️ verify early |
 | System assistant entry | Intents Kit (`@kit.AbilityKit` `@InsightIntentEntry`) | `insightintents/` (7 intents: CheckDrugSafety, ShowEmergencyCard, LogSymptom, TakeDose, ShowPharmacyCard, AddMedication, ReadEmergencyCard) | ⚠️ built and compiled; Celia routing needs a real device with Celia/Xiaoyi |
 | Agent-to-agent (stretch) | `@kit.AgentFrameworkKit` | `agentextability/` | ⚠️ ask mentors |
-| Home widgets | Form Kit | `widget/`, `entryformability/` | ✅ built — four cards: check (2×2), alert (2×4), "How are you feeling?" (2×2, opens the diary), medical ID (`renderingMode: "autoColor"`, home and lock screen; lock-screen placement unverified: no lock-screen editing on the emulator) |
+| Home widgets | Form Kit | `widget/`, `entryformability/` | ✅ built - four cards: check (2×2), alert (2×4), "How are you feeling?" (2×2, opens the diary), medical ID (`renderingMode: "autoColor"`, home and lock screen; lock-screen placement unverified: no lock-screen editing on the emulator) |
 | Online drug check (optional) | `@kit.NetworkKit` → Supabase `/drug-check` | `drugs/DrugCheckClient.ets`, `common/Net.ets`, `backend/supabase/` | ✅ offline-first; only for names the bundle does not know, logged in the privacy ledger. Tier 2 (RxNav + openFDA label QT rule) covers medicines outside the curated list |
 | Local DB | `@kit.ArkData` RDB (`encrypt: true`) | `data/LocalStore.ets` | ✅ verified |
 | Notifications / call | `@kit.NotificationKit`, `call.makeCall` (dialer) | `common/Notify.ets`, `common/Dialer.ets` | ✅ verified |
@@ -258,21 +258,21 @@ key is an Edge Function secret. Timeouts: app 20 s per step → fallback.
 | Voice (hands-free) | OpenAI Realtime over `@kit.NetworkKit` WebSocket + AudioKit | `voice/RealtimeSession.ets` | ✅ needs network + mic |
 | SOS location (F-28) | `@kit.LocationKit` | `emergency/SosService.ets` | ⚠️ permission flow verified; emulator has no fix → message says "location unknown" |
 | Card QR (F-30) | ArkUI `QRCode` → short encrypted link (`/card/#<id>.<key>`, Supabase `share` + Vercel viewer); offline/no backend → legacy link with the card in the `#fragment` (GitHub Pages viewer kept for old QRs) | `emergency/CardLink.ets`, `share/`, `pages/EmergencyPage.ets`, `pages/CardViewPage.ets`, `site/card/` | ✅ both kinds open in the app's scanner and on any phone camera (13 languages, incl. call/footer wording) |
-| SOS message (F-28) | `@kit.ShareKit` system share sheet | `common/Share.ets` | ✅ — direct SMS needs `SEND_MESSAGES` (system apps only), so the user sends via SMS/messenger/e-mail |
+| SOS message (F-28) | `@kit.ShareKit` system share sheet | `common/Share.ets` | ✅ - direct SMS needs `SEND_MESSAGES` (system apps only), so the user sends via SMS/messenger/e-mail |
 | Live View (F-35, B13) | `@kit.LiveViewKit` | `emergency/LiveStatus.ets`, `emergency/SosLiveText.ets` | ⚠️ runs on the emulator (system timer, capsule, end card). Real phone: Chinese mainland only, and an AGC scenario request (no scenario fits an SOS countdown; `TIMER` is for tool apps). Falls back to an ongoing notification. See `docs/research/live-view.md` |
 | Box barcode (F-36) | `@kit.ScanKit` (system scan UI, album allowed) | `drugs/BarcodeService.ets`, `drugs/Gs1.ets`, `drugs/GtinCatalog.ets`, `rawfile/gtin_pl.json` | ✅ real Polish boxes offline (URPL register, ≈68k packs, loads in ~80 ms); other countries via online `/box-identify` (registries first, AI web search last, user confirms) or on-device "teach this barcode"; demo GTINs (prefix 200) kept |
 | Dose reminders (F-38) | `@kit.BackgroundTasksKit` reminderAgentManager | `reminders/ReminderService.ets` | ⚠️ system refuses with 1700002 until the agent-reminder quota is granted in AGC; fallback: in-app notification while the app runs + Today view |
 | Read card aloud (F-42) | `@kit.CoreSpeechKit` textToSpeech (en) + cloud `/speak` (other languages) | `emergency/CardSpeech.ets`, `voice/VoiceOutput.ets` (`say`), `pages/EmergencyPage.ets` | ⚠️ cloud path works with network; on-device en-US voice unverified on the emulator; button hidden when neither works. Medical part only, never name/contacts |
-| Nearby ER / AED (F-43) | Fallback: map search link (`openLink`, Google Maps URLs, no key) — full Map Kit + Site Kit needs an AGC Map key | `emergency/NearbyHelp.ets`, Emergency → Nearby help | ✅ fallback; the app sends no location (the map app/browser uses its own) |
+| Nearby ER / AED (F-43) | Fallback: map search link (`openLink`, Google Maps URLs, no key) - full Map Kit + Site Kit needs an AGC Map key | `emergency/NearbyHelp.ets`, Emergency → Nearby help | ✅ fallback; the app sends no location (the map app/browser uses its own) |
 | Travel mode (F-40) | `@kit.LocationKit` reverse geocoding (only when location is already allowed) | `emergency/TravelService.ets`, Home banner, `pages/PharmacyCardPage.ets` | ⚠️ emulator has no location fix → no banner; logic unit-tested |
 | App lock (F-45) | `@kit.UserAuthenticationKit` | `common/AppLock.ets`, `components/LockScreen.ets` | ⚠️ needs a screen lock on the device; without one the switch stays off (no lock-out) |
 | Push (B12) | Push Kit (`pushService.getToken`) + Huawei Push server API (service-account JWT) | `account/PushToken.ets`, `EntryAbility.handlePushTap`, `backend/supabase/functions/sos/huaweiPush.ts` | ⚠️ phones: Chinese mainland only (Huawei docs). Token registration + sender built from `docs/research/push-kit.md`; the emulator gets no token (`1000900010 Illegal application identity`, no AGC project); watch SOS reaches contacts by the `sos` function and the open app by polling |
 | NFC card tag (B14) | `@ohos.nfc.tag` (reader mode, NDEF write) | `emergency/NfcCard.ets` | ⚠️ built, unverified; the action is hidden on the emulator (no `SystemCapability.Communication.NFC.Tag`) |
 | Accounts (B1, B2) | Supabase Auth over `@kit.NetworkKit` (no supabase-js) | `account/`, `common/Net.ets` | ⚠️ built; live sign-up needs migration `20261004100000` and "Confirm email" off. HUAWEI ID (Account Kit, B18) is available in Poland and on the emulator but not built; bridge function design in `docs/research/account-kit.md` |
 
-## Proposed contracts — feature expansion (F-19..F-34)
+## Proposed contracts - feature expansion (F-19..F-34)
 
-**Proposed, not final** — confirm with the owner, then move into "Shared contracts" and `model/`. Tasks:
+**Proposed, not final** - confirm with the owner, then move into "Shared contracts" and `model/`. Tasks:
 [`TASKS.md`](TASKS.md).
 
 ```ts
@@ -285,7 +285,7 @@ export interface LookupStep { step: string; matched: boolean; detail: string; } 
 // model/ScanRecord.ets (Mark + Georgi)
 export interface ScanRecord { id: number; ts: number; via: 'CHAT' | 'TEXT' | 'PHOTO' | 'INTENT'; verdict: DrugVerdict; }
 
-// model/Vitals.ets (additions, Mark) — all optional, SimulatedSource fills all
+// model/Vitals.ets (additions, Mark) - all optional, SimulatedSource fills all
 // VitalsSample gains: hrv?, rrMs?, restingHr?, stress?, asleep?, irregular?, steps?
 // AlertKind gains: 'IRREGULAR_RHYTHM' | 'HRV_DROP' | 'HIGH_HR_EXERTION' | 'RESTING_HR_RISE' (multi-day, BetaBlockerWatch); VitalsAlert gains severity: 'INFO' | 'WARN' | 'CRITICAL'
 
@@ -293,7 +293,7 @@ export interface ScanRecord { id: number; ts: number; via: 'CHAT' | 'TEXT' | 'PH
 export interface SosEvent { ts: number; trigger: 'VITALS' | 'BUTTON' | 'KEYWORD'; test: boolean;
   lat: number; lon: number; results: string; }   // results = JSON per contact/channel
 
-// model/Profile.ets (additions) — Profile.country: string (ISO2); Contact.email: string ('' if none)
+// model/Profile.ets (additions) - Profile.country: string (ISO2); Contact.email: string ('' if none)
 
 // model/GtinEntry.ets (F-36, Mark)
 export interface GtinEntry { gtin: string; product: string; ingredient: string; country: string; source: string; }
@@ -303,12 +303,12 @@ export type DoseStatus = 'DUE' | 'TAKEN' | 'SNOOZED' | 'MISSED';
 export interface DoseReminder { id: number; medId: number; hour: number; minute: number; reminderId: number; }
 export interface DoseLog { ts: number; medId: number; status: DoseStatus; }
 
-// model/SymptomEntry.ets (F-44) — produced by the LLM, validated; invalid → raw text only
+// model/SymptomEntry.ets (F-44) - produced by the LLM, validated; invalid → raw text only
 export type Symptom = 'DIZZINESS' | 'PALPITATIONS' | 'FAINTING' | 'CHEST_PAIN' | 'SHORTNESS_OF_BREATH' | 'OTHER';
 export interface SymptomEntry { ts: number; symptom: Symptom; activity: string; severity: number; note: string;
   hrMin: number; hrMax: number; }   // severity 1..5; HR window ±10 min, -1 if no data
 
-// model/LedgerEntry.ets (F-46) — field NAMES only, never values
+// model/LedgerEntry.ets (F-46) - field NAMES only, never values
 export interface LedgerEntry { ts: number; endpoint: string; fields: string[]; bytes: number; }
 ```
 
@@ -521,5 +521,5 @@ Nothing new. If the lock-screen medical ID widget is built (`live-view.md` §2),
 - Branches: `kaloyan/*`, `georgie/*`, `mark/*` → merge to `main` often (≥ every 2–3 h). `main` must always build.
 - Commits small and frequent (judges read history), Conventional Commits: `feat(agent): …`, `fix(vitals): …`.
 - No secrets in repo: `.env` in `.gitignore`, backend URL + Supabase anon key in the gitignored `app/entry/src/main/ets/common/LocalConfig.ets`, created from
-  `LocalConfig.example.ets` on first build — the anon key is public by design, LLM key never leaves Supabase secrets.
+  `LocalConfig.example.ets` on first build - the anon key is public by design, LLM key never leaves Supabase secrets.
 - Every AI-tool session: append prompt + outcome to `AI_WORKFLOW.md` (one line is fine).

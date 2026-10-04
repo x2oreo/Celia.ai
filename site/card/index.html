@@ -260,7 +260,7 @@
   function render(p, code) {
     var t = textFor(code);
     document.documentElement.lang = t.code;
-    document.title = titleCase(t.title) + (p.n ? ' — ' + p.n : '');
+    document.title = titleCase(t.title) + (p.n ? ' - ' + p.n : '');
     $('title').textContent = t.title;
     $('who').textContent = p.n || '';
     $('who').hidden = !p.n;
@@ -295,7 +295,7 @@
     $('notes').textContent = p.o || '';
     $('notesBox').hidden = !p.o;
 
-    // Main button: the general emergency number (112 across Europe) — the one every local recognises.
+    // Main button: the general emergency number (112 across Europe) - the one every local recognises.
     // The country's direct ambulance line, when different, goes underneath.
     var info = numbers[(p.cc || '').toUpperCase()];
     var number = info ? info.general : '112';

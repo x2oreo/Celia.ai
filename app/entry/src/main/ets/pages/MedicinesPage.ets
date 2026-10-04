@@ -296,7 +296,7 @@ export struct MedicinesPage {
         .fontColor($r('app.color.ink'))
         .maxLines(1)
         .textOverflow({ overflow: TextOverflow.Ellipsis })
-      Text(medSubtitle(m) === '' ? (m.ingredient === '' ? '—' : m.ingredient) : medSubtitle(m))
+      Text(medSubtitle(m) === '' ? (m.ingredient === '' ? '-' : m.ingredient) : medSubtitle(m))
         .fontSize($r('app.float.font_caption'))
         .fontColor($r('app.color.ink_3'))
         .lineHeight(16)

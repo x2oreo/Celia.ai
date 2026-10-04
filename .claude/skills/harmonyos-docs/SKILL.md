@@ -9,7 +9,7 @@ HarmonyOS APIs move fast (API level bumps every few months) and LLM training dat
 mixed with legacy Java/HarmonyOS 2-3 (Android-based) material. **Never trust memory for API names,
 imports or config keys. Look them up.** Current as of Oct 2026: DevEco Studio 6.1.x, HarmonyOS 6.1.1 = API 24
 (6.0.2 = API 22, 6.1.0 = API 23). Ignore anything about Java `Ability`/`AbilitySlice`, FA model,
-`config.json`, `.hml` / JS-like web UI, or `@ohos.*` HAP built with Gradle — that is the old era.
+`config.json`, `.hml` / JS-like web UI, or `@ohos.*` HAP built with Gradle - that is the old era.
 
 ## 1. Context7 (fastest, first choice)
 
@@ -19,14 +19,14 @@ Use `mcp__context7__query-docs` directly with these IDs (no resolve step needed)
 |---|---|
 | `/websites/developer_huawei_consumer_cn_doc_harmonyos-guides` | Official dev guides (ArkTS, ArkUI, kits, DevEco, hvigor, hdc). ~65k snippets. Best general source. |
 | `/websites/developer_huawei_consumer_cn_doc_harmonyos-references` | API reference (every `@kit.*` module, component attributes, error codes). |
-| `/linganmin/harmonyos_samples` | Official sample apps — complete working code. |
+| `/linganmin/harmonyos_samples` | Official sample apps - complete working code. |
 
 Snippets come from the CN site: prose may be Chinese, code is the same. One concept per query
 (e.g. "Navigation NavPathStack pushPathByName example", not "routing and state and http").
 
 ## 2. Official site (WebFetch)
 
-URL pattern — swap `/cn/` ↔ `/en/` for language (EN sometimes lags CN by a release):
+URL pattern - swap `/cn/` ↔ `/en/` for language (EN sometimes lags CN by a release):
 
 - Guides: `https://developer.huawei.com/consumer/en/doc/harmonyos-guides/<slug>`
 - API ref: `https://developer.huawei.com/consumer/en/doc/harmonyos-references/<slug>`
@@ -51,16 +51,16 @@ HarmonyOS = OpenHarmony + Huawei closed kits (HMS-like: Account, Map, Push, Paym
 Agent Framework...). Basic ArkTS/ArkUI/Ability/ArkData docs are identical in OpenHarmony and are plain Markdown:
 
 - `https://gitcode.com/openharmony/docs` (primary), GitHub mirror `https://github.com/openharmony/docs`
-- English: `en/application-dev/` — e.g. `en/application-dev/quick-start/`, `ui/`, `reference/apis-arkui/`
+- English: `en/application-dev/` - e.g. `en/application-dev/quick-start/`, `ui/`, `reference/apis-arkui/`
 - For heavy lookup: `git clone --depth 1 https://github.com/openharmony/docs` into scratch, then grep.
 
 ## 4. Community / third-party
 
-- `https://www.harmony-developers.com` — English community, global-dev workarounds.
+- `https://www.harmony-developers.com` - English community, global-dev workarounds.
 - Agent skill packs to mine for pitfalls: `github.com/DengShiyingA/harmonyos-ai-skill`,
   `github.com/FadingLight9291117/arkts_skills`, `skills.sh/openharmonyinsight/openharmony-skills`.
 - ohpm package registry: `https://ohpm.openharmony.cn` (3rd-party libs, e.g. `@ohos/axios`, `@ohos/lottie`).
-- Huawei mentors at HackYeah (Discord task channel, "Mentors Village" level 0) — ask them first when
+- Huawei mentors at HackYeah (Discord task channel, "Mentors Village" level 0) - ask them first when
   the docs contradict reality on the event devices.
 
 ## Lookup protocol

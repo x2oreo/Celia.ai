@@ -1,4 +1,4 @@
-// Plain facts about a scanned box (F-36) for the "About this medicine" card. Pure — unit tested.
+// Plain facts about a scanned box (F-36) for the "About this medicine" card. Pure - unit tested.
 
 import { BoxInfo } from '../model/BoxInfo';
 import { DrugChecker } from './DrugChecker';
@@ -103,7 +103,7 @@ export function sourceLine(box: BoxInfo): string {
     case 'PL_REGISTER':
       return `Polish medicines register (URPL), snapshot ${box.sourceDate}`;
     case 'LEARNED':
-      return `Added by you on ${box.sourceDate} — stored only on this phone`;
+      return `Added by you on ${box.sourceDate} - stored only on this phone`;
     case 'ONLINE':
       return `Found online (${box.sourceName ?? 'barcode lookup'}), confirmed by you on ${box.sourceDate}`;
     default:

@@ -1,4 +1,4 @@
-// Medication reminders (F-38) via the system reminder agent — they fire even when the app is closed.
+// Medication reminders (F-38) via the system reminder agent - they fire even when the app is closed.
 // Schedule and dose log live on-device (LocalStore settings).
 
 import { reminderAgentManager } from '@kit.BackgroundTasksKit';

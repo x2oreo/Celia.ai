@@ -49,12 +49,12 @@ export struct VitalsPage {
       case 'ASLEEP':
         return 'Asleep';
       default:
-        return '—';
+        return '-';
     }
   }
 
   orDash(v: number, unit: string): string {
-    return v > 0 ? `${v}${unit}` : '—';
+    return v > 0 ? `${v}${unit}` : '-';
   }
 
   build() {
@@ -64,7 +64,7 @@ export struct VitalsPage {
         Tile({ label: 'State', value: this.stateText() })
       }
       Row({ space: 4 }) {
-        Tile({ label: 'Recovery', value: this.ctrl.lastRecovery.length > 0 ? this.ctrl.lastRecovery : '—',
+        Tile({ label: 'Recovery', value: this.ctrl.lastRecovery.length > 0 ? this.ctrl.lastRecovery : '-',
           warn: this.ctrl.lastRecovery.endsWith('slow') })
         Tile({ label: 'Stress', value: this.ctrl.stress ? 'High' : 'Normal', warn: this.ctrl.stress })
         Tile({ label: 'Steps', value: `${this.ctrl.steps}` })
@@ -85,7 +85,7 @@ export struct VitalsPage {
           warn: this.ctrl.irregularRhythm, onTap: () => {
             this.ctrl.triggerAnomaly('rhythm');
           } })
-        Tile({ label: 'Genotype', value: this.ctrl.genotype === 'UNKNOWN' ? '—' : this.ctrl.genotype })
+        Tile({ label: 'Genotype', value: this.ctrl.genotype === 'UNKNOWN' ? '-' : this.ctrl.genotype })
       }
       Text(this.ctrl.anomaly === 'none' ? 'Tap a sim tile to simulate' : `Simulating ${this.ctrl.anomaly} anomaly`)
         .fontSize(8)

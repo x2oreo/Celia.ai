@@ -1,5 +1,5 @@
-// OWNER: Kaloyan — push-to-talk speech input.
-//   ON_DEVICE: Core Speech Kit speechRecognizer (en-US) — preferred, audio never leaves the phone.
+// OWNER: Kaloyan - push-to-talk speech input.
+//   ON_DEVICE: Core Speech Kit speechRecognizer (en-US) - preferred, audio never leaves the phone.
 //   CLOUD:     AudioCapturer PCM16 16 kHz → WAV → /transcribe (Core Speech samples are zh-CN only; English
 //              support is unverified on our devices, so this is the fallback).
 // Usage: await VoiceInput.get().init(ctx) once; begin() on press; const text = await end() on release.

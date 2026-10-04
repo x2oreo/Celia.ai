@@ -1,12 +1,12 @@
-// OWNER: Kaloyan — deterministic interaction rules. The LLM explains these findings; it never computes them.
+// OWNER: Kaloyan - deterministic interaction rules. The LLM explains these findings; it never computes them.
 //
-// Rules (simplified, conservative — decision support, not a clinical interaction checker):
+// Rules (simplified, conservative - decision support, not a clinical interaction checker):
 //   ADDITIVE_QT     new drug and a current drug are both on a QT-risk list (known/possible/conditional)
 //   CYP_INHIBITION  one drug inhibits the enzyme that clears a QT-risk drug in the pair → higher levels
 //   MANY_QT_DRUGS   three or more QT-risk drugs in total
 // Any finding escalates the combined risk by one level. UNKNOWN_DRUG is never escalated or lowered.
 //
-// Enzyme data: the bundled dataset (drugs/DrugDataset.ets: cypInhibitor / cypSubstrate) — the same table the
+// Enzyme data: the bundled dataset (drugs/DrugDataset.ets: cypInhibitor / cypSubstrate) - the same table the
 // check screen uses through DrugChecker.checkCombos, so the chat and the screens cannot disagree.
 
 import { DrugVerdict, RiskLevel } from '../model/DrugVerdict';

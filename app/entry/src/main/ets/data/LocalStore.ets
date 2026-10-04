@@ -1,8 +1,8 @@
-// On-device store. Personal data (profile, meds, contacts, events, checks, agent chats) lives only here — never on a
+// On-device store. Personal data (profile, meds, contacts, events, checks, agent chats) lives only here - never on a
 // server.
 //
 // Reads are served from an in-memory cache; every write updates the cache and is persisted to ArkData RDB
-// (celia.db, encrypted). Before `init(context)` — and in local unit tests — the store is memory-only.
+// (celia.db, encrypted). Before `init(context)` - and in local unit tests - the store is memory-only.
 
 import { relationalStore } from '@kit.ArkData';
 import { common } from '@kit.AbilityKit';
@@ -40,7 +40,7 @@ const CREATE_TABLES: string[] = [
   'CREATE INDEX IF NOT EXISTS chat_messages_chat ON chat_messages (chat_id, id)'
 ];
 
-// What changed — screens subscribe with onChange() and reload only what they show.
+// What changed - screens subscribe with onChange() and reload only what they show.
 export type StoreTopic = 'profile' | 'meds' | 'events' | 'scans' | 'settings' | 'chats';
 
 // Stored card list of a chat message; a corrupt value drops the cards, never the message. Exported for tests.

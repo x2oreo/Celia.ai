@@ -1,4 +1,4 @@
-// Saved conversations with the agent. Stored only on this phone (LocalStore, encrypted RDB) — never uploaded.
+// Saved conversations with the agent. Stored only on this phone (LocalStore, encrypted RDB) - never uploaded.
 
 import { ChatRole, UiAction } from './AgentTypes';
 
@@ -20,7 +20,7 @@ export interface StoredChatMessage {
   role: ChatRole;
   text: string;
   ts: number;
-  actions: UiAction[];   // only display cards — see keepOnRestore()
+  actions: UiAction[];   // only display cards - see keepOnRestore()
 }
 
 // A chat's title is the user's first message, shortened at a word boundary. No model involved.

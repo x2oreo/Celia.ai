@@ -45,7 +45,7 @@ const MEDS: Medication[] = [med(1, 'Corgard', 'nadolol', '40 mg')];
 
 // Measured sizes of the in-link fallback (base64url characters after '#'):
 //   demo card without details: 187 in v1, 187 in v2 (the details add nothing when empty)
-//   demo card with every B4 field filled: 435 — the limit stays 900, as in v1.
+//   demo card with every B4 field filled: 435 - the limit stays 900, as in v1.
 const DEMO_V1_CHARS: number = 187;
 const DEMO_DETAILS_CHARS: number = 435;
 

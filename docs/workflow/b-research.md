@@ -1,7 +1,7 @@
 # S7 research
 
 ## AI_WORKFLOW entry
-### 2026-10-03 — Georgi + Claude Code: platform research for Push, Live View, phone ↔ watch, HUAWEI ID (branch `georgi/b-research`)
+### 2026-10-03 - Georgi + Claude Code: platform research for Push, Live View, phone ↔ watch, HUAWEI ID (branch `georgi/b-research`)
 - Asked: research B12 (Push Kit), B13 (Live View + lock-screen medical ID), B17 (phone ↔ watch link), B18 (Account
   Kit) into `docs/research/*.md` so S4 / S1 can implement without re-researching; summarise the SOS voice path for
   B11 and ask for the Cardbeat reference before designing a conversational call. Docs only.

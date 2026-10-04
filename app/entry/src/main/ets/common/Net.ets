@@ -189,7 +189,7 @@ export class RequestOpts {
 }
 
 // Any method with a ready-made JSON body (nested objects allowed), for Supabase Auth and PostgREST calls made as the
-// signed-in user. `fields` names what the body carries — top-level keys plus any personal fields nested inside —
+// signed-in user. `fields` names what the body carries - top-level keys plus any personal fields nested inside -
 // so the privacy guard and the ledger see them. Personal fields are refused unless `opts.exception` covers them for
 // this endpoint. Any 2xx counts as success; the body is returned on errors too (Auth puts its error code there).
 export async function requestJson(method: http.RequestMethod, path: string, body: string, fields: string[],

@@ -1,6 +1,6 @@
 ---
 name: harmonyos-build-deploy
-description: Build, sign, install, run and debug HarmonyOS apps from the terminal and DevEco Studio — DevEco install/setup on macOS, hvigorw build commands, ohpm packages, hdc device commands (install, launch, logs, screenshots, files), emulator, automatic signing, CI-style loops. Use whenever Claude needs to compile, deploy to a device/emulator, read hilog, or fix build/sign/install errors.
+description: Build, sign, install, run and debug HarmonyOS apps from the terminal and DevEco Studio - DevEco install/setup on macOS, hvigorw build commands, ohpm packages, hdc device commands (install, launch, logs, screenshots, files), emulator, automatic signing, CI-style loops. Use whenever Claude needs to compile, deploy to a device/emulator, read hilog, or fix build/sign/install errors.
 ---
 
 # Build & deploy toolchain
@@ -16,18 +16,18 @@ description: Build, sign, install, run and debug HarmonyOS apps from the termina
 
 ## Setup (macOS, Apple Silicon OK)
 
-1. HUAWEI ID at developer.huawei.com (do it NOW — **overseas accounts need real-name/identity
+1. HUAWEI ID at developer.huawei.com (do it NOW - **overseas accounts need real-name/identity
    verification to use the emulator**, review can take time). Ask Huawei mentors at HackYeah if blocked;
    they likely bring devices/accounts.
 2. Download DevEco Studio (Download Center, login required) → install to `/Applications`.
    Bundles SDK, Node, hvigor, ohpm, emulator. Standalone "Command Line Tools" package may be
-   CN-account-only — just use the IDE's bundled tools.
+   CN-account-only - just use the IDE's bundled tools.
 3. First launch: sign in (top-right), let it download SDK, create project via
    *File → New → Create Project → Empty Ability* (Application, ArkTS, Stage model).
 
 ## Terminal env (so Claude can build without clicking)
 
-Tool locations differ between DevEco versions — discover, don't guess:
+Tool locations differ between DevEco versions - discover, don't guess:
 ```bash
 DEVECO=/Applications/DevEco-Studio.app/Contents
 find "$DEVECO" -maxdepth 5 \( -name hvigorw -o -name ohpm -o -name hdc -o -name 'hvigorw.js' \) -type f 2>/dev/null
@@ -59,7 +59,7 @@ If CLI build complains about missing `buildConfig.json`/SDK, do one build from t
 Debug on emulator or real device needs a signature. Easiest: DevEco *File → Project Structure →
 Signing Configs → Automatically generate signature* (logged-in HUAWEI ID, device connected for real
 devices). It writes `signingConfigs` into root `build-profile.json5` (paths to .p12/.cer/.p7b in
-`~/.ohos/config`). Don't commit those secrets publicly — judges need the repo, not your certs.
+`~/.ohos/config`). Don't commit those secrets publicly - judges need the repo, not your certs.
 Changing devices → regenerate. "Signature mismatch" on install → `hdc uninstall <bundle>` first.
 
 ## Device / emulator (hdc)
@@ -81,7 +81,7 @@ Real phone: Settings → About → tap build number 7× → Developer options �
 
 Emulator: DevEco *Device Manager* → create Phone/Tablet/2in1/Foldable → start. Needs login +
 (overseas) verified account. Some kits (Map, Push, Account, Payment, parts of Core Vision/Speech,
-Agent Framework) need a real device and/or AppGallery Connect config — check doc "Constraints".
+Agent Framework) need a real device and/or AppGallery Connect config - check doc "Constraints".
 
 ## Logs
 
@@ -106,14 +106,14 @@ Then screenshot via `snapshot_display` + Read the jpeg to verify UI visually.
 
 Unit tests: `entry/src/test/` (local, no device) and instrumented `entry/src/ohosTest/` (on device/emulator),
 framework `@ohos/hypium` (`describe/it/expect`). Put pure logic (drug lookup, rule engine, AI-output validators)
-in plain `.ets` classes without UI so they're testable locally. Run from DevEco (gutter ▶) or CLI — verify the
+in plain `.ets` classes without UI so they're testable locally. Run from DevEco (gutter ▶) or CLI - verify the
 exact hvigor test task name in Context7 (`ide-hvigor-commandline`, search "test"). Paste results into README.
 
 ## Release .hap for judges
 
 Deliverable is a working `.hap`. Build signed debug (or release) HAP, copy to `release/<app>-<version>.hap` or
 attach to a GitHub Release, and document install: `hdc install -r <file>.hap`. Debug signatures are tied to our
-HUAWEI ID profile (real devices: registered UDIDs) — another machine may reject the install. Ask mentors which
+HUAWEI ID profile (real devices: registered UDIDs) - another machine may reject the install. Ask mentors which
 signing judges expect; always also document the build-from-source path in README.
 
 ## ohpm

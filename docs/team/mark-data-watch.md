@@ -1,4 +1,4 @@
-# Mark — Database, drug data & watch integration
+# Mark - Database, drug data & watch integration
 
 **You own:** the Supabase backend (schema, seed, `/drug-check` function, RLS), the curated drug dataset, the
 on-device `LocalStore` (RDB), `DrugChecker`, and the whole vitals pipeline: Wear Engine (real watch) +
@@ -7,7 +7,7 @@ SimulatedSource (emulator) + AlarmRules.
 Skills to load before coding: `harmonyos-kits`, `harmonyos-app-model`, `arkts-language`,
 `supabase-postgres-best-practices`.
 
-## First 2 hours (in order) — two clocks are ticking, start them first
+## First 2 hours (in order) - two clocks are ticking, start them first
 
 1. **⏰ Apply for Wear Engine NOW.** It needs approval and may take hours or days.
    - Huawei developer console → create the app in AppGallery Connect with the agreed **bundle name** (get it from
@@ -18,13 +18,13 @@ Skills to load before coding: `harmonyos-kits`, `harmonyos-app-model`, `arkts-la
      the Wear Engine service".
 2. **⏰ Borrow a HarmonyOS phone (API 20+)** from the mentors and pair the GT5 Pro / GT6 Pro to it via the Huawei
    Health app. Check: `wearEngine.getDeviceClient(ctx).getConnectedDevices()` lists the watch.
-3. **Supabase project** — **EU region (Frankfurt)**, which supports the sovereignty pitch. Share the URL and anon key
+3. **Supabase project** - **EU region (Frankfurt)**, which supports the sovereignty pitch. Share the URL and anon key
    with the team privately (Discord DM), never in git. Re-enable the Supabase MCP in `.claude/settings.local.json`
    if you want Claude to help.
 4. **Schema migration** `backend/supabase/migrations/0001_init.sql`:
    - `drugs(id, ingredient text unique, atc_code, risk text check in ('KNOWN_RISK','POSSIBLE_RISK','CONDITIONAL_RISK'), reason text, source text)`
-   - `drug_aliases(alias text primary key, drug_id → drugs)` — brand names (PL/EN/DE), misspellings
-   - `agent_logs(id, ts, kind, detail jsonb)` — de-identified, for debugging only
+   - `drug_aliases(alias text primary key, drug_id → drugs)` - brand names (PL/EN/DE), misspellings
+   - `agent_logs(id, ts, kind, detail jsonb)` - de-identified, for debugging only
    - RLS: anon may `select` drugs and aliases; nobody may write from the client.
 5. **Curated dataset** `data/drugs.csv` (~60–100 common drugs, focusing on things people actually get prescribed:
    macrolide and fluoroquinolone antibiotics, ondansetron, domperidone, citalopram/escitalopram, haloperidol,
@@ -49,7 +49,7 @@ Skills to load before coding: `harmonyos-kits`, `harmonyos-app-model`, `arkts-la
    - `WearEngineSource`: `getConnectedDevices` → pick the device → MonitorClient `subscribeEvent` for
      `EVENT_HEART_RATE_ALARM` + `EVENT_WEAR_STATUS_CHANGED` + connection status; SensorClient for the HR stream if
      HEALTH_SENSOR is approved; NotifyClient to push an alert to the watch.
-   - `SimulatedSource`: scripted scenarios — `normal`, `lqt2_startle_tachy` (resting → 165 bpm),
+   - `SimulatedSource`: scripted scenarios - `normal`, `lqt2_startle_tachy` (resting → 165 bpm),
      `lqt3_night_brady` (38 bpm while sleeping), `watch_disconnect`.
    - `AlarmRules`: thresholds per genotype (configurable), debounce (sustained ≥ 15 s), emits `VitalsAlert`.
      **Unit tests** for each scenario.

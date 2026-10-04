@@ -125,14 +125,14 @@ per utterance.
 
 ## Sources
 
-- Heartbeat / QTShield reference — https://github.com/x2oreo/heartbeat (`src/services/sos-notifier.ts`,
+- Heartbeat / QTShield reference - https://github.com/x2oreo/heartbeat (`src/services/sos-notifier.ts`,
   `src/services/notifications/voice.ts`, `geocoding.ts`, `src/data/country-emergency-numbers.ts`)
-- Twilio ConversationRelay TwiML — https://www.twilio.com/docs/voice/twiml/connect/conversationrelay
-- Twilio ConversationRelay WebSocket messages — https://www.twilio.com/docs/voice/conversationrelay/websocket-messages
-- Twilio `<Gather>` — https://www.twilio.com/docs/voice/twiml/gather
-- Twilio Answering Machine Detection — https://www.twilio.com/docs/voice/answering-machine-detection
-- Twilio Call resource (StatusCallback, statuses) — https://www.twilio.com/docs/voice/api/call-resource
-- Twilio webhook security — https://www.twilio.com/docs/usage/webhooks/webhooks-security
-- Supabase Edge Function WebSockets — https://supabase.com/docs/guides/functions/websockets
-- Supabase worker timeouts and WebSocket drops — https://supabase.com/docs/guides/troubleshooting/edge-functions-worker-timeouts-and-websocket-drops
-- Nominatim usage policy — https://operations.osmfoundation.org/policies/nominatim/
+- Twilio ConversationRelay TwiML - https://www.twilio.com/docs/voice/twiml/connect/conversationrelay
+- Twilio ConversationRelay WebSocket messages - https://www.twilio.com/docs/voice/conversationrelay/websocket-messages
+- Twilio `<Gather>` - https://www.twilio.com/docs/voice/twiml/gather
+- Twilio Answering Machine Detection - https://www.twilio.com/docs/voice/answering-machine-detection
+- Twilio Call resource (StatusCallback, statuses) - https://www.twilio.com/docs/voice/api/call-resource
+- Twilio webhook security - https://www.twilio.com/docs/usage/webhooks/webhooks-security
+- Supabase Edge Function WebSockets - https://supabase.com/docs/guides/functions/websockets
+- Supabase worker timeouts and WebSocket drops - https://supabase.com/docs/guides/troubleshooting/edge-functions-worker-timeouts-and-websocket-drops
+- Nominatim usage policy - https://operations.osmfoundation.org/policies/nominatim/

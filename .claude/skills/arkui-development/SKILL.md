@@ -1,6 +1,6 @@
 ---
 name: arkui-development
-description: ArkUI declarative UI for HarmonyOS — @Entry/@Component(V2) structs, build(), layout containers, lists, state-management decorators (V1 @State/@Prop/@Link vs V2 @Local/@Param/@Event/@ObservedV2/@Trace), Navigation/NavPathStack routing, @Builder, resources, dialogs, animation, Web component. Use when building or debugging any HarmonyOS screen. Not React/Flutter/SwiftUI — do not port their idioms.
+description: ArkUI declarative UI for HarmonyOS - @Entry/@Component(V2) structs, build(), layout containers, lists, state-management decorators (V1 @State/@Prop/@Link vs V2 @Local/@Param/@Event/@ObservedV2/@Trace), Navigation/NavPathStack routing, @Builder, resources, dialogs, animation, Web component. Use when building or debugging any HarmonyOS screen. Not React/Flutter/SwiftUI - do not port their idioms.
 ---
 
 # ArkUI (declarative)
@@ -37,7 +37,7 @@ struct Counter {
 `build()` is NOT normal code: only UI components, `if/else`, `ForEach`/`LazyForEach`/`Repeat`, and
 `@Builder` calls. No `let`, no `console.log`, no arbitrary statements inside it.
 
-## State decorators — don't mix V1 and V2 in one component
+## State decorators - don't mix V1 and V2 in one component
 
 | Purpose | V1 (`@Component`) | V2 (`@ComponentV2`) |
 |---|---|---|
@@ -68,7 +68,7 @@ Basics: `Text`, `Image($r('app.media.x'))`, `Button`, `TextInput`, `TextArea`, `
 `Video`, `Web` (`@kit.ArkWeb`), `RichEditor`, `Refresh` (pull-to-refresh).
 Sizes: numbers = vp; strings `'100%'`, `'16fp'`; `layoutWeight(1)` = flex-grow.
 
-Lists — big data → `LazyForEach` (needs an `IDataSource` impl) or V2 `Repeat(...).virtualScroll()`:
+Lists - big data → `LazyForEach` (needs an `IDataSource` impl) or V2 `Repeat(...).virtualScroll()`:
 ```ts
 List({ space: 8 }) {
   ForEach(this.items, (it: Item) => {
@@ -136,7 +136,7 @@ Also `showDialog`, `openCustomDialog`, `@CustomDialog` + `CustomDialogController
 
 `GridRow/GridCol` breakpoints, `BreakpointSystem` via `window` size listener, `Navigation` auto
 split-view on wide screens (`.mode(NavigationMode.Auto)`), `SideBarContainer`. Judges like
-multi-device demos — "one app, many screens" is a HarmonyOS selling point.
+multi-device demos - "one app, many screens" is a HarmonyOS selling point.
 
 ## Immersive / safe area
 
@@ -145,5 +145,5 @@ multi-device demos — "one app, many screens" is a HarmonyOS selling point.
 
 ## Debug UI
 
-DevEco Previewer (`@Preview` decorator on a struct) — fast but no device APIs. ArkUI Inspector in
+DevEco Previewer (`@Preview` decorator on a struct) - fast but no device APIs. ArkUI Inspector in
 DevEco for live tree. Re-render issues → check decorator first.

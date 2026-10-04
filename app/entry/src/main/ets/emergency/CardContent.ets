@@ -17,7 +17,7 @@ export function cardPlainText(p: Profile, meds: Medication[]): string {
   }
   const gt: string = p.genotype === 'UNKNOWN' ? 'genotype unknown' : p.genotype;
   lines.push(`Long QT syndrome (${gt}). ICD: ${p.hasIcd ? 'YES' : 'no'}.`);
-  lines.push('AVOID QT-prolonging drugs — check crediblemeds.org. Torsades: IV magnesium.');
+  lines.push('AVOID QT-prolonging drugs - check crediblemeds.org. Torsades: IV magnesium.');
   lines.push(`Meds: ${meds.length === 0 ? 'none' : meds.map((m: Medication) => medLine(m)).join(', ')}`);
   if (p.contacts.length > 0) {
     lines.push(`ICE: ${p.contacts.map((c: Contact) => `${c.name} ${c.phone}`).join(', ')}`);

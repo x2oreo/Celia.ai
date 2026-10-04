@@ -1,4 +1,4 @@
-# Workstream B — Accounts, onboarding, emergency and platform integrations (Georgi)
+# Workstream B - Accounts, onboarding, emergency and platform integrations (Georgi)
 
 You are an agent working in the Celia.ai repo. This file is your whole brief. Read it fully, then read `CLAUDE.md`
 and `docs/design/DESIGN.md` before touching code. A second agent works in parallel on Workstream A
@@ -102,7 +102,7 @@ All phone paths are under `app/entry/src/main/ets/`.
 
 ## 5. Tasks
 
-### Phase 1 — must work and be verified on the emulator before the deadline
+### Phase 1 - must work and be verified on the emulator before the deadline
 
 **B1. Accounts: sign up, log in, stay signed in offline.**
 - Use Supabase Auth over HTTPS against `Config.SHARE_BACKEND_URL` (the real project), with the anon key in the
@@ -192,7 +192,7 @@ A full-screen page for the person who arrives to help. Route `responder`.
 - A watch SOS must not start a second 30 s countdown on the phone; open the SOS page already in its "sent" state.
 - The SOS page states plainly what happened: what was sent, to whom, and what still needs a tap.
 
-### Phase 2 — more. Build after Phase 1 is merged; may ship unverified if labelled so
+### Phase 2 - more. Build after Phase 1 is merged; may ship unverified if labelled so
 
 **B9. Close the RLS hole with accounts.** Bind a paired device to `auth.uid()` in `watch_pairings`; replace the
 open policies on `watch_metrics`, `watch_context`, `emergency_contacts` with policies through that binding; give

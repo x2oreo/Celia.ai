@@ -1,5 +1,5 @@
 // Chat commands the agent understands without the model (works offline): "new chat", "start over",
-// "save this chat (and start a new one)". Only short, whole-message commands match — anything longer goes to the
+// "save this chat (and start a new one)". Only short, whole-message commands match - anything longer goes to the
 // model, which can call start_new_chat. Runs after SafetyGate, so an emergency always wins.
 
 const NEW_CHAT: RegExp = new RegExp(

@@ -1,6 +1,6 @@
 // Read the emergency card aloud (T25) in the card's language, for a paramedic or bystander who can't read it.
 // Pure: built from the pre-translated CardStrings and the user's medicines. Name, contacts and notes are left out
-// on purpose — in languages other than English the text goes to cloud /speak, and personal data never leaves the
+// on purpose - in languages other than English the text goes to cloud /speak, and personal data never leaves the
 // phone (docs/ARCHITECTURE.md D6). The screen shows the full card anyway.
 
 import { CardText } from '../common/CardStrings';

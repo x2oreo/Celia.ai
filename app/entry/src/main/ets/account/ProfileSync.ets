@@ -2,7 +2,7 @@
 // account holds one document per user in `public.profiles` (backend migration 20261004100000_profiles_auth.sql,
 // RLS: each user reads and writes only their own row).
 //
-// Decision (docs/workflow/b-accounts.md): medicines ride in the same document as the profile — one round trip, one
+// Decision (docs/workflow/b-accounts.md): medicines ride in the same document as the profile - one round trip, one
 // RLS policy set, one timestamp. Sync is last-write-wins on that timestamp: the newer of Profile.updatedAt (stamped
 // by LocalStore.saveProfile) and the last local medicine change. It runs at sign-in, at launch when signed in, and
 // a few seconds after a local edit; every run reads the account copy first, then pushes or pulls whichever is newer.
@@ -70,7 +70,7 @@ class ProfileRow {
 export type SyncDecision = 'PUSH' | 'PULL' | 'NONE';
 
 // Last-write-wins. `localOwnedByOther`: the local data was synced with a different account (someone signed out and
-// another person signed in on this phone) — it must never be pushed into this account; the account copy wins.
+// another person signed in on this phone) - it must never be pushed into this account; the account copy wins.
 export function decideSync(hasLocal: boolean, localAt: number, hasRemote: boolean, remoteAt: number,
   localOwnedByOther: boolean): SyncDecision {
   if (localOwnedByOther) {

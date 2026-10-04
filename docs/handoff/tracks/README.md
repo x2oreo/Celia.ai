@@ -1,4 +1,4 @@
-# Workstream A — parallel tracks
+# Workstream A - parallel tracks
 
 Workstream A (`docs/handoff/KALOYAN_agent_and_ui.md`) is split into three build tracks that run at the same time,
 each in its own git worktree and branch, plus one integrator. Read this file first, then your track file.

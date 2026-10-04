@@ -1,6 +1,6 @@
 // Raw source hit → candidate with English ingredient names RxNav knows. Deterministic except the optional LLM
 // translation of foreign INN text ("VALPROATO SODIO" → "valproate sodium"), whose output is only kept when RxNav
-// resolves it. A name nobody can resolve is passed on unchanged, so /drug-check answers UNKNOWN_DRUG for it —
+// resolves it. A name nobody can resolve is passed on unchanged, so /drug-check answers UNKNOWN_DRUG for it -
 // an unidentified ingredient can never silently disappear from the check.
 
 import type { RawHit } from './sources.ts';
@@ -67,7 +67,7 @@ export async function resolveHit(hit: RawHit, gtin: string, country: string, dep
     }
   }
   if (unresolved.length === ingredients.length) {
-    return null;   // nothing confirmed — not worth asking the user about
+    return null;   // nothing confirmed - not worth asking the user about
   }
   return {
     gtin, brand: hit.brand, ingredients: [...new Set(ingredients)], unresolved, strength: hit.strength,

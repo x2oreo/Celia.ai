@@ -1,4 +1,4 @@
-// Privacy ledger (F-46): every request that leaves the phone is recorded here — time, endpoint, field NAMES
+// Privacy ledger (F-46): every request that leaves the phone is recorded here - time, endpoint, field NAMES
 // and size, never values. Also the D6 guard: personal fields are refused before anything is sent.
 
 import { LocalStore } from '../data/LocalStore';
@@ -68,7 +68,7 @@ export function blockedFields(endpoint: string, fields: string[], exception: Per
   return forbidden.filter((f: string) => !exception.fields.includes(f.toLowerCase()));
 }
 
-// Plain-text export of the ledger (newest first, as listed). Field names and sizes only — never values.
+// Plain-text export of the ledger (newest first, as listed). Field names and sizes only - never values.
 export function ledgerReport(entries: LedgerEntry[]): string {
   const lines: string[] = ['What left my phone (Celia privacy ledger)', ''];
   entries.forEach((e: LedgerEntry) => {

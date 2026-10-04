@@ -1,6 +1,6 @@
 // "Teach this barcode" (F-36): a box we don't know yet (Bulgarian and other non-Polish boxes have no open
 // barcode list). The user types the name on the box once; the mapping stays on this phone and the next scan of
-// the same box resolves instantly. The check itself stays deterministic — an unrecognised name is UNKNOWN_DRUG.
+// the same box resolves instantly. The check itself stays deterministic - an unrecognised name is UNKNOWN_DRUG.
 
 import { DrugChecker } from '../drugs/DrugChecker';
 import { DrugEntry } from '../drugs/DrugDataset';

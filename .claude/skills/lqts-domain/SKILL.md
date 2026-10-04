@@ -1,6 +1,6 @@
 ---
 name: lqts-domain
-description: Medical domain knowledge for the Long QT syndrome (LQTS) app — what LQTS is, genotypes LQT1/2/3 and their triggers, QT drug-risk taxonomy (CredibleMeds Known/Possible/Conditional + "avoid in congenital LQTS"), starter drug reference to build the dataset from, electrolyte and illness triggers, emergency facts for the emergency card and SOS flow, watch-signal heuristics, data sources + licences, and the safety design rules (deterministic verdicts, LLM explains only). Use when implementing any LQTS feature (medicine check, agent tools/prompts, emergency card, vitals rules, doctor report, onboarding) or writing medical copy.
+description: Medical domain knowledge for the Long QT syndrome (LQTS) app - what LQTS is, genotypes LQT1/2/3 and their triggers, QT drug-risk taxonomy (CredibleMeds Known/Possible/Conditional + "avoid in congenital LQTS"), starter drug reference to build the dataset from, electrolyte and illness triggers, emergency facts for the emergency card and SOS flow, watch-signal heuristics, data sources + licences, and the safety design rules (deterministic verdicts, LLM explains only). Use when implementing any LQTS feature (medicine check, agent tools/prompts, emergency card, vitals rules, doctor report, onboarding) or writing medical copy.
 ---
 
 # LQTS domain knowledge
@@ -31,7 +31,7 @@ crediblemeds.org before they ship in the dataset**, since categories change.
 | LQT1 (~35-40%) | KCNQ1 / IKs | Exercise, especially **swimming**, adrenaline | Warn on exertion and high HR; swim safety tip; beta-blocker adherence matters most |
 | LQT2 (~30-35%) | KCNH2 (hERG) / IKr | **Sudden loud noise** (alarm clock, phone ring), emotional stress, postpartum period | Tip: gentle alarm and no loud ringtone at night; stress context |
 | LQT3 (~5-10%) | SCN5A / INa | **Rest and sleep**, bradycardia | Night-time and low-HR rules |
-| Unknown / other | — | Treat with general rules | Default to the most conservative advice |
+| Unknown / other | - | Treat with general rules | Default to the most conservative advice |
 
 Onboarding options: LQT1 / LQT2 / LQT3 / Other / Unknown.
 

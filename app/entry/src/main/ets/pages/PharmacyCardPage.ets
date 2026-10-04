@@ -66,7 +66,7 @@ export struct PharmacyCardPage {
             this.message(pharmacyText('en'), false)
           }
           Divider().color($r('app.color.card_fixed_border'))
-          Text(this.meds.length === 0 ? '—' : this.meds.map((m: Medication) => medLine(m)).join('\n'))
+          Text(this.meds.length === 0 ? '-' : this.meds.map((m: Medication) => medLine(m)).join('\n'))
             .fontSize($r('app.float.font_subtitle'))
             .fontColor($r('app.color.card_fixed_ink'))
             .width('100%')

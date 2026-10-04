@@ -45,7 +45,7 @@ fi
 if [ ! -f "$HAP" ]; then
   # The emulator installs unsigned HAPs; a real watch needs signing (README → Setup).
   HAP="entry/build/default/outputs/default/entry-default-unsigned.hap"
-  echo "No signed HAP — installing the unsigned one (emulator only)." >&2
+  echo "No signed HAP - installing the unsigned one (emulator only)." >&2
 fi
 
 hdc -t "$TARGET" install -r "$HAP"

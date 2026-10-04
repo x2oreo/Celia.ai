@@ -1,8 +1,8 @@
 # S6 watch
 
 ## AI_WORKFLOW entry
-### 2026-10-04 — Georgi + Claude Code: watch internals, energy, background research (branch `georgi/b-watch`)
-- Asked: brief B16 — a build-and-install script for the watch, split `WatchController` (sensors, rules, SOS, sync,
+### 2026-10-04 - Georgi + Claude Code: watch internals, energy, background research (branch `georgi/b-watch`)
+- Asked: brief B16 - a build-and-install script for the watch, split `WatchController` (sensors, rules, SOS, sync,
   pairing) without behaviour change, energy (slower accelerometer at rest, outbox written once per sync, one reused
   HTTP client), background-monitoring research into `watch/README.md` with sources and a needs list.
 - Produced:

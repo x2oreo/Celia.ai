@@ -32,9 +32,9 @@ if [ -z "$TARGET" ]; then
   if [ "$COUNT" = "1" ]; then
     TARGET="$PHONES"
   elif [ "$COUNT" = "0" ]; then
-    bad "no phone connected — plug it in, enable Developer options → USB debugging, accept the prompt on the phone"
+    bad "no phone connected - plug it in, enable Developer options → USB debugging, accept the prompt on the phone"
   else
-    bad "several devices connected — pick one: HDC_TARGET=<serial> $0   ($(echo $PHONES))"
+    bad "several devices connected - pick one: HDC_TARGET=<serial> $0   ($(echo $PHONES))"
   fi
 fi
 
@@ -55,24 +55,24 @@ fi
 
 # 3. Signing. A real phone refuses an unsigned HAP.
 if grep -q '"signingConfigs": \[\]' build-profile.json5; then
-  bad "no signing config — DevEco → File → Project Structure → Signing Configs → Automatically generate signature (phone connected)"
+  bad "no signing config - DevEco → File → Project Structure → Signing Configs → Automatically generate signature (phone connected)"
 else
   ok "signing config present"
 fi
 
 # 4. Backend. 127.0.0.1 on a phone is the phone itself, so a local dev backend is unreachable there.
 if [ ! -f "$CONFIG" ]; then
-  warn "no LocalConfig.ets yet — the build creates it empty, the app runs offline"
+  warn "no LocalConfig.ets yet - the build creates it empty, the app runs offline"
 elif grep -qE "readonly BACKEND_URL: string = ''" "$CONFIG"; then
-  warn "BACKEND_URL is empty — the app runs offline (drug check, emergency card and SOS still work)"
+  warn "BACKEND_URL is empty - the app runs offline (drug check, emergency card and SOS still work)"
 elif grep -qE "readonly BACKEND_URL: string = 'https?://(127\.0\.0\.1|localhost)" "$CONFIG"; then
-  bad "BACKEND_URL points at this laptop (127.0.0.1) — set the deployed Supabase URL and its publishable key in $CONFIG"
+  bad "BACKEND_URL points at this laptop (127.0.0.1) - set the deployed Supabase URL and its publishable key in $CONFIG"
 else
   ok "backend configured"
 fi
 
 if [ "$problems" -gt 0 ]; then
-  echo "$problems problem(s) — see docs/REAL_DEVICE.md" >&2
+  echo "$problems problem(s) - see docs/REAL_DEVICE.md" >&2
   exit 1
 fi
 if [ "$MODE" = "check" ]; then
@@ -84,7 +84,7 @@ set -e
 rm -f "$HAP"   # never install a signed HAP left over from an earlier build
 hvigorw --mode module -p module=entry@default -p product=default assembleHap --no-daemon
 if [ ! -f "$HAP" ]; then
-  echo "Build produced no signed HAP — check the signing config (docs/REAL_DEVICE.md)." >&2
+  echo "Build produced no signed HAP - check the signing config (docs/REAL_DEVICE.md)." >&2
   exit 1
 fi
 

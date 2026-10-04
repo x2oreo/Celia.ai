@@ -9,7 +9,7 @@ fail=0
 for profile in app/build-profile.json5 watch/build-profile.json5; do
   if git diff --cached --name-only | grep -qx "$profile"; then
     if git show ":$profile" | grep -qE '"(storePassword|keyPassword|certpath|storeFile|profile)"'; then
-      echo "pre-commit: $profile contains signing material — keep it out of git." >&2
+      echo "pre-commit: $profile contains signing material - keep it out of git." >&2
       echo "  Unstage it:  git restore --staged $profile   (README → Signing)" >&2
       fail=1
     fi

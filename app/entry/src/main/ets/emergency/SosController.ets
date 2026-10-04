@@ -1,4 +1,4 @@
-// SOS escalation state machine (F-27). Pure — time is passed in, so it is unit tested without timers.
+// SOS escalation state machine (F-27). Pure - time is passed in, so it is unit tested without timers.
 //
 //   IDLE ──start──► COUNTDOWN ──ack──► ACKED       ("I'm OK")
 //                       │──timeout / sendNow──► SENT

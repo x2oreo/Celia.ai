@@ -1,4 +1,4 @@
-# Kaloyan — Agent & AI (+ coordination)
+# Kaloyan - Agent & AI (+ coordination)
 
 **You own:** everything that makes this "agent-first": `AgentCore` in the app, the tool layer, the `/agent` Edge
 Function (LLM loop), Intents Kit entry points, OCR service, voice (stretch), A2A (stretch), and the two AI docs.
@@ -8,9 +8,9 @@ Skills to load before coding: `celia-agent`, `harmonyos-kits`, `arkts-language`,
 
 ## First 2 hours (in order)
 
-1. **Mentor questions** (`docs/PLAN.md` list) — ask in the first hour, write answers into PLAN.md. They decide
+1. **Mentor questions** (`docs/PLAN.md` list) - ask in the first hour, write answers into PLAN.md. They decide
    whether Intents/HMAF/Wear Engine are in or out.
-2. **Decide the name** (see naming risk in `IDEA.md`) — 5 minutes, don't bikeshed.
+2. **Decide the name** (see naming risk in `IDEA.md`) - 5 minutes, don't bikeshed.
 3. **`/agent` Edge Function skeleton** in `backend/supabase/functions/agent/` (Mark creates the Supabase project;
    you own this function):
    - **OpenAI** Responses API (model via `OPENAI_MODEL` secret), key in Supabase secrets. Voice later via the
@@ -33,7 +33,7 @@ Skills to load before coding: `celia-agent`, `harmonyos-kits`, `arkts-language`,
   action, verdict mismatch, timeout.
 - Deterministic emergency pre-filter (keywords → `START_EMERGENCY` with no LLM call).
 - **Proactive agent:** subscribe to `VitalsService.onAlert` → build a check-in message ("Your heart rate jumped to 165
-  while resting — are you OK?") → push to chat + notification.
+  while resting - are you OK?") → push to chat + notification.
 - `OcrService` (Core Vision `textRecognition`) → pass OCR text to `DrugChecker.check` (it must find the ingredient
   inside noisy box text; agree the matching approach with Mark).
 - **Intents Kit:** `CheckDrugSafety` (background mode, returns verdict text) + `ShowEmergencyCard` (foreground mode).

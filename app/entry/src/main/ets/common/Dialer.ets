@@ -1,4 +1,4 @@
-// Opens the phone dialer with a number filled in. The user confirms the call — no CALL permission needed.
+// Opens the phone dialer with a number filled in. The user confirms the call - no CALL permission needed.
 
 import { call } from '@kit.TelephonyKit';
 import { Logger } from './Logger';

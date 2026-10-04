@@ -1,5 +1,5 @@
 // First-responder view content (Workstream B5): what not to give, what to use instead, and immediate care notes.
-// Pure and deterministic — built only from the bundled drug dataset (drugs/DrugDataset.ets, CredibleMeds QTdrugs
+// Pure and deterministic - built only from the bundled drug dataset (drugs/DrugDataset.ets, CredibleMeds QTdrugs
 // categories) and the emergency facts of the lqts-domain skill (.claude/skills/lqts-domain/SKILL.md, "Emergency
 // facts" and "Genotypes"; ERC/ESC guidance as cited there). No LLM text and no network on this path.
 
@@ -85,7 +85,7 @@ export function doNotGive(entries: DrugEntry[] = DRUGS): AvoidGroup[] {
 /**
  * "Use instead": the dataset's alternatives[] for every QT-risk drug (Known, Possible or Conditional), grouped by
  * the option set so one row says e.g. "Instead of macrolide and fluoroquinolone antibiotics: amoxicillin, …".
- * Options are NOT_LISTED in the dataset (checked by test/DrugData) — still only a doctor can choose.
+ * Options are NOT_LISTED in the dataset (checked by test/DrugData) - still only a doctor can choose.
  */
 export function useInstead(entries: DrugEntry[] = DRUGS): InsteadGroup[] {
   const groups: Map<string, InsteadGroup> = new Map<string, InsteadGroup>();

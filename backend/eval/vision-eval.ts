@@ -1,4 +1,4 @@
-// Phase 3 — /vision-extract on locally generated images (run make_images.py first). At most 4 paid calls.
+// Phase 3 - /vision-extract on locally generated images (run make_images.py first). At most 4 paid calls.
 // The relay returns no usage, so each call is billed at worst case: counted input tokens (free count endpoint,
 // 2000 if unavailable) + the full 400-token output cap.
 //

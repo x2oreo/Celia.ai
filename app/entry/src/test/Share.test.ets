@@ -1,5 +1,5 @@
 // Shareable links: link format, content fingerprint, report payload. (AES-GCM itself is checked end to end:
-// the app seals, the browser's WebCrypto opens — see AI_WORKFLOW.md.)
+// the app seals, the browser's WebCrypto opens - see AI_WORKFLOW.md.)
 
 import { describe, it, expect } from '@ohos/hypium';
 import { contentHash, parseShareLink, viewerUrl } from '../main/ets/share/ShareService';

@@ -1,7 +1,7 @@
 {
   "app": {
     // Do not commit signing material. DevEco "Automatically generate signature" writes local paths and
-    // encrypted passwords here — keep that hunk out of commits (see README → Signing).
+    // encrypted passwords here - keep that hunk out of commits (see README → Signing).
     "signingConfigs": [],
     "products": [
       {

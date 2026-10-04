@@ -1,5 +1,5 @@
 // Bystander mode (F-41): "Help this person" for a stranger. Three big steps, the right emergency number,
-// a hands-only CPR metronome (110/min, haptic + visual — no sudden sounds) and the facts paramedics need.
+// a hands-only CPR metronome (110/min, haptic + visual - no sudden sounds) and the facts paramedics need.
 // Steps follow public resuscitation guidance (ERC / AHA: call, push hard and fast in the centre of the chest,
 // 100–120/min, use an AED as soon as it arrives). Reachable without unlocking the app.
 

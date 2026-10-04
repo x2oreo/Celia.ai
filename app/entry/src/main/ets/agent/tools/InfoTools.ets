@@ -1,4 +1,4 @@
-// explain_condition, get_vitals_summary — grounding facts for the model.
+// explain_condition, get_vitals_summary - grounding facts for the model.
 
 import { AgentTool, TurnState, toolError } from '../ToolTypes';
 import { argString } from '../ResponseValidator';
@@ -9,7 +9,7 @@ import { CoachTip, tipsFor } from '../../coach/Coach';
 interface FactsOutput {
   topic: string;
   facts: string;
-  triggerTips: string[];   // static genotype coach (coach/Coach.ets), sourced — the model may quote, not invent
+  triggerTips: string[];   // static genotype coach (coach/Coach.ets), sourced - the model may quote, not invent
 }
 
 export class ExplainConditionTool implements AgentTool {
@@ -40,7 +40,7 @@ export class GetVitalsSummaryTool implements AgentTool {
   async execute(args: Record<string, Object>, turn: TurnState): Promise<string> {
     const out: VitalsOutput = {
       summary: VitalsDigest.get().summary(Date.now()),
-      note: 'Wrist heart rate only — not an ECG. Do not interpret it medically.'
+      note: 'Wrist heart rate only - not an ECG. Do not interpret it medically.'
     };
     return JSON.stringify(out);
   }

@@ -1,6 +1,6 @@
-// Genotype trigger coach (F-39). Short, static tips keyed by LQTS genotype — no AI. Content follows published
+// Genotype trigger coach (F-39). Short, static tips keyed by LQTS genotype - no AI. Content follows published
 // genotype–trigger patterns (Schwartz et al., Circulation 2001; HRS/EHRA/APHRS expert consensus 2013):
-// LQT1 — exertion, especially swimming; LQT2 — sudden noise / emotional stress, postpartum; LQT3 — rest and sleep.
+// LQT1 - exertion, especially swimming; LQT2 - sudden noise / emotional stress, postpartum; LQT3 - rest and sleep.
 
 import { Genotype } from '../model/Profile';
 
@@ -20,7 +20,7 @@ const GENERAL: CoachTip[] = [
   tip('Vomiting or diarrhoea?', 'Losing fluids lowers potassium and magnesium, which raises the risk. Drink, and ' +
     'call your doctor if it lasts.'),
   tip('Never skip the beta-blocker', 'Missed doses are a known cause of events. Set a reminder in Medicines.'),
-  tip('Carry your card', 'Your emergency card works offline and as a QR code — show it at any ER.')
+  tip('Carry your card', 'Your emergency card works offline and as a QR code - show it at any ER.')
 ];
 
 const BY_GENOTYPE: Map<Genotype, CoachTip[]> = new Map<Genotype, CoachTip[]>([
@@ -34,7 +34,7 @@ const BY_GENOTYPE: Map<Genotype, CoachTip[]> = new Map<Genotype, CoachTip[]>([
     tip('LQT2: avoid sudden loud sounds', 'Use a gentle, gradually louder alarm and put the phone on silent at ' +
       'night. This app never plays sudden sounds.'),
     tip('LQT2: stress and startle', 'Sudden fright or anger can trigger events. Keep potassium in the normal ' +
-      'range — ask about it at check-ups.')
+      'range - ask about it at check-ups.')
   ]],
   ['LQT3', [
     tip('LQT3: rest and sleep', 'Events tend to happen at rest or asleep. Keep night-time heart monitoring on.'),

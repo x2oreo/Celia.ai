@@ -1,4 +1,4 @@
-// UTF-8 + base64url (RFC 4648 §5, no padding) in plain ArkTS — used for the emergency-card link. Pure and
+// UTF-8 + base64url (RFC 4648 §5, no padding) in plain ArkTS - used for the emergency-card link. Pure and
 // dependency-free so it behaves the same on device and in local unit tests.
 
 const ALPHABET: string = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';

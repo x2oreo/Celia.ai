@@ -1,6 +1,6 @@
 // Scan → a box we don't know yet (DESIGN.md §10.2 "Scan → box we don't know yet"). While /box-identify looks the
 // barcode up it shows progress; then "Is this your box?" with the brand, ingredients and where it was found.
-// Identification only — no risk colour here; the verdict comes after "Yes, check it" from CheckService.
+// Identification only - no risk colour here; the verdict comes after "Yes, check it" from CheckService.
 
 import { BoxCandidate } from '../drugs/BoxIdentifyClient';
 import { gtinCountry } from '../drugs/Gs1';

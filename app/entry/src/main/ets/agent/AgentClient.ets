@@ -1,5 +1,5 @@
-// Client for the /agent Edge Function. Returns undefined on ANY failure — network down,
-// timeout, non-200, malformed body — so AgentCore has exactly one failure path: the deterministic fallback.
+// Client for the /agent Edge Function. Returns undefined on ANY failure - network down,
+// timeout, non-200, malformed body - so AgentCore has exactly one failure path: the deterministic fallback.
 
 import { Logger } from '../common/Logger';
 import { BackendClient } from './BackendClient';

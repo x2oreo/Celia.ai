@@ -1,4 +1,4 @@
-// Phase 2 — audio round trip: /speak (TTS → raw PCM 24 kHz) → WAV wrap → /transcribe → SafetyGate port.
+// Phase 2 - audio round trip: /speak (TTS → raw PCM 24 kHz) → WAV wrap → /transcribe → SafetyGate port.
 //
 //   set -a; source backend/supabase/functions/.env; set +a
 //   deno run -A backend/eval/audio-eval.ts

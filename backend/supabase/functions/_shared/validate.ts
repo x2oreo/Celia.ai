@@ -1,4 +1,4 @@
-// Request validation for /agent. Anything unexpected is rejected with 400 — the app then uses its fallback.
+// Request validation for /agent. Anything unexpected is rejected with 400 - the app then uses its fallback.
 
 import { AgentContext } from './prompt.ts';
 

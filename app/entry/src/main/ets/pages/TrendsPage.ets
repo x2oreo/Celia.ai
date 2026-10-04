@@ -1,5 +1,5 @@
 // Trends: resting heart rate, doses and symptoms per day over 14 or 30 days, plus the fixed-rule findings from the
-// watch data. Heart rate only — never QT, never a diagnosis.
+// watch data. Heart rate only - never QT, never a diagnosis.
 
 import { Card, EmptyCard, ScreenHeader, SectionHeader, SourceBadge } from '../components/Common';
 import { TrendChart } from '../components/TrendChart';

@@ -1,5 +1,5 @@
 // One registry for every entry point (text loop, realtime voice, intents). Names must match
-// backend/supabase/functions/_shared/tools.ts — a mismatch is caught by ToolRegistry tests.
+// backend/supabase/functions/_shared/tools.ts - a mismatch is caught by ToolRegistry tests.
 
 import { AgentTool, TurnState, toolError } from './ToolTypes';
 import { parseArgs } from './ResponseValidator';

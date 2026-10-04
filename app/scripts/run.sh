@@ -17,7 +17,7 @@ hvigorw --mode module -p module=entry@default -p product=default assembleHap --n
 if [ ! -f "$HAP" ]; then
   # The emulator installs unsigned HAPs; a real device needs signing (README → Signing).
   HAP="entry/build/default/outputs/default/entry-default-unsigned.hap"
-  echo "No signed HAP — installing the unsigned one (emulator only)." >&2
+  echo "No signed HAP - installing the unsigned one (emulator only)." >&2
 fi
 
 hdc install -r "$HAP"

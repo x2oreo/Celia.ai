@@ -40,11 +40,11 @@ export class SosService {
     }
   }
 
-  // During SOS: no new dialogs — a decision already made returns at once; never asked → no location.
+  // During SOS: no new dialogs - a decision already made returns at once; never asked → no location.
   static async requestLocation(ctx: common.UIAbilityContext): Promise<GeoPoint | undefined> {
     try {
       if (!SosService.locationGranted()) {
-        log.info('location not granted — SOS continues without it');
+        log.info('location not granted - SOS continues without it');
         return undefined;
       }
       const request: geoLocationManager.SingleLocationRequest = {

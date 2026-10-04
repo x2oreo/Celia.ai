@@ -1,4 +1,4 @@
-# T1 — Agent home (A3 → A1 → A2)
+# T1 - Agent home (A3 → A1 → A2)
 
 Read `docs/handoff/tracks/README.md` first (scope change, rules, emulator lock), then sections 3-7 of
 `docs/handoff/KALOYAN_agent_and_ui.md`. Tasks A3, A1 and A2 there are yours, in the order below.
@@ -13,7 +13,7 @@ Read `docs/handoff/tracks/README.md` first (scope change, rules, emulator lock),
 Not yours: `agent/*`, `voice/*`, `backend/*`, `components/AgentCards.ets` (T2); every other page and
 `components/Common.ets` (T3). You may call them, not edit them.
 
-## 1. A3 — split `AgentPage.ets` (do this first, ask for a merge as soon as it is green)
+## 1. A3 - split `AgentPage.ets` (do this first, ask for a merge as soon as it is green)
 
 Pure refactor, behaviour unchanged. Target shape in `components/agent/`:
 
@@ -30,7 +30,7 @@ after your merge.
 
 Check: 211 tests pass, the app builds, and one text turn plus one demo-voice turn look the same on the emulator.
 
-## 2. A1 — the agent is tab 0
+## 2. A1 - the agent is tab 0
 
 Write the layout into DESIGN.md first (new subsection under §10, structure only), and state there that the bar keeps
 four tabs with Emergency. Then build:
@@ -53,7 +53,7 @@ four tabs with Emergency. Then build:
 Acceptance: cold start lands on the orb; one tap starts talking; every row of the "Known UX problems" table in the
 workstream brief is reachable in at most 2 taps or one sentence. Put the before / after tap counts in your log.
 
-## 3. A2 — the orb as a stage (behaviour only, not the look)
+## 3. A2 - the orb as a stage (behaviour only, not the look)
 
 - Full-height voice stage while a session is live and nothing has been said; compact when a thread exists (today's
   168 → 84 step). Layout and sizes from existing tokens.

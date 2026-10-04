@@ -25,7 +25,7 @@ export default function cardLinkTest() {
     it('linkPointsToViewerWithoutPlainUrlsInside', 0, () => {
       const link: string = cardLink(profile('Georgi', ''), [med(1, 'Concor', 'bisoprolol', '5 mg')], 'PL');
       expect(link.startsWith(CARD_VIEWER_URL + '#')).assertTrue();
-      // The fragment is base64url only — no second URL a camera could jump to.
+      // The fragment is base64url only - no second URL a camera could jump to.
       expect(/^[A-Za-z0-9_-]+$/.test(link.substring(link.indexOf('#') + 1))).assertTrue();
     });
 

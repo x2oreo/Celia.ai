@@ -1,4 +1,4 @@
-// Missed beta-blocker check (pure — unit tested). Beta-blockers lower resting heart rate, so a resting HR that stays
+// Missed beta-blocker check (pure - unit tested). Beta-blockers lower resting heart rate, so a resting HR that stays
 // well above the person's own baseline for several days is a cue to ask about missed doses. It is a question, never
 // a verdict: fever, illness, stress or dehydration raise resting HR too, and the message says so.
 
@@ -99,7 +99,7 @@ function buildMessage(med: Medication, baseline: number, recent: DailyResting[],
   }
   const doses: string = evidence === 'MISSED_OR_SKIPPED' ? ` Your dose log shows ${name} wasn't marked as taken.` : '';
   return `${facts}${doses} Did you miss any ${name} doses? Taking it every day matters with Long QT. ` +
-    'Don\'t double up — take your next dose as usual, and ask your doctor if you missed several. ' +
+    'Don\'t double up - take your next dose as usual, and ask your doctor if you missed several. ' +
     'Feeling unwell or feverish can raise resting heart rate too.';
 }
 

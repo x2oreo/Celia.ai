@@ -1,5 +1,5 @@
 // Deterministic QT-risk rule over an openFDA drug label (api.fda.gov/drug/label.json). No AI.
-// Used by /drug-check only for ingredients that are NOT in the curated QT list — the curated list always wins.
+// Used by /drug-check only for ingredients that are NOT in the curated QT list - the curated list always wins.
 // Conservative by design: any QT / torsades wording in a warnings section flags the drug; the label can raise a
 // warning but never call a drug "safe" (no wording → NOT_LISTED, which the app shows with lower confidence).
 

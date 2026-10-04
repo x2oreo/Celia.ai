@@ -1,4 +1,4 @@
-// Plays a stream of PCM16 mono chunks (24 kHz) as they arrive — used for realtime speech. clear() drops queued
+// Plays a stream of PCM16 mono chunks (24 kHz) as they arrive - used for realtime speech. clear() drops queued
 // audio instantly (barge-in, or when a model response is cancelled by the safety checks).
 
 import { audio } from '@kit.AudioKit';

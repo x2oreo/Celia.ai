@@ -1,5 +1,5 @@
 // Celia → "Log that I felt dizzy": saves a symptom to the on-device log with the recent heart rate attached.
-// Deterministic (model/SymptomEntry.ets), no LLM. A red-flag symptom gets the emergency number read out — the
+// Deterministic (model/SymptomEntry.ets), no LLM. A red-flag symptom gets the emergency number read out - the
 // intent runs in the background, so it never starts the SOS countdown itself.
 
 import { InsightIntentEntryExecutor, insightIntent, InsightIntentEntry } from '@kit.AbilityKit';

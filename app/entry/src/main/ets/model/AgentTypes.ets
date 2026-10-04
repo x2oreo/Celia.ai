@@ -1,4 +1,4 @@
-// Shared contract — see docs/ARCHITECTURE.md.
+// Shared contract - see docs/ARCHITECTURE.md.
 
 export type ChatRole = 'user' | 'assistant';
 
@@ -10,17 +10,17 @@ export interface ChatMessage {
 }
 
 // UI actions the agent attaches to a reply. The chat UI renders one card per action.
-//   SHOW_VERDICT          payload: VerdictCardPayload   — deterministic verdict card (source of truth, not the text)
+//   SHOW_VERDICT          payload: VerdictCardPayload   - deterministic verdict card (source of truth, not the text)
 //   SHOW_EMERGENCY_CARD   payload: EmergencyCardPayload
-//   START_EMERGENCY       payload: EmergencyPayload      — cancellable countdown, then call + alert contacts
-//   OPEN_MED_SCAN         payload: '{}'                  — scan tile → photo picker → OCR → confirm drug
-//   ADD_MED               payload: AddMedPayload         — confirm card; UI calls AgentCore.resolveAction()
-//   SHARE_EMERGENCY_CARD  payload: ConfirmPayload        — confirm card; UI calls AgentCore.resolveAction()
-//   LOG_DOSE              payload: LogDosePayload        — confirm card; UI calls AgentCore.resolveAction()
-//   QUICK_REPLIES         payload: QuickRepliesPayload   — tappable answers; UI sends the tapped text
-//   SHOW_MEDS             payload: MedsPayload           — the user's medicines with their deterministic risk
-//   SHOW_ALTERNATIVES     payload: AlternativesPayload   — list-verified options to discuss with a doctor
-//   OPEN_PAGE             payload: OpenPagePayload       — tile that opens a page (see OPEN_PAGES)
+//   START_EMERGENCY       payload: EmergencyPayload      - cancellable countdown, then call + alert contacts
+//   OPEN_MED_SCAN         payload: '{}'                  - scan tile → photo picker → OCR → confirm drug
+//   ADD_MED               payload: AddMedPayload         - confirm card; UI calls AgentCore.resolveAction()
+//   SHARE_EMERGENCY_CARD  payload: ConfirmPayload        - confirm card; UI calls AgentCore.resolveAction()
+//   LOG_DOSE              payload: LogDosePayload        - confirm card; UI calls AgentCore.resolveAction()
+//   QUICK_REPLIES         payload: QuickRepliesPayload   - tappable answers; UI sends the tapped text
+//   SHOW_MEDS             payload: MedsPayload           - the user's medicines with their deterministic risk
+//   SHOW_ALTERNATIVES     payload: AlternativesPayload   - list-verified options to discuss with a doctor
+//   OPEN_PAGE             payload: OpenPagePayload       - tile that opens a page (see OPEN_PAGES)
 export type UiActionType = 'SHOW_VERDICT' | 'SHOW_EMERGENCY_CARD' | 'START_EMERGENCY' | 'OPEN_MED_SCAN' | 'ADD_MED' |
   'SHARE_EMERGENCY_CARD' | 'LOG_DOSE' | 'QUICK_REPLIES' | 'SHOW_MEDS' | 'SHOW_ALTERNATIVES' | 'OPEN_PAGE';
 

@@ -1,4 +1,4 @@
-// OWNER: Kaloyan — emergency pre-filter. Runs on every user utterance (typed, speech-to-text, realtime transcript)
+// OWNER: Kaloyan - emergency pre-filter. Runs on every user utterance (typed, speech-to-text, realtime transcript)
 // BEFORE any model call. A match starts the deterministic emergency flow; the LLM is never on that path.
 // Patterns are deliberately broad: a false alarm costs one tap on "Cancel", a miss can cost a life.
 

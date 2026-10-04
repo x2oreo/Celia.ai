@@ -1,5 +1,5 @@
 // Tells the Celia watch app (watch/) about the user's genotype and a risky medicine just taken, through the
-// `watch_context` row it polls every 60 s (T15 cloud path — no Wear Engine approval needed). Only when the
+// `watch_context` row it polls every 60 s (T15 cloud path - no Wear Engine approval needed). Only when the
 // watch's Supabase project can be reached (WatchSource.target). Sends no personal data: device id, genotype, ingredient, risk level, time.
 
 import { Config } from '../common/Config';

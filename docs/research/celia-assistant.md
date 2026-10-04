@@ -1,4 +1,4 @@
-# Celia (system assistant) integration — what exists, what access it needs, how to test (A9)
+# Celia (system assistant) integration - what exists, what access it needs, how to test (A9)
 
 Researched 3 October 2026 from the Huawei developer guides (Chinese edition, read through Context7:
 `insight-intent-decorator-development`, `intents-skill-all-rec-content-search`, `agent-extension-ability`,
@@ -39,7 +39,7 @@ compiled; Celia did not route to it on <phone model>, API <n>" and the demo uses
 The in-app agent is the product. The seven intents are entry points the system may use. Do not say "Celia calls
 our app" unless step 3 showed it on the phone.
 
-## Persona name for the in-app agent (A11, proposal only — owner decides)
+## Persona name for the in-app agent (A11, proposal only - owner decides)
 
 "Celia" is Huawei's assistant, so the in-app agent needs its own name or none.
 

@@ -68,6 +68,6 @@ export async function loadRestingHistory(now: number): Promise<DailyResting[]> {
       return [];
     }
   }
-  log.info('no watch source — using built-in demo history (SIMULATED)');
+  log.info('no watch source - using built-in demo history (SIMULATED)');
   return demoHistory(now);
 }

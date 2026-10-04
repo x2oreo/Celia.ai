@@ -57,7 +57,7 @@ watch inserts watch_metrics{type:'sos'}
    request measurement", fitness/health apps only). Without it, messages count as `MARKETING`: 2 per device per day
    for "Health & fitness" ([push-apply-right]). For the hackathon, send `testMessage: true`.
 
-## Client (phone) — what S4 writes
+## Client (phone) - what S4 writes
 
 No `module.json5` metadata is needed. Notification permission must be granted first (S3's onboarding asks; the
 existing `notificationManager.requestEnableNotification` path in `common/Notify.ets` also works).
@@ -128,7 +128,7 @@ reads it with the service role. **Dependency:** the `sos` function knows a `devi
 user needs B9's device ↔ account binding (`watch_pairings` + `auth.uid()`). Until B9 lands, there is no safe way
 to find whose phone to push to. Do not add an anon-writable token table keyed by device id: it repeats the RLS hole.
 
-## Server — sending from an Edge Function
+## Server - sending from an Edge Function
 
 Secrets (set by the coordinator, never in git): `HUAWEI_PUSH_PROJECT_ID`, `HUAWEI_PUSH_SA_KEY` (the whole
 service-account JSON as one string).
@@ -220,7 +220,7 @@ export async function sendPush(cfg: PushConfig, tokens: string[], title: string,
 | `getToken()` | Supported by the kit; needs the app signed with an AGC profile that has Push Kit. Outside China, unverified | Chinese-mainland phone + HUAWEI ID only |
 | Notification message | Supported | Supported (China) |
 | Live view / in-app call / text-to-speech message | **Not supported** | China, plus each permission |
-| Cloud-hosted real devices | Not supported for Push Kit | — |
+| Cloud-hosted real devices | Not supported for Push Kit | - |
 | Firewall | Device must reach ports 5223 and 443 | same |
 
 Test steps once a token exists: launch the app → `hdc shell hilog -x | grep PushToken` shows no error → row in
@@ -247,14 +247,14 @@ untested), and S6's watch app signed with that profile. Not started; noted for S
 
 ## Sources
 
-- [push-config-setting] Enabling Push Kit — https://developer.huawei.com/consumer/en/doc/harmonyos-guides/push-config-setting
-- [push-kit-introduction] About This Kit (regions, devices, emulator, limits) — https://developer.huawei.com/consumer/en/doc/harmonyos-guides/push-kit-introduction
-- [push-country] Supported Countries/Regions — https://developer.huawei.com/consumer/en/doc/harmonyos-guides/push-country
-- [push-get-token] Obtaining a Push Token — https://developer.huawei.com/consumer/en/doc/harmonyos-guides/push-get-token
-- [push-send-alert] Sending a Notification Message — https://developer.huawei.com/consumer/en/doc/harmonyos-guides/push-send-alert
-- [push-apply-right] Scenario-Specific Message Permissions, categories, frequency limits — https://developer.huawei.com/consumer/en/doc/harmonyos-guides/push-apply-right
-- [push-jwt-token] Generating a JWT Based on a Service Account — https://developer.huawei.com/consumer/en/doc/harmonyos-guides/push-jwt-token
-- [push-scenariozed-api-request-struct] Request structure (JWT only) — https://developer.huawei.com/consumer/en/doc/harmonyos-references/push-scenariozed-api-request-struct
-- [push-scenariozed-api-response] Response codes — https://developer.huawei.com/consumer/en/doc/harmonyos-references/push-scenariozed-api-response
-- `pushService` reference — https://developer.huawei.com/consumer/en/doc/harmonyos-references/push-pushservice
-- Sample — https://gitcode.com/harmonyos_samples/push-kit-sample-code-clientdemo-arkts
+- [push-config-setting] Enabling Push Kit - https://developer.huawei.com/consumer/en/doc/harmonyos-guides/push-config-setting
+- [push-kit-introduction] About This Kit (regions, devices, emulator, limits) - https://developer.huawei.com/consumer/en/doc/harmonyos-guides/push-kit-introduction
+- [push-country] Supported Countries/Regions - https://developer.huawei.com/consumer/en/doc/harmonyos-guides/push-country
+- [push-get-token] Obtaining a Push Token - https://developer.huawei.com/consumer/en/doc/harmonyos-guides/push-get-token
+- [push-send-alert] Sending a Notification Message - https://developer.huawei.com/consumer/en/doc/harmonyos-guides/push-send-alert
+- [push-apply-right] Scenario-Specific Message Permissions, categories, frequency limits - https://developer.huawei.com/consumer/en/doc/harmonyos-guides/push-apply-right
+- [push-jwt-token] Generating a JWT Based on a Service Account - https://developer.huawei.com/consumer/en/doc/harmonyos-guides/push-jwt-token
+- [push-scenariozed-api-request-struct] Request structure (JWT only) - https://developer.huawei.com/consumer/en/doc/harmonyos-references/push-scenariozed-api-request-struct
+- [push-scenariozed-api-response] Response codes - https://developer.huawei.com/consumer/en/doc/harmonyos-references/push-scenariozed-api-response
+- `pushService` reference - https://developer.huawei.com/consumer/en/doc/harmonyos-references/push-pushservice
+- Sample - https://gitcode.com/harmonyos_samples/push-kit-sample-code-clientdemo-arkts
