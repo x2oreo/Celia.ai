@@ -344,6 +344,7 @@ from the *Celia Icons* comparison (Phosphor, Tabler, Lucide).
 | Call · Responder · Medical card · QR · Language | `phone` · `hand-heart` · `id-card` · `qr-code` · `languages` | `ic_phone` · `ic_hand` · `ic_id_card` · `ic_qr` · `ic_languages` |
 | Hospital · Pharmacy · AED · First aid · Place · Travel | `hospital` · `store` · `zap` · `briefcase-medical` · `map-pin` · `plane` | `ic_hospital` · `ic_store` · `ic_zap` · `ic_first_aid` · `ic_location` · `ic_plane` |
 | Back · Forward · Expand · Close · Share · Copy · Delete · Lock · Notes · Box | `chevron-left` · `chevron-right` · `chevron-down` · `x` · `share-2` · `copy` · `trash-2` · `lock` · `notebook-pen` · `package` | `ic_chevron_left` · `ic_chevron_right` · `ic_chevron_down` · `ic_close` · `ic_share` · `ic_copy` · `ic_delete` · `ic_lock` · `ic_notes` · `ic_box` |
+| Person | `user` | `ic_user` |
 
 ### 6.7 States
 
@@ -473,6 +474,28 @@ the caption "Fixed rules on your own numbers. Not a diagnosis. Always ask your d
 simulate today (HRV, oxygen, breathing) always carry the `SIMULATED` badge and the line "Simulated signal".
 
 ---
+
+### 6.11 Settings list (grouped rows)
+
+Settings is an index, never a form: every editable thing opens its own page or sheet and saves on change there.
+
+- **Group** (`components/SettingsList.ets` `SettingsGroup`): caps label above (`CapsLabel`), then one `surface`
+  card, 1 vp `border`, `radius_l`, no inner padding. Rows are separated by a 1 vp `divider` inset 64 vp from the left
+  (it starts after the icon well). 24 vp between groups.
+- **Row** (`SettingsRow`): min height 60 vp, padding 12 / 16. Icon well 36 on `surface_alt`, `radius_s`, glyph 20 in
+  `ink_2`. Title in `body` / 500 `ink`; value line under it in `caption` `ink_3`, one line, ellipsis. The value says
+  the current state in words ("Germany · 112", "2 people", "Paired with 1a2b3c4d"), never a repeat of the title.
+  Trailing chevron 18 in `ink_4`. **Danger** variant (clear data): well on `risk_known_tint`, glyph and title in
+  `risk_known`, no chevron. Whole row is one touch target with the light click effect.
+- **Profile card** (top of Settings): `surface`, 1 vp `border`, `radius_l`, padding 16. Avatar circle 56 on
+  `brand_accent_soft` with the first letter of the name in `title-3` / 800 `brand_text` (no name: `ic_user` in
+  `brand_text`). Name in `headline` (or "Add your name" in `ink_3`), then chips: genotype ("LQT2", "Genotype not
+  set") and "ICD" when set, each `caption` / 600 on `surface_alt`, pill, 24 vp high. Under them the account line in
+  `caption` `ink_3` ("Backed up to your account" / "On this phone only"; the email itself is on the Account row). Chevron right. Opens **Your profile**.
+- **Choice sheet** (emergency number): `bindSheet` on `bg`, `SheetSize.LARGE`, close button, a 48 vp search field
+  on `surface_alt`, then rows (60 vp, name in `body`, number in `body` / 600 `ink_2` on the right, selected row
+  ends in `ic_check` `brand_text`). Picking saves and closes.
+- Footer under the last group: the disclaimer in `caption` `ink_4`, centred.
 
 ## 7. Watch
 
@@ -843,7 +866,22 @@ from deterministic payloads only.
   first (system dialog: "Log X as taken now?", Cancel / Log it). After logging: check icon + "Logged as taken at
   HH:MM" in `body` medium and "Your watch is watching more closely until …" in `ink-3`; if the watch couldn't be
   reached, the 6.7 error strip with `Send to watch`. Never a risk colour on this card: logging is not a verdict.
-- **Pair watch** (Settings → Pair watch): when paired, a `surface` card with a check icon, "Paired with watch
+- **Settings** (pushed from the round settings button): the 6.11 list, in this order. Profile card. SAFETY:
+  Emergency contacts (`ic_phone`, "2 people · watch alerts on" / "No one yet"), Emergency details (`ic_id_card`,
+  "What a paramedic sees"), Emergency number (`ic_location`, "Germany · 112", opens the choice sheet), Test SOS
+  (`ic_bell`, "Practise the SOS flow - marked as TEST"). DEVICES: Watch (`ic_watch`, paired / not paired line).
+  ACCOUNT AND PRIVACY: Account (`ic_user`, email / "Not signed in"), Privacy and app lock (`ic_lock`, "App lock on"
+  / "App lock off"). Then a lone danger group with "Clear all data on this phone" (confirm dialog), and the footer.
+- **Your profile** (Settings → profile card): the onboarding "About you" fields without the step heading (name,
+  date of birth, genotype chips + help, ICD switch + model). Saved on change (debounced 400 ms, flushed on leave),
+  caption "Saved on this phone". No Save button.
+- **Emergency contacts** (Settings → Emergency contacts): intro in `body-sm` `ink_2`. One 6.11 group of contacts:
+  avatar circle 36 (`surface_alt`, initial in `ink_2`), name (+ relation) in `body` / 500, phone · email in
+  `caption` `ink_3`, a 48 vp delete target (`ic_delete` 20, `ink_4`) that asks first. Empty: the 6.7 dashed card.
+  Then SOS ALERTS FROM YOUR WATCH: the consent card (moved here from Account; signed out = one `body-sm` line and a
+  secondary `Log in`). Pinned primary `Add a contact` opens a sheet (name, phone, relation, e-mail optional; primary
+  `Add`, inactive until name and a valid phone).
+- **Pair watch** (Settings → Watch): when paired, a `surface` card with a check icon, "Paired with watch
   {first 8 chars of the id}" (`body` bold), "Since …" in `ink-3` and a secondary `Unpair`. Below it, always, the code
   card: one `body` intro line, two `body-sm` steps in `ink-3`, a 56 vp `surface-alt` input centred in `title-2`, the
   error strip from 6.7 when a code fails (neutral offline strip when there is no backend), and a primary `Pair`
