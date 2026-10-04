@@ -35,6 +35,7 @@ import responderTest from './Responder.test';
 import cardPayloadTest from './CardPayload.test';
 import nfcCardTest from './NfcCard.test';
 import onboardingTest from './Onboarding.test';
+import widgetsTest from './Widgets.test';
 import { Config } from '../main/ets/common/Config';
 
 export default function testsuite() {
@@ -77,4 +78,5 @@ export default function testsuite() {
   cardPayloadTest();
   nfcCardTest();
   onboardingTest();
+  widgetsTest();
 }

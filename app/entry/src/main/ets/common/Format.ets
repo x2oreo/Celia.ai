@@ -33,6 +33,12 @@ export function dateTime(ts: number, now: number): string {
   return `${dayLabel(ts, now)} ${clock(ts)}`;
 }
 
+// "3 Oct 20:14": never "Today", for text that outlives the day it was written (home-screen cards).
+export function shortDateTime(ts: number): string {
+  const d: Date = new Date(ts);
+  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${clock(ts)}`;
+}
+
 export function fullDate(ts: number): string {
   const d: Date = new Date(ts);
   return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}, ${clock(ts)}`;
