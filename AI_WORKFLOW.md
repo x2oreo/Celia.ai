@@ -1339,4 +1339,5 @@ The tap-to-talk fallback is also untested end to end.
   (`CardIdentity`) is left to the session redesigning the card, by agreement, to avoid editing the same files.
 - **Validated:** phone HAP builds; on the emulator: picked a gallery image, saw it on Your profile and in Settings,
   restarted the app (photo kept), removed it (file deleted) and added it again.
-- **Not validated:** the card showing it (pending the card session); the switch's effect on the card.
+- **Card (after the card session's 25011ee):** on the emulator the medical alert card showed the photo; with
+  "Show on emergency card" off it showed the initial; the switch state survived an app restart.
