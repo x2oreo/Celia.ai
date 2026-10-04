@@ -6,6 +6,7 @@ import { Profile } from '../model/Profile';
 import { EMERGENCY_NUMBERS, EmergencyInfo, emergencyFor, systemCountry } from '../common/EmergencyNumbers';
 import { Routes, SosParam } from '../common/Routes';
 import { ScreenHeader, fmtText } from '../components/Common';
+import { ProfileAvatar } from '../components/ProfileAvatar';
 import { SettingsDivider, SettingsGroup, SettingsRow } from '../components/SettingsList';
 import { WatchPairing, shortId } from '../data/WatchPairing';
 import { Config } from '../common/Config';
@@ -132,20 +133,7 @@ export struct SettingsPage {
   @Builder
   profileCard() {
     Row({ space: 14 }) {
-      Stack() {
-        if ((this.profile?.name ?? '').trim().length > 0) {
-          Text((this.profile?.name ?? '').trim().charAt(0).toUpperCase())
-            .fontSize($r('app.float.font_title_3'))
-            .fontWeight(800)
-            .fontColor($r('app.color.brand_text'))
-        } else {
-          Image($r('app.media.ic_user')).width(26).height(26).fillColor($r('app.color.brand_text'))
-        }
-      }
-      .width(56)
-      .height(56)
-      .borderRadius(28)
-      .backgroundColor($r('app.color.brand_accent_soft'))
+      ProfileAvatar({ side: 56, name: this.profile?.name ?? '' })
       Column({ space: 6 }) {
         if ((this.profile?.name ?? '').trim().length > 0) {
           Text((this.profile?.name ?? '').trim())

@@ -143,6 +143,30 @@
     {
       "name": "contacts_sos_signed_out",
       "value": "Log in to let your watch alert these people when it sends an SOS."
+    },
+    {
+      "name": "photo_add",
+      "value": "Add a photo"
+    },
+    {
+      "name": "photo_change",
+      "value": "Change photo"
+    },
+    {
+      "name": "photo_remove",
+      "value": "Remove photo"
+    },
+    {
+      "name": "photo_on_card",
+      "value": "Show on emergency card"
+    },
+    {
+      "name": "photo_hint",
+      "value": "Stays on this phone. On your emergency card it helps a paramedic see the card is yours."
+    },
+    {
+      "name": "photo_failed",
+      "value": "Couldn't use that photo. Try another one."
     }
   ]
 }

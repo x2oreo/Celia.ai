@@ -1324,3 +1324,16 @@ The tap-to-talk fallback is also untested end to end.
   clean checkout; on the emulator: Emergency tab card, full card scrolled end to end, Show all, About opened.
 - **Not validated:** the web card in `site/card/` still has the old layout; the card in other languages beyond the
   glance layer (layers 3 and 4 stay English by design until a checked translation exists).
+
+### 2026-10-04 - Kaloyan + Claude Code: profile photo for the emergency card (branch `kaloyan/agent-home`)
+
+- **Asked:** let the user add a profile picture that the emergency card can use.
+- **What the AI did:** `data/ProfilePhoto.ets` (system photo picker, no permission; centre-crop to a 512 px square
+  JPEG in `filesDir`; a new file name per save so images reload; deleted by `LocalStore.clearAll`). It is not a
+  `Profile` field, so it is never synced and never in the card QR or web card. `CardField.PHOTO` lets the user hide
+  it from the card. `components/ProfileAvatar.ets` shows photo, initial or glyph; used in Settings and on Your
+  profile (photo block with Add / Change / Remove and the "Show on emergency card" switch). The emergency card hook
+  (`CardIdentity`) is left to the session redesigning the card, by agreement, to avoid editing the same files.
+- **Validated:** phone HAP builds; on the emulator: picked a gallery image, saw it on Your profile and in Settings,
+  restarted the app (photo kept), removed it (file deleted) and added it again.
+- **Not validated:** the card showing it (pending the card session); the switch's effect on the card.
