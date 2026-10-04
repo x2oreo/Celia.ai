@@ -34,30 +34,63 @@
     background: var(--fixed-bg); color: var(--fixed-ink); border: 1px solid var(--fixed-border);
     border-radius: var(--r-l); overflow: hidden; box-shadow: 0 1px 2px rgba(31, 26, 23, 0.06), 0 8px 24px rgba(31, 26, 23, 0.06);
   }
-  .band { background: var(--fixed-alert); color: #FFFFFF; padding: 18px 20px 20px; }
-  .band-top { display: flex; align-items: center; gap: 10px; }
-  .band-top svg { width: 26px; height: 26px; flex: none; }
-  .band .t-label { letter-spacing: 0.08em; opacity: 0.95; }
-  .band h1 { margin: 10px 0 0; }
-  .card-body { padding: 18px 20px 22px; display: grid; gap: 18px; }
-  .condition { margin: 0; color: var(--fixed-alert); }
-  .facts { display: flex; flex-wrap: wrap; gap: 8px; }
+  /* Plain design-system shapes (DESIGN.md §11 v3): caps labels, 1px cards, the Known-risk notice. No bands. */
+  .card-head { padding: 18px 20px 0; display: grid; gap: 12px; }
+  .card-title { display: flex; align-items: center; gap: 8px; color: var(--fixed-alert); }
+  .card-title svg { width: 16px; height: 16px; flex: none; }
+  .who { display: flex; align-items: center; gap: 12px; }
+  .avatar {
+    width: 48px; height: 48px; border-radius: 24px; flex: none; display: grid; place-items: center;
+    background: var(--fixed-alert-tint); color: var(--fixed-alert); font: 800 20px/1 var(--font);
+  }
+  .who h1 { margin: 0; font-size: 24px; line-height: 30px; font-weight: 800; }
+  .card-body { padding: 16px 20px 22px; display: grid; gap: 18px; }
+  .condition { margin: 0; color: var(--fixed-ink-2); }
+  .facts { display: flex; flex-wrap: wrap; gap: 6px; }
   .chip {
-    display: inline-flex; align-items: center; height: 32px; padding: 0 14px; border-radius: 16px;
-    border: 1.5px solid var(--fixed-ink); font: 700 14px/1 var(--font);
+    display: inline-flex; align-items: center; height: 28px; padding: 0 12px; border-radius: 14px;
+    border: 1px solid var(--fixed-border); font: 500 14px/1 var(--font); color: var(--fixed-ink);
   }
-  .chip.solid { background: var(--fixed-ink); color: #FFFFFF; }
   .avoid {
-    margin: 0; padding: 14px 16px 14px 14px; background: var(--fixed-alert-tint); border-radius: 12px;
-    border-left: 6px solid var(--fixed-alert); font-weight: 700; color: var(--fixed-ink);
+    margin: 0; padding: 14px 16px; background: var(--fixed-alert-tint); border: 1px solid #F4B5AF;
+    border-radius: 16px; font-weight: 700; color: var(--fixed-ink); display: flex; gap: 10px; align-items: flex-start;
   }
+  .avoid svg { width: 24px; height: 24px; flex: none; }
+  .plain {
+    background: var(--fixed-bg); color: var(--fixed-ink); border: 1px solid var(--fixed-border);
+    border-radius: var(--r-ml); padding: 16px; display: grid; gap: 14px; margin-top: 16px;
+  }
+  .plain hr { border: 0; border-top: 1px solid var(--fixed-border); margin: 0; width: 100%; }
+  .plain .k { margin: 0; }
+  .alert-k { color: var(--fixed-alert) !important; }
+  .steps { margin: 0; padding: 0; list-style: none; display: grid; gap: 12px; }
+  .steps li { display: grid; grid-template-columns: 24px 1fr; gap: 12px; }
+  .steps .n {
+    width: 24px; height: 24px; border-radius: 12px; background: var(--fixed-ink); color: #FFFFFF;
+    display: grid; place-items: center; font: 800 13px/1 var(--font);
+  }
+  .steps b { display: block; font-size: 16px; }
+  .steps span.d { font-size: 14px; color: var(--fixed-ink-2); }
+  .marks { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; font-size: 14px; }
+  .marks li { display: grid; grid-template-columns: 16px 1fr; gap: 10px; }
+  .marks i { font-style: normal; font-weight: 800; color: var(--fixed-ink-3); }
+  .marks.no i { color: var(--fixed-alert); }
+  .sub { margin: 0; font-size: 14px; color: var(--fixed-ink-2); }
+  details.plain summary {
+    list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+    min-height: 44px; font: 700 17px/1.2 var(--font);
+  }
+  details.plain summary::-webkit-details-marker { display: none; }
+  details.plain summary::after { content: "\203A"; transform: rotate(90deg); color: var(--fixed-ink-3); font-size: 22px; }
+  details.plain[open] summary::after { transform: rotate(-90deg); }
+  details.plain p { margin: 0; color: var(--fixed-ink-2); }
   .k { margin: 0 0 6px; color: var(--fixed-ink-3); }
   #details { display: grid; gap: 14px; }
   #details .v { font-size: 18px; color: var(--fixed-ink); }
   .v { margin: 0; color: var(--fixed-ink-2); }
   .card ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
   .card li { padding-left: 16px; position: relative; color: var(--fixed-ink); }
-  .card li::before { content: ""; position: absolute; left: 2px; top: 10px; width: 6px; height: 6px; border-radius: 3px; background: var(--fixed-alert); }
+  .card li::before { content: ""; position: absolute; left: 2px; top: 10px; width: 6px; height: 6px; border-radius: 3px; background: var(--fixed-ink-3); }
 
   .actions { display: grid; gap: 10px; margin-top: 16px; }
   .call { min-height: 64px; background: var(--danger); color: #FFFFFF; font-size: 20px; }
@@ -82,6 +115,7 @@
     body { background: #FFFFFF; }
     .topbar, .actions, .foot, .section-label { display: none !important; }
     .card { box-shadow: none; }
+    details.plain > *:not(summary) { display: block; }
   }
 </style>
 <script src="../assets/config.js"></script>
@@ -110,17 +144,22 @@
   </div>
 
   <article class="card" id="card" hidden data-reveal>
-    <header class="band">
-      <div class="band-top">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#FFFFFF" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/><path fill="#B42318" d="M5 10h3l1.5-3 3 6 1.5-3h5v1.6h-4l-2.5 4.4-3-6-1 2H5z"/></svg>
+    <header class="card-head">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
         <span class="t-label" id="title"></span>
       </div>
-      <h1 class="t-title-1" id="who" hidden></h1>
+      <div class="who">
+        <div class="avatar" id="avatar" aria-hidden="true"></div>
+        <div>
+          <h1 id="who" hidden></h1>
+          <p class="condition t-body-sm" id="condition"></p>
+        </div>
+      </div>
+      <div class="facts" id="facts"></div>
     </header>
     <div class="card-body">
-      <p class="condition t-title-3" id="condition"></p>
-      <div class="facts" id="facts"></div>
-      <p class="avoid" id="avoid"></p>
+      <p class="avoid"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#D92D20" d="M7.86 2h8.28L22 7.86v8.28L16.14 22H7.86L2 16.14V7.86z"/><path stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" d="M9 9l6 6M15 9l-6 6"/></svg><span id="avoid"></span></p>
       <p class="v" id="treatment"></p>
       <div id="details" hidden></div>
       <div>
@@ -143,6 +182,40 @@
     <p class="section-label t-label" id="contactsLabel" hidden></p>
     <div class="actions" id="contacts" style="margin-top:0"></div>
   </section>
+
+  <section class="plain" id="clinicians" hidden data-reveal>
+    <div>
+      <p class="k t-label alert-k">If unresponsive or collapsed</p>
+      <p class="sub" style="color:var(--fixed-ink-3)">For paramedics and emergency doctors</p>
+    </div>
+    <ol class="steps" id="steps"></ol>
+    <hr>
+    <p class="k t-label">Torsades de pointes</p>
+    <p class="sub" id="torsadesIntro"></p>
+    <ul class="marks" id="torsades"></ul>
+    <hr>
+    <p class="k t-label alert-k">Do not use</p>
+    <ul class="marks no" id="doNotUse"></ul>
+    <hr>
+    <p class="k t-label" id="typeNotesLabel"></p>
+    <ul class="marks" id="typeNotes"></ul>
+  </section>
+
+  <details class="plain" id="about" hidden data-reveal>
+    <summary>About long QT syndrome</summary>
+    <div id="overview" style="display:grid;gap:10px"></div>
+    <hr>
+    <p class="k t-label" id="typeLabel"></p>
+    <div>
+      <p style="font-weight:700;font-size:17px;color:var(--fixed-ink)" id="typeName"></p>
+      <p class="sub" style="color:var(--fixed-ink-3)" id="typeGene"></p>
+    </div>
+    <p class="k t-label">Triggers</p>
+    <ul class="marks" id="typeTriggers"></ul>
+    <div id="typeEcgBox"><p class="k t-label">ECG pattern</p><p id="typeEcg" style="color:var(--fixed-ink)"></p></div>
+    <div><p class="k t-label">Treatment</p><p id="typeTreatment" style="color:var(--fixed-ink)"></p></div>
+    <div id="precautionsBox" hidden><p class="k t-label">General precautions</p><ul class="marks" id="precautions"></ul></div>
+  </details>
 
   <section class="state" id="gone" hidden data-reveal>
     <span class="t-label" style="color:var(--brand-text)">Medical alert card</span>
@@ -264,12 +337,13 @@
     $('title').textContent = t.title;
     $('who').textContent = p.n || '';
     $('who').hidden = !p.n;
+    $('avatar').textContent = p.n ? p.n.trim().charAt(0).toUpperCase() : '';
     $('condition').textContent = t.condition;
 
     var facts = $('facts');
     facts.textContent = '';
     facts.appendChild(el('span', 'chip', t.genotype + ': ' + (p.g && p.g !== 'UNKNOWN' ? p.g : '?')));
-    facts.appendChild(el('span', 'chip' + (p.i ? ' solid' : ''), p.i ? t.icdYes : t.icdNo));
+    facts.appendChild(el('span', 'chip', p.i ? t.icdYes : t.icdNo));
 
     $('avoid').textContent = t.avoid;
     $('treatment').textContent = t.treatment;
@@ -312,6 +386,8 @@
       local.appendChild(el('small', '', '· ' + w[2]));
     }
 
+    renderFacts(p, number);
+
     $('contactsLabel').textContent = t.contacts;
     $('contactsLabel').hidden = p.c.length === 0;
     var contacts = $('contacts');
@@ -324,6 +400,55 @@
       a.appendChild(document.createTextNode(' · ' + c[1]));
       contacts.appendChild(a);
     });
+  }
+
+  // Layers 3 and 4 (for clinicians, about long QT): fixed English facts from the app (emergency/LqtsFacts.ets),
+  // English until a checked translation exists - same rule as the app.
+  function marks(id, items, mark) {
+    var ul = $(id);
+    ul.textContent = '';
+    items.forEach(function (text, i) {
+      var li = el('li');
+      li.appendChild(el('i', '', typeof mark === 'function' ? mark(i) : mark));
+      li.appendChild(el('span', '', text));
+      ul.appendChild(li);
+    });
+  }
+
+  function renderFacts(p, number) {
+    var f = window.LQTS_FACTS;
+    if (!f) { return; }
+    var g = f.genotypes.filter(function (x) { return x.genotype === p.g; })[0] ||
+      f.genotypes.filter(function (x) { return x.genotype === 'UNKNOWN'; })[0];
+    var steps = $('steps');
+    steps.textContent = '';
+    f.steps.filter(function (s) { return !s.icdOnly || p.i; }).forEach(function (s, i) {
+      var li = el('li');
+      li.appendChild(el('span', 'n', String(i + 1)));
+      var box = el('div');
+      box.appendChild(el('b', '', s.step));
+      box.appendChild(el('span', 'd', s.detail.replace('{number}', number)));
+      li.appendChild(box);
+      steps.appendChild(li);
+    });
+    $('torsadesIntro').textContent = f.torsadesIntro;
+    marks('torsades', f.torsades, function (i) { return String.fromCharCode(65 + i); });
+    marks('doNotUse', f.doNotUse, '\u2715');
+    $('typeNotesLabel').textContent = 'Notes for ' + (g.genotype === 'UNKNOWN' ? 'unknown type' : g.genotype);
+    marks('typeNotes', g.emergencyNotes, '\u2022');
+
+    var overview = $('overview');
+    overview.textContent = '';
+    f.overview.forEach(function (x) { overview.appendChild(el('p', '', x)); });
+    $('typeLabel').textContent = g.genotype === 'UNKNOWN' ? 'Type not known' : 'This person\u2019s type';
+    $('typeName').textContent = g.name;
+    $('typeGene').textContent = g.gene ? g.gene + '. ' + g.share + '.' : '';
+    marks('typeTriggers', g.triggers, '\u2022');
+    $('typeEcg').textContent = g.ecg;
+    $('typeEcgBox').hidden = !g.ecg;
+    $('typeTreatment').textContent = g.treatment;
+    marks('precautions', f.precautions, '\u2022');
+    $('precautionsBox').hidden = g.genotype !== 'UNKNOWN';
   }
 
   var legacyLink = false;
@@ -346,6 +471,8 @@
     $('langRow').hidden = false;
     $('card').hidden = false;
     $('actions').hidden = false;
+    $('clinicians').hidden = !window.LQTS_FACTS;
+    $('about').hidden = !window.LQTS_FACTS;
     $('foot').hidden = false;
     window.CeliaShare.reveal($('root'));
   }

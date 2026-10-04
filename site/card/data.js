@@ -196,4 +196,142 @@ window.CARD_TEXTS = [
   "noMeds": "Yok"
  }
 ];
-window.EMERGENCY_NUMBERS = {"AL": {"name": "Albania", "ambulance": "127", "general": "112"}, "AT": {"name": "Austria", "ambulance": "144", "general": "112"}, "BA": {"name": "Bosnia and Herzegovina", "ambulance": "124", "general": "112"}, "BE": {"name": "Belgium", "ambulance": "112", "general": "112"}, "BG": {"name": "Bulgaria", "ambulance": "150", "general": "112"}, "CH": {"name": "Switzerland", "ambulance": "144", "general": "112"}, "CY": {"name": "Cyprus", "ambulance": "112", "general": "112"}, "CZ": {"name": "Czechia", "ambulance": "155", "general": "112"}, "DE": {"name": "Germany", "ambulance": "112", "general": "112"}, "DK": {"name": "Denmark", "ambulance": "112", "general": "112"}, "EE": {"name": "Estonia", "ambulance": "112", "general": "112"}, "ES": {"name": "Spain", "ambulance": "112", "general": "112"}, "FI": {"name": "Finland", "ambulance": "112", "general": "112"}, "FR": {"name": "France", "ambulance": "15", "general": "112"}, "GB": {"name": "United Kingdom", "ambulance": "999", "general": "112"}, "GR": {"name": "Greece", "ambulance": "166", "general": "112"}, "HR": {"name": "Croatia", "ambulance": "194", "general": "112"}, "HU": {"name": "Hungary", "ambulance": "104", "general": "112"}, "IE": {"name": "Ireland", "ambulance": "112", "general": "112"}, "IS": {"name": "Iceland", "ambulance": "112", "general": "112"}, "IT": {"name": "Italy", "ambulance": "118", "general": "112"}, "LT": {"name": "Lithuania", "ambulance": "112", "general": "112"}, "LU": {"name": "Luxembourg", "ambulance": "112", "general": "112"}, "LV": {"name": "Latvia", "ambulance": "113", "general": "112"}, "MD": {"name": "Moldova", "ambulance": "903", "general": "112"}, "ME": {"name": "Montenegro", "ambulance": "124", "general": "112"}, "MK": {"name": "North Macedonia", "ambulance": "194", "general": "112"}, "MT": {"name": "Malta", "ambulance": "112", "general": "112"}, "NL": {"name": "Netherlands", "ambulance": "112", "general": "112"}, "NO": {"name": "Norway", "ambulance": "113", "general": "112"}, "PL": {"name": "Poland", "ambulance": "999", "general": "112"}, "PT": {"name": "Portugal", "ambulance": "112", "general": "112"}, "RO": {"name": "Romania", "ambulance": "112", "general": "112"}, "RS": {"name": "Serbia", "ambulance": "194", "general": "112"}, "SE": {"name": "Sweden", "ambulance": "112", "general": "112"}, "SI": {"name": "Slovenia", "ambulance": "112", "general": "112"}, "SK": {"name": "Slovakia", "ambulance": "155", "general": "112"}, "TR": {"name": "Türkiye", "ambulance": "112", "general": "112"}, "UA": {"name": "Ukraine", "ambulance": "103", "general": "112"}, "US": {"name": "United States", "ambulance": "911", "general": "911"}, "CA": {"name": "Canada", "ambulance": "911", "general": "911"}, "MX": {"name": "Mexico", "ambulance": "911", "general": "911"}, "BR": {"name": "Brazil", "ambulance": "192", "general": "190"}, "AR": {"name": "Argentina", "ambulance": "107", "general": "911"}, "AU": {"name": "Australia", "ambulance": "000", "general": "112"}, "NZ": {"name": "New Zealand", "ambulance": "111", "general": "111"}, "JP": {"name": "Japan", "ambulance": "119", "general": "110"}, "KR": {"name": "South Korea", "ambulance": "119", "general": "112"}, "CN": {"name": "China", "ambulance": "120", "general": "110"}, "IN": {"name": "India", "ambulance": "108", "general": "112"}, "AE": {"name": "United Arab Emirates", "ambulance": "998", "general": "999"}, "IL": {"name": "Israel", "ambulance": "101", "general": "100"}, "ZA": {"name": "South Africa", "ambulance": "10177", "general": "112"}, "EG": {"name": "Egypt", "ambulance": "123", "general": "122"}, "TH": {"name": "Thailand", "ambulance": "1669", "general": "191"}};
+window.EMERGENCY_NUMBERS = {"AL": {"name": "Albania", "ambulance": "127", "general": "112"}, "AT": {"name": "Austria", "ambulance": "144", "general": "112"}, "BA": {"name": "Bosnia and Herzegovina", "ambulance": "124", "general": "112"}, "BE": {"name": "Belgium", "ambulance": "112", "general": "112"}, "BG": {"name": "Bulgaria", "ambulance": "112", "general": "112"}, "CH": {"name": "Switzerland", "ambulance": "144", "general": "112"}, "CY": {"name": "Cyprus", "ambulance": "112", "general": "112"}, "CZ": {"name": "Czechia", "ambulance": "155", "general": "112"}, "DE": {"name": "Germany", "ambulance": "112", "general": "112"}, "DK": {"name": "Denmark", "ambulance": "112", "general": "112"}, "EE": {"name": "Estonia", "ambulance": "112", "general": "112"}, "ES": {"name": "Spain", "ambulance": "112", "general": "112"}, "FI": {"name": "Finland", "ambulance": "112", "general": "112"}, "FR": {"name": "France", "ambulance": "15", "general": "112"}, "GB": {"name": "United Kingdom", "ambulance": "999", "general": "112"}, "GR": {"name": "Greece", "ambulance": "166", "general": "112"}, "HR": {"name": "Croatia", "ambulance": "194", "general": "112"}, "HU": {"name": "Hungary", "ambulance": "104", "general": "112"}, "IE": {"name": "Ireland", "ambulance": "112", "general": "112"}, "IS": {"name": "Iceland", "ambulance": "112", "general": "112"}, "IT": {"name": "Italy", "ambulance": "118", "general": "112"}, "LT": {"name": "Lithuania", "ambulance": "112", "general": "112"}, "LU": {"name": "Luxembourg", "ambulance": "112", "general": "112"}, "LV": {"name": "Latvia", "ambulance": "113", "general": "112"}, "MD": {"name": "Moldova", "ambulance": "112", "general": "112"}, "ME": {"name": "Montenegro", "ambulance": "124", "general": "112"}, "MK": {"name": "North Macedonia", "ambulance": "194", "general": "112"}, "MT": {"name": "Malta", "ambulance": "112", "general": "112"}, "NL": {"name": "Netherlands", "ambulance": "112", "general": "112"}, "NO": {"name": "Norway", "ambulance": "113", "general": "112"}, "PL": {"name": "Poland", "ambulance": "999", "general": "112"}, "PT": {"name": "Portugal", "ambulance": "112", "general": "112"}, "RO": {"name": "Romania", "ambulance": "112", "general": "112"}, "RS": {"name": "Serbia", "ambulance": "194", "general": "112"}, "SE": {"name": "Sweden", "ambulance": "112", "general": "112"}, "SI": {"name": "Slovenia", "ambulance": "112", "general": "112"}, "SK": {"name": "Slovakia", "ambulance": "155", "general": "112"}, "TR": {"name": "Türkiye", "ambulance": "112", "general": "112"}, "UA": {"name": "Ukraine", "ambulance": "103", "general": "112"}, "US": {"name": "United States", "ambulance": "911", "general": "911"}, "CA": {"name": "Canada", "ambulance": "911", "general": "911"}, "MX": {"name": "Mexico", "ambulance": "911", "general": "911"}, "BR": {"name": "Brazil", "ambulance": "192", "general": "190"}, "AR": {"name": "Argentina", "ambulance": "107", "general": "911"}, "AU": {"name": "Australia", "ambulance": "000", "general": "000"}, "NZ": {"name": "New Zealand", "ambulance": "111", "general": "111"}, "JP": {"name": "Japan", "ambulance": "119", "general": "110"}, "KR": {"name": "South Korea", "ambulance": "119", "general": "112"}, "CN": {"name": "China", "ambulance": "120", "general": "110"}, "IN": {"name": "India", "ambulance": "108", "general": "112"}, "AE": {"name": "United Arab Emirates", "ambulance": "998", "general": "999"}, "IL": {"name": "Israel", "ambulance": "101", "general": "100"}, "ZA": {"name": "South Africa", "ambulance": "10177", "general": "112"}, "EG": {"name": "Egypt", "ambulance": "123", "general": "122"}, "TH": {"name": "Thailand", "ambulance": "1669", "general": "191"}};
+window.LQTS_FACTS = {
+ "overview": [
+  "Long QT syndrome (LQTS) is an inherited condition of the heart's electrical recharging. The QT interval on the ECG is longer than normal.",
+  "A long QT raises the chance of torsades de pointes, a fast and chaotic rhythm. It can cause fainting, seizure-like episodes or cardiac arrest. About 1 in 2,000 people have LQTS.",
+  "Many common medicines prolong the QT further, among them some antibiotics, anti-sickness medicines, antidepressants and antipsychotics. Low potassium or magnesium, fever and some triggers for each type add to the risk."
+ ],
+ "precautions": [
+  "Treat every QT-prolonging medicine as dangerous.",
+  "Keep potassium and magnesium normal; vomiting, diarrhoea and diuretics lower them.",
+  "Take the beta-blocker every day.",
+  "Tell every doctor, dentist and pharmacist about long QT.",
+  "Fainting, a seizure-like episode or palpitations with dizziness need urgent care."
+ ],
+ "steps": [
+  {
+   "step": "Check response and breathing",
+   "detail": "Unresponsive and not breathing normally: call {number} and start CPR.",
+   "icdOnly": false
+  },
+  {
+   "step": "Use an AED as soon as possible",
+   "detail": "Defibrillation is safe in long QT and ends torsades de pointes or ventricular fibrillation.",
+   "icdOnly": false
+  },
+  {
+   "step": "Has an implanted defibrillator (ICD)",
+   "detail": "It may shock on its own. Still use an AED and CPR if the person stays unresponsive.",
+   "icdOnly": true
+  },
+  {
+   "step": "Record a 12-lead ECG",
+   "detail": "Look for torsades de pointes and a long QTc. 500 ms or more is high risk.",
+   "icdOnly": false
+  },
+  {
+   "step": "Give IV magnesium sulfate for torsades",
+   "detail": "First line, even when serum magnesium is normal.",
+   "icdOnly": false
+  },
+  {
+   "step": "Correct potassium and magnesium",
+   "detail": "Keep both high-normal. Low potassium makes torsades much more likely.",
+   "icdOnly": false
+  },
+  {
+   "step": "Stop every QT-prolonging drug",
+   "detail": "Check each drug before giving it. The \"Do not give\" list above is a starting point.",
+   "icdOnly": false
+  }
+ ],
+ "torsadesIntro": "If the ECG shows torsades de pointes (polymorphic VT with a twisting axis):",
+ "torsades": [
+  "IV magnesium sulfate.",
+  "Unstable or pulseless: unsynchronised defibrillation.",
+  "Potassium and magnesium to high-normal.",
+  "Recurrent torsades: temporary overdrive pacing to raise the heart rate.",
+  "Isoproterenol is for acquired long QT. In congenital long QT, only on a cardiologist's advice."
+ ],
+ "doNotUse": [
+  "Amiodarone, sotalol, procainamide or other QT-prolonging antiarrhythmics.",
+  "Ondansetron, droperidol or domperidone for nausea.",
+  "Haloperidol or droperidol for agitation.",
+  "Macrolide or fluoroquinolone antibiotics.",
+  "Catecholamines, unless life-saving."
+ ],
+ "genotypes": [
+  {
+   "genotype": "LQT1",
+   "name": "Long QT syndrome type 1 (LQT1)",
+   "gene": "KCNQ1 gene, slow potassium channel (IKs)",
+   "share": "About 35-40% of genotyped cases",
+   "ecg": "Broad-based T waves",
+   "treatment": "Beta-blockers (nadolol or propranolol) protect well. An ICD for those at high risk.",
+   "triggers": [
+    "Exercise, especially swimming",
+    "Sudden exertion or diving into cold water",
+    "Adrenaline surges, such as fear or anger during activity"
+   ],
+   "emergencyNotes": [
+    "Events typically happen during exercise or swimming. A swimming accident may be an arrhythmia.",
+    "Adrenaline-driven: avoid catecholamines unless life-saving.",
+    "Beta-blocker adherence matters most for this type."
+   ]
+  },
+  {
+   "genotype": "LQT2",
+   "name": "Long QT syndrome type 2 (LQT2)",
+   "gene": "KCNH2 (hERG) gene, rapid potassium channel (IKr)",
+   "share": "About 30-35% of genotyped cases",
+   "ecg": "Low, notched or double-humped T waves",
+   "treatment": "Beta-blockers (nadolol preferred). Potassium kept high-normal. An ICD for those at high risk.",
+   "triggers": [
+    "Sudden loud noise, such as an alarm clock or a phone ringing",
+    "Being startled or strong emotion",
+    "The months after giving birth"
+   ],
+   "emergencyNotes": [
+    "Most QT-prolonging drugs block the same channel: this type is very sensitive to them.",
+    "Low potassium is dangerous. Correct it early.",
+    "Keep the room calm and quiet. Avoid sudden alarms near the patient."
+   ]
+  },
+  {
+   "genotype": "LQT3",
+   "name": "Long QT syndrome type 3 (LQT3)",
+   "gene": "SCN5A gene, sodium channel (INa)",
+   "share": "About 5-10% of genotyped cases",
+   "ecg": "Long flat ST segment with a late T wave",
+   "treatment": "Beta-blockers, sometimes mexiletine. An ICD is often recommended.",
+   "triggers": [
+    "Rest and sleep, often at night",
+    "Slow heart rate"
+   ],
+   "emergencyNotes": [
+    "Events typically happen at rest or during sleep, when the heart rate is slow.",
+    "A slow heart rate makes it worse. Pacing to raise the rate helps.",
+    "Mexiletine may be part of this person's treatment."
+   ]
+  },
+  {
+   "genotype": "UNKNOWN",
+   "name": "Long QT syndrome, type not known",
+   "gene": "",
+   "share": "",
+   "ecg": "",
+   "treatment": "Beta-blockers for most people, plus avoiding QT-prolonging medicines. An ICD for those at high risk.",
+   "triggers": [
+    "Exercise and swimming",
+    "Sudden loud noise or strong emotion",
+    "Rest and sleep with a slow heart rate",
+    "Low potassium or magnesium, fever"
+   ],
+   "emergencyNotes": [
+    "Type not known: treat every trigger and every QT-prolonging drug as relevant."
+   ]
+  }
+ ]
+};
