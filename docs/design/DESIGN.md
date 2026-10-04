@@ -83,14 +83,27 @@ Risk surfaces on dark: tint = ~14% of the risk colour over `#1A1614`. Keep the i
 
 ### 2.3 Watch (true-black AMOLED only)
 
+The watch is the phone's dark mode on true black: the same warm neutrals, the same coral, the same risk language.
+Tokens live in `watch/entry/src/main/ets/components/Theme.ets` (and `color.json` for the start window); screens
+use the names, never a hex.
+
 | Token | Hex | Use |
 |---|---|---|
-| `black` | `#000000` | Screen background |
-| `ring-track` | `#161616` | Empty bezel ring |
-| `button` | `#2A2A2A` | Secondary pill |
-| `calm` | `#12B76A` | Ring, "All good" |
-| `elevated` | `#FDB022` | Ring, low/high HR text |
-| `alert` | `#F04438` | SOS ring, danger text |
+| `BG` | `#000000` | Screen background (pixels off) |
+| `RING_TRACK` | `#1A1614` | Empty bezel ring, chart band |
+| `SURFACE` | `#1F1A17` | Rows, tiles, cards (phone dark `surface`) |
+| `BUTTON` | `#2A2421` | Secondary pill, icon wells |
+| `BORDER` | `#332C28` | 1 vp outlines, dashed demo panel, grid lines |
+| `TEXT` | `#F5F0EC` | Primary text (phone dark `ink`) |
+| `TEXT_2` | `#B8AEA8` | Secondary text, units |
+| `TEXT_3` | `#8A817B` | Fine print, caps labels |
+| `BRAND` | `#F26B6F` | Coral on dark: primary non-risk actions, chart series, the agent |
+| `CALM` | `#12B76A` | Ring and status "All good" |
+| `ELEVATED` | `#FDB022` | Ring and text near a limit, low HR, amber badges |
+| `ALERT` | `#F04438` | Alert ring, Need help, SOS |
+| `*_TINT` | ~18% of the colour on black | Fills behind status pills and feel buttons (`CALM_TINT` `#0B2A1C`, `ELEVATED_TINT` `#33240A`, `ALERT_TINT` `#33100D`) |
+
+Risk verdicts on the watch use the §3 solids and shapes unchanged (`ic_risk_*`).
 
 ---
 
@@ -461,17 +474,63 @@ simulate today (HRV, oxygen, breathing) always carry the `SIMULATED` badge and t
 
 ## 7. Watch
 
-- **Ring motif.** A 12 px bezel ring is the zone signal: green = calm, amber = elevated, risk-red = alert,
-  coral = agent. Pulse speed rises with state (1.1 s calm → 0.5 s alert). A countdown is the same ring draining.
-- **Type.** BPM 80–96 px ExtraBold. Titles 20–30 px. Labels never below 12 px caps.
-- **Layout.** One action per screen. Buttons are 52 px pills. Every alert has at least two (I'm OK / Need help).
-- **Screens (7).** Home, HR high, HR low (gentle wake-up tone), How do you feel (Fine / Dizzy / Racing),
-  SOS countdown ("Calling 112 in 10 s" + Cancel), Verdict glance, Not on wrist.
+Round 466 × 466 px AMOLED = **233 × 233 vp** (density 2). All sizes below are vp / fp. Design file: `docs/design/v1`
+W1-W7; this section is the spec for everything the drawing does not show.
+
+**Round-screen rules**
+
+- Content lives inside the inscribed square (~165 vp) or follows the circle. Nothing important within 16 vp of
+  the edge except the bezel ring and arc buttons.
+- One idea per screen, glanceable in two seconds: one number, one word, one action.
+- Lists are `ArcList` (items scale down towards the top and bottom edge, crown scrolls). Every list starts with a
+  centred title in `TITLE` and ends with 48 vp of air so the last row clears the bottom curve.
+- A single primary action at the bottom is an **`ArcButton`** (`BOTTOM_EDGE`, `CUSTOM` style with our tokens).
+  Two actions are two pills side by side (height 44, radius 22).
+- Touch targets at least 44 vp; rows 52.
+- Never colour alone: every status is word + shape + colour, exactly as on the phone (§3, §6.10).
+
+**Type** (HarmonyOS Sans)
+
+| Style | Size | Weight | Use |
+|---|---|---|---|
+| `HERO` | 52 | 800 | Home bpm, alert number, SOS seconds |
+| `NUMBER` | 22 | 700 | Trend readout, pairing code is 34 |
+| `TITLE` | 17 | 700 | Screen and list titles, drug name |
+| `BODY` | 14 | 600 | Row values, buttons |
+| `SMALL` | 12 | 500 | Units, context lines |
+| `CAPS` | 11 | 700, +1 letter-spacing | Caps labels, status words on alerts |
+| `MICRO` | 10 | 700 mono-ish caps | `SIM` / `DEMO` badges only |
+
+**Ring motif.** An 8 vp bezel ring is the zone signal: `CALM` all good, `ELEVATED` near a limit or low,
+`ALERT` above the max / SOS, `BRAND` pairing and agent screens. On Home the ring fill is where the bpm sits between
+your min and max. A countdown is the same ring draining. Off the wrist the ring is a dashed `BORDER` circle.
+
+**Status (Home)**: a 16 vp shape + word over the bpm: circle-check "All good", triangle "Near your max",
+octagon "Above your max", triangle "Below your min", dashed circle "Waiting". A heart glyph (`ic_heart_fill`) beats
+next to "bpm" at 1.1 s when calm and 0.5 s on alert.
+
+**Pages** (horizontal swiper, dots at the bottom; the simulator panel is the last page and exists only in a
+`DEMO_MODE` build):
+
+| # | Page | Content |
+|---|---|---|
+| 1 | Home (W1) | ring, status, bpm + heart, "At rest · max 110", genotype · phone chip, drug badge, `SIM` badge when the source is demo data |
+| 2 | Heart · 10 min | readout (avg, min-max), range chart: one 6 vp capsule per 30 s from the lowest to the highest reading (`BRAND` 40%) with an average dot, your min-max limits as a `RING_TRACK` band with a dashed max line, axis "10 min ago / now". Resting rate under it. Never a trace. |
+| 3 | Vitals | `ArcList` rows: icon well 32, caps label, value `BODY` + unit `SMALL`, status pill (6.10 words and shapes: Good, Okay, Worth a look, No data). HRV, oxygen, breathing and rhythm carry the `SIM` badge. |
+| 4 | Log | "How do you feel?" Fine / Dizzy / Racing (56 circles, tint fill, 2 vp ring), then "Took nadolol" pill and a 44 `ALERT` SOS circle |
+| 5 | Settings | `ArcList`: phone pairing, today's limits and why, genotype, reminder time, watch id, "Not a medical device" |
+| 6 | Simulator (demo) | dashed `BORDER` panel title "SIMULATOR". Sections HEART RATE (source, scenario, speed), EVENTS (fall, irregular rhythm, low HRV, low oxygen, watch off), CONTEXT (state, genotype, risky drug, missed beta-blocker, dose nudge, reminder in 10 s). Every demo control lives here and only here. |
+
+**Full-screen moments** (most urgent wins: SOS > fall/alert > check-in > dose nudge > verdict > pairing):
+W2/W3 alerts (ring in the zone colour, caps title with its shape, `HERO` number, context line, I'm OK / Need help),
+fall (ring drains over 30 s), W5 SOS (`ALERT` ring drains over 10 s, white Cancel arc button), W6 verdict (the §3
+shape and word of the real verdict level, "Ask your doctor.", Got it arc button), dose nudge (pill icon, Took it
+`BRAND` / Later), pairing (`BRAND` ring drains with the code's lifetime).
+
 - **Drug badge (Home).** While a QT-risk medicine the user took ("I took it" on the phone) is inside its 72 h window,
-  an amber pill under the HRV line: `!` + "Clarithromycin · 2d left" (10 px, `elevated` text on a dark amber fill).
-  Amber because the watch is watching more closely, not alarming. A high-HR alert then reads "Limit 110 · lowered
-  for Clarithromycin". It disappears when the window ends.
-- The watch shows **heart rate only. Never QT.**
+  an amber pill: `!` + "Clarithromycin · 2d left" (`ELEVATED` text on `ELEVATED_TINT`). Amber because the watch is
+  watching more closely, not alarming. A high-HR alert then reads "Limit 110 · lowered for Clarithromycin".
+- The watch shows **heart rate and the signals around it. Never QT, never an ECG trace.**
 
 ---
 
