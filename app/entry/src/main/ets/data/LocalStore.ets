@@ -17,6 +17,7 @@ import {
 } from '../model/Chat';
 import { Listener, Listeners } from '../common/Listeners';
 import { Logger } from '../common/Logger';
+import { ProfilePhoto } from './ProfilePhoto';
 
 const log: Logger = new Logger('LocalStore');
 
@@ -381,6 +382,7 @@ export class LocalStore {
     this.settings.clear();
     this.chats = [];
     this.chatMessages.clear();
+    ProfilePhoto.remove();
     for (const table of ['kv', 'meds', 'events', 'scans', 'chat_messages', 'chats']) {
       await this.safeExec(`DELETE FROM ${table}`, []);
     }
