@@ -169,10 +169,15 @@ export struct HeartPage {
             .margin({ top: 6 })
 
           Row({ space: 4 }) {
-            Chip({ label: this.ctrl.genotype === 'UNKNOWN' ? 'No genotype' : this.ctrl.genotype,
-              color: this.ctrl.genotype === 'UNKNOWN' ? Theme.TEXT_2 : Theme.TEXT })
-            Chip({ label: this.phoneText(), check: this.ctrl.syncState === 'OK',
-              color: this.ctrl.syncState === 'OK' ? Theme.TEXT : Theme.TEXT_2 })
+            if (this.ctrl.phoneAckUntil > 0) {
+              // "I'm fine" on the phone just closed the alert here: say so for a few seconds.
+              Chip({ label: 'Answered on phone', check: true })
+            } else {
+              Chip({ label: this.ctrl.genotype === 'UNKNOWN' ? 'No genotype' : this.ctrl.genotype,
+                color: this.ctrl.genotype === 'UNKNOWN' ? Theme.TEXT_2 : Theme.TEXT })
+              Chip({ label: this.phoneText(), check: this.ctrl.syncState === 'OK',
+                color: this.ctrl.syncState === 'OK' ? Theme.TEXT : Theme.TEXT_2 })
+            }
           }
           .margin({ top: 6 })
         }

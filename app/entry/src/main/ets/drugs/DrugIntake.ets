@@ -16,6 +16,39 @@ export const WATCH_WINDOW_MS: number = 72 * 3600 * 1000;
 
 const KEY_LAST: string = 'riskyIntakeLast';
 
+/** A symptom this soon after a logged risky drug gets the stronger warning (watch: DrugBadge, DB: watch_insights). */
+export const SYMPTOM_WINDOW_MS: number = 24 * 3600 * 1000;
+
+/**
+ * "You said you feel dizzy 3 h after taking clarithromycin. …" for a watch "How do you feel?" answer within 24 h of
+ * a logged intake; '' otherwise ('fine' never warns). Same rule as the watch, so both say the same thing. Pure.
+ */
+export function symptomAfterDrugText(kind: string, rec: IntakeRecord | undefined, now: number): string {
+  if (rec === undefined || rec.ts <= 0 || now < rec.ts || now - rec.ts > SYMPTOM_WINDOW_MS) {
+    return '';
+  }
+  let feel: string = '';
+  switch (kind) {
+    case 'dizziness':
+      feel = 'feel dizzy';
+      break;
+    case 'palpitations':
+      feel = 'your heart is racing';
+      break;
+    case 'fainting':
+      feel = 'you fainted';
+      break;
+    case 'other':
+      feel = 'you feel unwell';
+      break;
+    default:
+      return '';
+  }
+  const hours: number = Math.max(1, Math.round((now - rec.ts) / 3600000));
+  return `On your watch you said ${feel}, ${hours} h after taking ${rec.name}, which can affect heart rhythm. ` +
+    'Don\'t take the next dose, and call your doctor or pharmacist today. If you faint, call 112.';
+}
+
 export interface IntakeRecord {
   name: string;
   risk: string;
@@ -76,6 +109,17 @@ export class DrugIntake {
     await LocalStore.get().setSetting(KEY_LAST, JSON.stringify(rec));
     log.info(`intake logged: ${name} (${risk}), watch ${synced ? 'told' : 'not reached'}`);
     return rec;
+  }
+
+  /** The last logged intake of any medicine, if it is still inside the watch window. */
+  static async last(now: number): Promise<IntakeRecord | undefined> {
+    try {
+      const rec: IntakeRecord = JSON.parse(await LocalStore.get().getSetting(KEY_LAST, '{}')) as IntakeRecord;
+      return typeof rec.name === 'string' && typeof rec.ts === 'number' && now - rec.ts < WATCH_WINDOW_MS ? rec :
+        undefined;
+    } catch (e) {
+      return undefined;
+    }
   }
 
   /** The last intake of this medicine if it is still inside the watch window (shown when the page reopens). */

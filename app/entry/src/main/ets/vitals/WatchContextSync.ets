@@ -3,7 +3,7 @@
 // watch's Supabase project can be reached (WatchSource.target). Sends no personal data: device id, genotype, ingredient, risk level, time.
 
 import { Config } from '../common/Config';
-import { NetResult, NetTarget, upsertJson } from '../common/Net';
+import { NetResult, NetTarget, postJson, upsertJson } from '../common/Net';
 import { WatchSource } from './WatchSource';
 import { Logger } from '../common/Logger';
 
@@ -33,6 +33,20 @@ export class WatchContextSync {
       watchContextRow(Config.WATCH_DEVICE_ID, genotype, drug, risk, at), 8000, target);
     if (!res.ok) {
       log.warn(`watch_context upsert failed: HTTP ${res.status}`);
+    }
+    return res.ok;
+  }
+
+  // "I'm fine" on the phone: the paired watch closes the same heart-rate alert / check-in (ack_watch_alert).
+  static async ackAlert(): Promise<boolean> {
+    const target: NetTarget | undefined = WatchSource.target();
+    if (target === undefined) {
+      return false;
+    }
+    const fields: Record<string, string> = { 'p_device_id': Config.WATCH_DEVICE_ID };
+    const res: NetResult = await postJson('/rest/v1/rpc/ack_watch_alert', fields, 8000, target);
+    if (!res.ok) {
+      log.warn(`ack_watch_alert failed: HTTP ${res.status}`);
     }
     return res.ok;
   }

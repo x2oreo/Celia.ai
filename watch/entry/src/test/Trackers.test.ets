@@ -2,7 +2,7 @@ import { describe, it, expect } from '@ohos/hypium';
 import { RestingHr } from '../main/ets/vitals/RestingHr';
 import { RecoveryTracker } from '../main/ets/vitals/RecoveryTracker';
 import { isAsleep } from '../main/ets/vitals/SleepDetector';
-import { ANOMALY_RAMP_MS, anomalyProgress, applyAnomaly, mockVitals, vitalAlertFor } from '../main/ets/vitals/MockedVitals';
+import { ANOMALY_RAMP_MS, anomalyProgress, applyAnomaly, mockVitals, vitalAlertFor, hrAnomalyBpm, HR_ANOMALY_ABOVE_LIMIT } from '../main/ets/vitals/MockedVitals';
 import { Activity, HrRecoveryValues } from '../main/ets/model/WatchMetric';
 
 function runRecovery(peak: number, after: number): HrRecoveryValues | undefined {
@@ -84,6 +84,14 @@ export default function trackersTest() {
       expect(mockVitals(185, 'REST', half).irregularRhythm).assertTrue();
       expect(mockVitals(185, 'ACTIVE', half).irregularRhythm).assertFalse();
       expect(mockVitals(70, 'ACTIVE', half).hrvMs < mockVitals(70, 'REST', half).hrvMs).assertTrue();
+    });
+
+    it('heartTileDriftsAboveTheCurrentLimitAndBack', 0, () => {
+      expect(hrAnomalyBpm(72, 120, 0)).assertEqual(72);
+      expect(hrAnomalyBpm(72, 120, 1)).assertEqual(120 + HR_ANOMALY_ABOVE_LIMIT);
+      expect(hrAnomalyBpm(72, 110, 0.5)).assertEqual(Math.round(72 + (125 - 72) * 0.5));
+      // Already above the target: never pulls the real reading down.
+      expect(hrAnomalyBpm(150, 120, 1)).assertEqual(150);
     });
   });
 }

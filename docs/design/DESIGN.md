@@ -515,8 +515,8 @@ superseded for the watch.
   have no fill: label `SMALL` `TEXT_2`, value `TITLE`+ bold, a 1 vp `BORDER` divider between rows, 48 vp of air at
   the end.
 - Actions are centred **pills** (height 40, radius 20): one pill alone (Got it, Done, Cancel, Not now) or two side by
-  side (I'm OK / Need help, Took it / Not yet, New code / Close). Secondary = `BUTTON` fill; primary non-risk =
-  `BRAND` fill; Need help = `ALERT` fill; SOS Cancel = white fill with dark text (the easiest target on screen).
+  side (I'm OK / Need help, OK / Need help, Took it / Not yet, New code / Close). Secondary = `BUTTON` fill; primary
+  non-risk = `BRAND` fill; Need help = `ALERT` fill; SOS Cancel = white fill with dark text (the easiest target on screen).
 - Touch targets at least 40 vp.
 - Never colour alone: every status is word + shape + colour, exactly as on the phone (§3, §6.10).
 
@@ -549,7 +549,9 @@ superseded for the watch.
 hollow circle = waiting / no data. Shapes are drawn (`StatusMark`), not font glyphs.
 
 **Badges and chips**: chips are `SURFACE` capsules, 22 high, `SMALL` bold `TEXT` ("LQT2", "Phone ✓", "Syncing...",
-"Offline", "No genotype" in `TEXT_2`). Outlined badges (`MICRO` mono, 1 vp `TEXT_3` border, radius 4) mark scripted
+"Offline", "No genotype" in `TEXT_2`). For 5 s after "I'm fine" on the phone closed an alert or check-in here, Home
+shows one chip instead of the two: "Answered on phone ✓". Outlined badges (`MICRO` mono, 1 vp `TEXT_3` border,
+radius 4) mark scripted
 data: `DEMO DATA` on Home, `SIM` on every simulated signal. The simulator title is the same badge with a dashed border.
 
 **Pages** (horizontal swiper; dots in the gauge gap, the current one a 12 × 5 capsule; the simulator is the last page
@@ -558,13 +560,15 @@ and exists only in a `DEMO_MODE` build):
 | # | Page | Content |
 |---|---|---|
 | 1 | Home | Gauge, optional top badge (risky medicine, else `DEMO DATA`), status mark + word, `HERO` bpm, "bpm", "At rest · max 110" ("Asleep · min 45" when asleep or below the min), chips: genotype, phone. Waiting: dashed ring, "Waiting", two grey bars for the number, "Waiting for heart rate". Off the wrist: dashed ring, bars, "Not on wrist" + one line; alerts pause. |
-| 2 | Heart rate · 10 min | Caps "LAST 10 MIN", `NUMBER` average + "avg bpm", "Range 66-118 · ▲ 3 over max" (the count in `ALERT` only when > 0). 20 slots × 30 s: a grey `CHART_BAR` capsule lowest-highest with a white average tick; slots that cross the max are `ALERT`. Dashed `TEXT_3` lines at your min and max with their numbers on the right, "10 min ago / now", "Resting 62 bpm" + `EST` until measured. Empty: a dashed box "Collecting readings..." + "Your chart fills in as readings arrive." Never a trace. |
-| 3 | Vitals | List: Resting HR, HRV, Blood oxygen, Breathing, Rhythm, Stress, Recovery, State, Steps. Status on the right = mark + word (Good, Okay, Worth a look, No data). HRV, oxygen, breathing and rhythm carry `SIM`. State and Steps carry no status. Footer "Heart rate only. Never QT." |
-| 4 | Log | Caps "LOG", "How do you feel?", Fine / Dizzy / Racing (52 circles, tint fill, 1.5 vp ring in the colour), a full-width `BRAND` "Took Nadolol" pill, an outlined SOS pill (`ALERT_TINT` fill, `ALERT` border and text). A tap replaces the title with "Logged: Dizzy" for 3 s, fills the chosen circle, dims the others and shows "14:32 · sent to your phone". After the dose the pill becomes `SURFACE` "✓ Nadolol taken 08:04" in `CALM` until midnight. |
-| 5 | Settings | List: Phone ("✓ Paired" + phone and sync line; unpaired = "Pair with phone" in `BRAND`, the row opens pairing), Limits now ("45-100 bpm" + genotype · state · lowered for a medicine), Genotype ("Not set on phone" when empty), Dose reminder, Watch ID, footer "Not a medical device. Heart rate only, never QT or an ECG." |
-| 6 | Simulator (demo) | Dashed badge "SIMULATOR · DEMO BUILD" and the running line in `ELEVATED` ("▶ LQT2 startle · 0:42"; an event shows here once). Labelled chip groups, selected chip = white fill, dark text: Source, Scenario, Speed, Events (Fall, Irregular rhythm, Low HRV, Low oxygen, Take watch off / Put watch on), State, Genotype, Risky medicine, Beta-blocker, then Dose nudge now / Reminder in 10 s. Every demo control lives here and only here. |
+| 2 | Medical ID | For a bystander, one swipe from Home. Caps "MEDICAL ID" in `RISK_KNOWN_TEXT`, "Long QT syndrome" `TITLE` bold, "Type LQT2" when known, "Avoid QT-prolonging drugs", the medicine taken in the last 72 h in `ELEVATED` ("Took Clarithromycin (known QT risk)"), an `ALERT` "Call 112" capsule (an instruction: the watch never dials) and "Emergency contacts: on my phone". No names or numbers on the watch. |
+| 3 | Heart rate · 10 min | Caps "LAST 10 MIN", `NUMBER` average + "avg bpm", "Range 66-118 · ▲ 3 over max" (the count in `ALERT` only when > 0). 20 slots × 30 s: a grey `CHART_BAR` capsule lowest-highest with a white average tick; slots that cross the max are `ALERT`. Dashed `TEXT_3` lines at your min and max with their numbers on the right, "10 min ago / now", "Resting 62 bpm" + `EST` until measured. Empty: a dashed box "Collecting readings..." + "Your chart fills in as readings arrive." Never a trace. |
+| 4 | Vitals | List: Resting HR, HRV, Blood oxygen, Breathing, Rhythm, Stress, Recovery, State, Steps. Status on the right = mark + word (Good, Okay, Worth a look, No data). HRV, oxygen, breathing and rhythm carry `SIM`. State and Steps carry no status. Footer "Heart rate only. Never QT." |
+| 5 | Log | Caps "LOG", "How do you feel?", Fine / Dizzy / Racing (52 circles, tint fill, 1.5 vp ring in the colour), a full-width `BRAND` "Took Nadolol" pill, an outlined SOS pill (`ALERT_TINT` fill, `ALERT` border and text). A tap replaces the title with "Logged: Dizzy" for 3 s, fills the chosen circle, dims the others and shows "14:32 · sent to your phone". After the dose the pill becomes `SURFACE` "✓ Nadolol taken 08:04" in `CALM` until midnight. |
+| 6 | Settings | List: Phone ("✓ Paired" + phone and sync line; unpaired = "Pair with phone" in `BRAND`, the row opens pairing), Limits now ("45-100 bpm" + genotype · state · lowered for a medicine), Genotype ("Not set on phone" when empty), Dose reminder, Watch ID, footer "Not a medical device. Heart rate only, never QT or an ECG." |
+| 7 | Simulator (demo) | Dashed badge "SIMULATOR · DEMO BUILD" and the running line in `ELEVATED` ("▶ LQT2 startle · 0:42"; an event shows here once). Labelled chip groups, selected chip = white fill, dark text: Source, Scenario, Speed, Events (Fall, High heart rate, Irregular rhythm, Low HRV, Low oxygen, Take watch off / Put watch on), State, Genotype, Risky medicine, Beta-blocker, then Dose nudge now / Reminder in 10 s. Every demo control lives here and only here. |
 
-**Full-screen moments** (most urgent wins: SOS > fall/alert > check-in > dose nudge > verdict > pairing):
+**Full-screen moments** (most urgent wins: SOS > fall/alert > check-in > drug warning > dose nudge > verdict >
+pairing):
 
 - **Heart rate alerts (7-8)**: zone ring, caps title with ▲ / ▼, `HERO` number in the zone colour, "bpm · at rest",
   then the limit and why ("Limit 110 · LQT2 at rest", "Limit 100 · lowered for Clarithromycin"), I'm OK / Need help.
@@ -575,6 +579,12 @@ and exists only in a `DEMO_MODE` build):
   "No answer sends an SOS", I'm OK / Need help.
 - **Check-in (11)** after I'm OK: `BRAND` ring, "How do you feel?", the three circles, "Racing = palpitations",
   Not now. Dizzy or Racing logs it and then offers Need help next to Done.
+- **Drug warning**: a symptom logged within 24 h of a QT-risk medicine the user took (check-in or Log page). No
+  ring; the §3 Known-risk shape (30 vp), "Dizzy after Clarithromycin" in `TITLE`, "Don't take the next dose. Call your
+  doctor today.", "If you faint, call 112." in `RISK_KNOWN_TEXT`, then OK / Need help (starts the SOS countdown). It
+  replaces "Logged: Dizzy". Fixed text from a fixed rule; the phone shows the same text from the same rule.
+- **Answered on phone**: "I'm fine" on the phone closes a heart-rate or signal alert and the check-in on the watch
+  too (short vibration). Falls and the SOS countdown are never closed from the phone.
 - **SOS (12-13)**: countdown 10 s, caps "SOS", "Sending SOS", `HERO` seconds, white Cancel. Sent: `CALM` ring, check
   disc, "SOS sent", the bystander card (`ALERT_TINT`, `TITLE` bold: "I have Long QT syndrome. Call 112.", the biggest
   text on screen), Done. Saved: dashed amber ring, warning triangle, "SOS saved", "Not sent yet. Retrying when your
@@ -951,6 +961,30 @@ the browser; the page itself never sees anything until the key in the link's `#`
 - **Motion (both pages)**: content groups fade and rise 8 px once on load, 220 ms `cubic-bezier(0.23, 1, 0.32, 1)`,
   40 ms stagger, at most 5 groups; buttons scale 0.97 on press (120 ms ease-out). Nothing loops. With
   `prefers-reduced-motion`, opacity only.
+
+### 10.2b Landing page (`site/index.html`)
+
+The public page about the product. It is a web page, not an app screen, so it may use web-only effects that the app
+cannot (blur, canvas, scroll-linked motion). It must still read as Celia: same tokens, orb, risk language and voice.
+
+- **Rhythm of surfaces**: warm dark (`#120E0D`, from 2.2) for the hero, agent and closing; true black for the watch;
+  `bg` / `surface_alt` for medicines, emergency and report. Coral light (orb glow, radial washes) is the only
+  decoration. Risk colours still appear only on risk badges and emergencies.
+- **Signature**: the heartbeat field. A canvas behind the hero orb: a dot grid that a coral pulse ring sweeps through
+  on a lub-dub rhythm (~1.1 s), and that bends away from the cursor. It is a ripple, never an ECG trace.
+- **Type**: Figtree (self-hosted) as the stand-in for HarmonyOS Sans. Headlines reveal word by word (blur 10 px →
+  0, rise 0.4em, 60 ms stagger); the context statement fills word by word as you scroll.
+- **Storytelling**: the medicine check is a pinned phone (desktop) whose screen moves through Type → Scan → Photo →
+  Verdict as the steps scroll past. The agent conversation plays once when it enters view (live words, tool steps,
+  then the answer), with the orb label stating each state.
+- **Interaction**: floating nav pill that changes theme over dark sections and slides an indicator to the active
+  link; 3D tilt that follows the cursor on the hero phone and the emergency card; cursor spotlight on cards; the
+  emergency card switches through the 13 card languages from `site/card/data.js`; a CPR metronome at 110 / min.
+- **Data**: the medicine marquee lists real entries from the dataset with their risk shape. Example numbers in the
+  report are labelled `SIMULATED`.
+- **Motion**: Lenis smooth scroll + GSAP ScrollTrigger, both self-hosted (CSP is `'self'`). Entrances ease out
+  (`cubic-bezier(0.23, 1, 0.32, 1)`), 600–900 ms; loops only where they mean something (heartbeat, orb, scan line,
+  metronome). `prefers-reduced-motion`: no smooth scroll, no scrub, no loops, everything visible.
 
 ### 10.3 Still open
 

@@ -102,6 +102,11 @@ export struct CheckIn {
       return;
     }
     this.ctrl.logSymptom(kind);
+    if (this.ctrl.drugWarning.length > 0) {
+      // Within 24 h of a risky medicine: the drug warning (OK / Need help) replaces "Logged".
+      this.ctrl.closeCheckIn();
+      return;
+    }
     this.logged = kind;
   }
 

@@ -152,6 +152,8 @@ Icons: Lucide (lucide.dev, ISC licence, `lucide-static` 1.51.0), strokes outline
 `npm:jose@5` signs the Huawei Push Kit service-account JWT in the `sos` Edge Function; Twilio (SOS SMS and calls)
 and Huawei Push Kit are external services called from that function.
 Hosting: Supabase (Edge Functions, Storage) and Vercel (static viewer pages in `site/`; they hold no data).
+The landing page (`site/index.html`) self-hosts the Figtree font (SIL Open Font License 1.1, via Fontsource),
+GSAP 3.13 + ScrollTrigger (GSAP standard no-charge licence) and Lenis 1.3 (MIT) in `site/assets/vendor/`.
 Public APIs called by the `/drug-check` and `/box-identify` Edge Functions for medicines outside our data: NLM RxNav
 (name → ingredient, rxnav.nlm.nih.gov), openFDA drug labels (api.fda.gov, public domain), AEMPS CIMA (Spanish
 medicines register, cima.aemps.es), UPCitemdb (free trial API) and Open Food / Products / Beauty Facts (ODbL). Only a
