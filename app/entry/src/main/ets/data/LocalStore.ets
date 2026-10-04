@@ -17,6 +17,7 @@ import {
 } from '../model/Chat';
 import { Listener, Listeners } from '../common/Listeners';
 import { Logger } from '../common/Logger';
+import { ProfilePhoto } from './ProfilePhoto';
 
 const log: Logger = new Logger('LocalStore');
 
@@ -261,6 +262,13 @@ export class LocalStore {
     this.changes.emit('settings');
   }
 
+  /** setSetting without the change event, for caches no screen listens to (data/HistoryCache.ets). */
+  async setSettingQuiet(key: string, value: string): Promise<void> {
+    await this.ready;
+    this.settings.set(key, value);
+    await this.putKv(`setting.${key}`, value);
+  }
+
   // ── Agent chats ──────────────────────────────────────────────────────────────────────────────
   // Most recently used first.
   async listChats(): Promise<ChatSummary[]> {
@@ -374,6 +382,7 @@ export class LocalStore {
     this.settings.clear();
     this.chats = [];
     this.chatMessages.clear();
+    ProfilePhoto.remove();
     for (const table of ['kv', 'meds', 'events', 'scans', 'chat_messages', 'chats']) {
       await this.safeExec(`DELETE FROM ${table}`, []);
     }

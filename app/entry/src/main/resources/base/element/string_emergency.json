@@ -247,6 +247,78 @@
     {
       "name": "em_nfc_hint",
       "value": "Needs a %s tag or larger. Write it again after you change your card. Not yet tested with a real tag."
+    },
+    {
+      "name": "em_clin_title",
+      "value": "If unresponsive or collapsed"
+    },
+    {
+      "name": "em_clin_sub",
+      "value": "For paramedics and emergency doctors"
+    },
+    {
+      "name": "em_clin_torsades",
+      "value": "Torsades de pointes"
+    },
+    {
+      "name": "em_clin_do_not",
+      "value": "Do not use"
+    },
+    {
+      "name": "em_clin_type_notes",
+      "value": "Notes for %s"
+    },
+    {
+      "name": "em_about_title",
+      "value": "About long QT syndrome"
+    },
+    {
+      "name": "em_about_this_type",
+      "value": "This person's type"
+    },
+    {
+      "name": "em_about_general",
+      "value": "Type not known"
+    },
+    {
+      "name": "em_about_triggers",
+      "value": "Triggers"
+    },
+    {
+      "name": "em_about_ecg",
+      "value": "ECG pattern"
+    },
+    {
+      "name": "em_about_treatment",
+      "value": "Treatment"
+    },
+    {
+      "name": "em_about_precautions",
+      "value": "General precautions"
+    },
+    {
+      "name": "em_resp_critical",
+      "value": "Critical information"
+    },
+    {
+      "name": "em_resp_qt_banner",
+      "value": "Takes a QT-prolonging medicine. Check interactions before giving any drug."
+    },
+    {
+      "name": "em_resp_call_number",
+      "value": "Call %s"
+    },
+    {
+      "name": "em_card_full",
+      "value": "Open the full card"
+    },
+    {
+      "name": "em_avoid_more",
+      "value": "Show all %d drug groups"
+    },
+    {
+      "name": "em_avoid_less",
+      "value": "Show fewer"
     }
   ]
 }

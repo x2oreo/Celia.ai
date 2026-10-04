@@ -1,0 +1,172 @@
+{
+  "string": [
+    {
+      "name": "settings_group_safety",
+      "value": "SAFETY"
+    },
+    {
+      "name": "settings_group_devices",
+      "value": "DEVICES"
+    },
+    {
+      "name": "settings_group_account",
+      "value": "ACCOUNT AND PRIVACY"
+    },
+    {
+      "name": "settings_add_name",
+      "value": "Add your name"
+    },
+    {
+      "name": "settings_genotype_unset",
+      "value": "Genotype not set"
+    },
+    {
+      "name": "settings_icd_chip",
+      "value": "ICD"
+    },
+    {
+      "name": "settings_in_account",
+      "value": "Backed up to your account"
+    },
+    {
+      "name": "settings_on_phone",
+      "value": "On this phone only"
+    },
+    {
+      "name": "settings_open_profile",
+      "value": "Open your profile"
+    },
+    {
+      "name": "settings_contacts_none",
+      "value": "No one yet"
+    },
+    {
+      "name": "settings_contacts_one",
+      "value": "1 person"
+    },
+    {
+      "name": "settings_contacts_many",
+      "value": "%d people"
+    },
+    {
+      "name": "settings_contacts_alerts",
+      "value": "%s · watch alerts on"
+    },
+    {
+      "name": "settings_details_value",
+      "value": "What a paramedic sees"
+    },
+    {
+      "name": "settings_number_title",
+      "value": "Emergency number"
+    },
+    {
+      "name": "settings_number_search",
+      "value": "Search a country"
+    },
+    {
+      "name": "settings_watch_title",
+      "value": "Watch"
+    },
+    {
+      "name": "settings_watch_unpaired",
+      "value": "Not paired"
+    },
+    {
+      "name": "settings_account_out",
+      "value": "Not signed in"
+    },
+    {
+      "name": "settings_privacy_title",
+      "value": "Privacy and app lock"
+    },
+    {
+      "name": "settings_lock_on",
+      "value": "App lock on"
+    },
+    {
+      "name": "settings_lock_off",
+      "value": "App lock off"
+    },
+    {
+      "name": "settings_clear_row",
+      "value": "Clear all data on this phone"
+    },
+    {
+      "name": "settings_footer",
+      "value": "Celia is not a medical device. Always ask your doctor or pharmacist."
+    },
+    {
+      "name": "profile_title",
+      "value": "Your profile"
+    },
+    {
+      "name": "contacts_title",
+      "value": "Emergency contacts"
+    },
+    {
+      "name": "contacts_intro",
+      "value": "The people your SOS reaches. They are also listed on your emergency card."
+    },
+    {
+      "name": "contacts_empty",
+      "value": "No emergency contacts yet. Add someone who can help if your heart acts up."
+    },
+    {
+      "name": "contacts_list_label",
+      "value": "YOUR CONTACTS"
+    },
+    {
+      "name": "contacts_add",
+      "value": "Add a contact"
+    },
+    {
+      "name": "contacts_new",
+      "value": "New contact"
+    },
+    {
+      "name": "contacts_add_yes",
+      "value": "Add"
+    },
+    {
+      "name": "contacts_remove_title",
+      "value": "Remove %s?"
+    },
+    {
+      "name": "contacts_remove_body",
+      "value": "They will no longer get your SOS or be shown on your emergency card."
+    },
+    {
+      "name": "contacts_remove_yes",
+      "value": "Remove"
+    },
+    {
+      "name": "contacts_sos_signed_out",
+      "value": "Log in to let your watch alert these people when it sends an SOS."
+    },
+    {
+      "name": "photo_add",
+      "value": "Add a photo"
+    },
+    {
+      "name": "photo_change",
+      "value": "Change photo"
+    },
+    {
+      "name": "photo_remove",
+      "value": "Remove photo"
+    },
+    {
+      "name": "photo_on_card",
+      "value": "Show on emergency card"
+    },
+    {
+      "name": "photo_hint",
+      "value": "Stays on this phone. On your emergency card it helps a paramedic see the card is yours."
+    },
+    {
+      "name": "photo_failed",
+      "value": "Couldn't use that photo. Try another one."
+    }
+  ]
+}

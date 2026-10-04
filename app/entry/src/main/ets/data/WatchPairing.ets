@@ -179,8 +179,23 @@ export class WatchPairing {
     return r;
   }
 
-  /** Forget the watch and go back to the shared demo id. */
+  /**
+   * Forget the watch and go back to the shared demo id. The server ends the pairing too (pairing_unbind), so this
+   * account stops receiving the watch's readings; the readings it already has stay with it. Offline, the phone
+   * forgets the watch anyway and the server keeps the old pairing until another phone claims the watch.
+   */
   static async unpair(): Promise<void> {
+    const token: string = await LocalStore.get().getSetting(KEY_TOKEN, '');
+    const target: NetTarget | undefined = WatchSource.target();
+    if (token !== '' && target !== undefined) {
+      // POST, so the token stays out of the privacy ledger (field names only).
+      const fields: Record<string, string> = { 'p_token': token };
+      const res: NetResult = await postJson('/rest/v1/rpc/pairing_unbind', fields, Config.DRUG_CHECK_TIMEOUT_MS,
+        target);
+      if (!res.ok) {
+        log.warn(`pairing_unbind HTTP ${res.status}`);
+      }
+    }
     await LocalStore.get().setSetting(KEY_DEVICE, '');
     await LocalStore.get().setSetting(KEY_TOKEN, '');
     await LocalStore.get().setSetting(KEY_AT, '0');

@@ -20,6 +20,7 @@ import {
   Anomaly,
   anomalyProgress,
   applyAnomaly,
+  hrAnomalyBpm,
   mockVitals,
   vitalAlertFor
 } from '../vitals/MockedVitals';
@@ -151,6 +152,19 @@ export class HeartRules {
   /** True while a tapped anomaly still ramps (+ sustain + 1 s): the controller refreshes it faster then. */
   anomalyRamping(now: number, rampMs: number): boolean {
     return now - this.anomalyStartMs <= rampMs + ANOMALY_SUSTAIN_MS + 1000;
+  }
+
+  /** Simulator "High heart rate": the sensor reading, or the demo value drifting past the high limit and back. */
+  hrWithAnomaly(sensorBpm: number, limitHigh: number, now: number): number {
+    if (this.anomaly !== 'hr' || sensorBpm <= 0) {
+      return sensorBpm;
+    }
+    const elapsed = now - this.anomalyStartMs;
+    if (elapsed >= ANOMALY_TOTAL_MS) {
+      this.anomaly = 'none';
+      return sensorBpm;
+    }
+    return hrAnomalyBpm(sensorBpm, limitHigh, anomalyProgress(elapsed));
   }
 
   process(r: Reading): void {

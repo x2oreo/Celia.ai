@@ -348,6 +348,9 @@ Deploy order for B9 (migrations `20261004100000`..`100300`): `docs/handoff/B_DEP
 - Card payload versions: v1 and v2 readable forever (`READABLE_VERSIONS`). New fields go in a new version.
 - The responder view and the card honour `hiddenOnCard` everywhere they can be seen without unlocking.
 - Responder opens with no network request: it reads only `LocalStore`, the bundled dataset and `DrugChecker`.
+- Profile photo: `data/ProfilePhoto.ets`, a 512 px square JPEG in `filesDir`, not a `Profile` field, so it is never
+  synced and never part of the card payload or the web card. Shown on the phone's card unless `CardField.PHOTO` is
+  in `hiddenOnCard`; `LocalStore.clearAll` deletes it.
 
 ### Onboarding (S3: B3)
 

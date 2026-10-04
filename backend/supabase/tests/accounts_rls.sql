@@ -1,4 +1,4 @@
--- Behaviour test for the accounts migrations (20261004100000, 100100, 100200, 100300): RLS on profiles, watch data
+-- Behaviour test for the accounts migrations (20261004100000, 100100, 100200, 100300, 130000): RLS on profiles, watch data
 -- by device ↔ account binding, SOS contacts RPCs, the watch secret. Runs against a scratch Postgres with Supabase-like shims
 -- (roles anon / authenticated / service_role, auth.users, auth.uid() from request.jwt.claim.sub) after every
 -- migration has been applied. Each check raises on failure; the last line prints ALL ACCOUNTS RLS CHECKS PASSED.
@@ -157,7 +157,23 @@ select pg_temp.check((select count(*) from emergency_contacts where device_id = 
 select pg_temp.as_user('22222222-2222-2222-2222-222222222222');
 select pg_temp.check(pairing_bind('not-a-token-but-long-enough-0123456789') is null, 'wrong token binds nothing');
 select pg_temp.check(pairing_bind(:'tok2') = 'watch-one', 'token binds the watch to the signed-in user');
-select pg_temp.check((select count(*) from watch_metrics where device_id = 'watch-one') = 1, 'new owner reads the watch');
+select pg_temp.check((select count(*) from watch_metrics where device_id = 'watch-one') = 0,
+  'new owner does not see the previous owner''s readings');
+reset role;
+insert into watch_metrics (device_id, type, payload, recorded_at, source) values
+  ('watch-one', 'hr_live', '{"bpm": 75}', now(), 'watch'),
+  ('watch-one', 'hr_live', '{"bpm": 60}', now() - interval '1 day', 'watch'),
+  ('watch-one', 'hr_live', '{"bpm": 61, "user_id": "x"}', now(), 'watch');
+select pg_temp.check((select count(*) from watch_metrics where device_id = 'watch-one'
+  and user_id = '22222222-2222-2222-2222-222222222222') = 2, 'uploads are stamped with the owner of their period');
+select pg_temp.check((select count(*) from watch_metrics where device_id = 'watch-one' and user_id is null) = 1,
+  'a late upload recorded before the new owner''s period belongs to nobody');
+select pg_temp.as_user('22222222-2222-2222-2222-222222222222');
+select pg_temp.check((select count(*) from watch_metrics where device_id = 'watch-one') = 2, 'new owner reads only its own readings');
+reset role;
+select pg_temp.as_user('11111111-1111-1111-1111-111111111111');
+select pg_temp.check((select count(*) from watch_metrics where device_id = 'watch-one') = 1,
+  'the previous owner keeps its own readings and sees none of the new owner''s');
 reset role;
 select pg_temp.as_anon();
 do $$ begin
@@ -173,6 +189,10 @@ select sync_sos_contacts('watch-one', '[{"name": "Sis", "phone": "+48600000002"}
 reset role;
 delete from auth.users where id = '22222222-2222-2222-2222-222222222222';
 select pg_temp.check((select count(*) from emergency_contacts where device_id = 'watch-one') = 0, 'account delete removes contacts');
+select pg_temp.check((select count(*) from watch_metrics where user_id = '22222222-2222-2222-2222-222222222222') = 0,
+  'account delete removes its readings');
+select pg_temp.check((select count(*) from watch_metrics where user_id = '11111111-1111-1111-1111-111111111111') = 1,
+  'another account''s readings stay');
 select pg_temp.check((select user_id from watch_pairings where device_id = 'watch-one') is null, 'account delete unbinds the watch');
 
 -- The watch secret (part 2): without it the watch's public-key paths are closed for a watch that has one.
@@ -207,6 +227,30 @@ select pg_temp.check((select count(*) from watch_metrics where device_id = 'watc
 select set_config('request.headers', json_build_object('x-watch-secret', 'wrong')::text, false);
 select pg_temp.check((select count(*) from watch_context where device_id = 'watch-one') = 0, 'a wrong secret reads nothing');
 select set_config('request.headers', '{}', false);
+reset role;
+
+-- Unpairing on the server (20261004130000): the token ends the pairing; the account keeps what it owns.
+insert into auth.users (id, email) values ('33333333-3333-3333-3333-333333333333', 'three@celia.test');
+insert into watch_metrics (device_id, type, payload, recorded_at, source) values
+  ('fresh-watch', 'hr_live', '{"bpm": 66}', now() - interval '1 hour', 'watch');
+select (pairing_start('fresh-watch') ->> 'code') as code3 \gset
+select pg_temp.as_user('33333333-3333-3333-3333-333333333333');
+select (pairing_claim(:'code3') ->> 'token') as tok3 \gset
+select pg_temp.check((select count(*) from watch_metrics where device_id = 'fresh-watch') = 1,
+  'the first owner gets what the watch recorded before it was paired');
+reset role;
+select pg_temp.as_anon();
+select pg_temp.check(not pairing_unbind('not-a-token-but-long-enough-0123456789'), 'a wrong token unbinds nothing');
+select pg_temp.check(pairing_unbind(:'tok3'), 'the phone unbinds with its token');
+select pg_temp.check(pairing_device(:'tok3') is null, 'the old token no longer names the watch');
+reset role;
+select pg_temp.check((select user_id from watch_pairings where device_id = 'fresh-watch') is null, 'unbind clears the owner');
+select pg_temp.check((pairing_status('fresh-watch') ->> 'status') <> 'PAIRED', 'the watch no longer reports paired');
+insert into watch_metrics (device_id, type, payload, recorded_at, source) values
+  ('fresh-watch', 'hr_live', '{"bpm": 67}', now(), 'watch');
+select pg_temp.as_user('33333333-3333-3333-3333-333333333333');
+select pg_temp.check((select count(*) from watch_metrics where device_id = 'fresh-watch') = 1,
+  'after unbind the account keeps its readings but gets no new ones');
 reset role;
 
 select 'ALL ACCOUNTS RLS CHECKS PASSED' as result;

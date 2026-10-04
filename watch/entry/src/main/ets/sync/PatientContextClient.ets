@@ -10,6 +10,10 @@ interface ContextRow {
   risky_drug_at: string | null;
 }
 
+interface AckRow {
+  alert_ack_at: string | null;
+}
+
 export interface PatientContext {
   genotype: Genotype;
   /** Name of a QT-risk drug taken in the last 72 h, '' if none. */
@@ -34,6 +38,27 @@ export class PatientContextClient {
   constructor(client: RestClient, deviceId: string) {
     this.client = client;
     this.path = `/rest/v1/watch_context?device_id=eq.${encodeURIComponent(deviceId)}&select=*`;
+  }
+
+  /**
+   * When "I'm fine" was last answered on the phone (watch_context.alert_ack_at, epoch ms); 0 if never, undefined when
+   * the request fails. Polled every few seconds only while an alert or check-in is open.
+   */
+  async fetchAlertAck(): Promise<number | undefined> {
+    const resp = await this.client.get(this.path.replace('select=*', 'select=alert_ack_at'));
+    if (resp.status !== 200) {
+      return undefined;
+    }
+    try {
+      const rows = JSON.parse(resp.body) as AckRow[];
+      if (!Array.isArray(rows) || rows.length === 0 || rows[0].alert_ack_at === null) {
+        return 0;
+      }
+      const at = Date.parse(rows[0].alert_ack_at);
+      return isNaN(at) ? 0 : at;
+    } catch (e) {
+      return undefined;
+    }
   }
 
   /** Undefined when the request fails or no row exists (keep the previous context). */

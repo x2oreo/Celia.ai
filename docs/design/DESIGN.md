@@ -344,6 +344,7 @@ from the *Celia Icons* comparison (Phosphor, Tabler, Lucide).
 | Call · Responder · Medical card · QR · Language | `phone` · `hand-heart` · `id-card` · `qr-code` · `languages` | `ic_phone` · `ic_hand` · `ic_id_card` · `ic_qr` · `ic_languages` |
 | Hospital · Pharmacy · AED · First aid · Place · Travel | `hospital` · `store` · `zap` · `briefcase-medical` · `map-pin` · `plane` | `ic_hospital` · `ic_store` · `ic_zap` · `ic_first_aid` · `ic_location` · `ic_plane` |
 | Back · Forward · Expand · Close · Share · Copy · Delete · Lock · Notes · Box | `chevron-left` · `chevron-right` · `chevron-down` · `x` · `share-2` · `copy` · `trash-2` · `lock` · `notebook-pen` · `package` | `ic_chevron_left` · `ic_chevron_right` · `ic_chevron_down` · `ic_close` · `ic_share` · `ic_copy` · `ic_delete` · `ic_lock` · `ic_notes` · `ic_box` |
+| Person | `user` | `ic_user` |
 
 ### 6.7 States
 
@@ -474,6 +475,31 @@ simulate today (HRV, oxygen, breathing) always carry the `SIMULATED` badge and t
 
 ---
 
+### 6.11 Settings list (grouped rows)
+
+Settings is an index, never a form: every editable thing opens its own page or sheet and saves on change there.
+
+- **Group** (`components/SettingsList.ets` `SettingsGroup`): caps label above (`CapsLabel`), then one `surface`
+  card, 1 vp `border`, `radius_l`, no inner padding. Rows are separated by a 1 vp `divider` inset 64 vp from the left
+  (it starts after the icon well). 24 vp between groups.
+- **Row** (`SettingsRow`): min height 60 vp, padding 12 / 16. Icon well 36 on `surface_alt`, `radius_s`, glyph 20 in
+  `ink_2`. Title in `body` / 500 `ink`; value line under it in `caption` `ink_3`, one line, ellipsis. The value says
+  the current state in words ("Germany · 112", "2 people", "Paired with 1a2b3c4d"), never a repeat of the title.
+  Trailing chevron 18 in `ink_4`. **Danger** variant (clear data): well on `risk_known_tint`, glyph and title in
+  `risk_known`, no chevron. Whole row is one touch target with the light click effect.
+- **Avatar** (`components/ProfileAvatar.ets`): a circle showing the profile photo (cover-cropped), else the first
+  letter of the name in 800 `brand_text` (40 % of the side) on `brand_accent_soft`, else `ic_user`. Sizes: 56 in the
+  Settings card, 96 on Your profile; the emergency card uses the same component.
+- **Profile card** (top of Settings): `surface`, 1 vp `border`, `radius_l`, padding 16. Avatar 56. Name in
+  `headline` (or "Add your name" in `ink_3`), then chips: genotype ("LQT2", "Genotype not set") and "ICD" when set,
+  each `caption` / 600 on `surface_alt`, pill, 24 vp high. Under them the account line in `caption` `ink_3`
+  ("Backed up to your account" / "On this phone only"; the email itself is on the Account row). Chevron right.
+  Opens **Your profile**.
+- **Choice sheet** (emergency number): `bindSheet` on `bg`, `SheetSize.LARGE`, close button, a 48 vp search field
+  on `surface_alt`, then rows (60 vp, name in `body`, number in `body` / 600 `ink_2` on the right, selected row
+  ends in `ic_check` `brand_text`). Picking saves and closes.
+- Footer under the last group: the disclaimer in `caption` `ink_4`, centred.
+
 ## 7. Watch
 
 Round 466 × 466 px AMOLED = **233 × 233 vp** (density 2). All sizes below are vp / fp. **Design file:
@@ -489,8 +515,8 @@ superseded for the watch.
   have no fill: label `SMALL` `TEXT_2`, value `TITLE`+ bold, a 1 vp `BORDER` divider between rows, 48 vp of air at
   the end.
 - Actions are centred **pills** (height 40, radius 20): one pill alone (Got it, Done, Cancel, Not now) or two side by
-  side (I'm OK / Need help, Took it / Not yet, New code / Close). Secondary = `BUTTON` fill; primary non-risk =
-  `BRAND` fill; Need help = `ALERT` fill; SOS Cancel = white fill with dark text (the easiest target on screen).
+  side (I'm OK / Need help, OK / Need help, Took it / Not yet, New code / Close). Secondary = `BUTTON` fill; primary
+  non-risk = `BRAND` fill; Need help = `ALERT` fill; SOS Cancel = white fill with dark text (the easiest target on screen).
 - Touch targets at least 40 vp.
 - Never colour alone: every status is word + shape + colour, exactly as on the phone (§3, §6.10).
 
@@ -523,7 +549,9 @@ superseded for the watch.
 hollow circle = waiting / no data. Shapes are drawn (`StatusMark`), not font glyphs.
 
 **Badges and chips**: chips are `SURFACE` capsules, 22 high, `SMALL` bold `TEXT` ("LQT2", "Phone ✓", "Syncing...",
-"Offline", "No genotype" in `TEXT_2`). Outlined badges (`MICRO` mono, 1 vp `TEXT_3` border, radius 4) mark scripted
+"Offline", "No genotype" in `TEXT_2`). For 5 s after "I'm fine" on the phone closed an alert or check-in here, Home
+shows one chip instead of the two: "Answered on phone ✓". Outlined badges (`MICRO` mono, 1 vp `TEXT_3` border,
+radius 4) mark scripted
 data: `DEMO DATA` on Home, `SIM` on every simulated signal. The simulator title is the same badge with a dashed border.
 
 **Pages** (horizontal swiper; dots in the gauge gap, the current one a 12 × 5 capsule; the simulator is the last page
@@ -532,13 +560,15 @@ and exists only in a `DEMO_MODE` build):
 | # | Page | Content |
 |---|---|---|
 | 1 | Home | Gauge, optional top badge (risky medicine, else `DEMO DATA`), status mark + word, `HERO` bpm, "bpm", "At rest · max 110" ("Asleep · min 45" when asleep or below the min), chips: genotype, phone. Waiting: dashed ring, "Waiting", two grey bars for the number, "Waiting for heart rate". Off the wrist: dashed ring, bars, "Not on wrist" + one line; alerts pause. |
-| 2 | Heart rate · 10 min | Caps "LAST 10 MIN", `NUMBER` average + "avg bpm", "Range 66-118 · ▲ 3 over max" (the count in `ALERT` only when > 0). 20 slots × 30 s: a grey `CHART_BAR` capsule lowest-highest with a white average tick; slots that cross the max are `ALERT`. Dashed `TEXT_3` lines at your min and max with their numbers on the right, "10 min ago / now", "Resting 62 bpm" + `EST` until measured. Empty: a dashed box "Collecting readings..." + "Your chart fills in as readings arrive." Never a trace. |
-| 3 | Vitals | List: Resting HR, HRV, Blood oxygen, Breathing, Rhythm, Stress, Recovery, State, Steps. Status on the right = mark + word (Good, Okay, Worth a look, No data). HRV, oxygen, breathing and rhythm carry `SIM`. State and Steps carry no status. Footer "Heart rate only. Never QT." |
-| 4 | Log | Caps "LOG", "How do you feel?", Fine / Dizzy / Racing (52 circles, tint fill, 1.5 vp ring in the colour), a full-width `BRAND` "Took Nadolol" pill, an outlined SOS pill (`ALERT_TINT` fill, `ALERT` border and text). A tap replaces the title with "Logged: Dizzy" for 3 s, fills the chosen circle, dims the others and shows "14:32 · sent to your phone". After the dose the pill becomes `SURFACE` "✓ Nadolol taken 08:04" in `CALM` until midnight. |
-| 5 | Settings | List: Phone ("✓ Paired" + phone and sync line; unpaired = "Pair with phone" in `BRAND`, the row opens pairing), Limits now ("45-100 bpm" + genotype · state · lowered for a medicine), Genotype ("Not set on phone" when empty), Dose reminder, Watch ID, footer "Not a medical device. Heart rate only, never QT or an ECG." |
-| 6 | Simulator (demo) | Dashed badge "SIMULATOR · DEMO BUILD" and the running line in `ELEVATED` ("▶ LQT2 startle · 0:42"; an event shows here once). Labelled chip groups, selected chip = white fill, dark text: Source, Scenario, Speed, Events (Fall, Irregular rhythm, Low HRV, Low oxygen, Take watch off / Put watch on), State, Genotype, Risky medicine, Beta-blocker, then Dose nudge now / Reminder in 10 s. Every demo control lives here and only here. |
+| 2 | Medical ID | For a bystander, one swipe from Home. Caps "MEDICAL ID" in `RISK_KNOWN_TEXT`, "Long QT syndrome" `TITLE` bold, "Type LQT2" when known, "Avoid QT-prolonging drugs", the medicine taken in the last 72 h in `ELEVATED` ("Took Clarithromycin (known QT risk)"), an `ALERT` "Call 112" capsule (an instruction: the watch never dials) and "Emergency contacts: on my phone". No names or numbers on the watch. |
+| 3 | Heart rate · 10 min | Caps "LAST 10 MIN", `NUMBER` average + "avg bpm", "Range 66-118 · ▲ 3 over max" (the count in `ALERT` only when > 0). 20 slots × 30 s: a grey `CHART_BAR` capsule lowest-highest with a white average tick; slots that cross the max are `ALERT`. Dashed `TEXT_3` lines at your min and max with their numbers on the right, "10 min ago / now", "Resting 62 bpm" + `EST` until measured. Empty: a dashed box "Collecting readings..." + "Your chart fills in as readings arrive." Never a trace. |
+| 4 | Vitals | List: Resting HR, HRV, Blood oxygen, Breathing, Rhythm, Stress, Recovery, State, Steps. Status on the right = mark + word (Good, Okay, Worth a look, No data). HRV, oxygen, breathing and rhythm carry `SIM`. State and Steps carry no status. Footer "Heart rate only. Never QT." |
+| 5 | Log | Caps "LOG", "How do you feel?", Fine / Dizzy / Racing (52 circles, tint fill, 1.5 vp ring in the colour), a full-width `BRAND` "Took Nadolol" pill, an outlined SOS pill (`ALERT_TINT` fill, `ALERT` border and text). A tap replaces the title with "Logged: Dizzy" for 3 s, fills the chosen circle, dims the others and shows "14:32 · sent to your phone". After the dose the pill becomes `SURFACE` "✓ Nadolol taken 08:04" in `CALM` until midnight. |
+| 6 | Settings | List: Phone ("✓ Paired" + phone and sync line; unpaired = "Pair with phone" in `BRAND`, the row opens pairing), Limits now ("45-100 bpm" + genotype · state · lowered for a medicine), Genotype ("Not set on phone" when empty), Dose reminder, Watch ID, footer "Not a medical device. Heart rate only, never QT or an ECG." |
+| 7 | Simulator (demo) | Dashed badge "SIMULATOR · DEMO BUILD" and the running line in `ELEVATED` ("▶ LQT2 startle · 0:42"; an event shows here once). Labelled chip groups, selected chip = white fill, dark text: Source, Scenario, Speed, Events (Fall, High heart rate, Irregular rhythm, Low HRV, Low oxygen, Take watch off / Put watch on), State, Genotype, Risky medicine, Beta-blocker, then Dose nudge now / Reminder in 10 s. Every demo control lives here and only here. |
 
-**Full-screen moments** (most urgent wins: SOS > fall/alert > check-in > dose nudge > verdict > pairing):
+**Full-screen moments** (most urgent wins: SOS > fall/alert > check-in > drug warning > dose nudge > verdict >
+pairing):
 
 - **Heart rate alerts (7-8)**: zone ring, caps title with ▲ / ▼, `HERO` number in the zone colour, "bpm · at rest",
   then the limit and why ("Limit 110 · LQT2 at rest", "Limit 100 · lowered for Clarithromycin"), I'm OK / Need help.
@@ -549,6 +579,12 @@ and exists only in a `DEMO_MODE` build):
   "No answer sends an SOS", I'm OK / Need help.
 - **Check-in (11)** after I'm OK: `BRAND` ring, "How do you feel?", the three circles, "Racing = palpitations",
   Not now. Dizzy or Racing logs it and then offers Need help next to Done.
+- **Drug warning**: a symptom logged within 24 h of a QT-risk medicine the user took (check-in or Log page). No
+  ring; the §3 Known-risk shape (30 vp), "Dizzy after Clarithromycin" in `TITLE`, "Don't take the next dose. Call your
+  doctor today.", "If you faint, call 112." in `RISK_KNOWN_TEXT`, then OK / Need help (starts the SOS countdown). It
+  replaces "Logged: Dizzy". Fixed text from a fixed rule; the phone shows the same text from the same rule.
+- **Answered on phone**: "I'm fine" on the phone closes a heart-rate or signal alert and the check-in on the watch
+  too (short vibration). Falls and the SOS countdown are never closed from the phone.
 - **SOS (12-13)**: countdown 10 s, caps "SOS", "Sending SOS", `HERO` seconds, white Cancel. Sent: `CALM` ring, check
   disc, "SOS sent", the bystander card (`ALERT_TINT`, `TITLE` bold: "I have Long QT syndrome. Call 112.", the biggest
   text on screen), Done. Saved: dashed amber ring, warning triangle, "SOS saved", "Not sent yet. Retrying when your
@@ -843,7 +879,26 @@ from deterministic payloads only.
   first (system dialog: "Log X as taken now?", Cancel / Log it). After logging: check icon + "Logged as taken at
   HH:MM" in `body` medium and "Your watch is watching more closely until …" in `ink-3`; if the watch couldn't be
   reached, the 6.7 error strip with `Send to watch`. Never a risk colour on this card: logging is not a verdict.
-- **Pair watch** (Settings → Pair watch): when paired, a `surface` card with a check icon, "Paired with watch
+- **Settings** (pushed from the round settings button): the 6.11 list, in this order. Profile card. SAFETY:
+  Emergency contacts (`ic_phone`, "2 people · watch alerts on" / "No one yet"), Emergency details (`ic_id_card`,
+  "What a paramedic sees"), Emergency number (`ic_location`, "Germany · 112", opens the choice sheet), Test SOS
+  (`ic_bell`, "Practise the SOS flow - marked as TEST"). DEVICES: Watch (`ic_watch`, paired / not paired line).
+  ACCOUNT AND PRIVACY: Account (`ic_user`, email / "Not signed in"), Privacy and app lock (`ic_lock`, "App lock on"
+  / "App lock off"). Then a lone danger group with "Clear all data on this phone" (confirm dialog), and the footer.
+- **Your profile** (Settings → profile card): first the photo block, centred: avatar 96, secondary `Add a photo`
+  (`ic_camera`; `Change photo` once set) and quiet `Remove photo`, a `surface` row "Show on emergency card" with a
+  `brand_accent` switch (only with a photo; on by default, stored as `CardField.PHOTO` in `hiddenOnCard`), and the
+  caption "Stays on this phone…" in `ink_3`. The system photo picker needs no permission; the photo is centre-cropped
+  to a 512 px square. Then the onboarding "About you" fields without the step heading (name,
+  date of birth, genotype chips + help, ICD switch + model). Saved on change (debounced 400 ms, flushed on leave),
+  caption "Saved on this phone". No Save button.
+- **Emergency contacts** (Settings → Emergency contacts): intro in `body-sm` `ink_2`. One 6.11 group of contacts:
+  avatar circle 36 (`surface_alt`, initial in `ink_2`), name (+ relation) in `body` / 500, phone · email in
+  `caption` `ink_3`, a 48 vp delete target (`ic_delete` 20, `ink_4`) that asks first. Empty: the 6.7 dashed card.
+  Then SOS ALERTS FROM YOUR WATCH: the consent card (moved here from Account; signed out = one `body-sm` line and a
+  secondary `Log in`). Pinned primary `Add a contact` opens a sheet (name, phone, relation, e-mail optional; primary
+  `Add`, inactive until name and a valid phone).
+- **Pair watch** (Settings → Watch): when paired, a `surface` card with a check icon, "Paired with watch
   {first 8 chars of the id}" (`body` bold), "Since …" in `ink-3` and a secondary `Unpair`. Below it, always, the code
   card: one `body` intro line, two `body-sm` steps in `ink-3`, a 56 vp `surface-alt` input centred in `title-2`, the
   error strip from 6.7 when a code fails (neutral offline strip when there is no backend), and a primary `Pair`
@@ -906,6 +961,30 @@ the browser; the page itself never sees anything until the key in the link's `#`
 - **Motion (both pages)**: content groups fade and rise 8 px once on load, 220 ms `cubic-bezier(0.23, 1, 0.32, 1)`,
   40 ms stagger, at most 5 groups; buttons scale 0.97 on press (120 ms ease-out). Nothing loops. With
   `prefers-reduced-motion`, opacity only.
+
+### 10.2b Landing page (`site/index.html`)
+
+The public page about the product. It is a web page, not an app screen, so it may use web-only effects that the app
+cannot (blur, canvas, scroll-linked motion). It must still read as Celia: same tokens, orb, risk language and voice.
+
+- **Rhythm of surfaces**: warm dark (`#120E0D`, from 2.2) for the hero, agent and closing; true black for the watch;
+  `bg` / `surface_alt` for medicines, emergency and report. Coral light (orb glow, radial washes) is the only
+  decoration. Risk colours still appear only on risk badges and emergencies.
+- **Signature**: the heartbeat field. A canvas behind the hero orb: a dot grid that a coral pulse ring sweeps through
+  on a lub-dub rhythm (~1.1 s), and that bends away from the cursor. It is a ripple, never an ECG trace.
+- **Type**: Figtree (self-hosted) as the stand-in for HarmonyOS Sans. Headlines reveal word by word (blur 10 px →
+  0, rise 0.4em, 60 ms stagger); the context statement fills word by word as you scroll.
+- **Storytelling**: the medicine check is a pinned phone (desktop) whose screen moves through Type → Scan → Photo →
+  Verdict as the steps scroll past. The agent conversation plays once when it enters view (live words, tool steps,
+  then the answer), with the orb label stating each state.
+- **Interaction**: floating nav pill that changes theme over dark sections and slides an indicator to the active
+  link; 3D tilt that follows the cursor on the hero phone and the emergency card; cursor spotlight on cards; the
+  emergency card switches through the 13 card languages from `site/card/data.js`; a CPR metronome at 110 / min.
+- **Data**: the medicine marquee lists real entries from the dataset with their risk shape. Example numbers in the
+  report are labelled `SIMULATED`.
+- **Motion**: Lenis smooth scroll + GSAP ScrollTrigger, both self-hosted (CSP is `'self'`). Entrances ease out
+  (`cubic-bezier(0.23, 1, 0.32, 1)`), 600–900 ms; loops only where they mean something (heartbeat, orb, scan line,
+  metronome). `prefers-reduced-motion`: no smooth scroll, no scrub, no loops, everything visible.
 
 ### 10.3 Still open
 
@@ -978,13 +1057,41 @@ label in `label` `ink_3` with a "Show on card" switch (`brand_accent`) on the ri
 `radius_s`; single-choice chips 44 vp pill (selected = `ink` fill). Invalid date: one `risk_possible_text` caption
 (no red). Extra fields as label/value rows with a 48 vp delete target. Saved on change; caption "Saved on this phone".
 
-#### For first responders (route `responder`)
-Always light (`card_fixed_*`), no title bar. Header band `card_fixed_alert`: back 48 vp, card title in `label`,
-name `title-1`, condition `title-3`, chips (age, genotype) on `card_fixed_bg`, ICD line. Then on `card_fixed_bg`:
-"Do not give" panel (`card_fixed_alert_tint`, 6 vp alert rule on the left, `title-2` heading in alert colour, groups
-in `body` bold + `subtitle` names); "Use instead" groups; numbered care notes (28 vp ink circles); medicines with
-the compact risk badge (shape + word) and a tinted "Recent QT-risk medicine" box; details as caps label + `subtitle`
-value; contacts and cardiologist as 52 vp outlined call rows. Footer: source and "works offline" in `micro`.
+#### For first responders (route `responder`): the full emergency card (v3)
+One card, read in layers, so a stranger gets the point in 10 seconds and a clinician finds detail below. Always light
+(`card_fixed_*`), no title bar. Everything is fixed data (`emergency/LqtsFacts.ets`, `emergency/Responder.ets`, the
+QT dataset); no LLM text. Treatment lines name drugs only, never doses. Plain design-system shapes only: cards with a
+1 vp border, caps labels, the risk shape + word. No coloured header bands and no side rules.
+Parts live in `components/EmergencyCardParts.ets`.
+
+1. **Glance.** Back chevron + caps "MEDICAL ALERT" in `card_fixed_alert`. Identity row: 48 vp initial avatar
+   (`card_fixed_alert_tint` circle, initial in `title-3` 800 `card_fixed_alert`; heart icon without a name; the
+   profile photo via `ProfileAvatar` (6.11) when it exists and "Show on card" is on, phone only), name in
+   `title-2` 800, condition in `body-sm` `card_fixed_ink_2`. Chips (age, genotype, ICD): height 28, 1 vp
+   `card_fixed_border`, radius 14. A 56 vp `danger` "Call {112}" button. Then **Do not give** as the Known-risk
+   notice: `card_fixed_alert_tint`, 1 vp `card_fixed_alert_border` (`#F4B5AF`), radius 16, Known-risk shape +
+   heading; the first 4 drug groups (antiemetics, stimulants, macrolides, fluoroquinolones), "Show all N drug
+   groups" for the rest.
+2. **Critical.** Caps-labelled sections: emergency contacts (cardiologist first) as 52 vp outlined call rows;
+   medicines with the compact risk badge and, when one is Known risk or avoid-in-congenital, a notice line "Takes a
+   QT-prolonging medicine" (same notice style); the "Recent QT-risk medicine" box when inside 72 h; details.
+3. **For clinicians.** One `card_fixed_bg` card, 1 vp `card_fixed_border`, radius 20, padding 16. Caps "IF
+   UNRESPONSIVE OR COLLAPSED" in alert colour; numbered steps (24 vp ink circles, step in `body` bold, detail in
+   `body-sm` `card_fixed_ink_2`); then, split by dividers, caps sections Torsades de pointes (A, B, C in `ink_3`),
+   Do not use (✕ in alert colour) and Notes for {type}. "Use instead" groups follow under their caps label.
+4. **About long QT.** A plain card folded by default (48 vp header row, chevron). Inside: overview paragraphs, then
+   "This person's type": name in `headline`, gene and share in `body-sm` `ink_3`, Triggers (bullets), ECG pattern,
+   Treatment. Unknown genotype shows "General precautions".
+
+Footer: source and "works offline" in `micro`. Card text follows the card language for the glance layer (13
+languages); layers 3 and 4 stay English until a checked translation exists.
+
+#### Emergency tab card
+The unfolded card on the Emergency tab is the glance layer of the same design: a `card_fixed_bg` card, 1.5 vp
+`card_fixed_alert_border`, radius 20. Heart icon + caps title in alert colour, the identity row and chips, the
+translated "Do NOT give" sentence in the Known-risk notice (shape + sentence, no separate heading, so it stays in
+the card language), treatment line, medicines with the compact risk badge, contacts and notes, then "Open the full
+card ›" to `responder`.
 
 ### Onboarding (S3, B3)
 

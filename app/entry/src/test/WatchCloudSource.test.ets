@@ -7,6 +7,12 @@ function row(type: string, payload: Record<string, Object>, source: string): Met
   return r;
 }
 
+function timed(id: number, type: string, bpm: number, at: string): MetricRow {
+  const p: Record<string, Object> = { 'bpm': bpm };
+  const r: MetricRow = { id: id, type: type, payload: p, recorded_at: at, source: 'watch' };
+  return r;
+}
+
 export default function watchCloudSourceTest() {
   describe('WatchCloudSource', () => {
     it('hr_live from the watch sensor becomes a WATCH sample with extras', 0, () => {
@@ -82,6 +88,22 @@ export default function watchCloudSourceTest() {
       expect(l?.message.includes('below your watch limit of 40')).assertTrue();
       const odd: Record<string, Object> = { 'bpm': 100, 'limitBpm': 90, 'direction': 'sideways' };
       expect(WatchCloudSource.toAlert(row('hr_alert', odd, 'watch')) === undefined).assertTrue();
+    });
+    it('backfill turns recent hr_live rows into samples, oldest first, skipping anything else', 0, () => {
+      const rows: MetricRow[] = [
+        timed(3, 'hr_live', 72, '2026-10-03T12:00:04.000Z'),
+        timed(2, 'hr_live', 0, '2026-10-03T12:00:02.000Z'),
+        timed(1, 'hr_live', 70, '2026-10-03T12:00:00.000Z'),
+        timed(0, 'vitals', 69, '2026-10-03T11:59:58.000Z')
+      ];
+      const body: string = JSON.stringify(rows);
+      const s: VitalsSample[] = WatchCloudSource.backfill(body, 40, 60, false);
+      expect(s.length).assertEqual(2);
+      expect(s[0].hr).assertEqual(70);
+      expect(s[1].hr).assertEqual(72);
+      expect(s[1].restingHr).assertEqual(60);
+      expect(WatchCloudSource.backfill('nope', undefined, undefined, undefined).length).assertEqual(0);
+      expect(WatchCloudSource.backfill('{}', undefined, undefined, undefined).length).assertEqual(0);
     });
   });
 }

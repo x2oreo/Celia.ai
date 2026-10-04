@@ -13,6 +13,9 @@ const log: Logger = new Logger('WatchCloud');
 
 const POLL_MS: number = 2000;
 const BATCH: number = 200;
+// At start the live chart is filled with the watch's last few minutes instead of starting empty.
+const BACKFILL_MS: number = 5 * 60 * 1000;
+const BACKFILL_ROWS: number = 90;
 // The phone's AlarmRules treat > 60 steps in the last minute as exertion; the watch reports activity directly.
 const ACTIVE_STEPS: number = 120;
 
@@ -34,6 +37,8 @@ export interface WatchCloudCallbacks {
   onAlert: (a: VitalsAlert) => void;
   /** A "How do you feel?" answer given on the watch: 'fine', 'dizziness', 'palpitations', 'fainting' or 'other'. */
   onAnswer: (kind: string) => void;
+  /** The watch's recent heart-rate readings at start, oldest first, for history only (no alerts, no listeners). */
+  onBackfill: (samples: VitalsSample[]) => void;
 }
 
 const ANSWER_KINDS: string[] = ['fine', 'dizziness', 'palpitations', 'fainting', 'other'];
@@ -131,6 +136,31 @@ export class WatchCloudSource {
     return undefined;
   }
 
+  /** Backfill rows (newest first, as fetched) → samples oldest first. Rows that aren't a live reading are skipped. */
+  static backfill(body: string, hrv: number | undefined, restingHr: number | undefined,
+    irregular: boolean | undefined): VitalsSample[] {
+    let rows: MetricRow[] = [];
+    try {
+      rows = JSON.parse(body) as MetricRow[];
+    } catch (e) {
+      return [];
+    }
+    if (!Array.isArray(rows)) {
+      return [];
+    }
+    const out: VitalsSample[] = [];
+    for (const r of rows) {
+      if (typeof r.id !== 'number' || r.payload === null || typeof r.payload !== 'object') {
+        continue;
+      }
+      const s: VitalsSample | undefined = WatchCloudSource.toSample(r, hrv, restingHr, irregular);
+      if (s !== undefined && !isNaN(s.ts)) {
+        out.push(s);
+      }
+    }
+    return out.sort((a: VitalsSample, b: VitalsSample) => a.ts - b.ts);
+  }
+
   /** The watch's check-in answer in a `symptom` row, or undefined for any other row. */
   static answerOf(r: MetricRow): string | undefined {
     if (r.type !== 'symptom') {
@@ -201,7 +231,8 @@ export class WatchCloudSource {
     }
   }
 
-  // Start after the newest existing row (no replay of old alerts), but pick up the latest extras.
+  // Start after the newest existing row (no replay of old alerts), but pick up the latest extras and the last few
+  // minutes of readings for the chart.
   private async bootstrap(target: NetTarget): Promise<void> {
     const dev: string = Config.WATCH_DEVICE_ID;
     const res: NetResult = await getJson(`/rest/v1/watch_metrics?device_id=eq.${dev}&select=id&order=id.desc&limit=1`,
@@ -221,6 +252,17 @@ export class WatchCloudSource {
       '&select=id,type,payload,recorded_at,source', Config.DRUG_CHECK_TIMEOUT_MS, false, target);
     if (v.ok) {
       this.apply(v.body, false);
+    }
+    // Rows up to lastId only: anything newer comes through fetchNew, so nothing is shown twice.
+    const since: string = new Date(Date.now() - BACKFILL_MS).toISOString();
+    const b: NetResult = await getJson(`/rest/v1/watch_metrics?device_id=eq.${dev}&type=eq.hr_live` +
+      `&id=lte.${this.lastId}&recorded_at=gte.${since}&select=id,type,payload,recorded_at,source` +
+      `&order=id.desc&limit=${BACKFILL_ROWS}`, Config.DRUG_CHECK_TIMEOUT_MS, false, target);
+    if (b.ok && this.cb !== undefined) {
+      const samples: VitalsSample[] = WatchCloudSource.backfill(b.body, this.hrv, this.restingHr, this.irregular);
+      if (samples.length > 0) {
+        this.cb.onBackfill(samples);
+      }
     }
   }
 

@@ -24,6 +24,7 @@ export class VitalsService {
   private samples: Listeners<VitalsSample> = new Listeners<VitalsSample>();
   private alerts: Listeners<VitalsAlert> = new Listeners<VitalsAlert>();
   private answers: Listeners<string> = new Listeners<string>();
+  private silenceReported: boolean = false;
   private source: VitalsSourceKind | undefined = undefined;
   private rules: AlarmRules = new AlarmRules('UNKNOWN');
   private timer: number = -1;
@@ -67,7 +68,8 @@ export class VitalsService {
       w.start({
         onSample: (s: VitalsSample) => this.ingest(s),
         onAlert: (a: VitalsAlert) => this.fire(a),
-        onAnswer: (kind: string) => this.answers.emit(kind)
+        onAnswer: (kind: string) => this.answers.emit(kind),
+        onBackfill: (samples: VitalsSample[]) => this.seed(samples)
       });
       this.watch = w;
       // Same silence check as the simulated source: no watch data for a while → WATCH_DISCONNECTED.
@@ -164,10 +166,13 @@ export class VitalsService {
     this.ingest(s);
   }
 
+  // One "no data from the watch" alert per gap: it fires again only after samples came back in between
+  // (it used to repeat every minute while the watch app was paused).
   private checkSilence(now: number): void {
-    if (now - this.lastSampleTs > SILENCE_MS) {
+    if (now - this.lastSampleTs > SILENCE_MS && !this.silenceReported) {
       const a: VitalsAlert | undefined = this.rules.disconnected(now);
       if (a !== undefined) {
+        this.silenceReported = true;
         this.fire(a);
       }
     }
@@ -176,6 +181,7 @@ export class VitalsService {
   // One sample from any source: history for the chart, listeners, per-sample alarm rules.
   private ingest(s: VitalsSample): void {
     this.lastSampleTs = Date.now();
+    this.silenceReported = false;
     this.recent.push(s);
     if (this.recent.length > KEEP_SAMPLES) {
       this.recent.shift();
@@ -190,6 +196,14 @@ export class VitalsService {
     if (a !== undefined) {
       this.fire(a);
     }
+  }
+
+  // Readings the watch sent before the app started: history only, so screens open with data instead of empty.
+  private seed(samples: VitalsSample[]): void {
+    const live: VitalsSample[] = this.recent.slice();
+    const oldest: number = live.length > 0 ? live[0].ts : Number.MAX_SAFE_INTEGER;
+    this.recent = samples.filter((s: VitalsSample) => s.ts < oldest).concat(live).slice(-KEEP_SAMPLES);
+    log.info(`seeded ${samples.length} recent watch readings`);
   }
 
   // Alerts from slower checks outside the per-sample rules (e.g. BetaBlockerWatch's multi-day trend).

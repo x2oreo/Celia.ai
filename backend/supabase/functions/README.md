@@ -48,6 +48,8 @@ supabase functions deploy agent transcribe speak vision-extract med-info doctor-
 
 Type-check without the Supabase CLI: `cd supabase/functions && npx deno@2 check */index.ts`.
 Unit tests (pure logic, no network): `npx -y deno test --no-lock backend/supabase/functions/` from the repo root.
+Live check of the deployed project (every function, REST, share round trip; about $0.05):
+`CELIA_KEY=<publishable key> npx -y deno@2 run -A --no-lock backend/eval/remote-smoke.ts`.
 
 Agent tools added on 3 Oct: `log_symptom` (T27; prompt rule 7b, `PROMPT_VERSION` 2026-10-03.4). The device executes it
 (`agent/tools/SymptomTools.ets`); redeploy `agent` and `realtime-session` so the model sees it.

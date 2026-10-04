@@ -155,6 +155,9 @@ export struct SimulatePage {
           SimChip({ label: 'Fall', onTap: () => {
             this.ctrl.simulateFall();
           } })
+          SimChip({ label: 'High heart rate', on: this.ctrl.anomaly === 'hr', onTap: () => {
+            this.ctrl.triggerAnomaly('hr');
+          } })
           SimChip({ label: 'Irregular rhythm', on: this.ctrl.anomaly === 'rhythm', onTap: () => {
             this.ctrl.triggerAnomaly('rhythm');
           } })

@@ -1,5 +1,5 @@
 import { describe, it, expect } from '@ohos/hypium';
-import { DRUG_WINDOW_MS, drugBadgeText, shortDrugName, timeLeft } from '../main/ets/vitals/DrugBadge';
+import { DRUG_WINDOW_MS, drugBadgeText, shortDrugName, symptomAfterDrugTitle, timeLeft } from '../main/ets/vitals/DrugBadge';
 
 const H = 3600 * 1000;
 const NOW = 1791050000000;
@@ -28,6 +28,19 @@ export default function drugBadgeTest() {
 
     it('unknownTimeStillNamesTheDrug', 0, () => {
       expect(drugBadgeText('ondansetron', 0, NOW)).assertEqual('Ondansetron');
+    });
+
+    it('symptomWithin24hAfterTheDrugWarns', 0, () => {
+      expect(symptomAfterDrugTitle('dizziness', 'clarithromycin', NOW - 3 * H, NOW)).assertEqual('Dizzy after Clarithromycin');
+      expect(symptomAfterDrugTitle('palpitations', 'clarithromycin', NOW - 23 * H, NOW))
+        .assertEqual('Racing heart after Clarithromycin');
+    });
+
+    it('noWarningForFineOldOrMissingDrug', 0, () => {
+      expect(symptomAfterDrugTitle('fine', 'clarithromycin', NOW - H, NOW)).assertEqual('');
+      expect(symptomAfterDrugTitle('dizziness', 'clarithromycin', NOW - 25 * H, NOW)).assertEqual('');
+      expect(symptomAfterDrugTitle('dizziness', '', NOW - H, NOW)).assertEqual('');
+      expect(symptomAfterDrugTitle('dizziness', 'clarithromycin', 0, NOW)).assertEqual('');
     });
   });
 }

@@ -20,6 +20,7 @@ import { SosController } from '../emergency/SosController';
 import { ReminderService } from '../reminders/ReminderService';
 import { HeartOkRequest } from '../common/HeartOkRequest';
 import { FeelingPrefill } from '../diary/FeelingPrefill';
+import { ProfilePhoto } from '../data/ProfilePhoto';
 
 const log: Logger = new Logger('EntryAbility');
 
@@ -38,6 +39,7 @@ export default class EntryAbility extends UIAbility {
     });
     initNotify(this.context);
     GtinCatalog.get().init(this.context);
+    ProfilePhoto.init(this.context);
     DemoVoice.init(this.context);
     // Agent listens for vitals alerts from app start (proactive check-ins).
     AgentCore.get().start();

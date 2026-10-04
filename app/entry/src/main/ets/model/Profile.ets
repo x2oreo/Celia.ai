@@ -58,4 +58,5 @@ export class CardField {
   static readonly CONTACTS: string = 'contacts';
   static readonly NOTES: string = 'notes';
   static readonly EXTRA: string = 'extra';
+  static readonly PHOTO: string = 'photo';      // profile photo (data/ProfilePhoto.ets), phone card only
 }
