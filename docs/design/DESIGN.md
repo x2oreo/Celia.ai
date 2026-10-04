@@ -487,11 +487,14 @@ Settings is an index, never a form: every editable thing opens its own page or s
   the current state in words ("Germany · 112", "2 people", "Paired with 1a2b3c4d"), never a repeat of the title.
   Trailing chevron 18 in `ink_4`. **Danger** variant (clear data): well on `risk_known_tint`, glyph and title in
   `risk_known`, no chevron. Whole row is one touch target with the light click effect.
-- **Profile card** (top of Settings): `surface`, 1 vp `border`, `radius_l`, padding 16. Avatar circle 56 on
-  `brand_accent_soft` with the first letter of the name in `title-3` / 800 `brand_text` (no name: `ic_user` in
-  `brand_text`). Name in `headline` (or "Add your name" in `ink_3`), then chips: genotype ("LQT2", "Genotype not
-  set") and "ICD" when set, each `caption` / 600 on `surface_alt`, pill, 24 vp high. Under them the account line in
-  `caption` `ink_3` ("Backed up to your account" / "On this phone only"; the email itself is on the Account row). Chevron right. Opens **Your profile**.
+- **Avatar** (`components/ProfileAvatar.ets`): a circle showing the profile photo (cover-cropped), else the first
+  letter of the name in 800 `brand_text` (40 % of the side) on `brand_accent_soft`, else `ic_user`. Sizes: 56 in the
+  Settings card, 96 on Your profile; the emergency card uses the same component.
+- **Profile card** (top of Settings): `surface`, 1 vp `border`, `radius_l`, padding 16. Avatar 56. Name in
+  `headline` (or "Add your name" in `ink_3`), then chips: genotype ("LQT2", "Genotype not set") and "ICD" when set,
+  each `caption` / 600 on `surface_alt`, pill, 24 vp high. Under them the account line in `caption` `ink_3`
+  ("Backed up to your account" / "On this phone only"; the email itself is on the Account row). Chevron right.
+  Opens **Your profile**.
 - **Choice sheet** (emergency number): `bindSheet` on `bg`, `SheetSize.LARGE`, close button, a 48 vp search field
   on `surface_alt`, then rows (60 vp, name in `body`, number in `body` / 600 `ink_2` on the right, selected row
   ends in `ic_check` `brand_text`). Picking saves and closes.
@@ -872,7 +875,11 @@ from deterministic payloads only.
   (`ic_bell`, "Practise the SOS flow - marked as TEST"). DEVICES: Watch (`ic_watch`, paired / not paired line).
   ACCOUNT AND PRIVACY: Account (`ic_user`, email / "Not signed in"), Privacy and app lock (`ic_lock`, "App lock on"
   / "App lock off"). Then a lone danger group with "Clear all data on this phone" (confirm dialog), and the footer.
-- **Your profile** (Settings → profile card): the onboarding "About you" fields without the step heading (name,
+- **Your profile** (Settings → profile card): first the photo block, centred: avatar 96, secondary `Add a photo`
+  (`ic_camera`; `Change photo` once set) and quiet `Remove photo`, a `surface` row "Show on emergency card" with a
+  `brand_accent` switch (only with a photo; on by default, stored as `CardField.PHOTO` in `hiddenOnCard`), and the
+  caption "Stays on this phone…" in `ink_3`. The system photo picker needs no permission; the photo is centre-cropped
+  to a 512 px square. Then the onboarding "About you" fields without the step heading (name,
   date of birth, genotype chips + help, ICD switch + model). Saved on change (debounced 400 ms, flushed on leave),
   caption "Saved on this phone". No Save button.
 - **Emergency contacts** (Settings → Emergency contacts): intro in `body-sm` `ink_2`. One 6.11 group of contacts:
