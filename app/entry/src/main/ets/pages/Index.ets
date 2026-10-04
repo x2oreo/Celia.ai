@@ -47,6 +47,8 @@ import { AccountPage } from './AccountPage';
 import { EmergencyProfilePage } from './EmergencyProfilePage';
 import { ResponderPage } from './ResponderPage';
 import { FeelingPage } from './FeelingPage';
+import { HeartProfilePage } from './HeartProfilePage';
+import { ContactsPage } from './ContactsPage';
 import { Session, launchRoute } from '../account/Session';
 import { ProfileSync } from '../account/ProfileSync';
 import { SosContacts } from '../account/SosContacts';
@@ -315,6 +317,10 @@ struct Index {
       ResponderPage()
     } else if (name === Routes.FEELING) {
       FeelingPage()
+    } else if (name === Routes.HEART_PROFILE) {
+      HeartProfilePage()
+    } else if (name === Routes.CONTACTS) {
+      ContactsPage()
     }
   }
 

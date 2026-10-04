@@ -30,6 +30,9 @@ export class Routes {
   static readonly EMERGENCY_PROFILE: string = 'emergencyProfile'; // edit the emergency details (B4)
   static readonly RESPONDER: string = 'responder';                // first-responder view (B5)
   static readonly FEELING: string = 'feeling';                    // "How are you feeling?" diary entry (B15)
+  // Settings sub-pages.
+  static readonly HEART_PROFILE: string = 'heartProfile';         // Settings → Your profile
+  static readonly CONTACTS: string = 'contacts';                  // Settings → Emergency contacts
 }
 
 export type AuthMode = 'SIGN_UP' | 'LOG_IN';

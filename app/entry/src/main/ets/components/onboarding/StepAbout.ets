@@ -1,4 +1,5 @@
-// Onboarding step 3 "About you": name, date of birth, genotype, ICD and its model.
+// Onboarding step 3 "About you": name, date of birth, genotype, ICD and its model. Also hosted by Settings →
+// Your profile (pages/HeartProfilePage.ets) without the step heading.
 // Never saves: every edit goes back to the page's single draft through onChange.
 // Genotype wording: lqts-domain skill (options LQT1 / LQT2 / LQT3 / unknown; unknown → most conservative advice).
 
@@ -9,6 +10,7 @@ import { OnbHeading, OnbInput } from './OnbParts';
 @ComponentV2
 export struct StepAbout {
   @Param @Require profile: Profile;
+  @Param heading: boolean = true;   // false on Settings → Your profile, which has its own title
   @Event onChange: (profile: Profile) => void = (profile: Profile) => {
   };
 
@@ -42,7 +44,9 @@ export struct StepAbout {
 
   build() {
     Column({ space: 16 }) {
-      OnbHeading({ heading: $r('app.string.onb_about_title'), subtitle: $r('app.string.onb_about_subtitle') })
+      if (this.heading) {
+        OnbHeading({ heading: $r('app.string.onb_about_title'), subtitle: $r('app.string.onb_about_subtitle') })
+      }
 
       OnbInput({
         value: this.profile.name ?? '',

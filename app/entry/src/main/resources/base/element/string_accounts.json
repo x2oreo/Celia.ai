@@ -254,7 +254,7 @@
     },
     {
       "name": "acc_sos_needs_watch",
-      "value": "Pair a watch first (Settings → Pair watch)."
+      "value": "Pair a watch first (Settings → Watch)."
     },
     {
       "name": "acc_sos_ready",
@@ -262,7 +262,7 @@
     },
     {
       "name": "acc_sos_none",
-      "value": "No contacts on the server yet. Add emergency contacts in Settings."
+      "value": "No contacts on the server yet. Add someone above."
     },
     {
       "name": "acc_sos_skipped",
