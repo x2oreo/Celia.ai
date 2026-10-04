@@ -1262,3 +1262,30 @@ The tap-to-talk fallback is also untested end to end.
   anon: 56 demo days plus today's live row, on/off works, other devices refused without the secret.
 - **Not validated:** the charts on the emulator (another session's watch alarm scenario held the shared phone
   emulator); the migration is not applied to the live project yet.
+
+### 2026-10-04 - Georgi + Claude Code: home-screen widgets v2 (branch `georgi/b-widgets`, from `kaloyan/agent-home`)
+
+- **Asked:** redesign the home-screen widgets and add four or five genuinely useful ones; plan first, then build, in
+  an isolated git worktree so parallel agent sessions are not disturbed.
+- **What the AI did:** wrote the spec into DESIGN.md (§11 "Home-screen widgets v2") and the plan into
+  `docs/workflow/b-widgets.md` before any code. Three new Form Kit cards: **The agent** (2×2/2×4, default: the
+  HomeBrief sentence + Talk / Scan / How I feel), **Next dose** (2×2: dose to take, today's dots, one-tap Taken) and
+  **Resting heart rate** (2×2/2×4: 7-day average, change, dot plot on the usual range, status pill). Redesigned
+  **Can I take this?** (2×4 adds the last three checks with risk shape + word) and **How are you feeling?** (2×4:
+  one-tap moods that open the diary with the mood picked; saving stays the user's tap). Medical alert and Medical ID
+  unchanged. A pure `WidgetModel` builds one flat snapshot; `WidgetDose` / `WidgetSnapshot` let the form extension
+  move the dose card and the agent's dose sentence on by the clock every 30 min while the app is closed.
+- **Safety:** nothing on a card comes from a model. Risk words/shapes come from the logged deterministic verdicts;
+  heart status from the fixed `Metrics` rules (never red); dose styling stays neutral; "Taken" logs only a due or
+  missed dose (same rule as the notification button).
+- **Bug found on the emulator:** the app and the form extension run in separate processes and Preferences caches per
+  process, so pushes never reached placed cards. Fixed with one writer per file (snapshot: app; registry: extension)
+  and a cache drop before cross-process reads.
+- **Validated:** 404 phone tests (10 new in `Widgets.test.ets`); HAP builds; on the phone emulator every card renders
+  with the demo profile's data, Talk opens the agent stage, the dose card's button opens Reminders, adding and
+  deleting a reminder updates the placed dose card live, a mood chip opens the diary with that mood picked
+  (`docs/screenshots/b/widgets-*.jpeg`). Fixed from screenshots: heart 2×2 badge overflow, clipped "latest reading"
+  line, missing orb on the 2×2 check card.
+- **Not validated:** the DUE / MISSED dose card and its Taken tap on the emulator (a reminder created after its time
+  starts tomorrow, so a due dose cannot be set up from the UI; covered by unit tests); the 30-minute `onUpdateForm`
+  tick; the recent-checks rows with real checks (the demo profile has none); dark mode.
