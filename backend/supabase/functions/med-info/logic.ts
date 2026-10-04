@@ -18,7 +18,7 @@ export const BANNED =
   /\b(qtc?\b|torsade|arrhythmi|heart rhythm|safe for (your|the) heart|stop taking|start taking|\d+([.,]\d+)?\s?(mg|mcg|µg|ml)\b)/i;
 
 export function clip(s: string, max: number): string {
-  const t = s.trim().replace(/\s+/g, ' ');
+  const t = s.trim().replace(/\s+/g, ' ').replace(/\u2014/g, '-'); // no em dashes in our copy
   return t.length > max ? `${t.slice(0, max - 1)}…` : t;
 }
 

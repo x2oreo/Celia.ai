@@ -6,7 +6,7 @@
 
 import { VerdictCardPayload } from '../model/AgentTypes';
 import { verdictText } from './VerdictText';
-import { normalizeText } from '../common/Text';
+import { normalizeText, plainDashes } from '../common/Text';
 
 export interface RelayToolCall {
   callId: string;
@@ -144,7 +144,7 @@ function replacement(verdicts: VerdictCardPayload[]): string {
 
 // verdicts: deterministic verdicts produced by check_drug during this turn.
 export function checkFinalText(text: string, verdicts: VerdictCardPayload[]): TextCheck {
-  const trimmed: string = text.trim().slice(0, MAX_TEXT);
+  const trimmed: string = plainDashes(text.trim().slice(0, MAX_TEXT));
   if (trimmed.length === 0) {
     const r: TextCheck = { issue: 'EMPTY', text: replacement(verdicts) };
     return r;

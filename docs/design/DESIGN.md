@@ -524,6 +524,8 @@ A size or radius that changes with the orb must not sit under a looping `.animat
 - Never use coral for verdict buttons, or red for non-risk UI.
 - Never show QT values, ECG-style traces of the user's heart, or diagnostic claims.
 - Never use heavy blur, shaders or web-only effects. Everything has to rebuild in ArkUI.
+- Never use em dashes (the long dash) in copy, UI strings, prompts or agent replies. Use a normal dash "-" with
+  spaces around it, or split the sentence. The agent is told the same, and `plainDashes` swaps any it still writes.
 
 ---
 

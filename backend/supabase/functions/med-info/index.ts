@@ -17,7 +17,8 @@ Given a medicine name (a brand or an active ingredient), return:
 - tips: up to 3 general everyday tips from patient leaflets (food, alcohol, drowsiness, timing, storage).
 Hard rules: Do NOT say whether it is safe for the heart or for long QT, do NOT mention QT, torsades or arrhythmia
 risk, do NOT give doses or tell the user to start or stop anything. If you do not recognise the name as a real
-medicine, set recognised to false and leave the other fields empty.`;
+medicine, set recognised to false and leave the other fields empty. Never use em dashes (the long dash); use a normal
+dash "-" instead.`;
 
 const SCHEMA = {
   type: 'object',

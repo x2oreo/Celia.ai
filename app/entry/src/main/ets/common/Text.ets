@@ -7,3 +7,10 @@ const TYPOGRAPHIC_APOSTROPHES: RegExp = /[‘’ʼ′]/g;
 export function normalizeText(text: string): string {
   return text.toLowerCase().replace(TYPOGRAPHIC_APOSTROPHES, '\'');
 }
+
+// Our copy never uses em dashes (docs/design/DESIGN.md, Voice); the model sometimes writes them anyway.
+const EM_DASH: RegExp = /\u2014/g;
+
+export function plainDashes(text: string): string {
+  return text.replace(EM_DASH, '-');
+}

@@ -189,6 +189,11 @@ export default function agentSafetyTest() {
       expect(c.issue).assertEqual('NONE');
     });
 
+    it('emDashesBecomePlainDashes', 0, () => {
+      const c: TextCheck = checkFinalText('Your heart rate looks steady \u2014 nice work.', []);
+      expect(c.text).assertEqual('Your heart rate looks steady - nice work.');
+    });
+
     it('polishReassuranceIsCaught', 0, () => {
       expect(hasReassurance('Apap jest bezpieczny.')).assertTrue();
       expect(hasReassurance('Można go bezpiecznie przyjmować.')).assertTrue();

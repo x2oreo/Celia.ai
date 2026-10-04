@@ -81,7 +81,7 @@ export function parseInput(b: Record<string, unknown>): SummaryInput | undefined
 // Model text → summary, or undefined when it is empty, too long or breaks a rule.
 export function checkSummary(text: unknown): string | undefined {
   if (typeof text !== 'string') return undefined;
-  const t = text.trim().replace(/\s+/g, ' ');
+  const t = text.trim().replace(/\s+/g, ' ').replace(/\u2014/g, '-'); // no em dashes in our copy
   if (t.length < 20 || t.length > MAX_SUMMARY || BANNED.test(t)) return undefined;
   return t;
 }

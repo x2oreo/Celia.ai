@@ -25,6 +25,8 @@ Mobile-first, agent-focused: Celia (Huawei's system assistant, 小艺/Xiaoyi) at
 - Do not port React/Android/Flutter patterns (no fetch/axios-by-default, no Android manifests, no hooks).
 - Build/verify through the terminal loop in `harmonyos-build-deploy` (hvigorw → hdc install → screenshot).
 - Everything in English (code, comments, docs, UI strings default).
+- Never use em dashes (the long dash) anywhere: code, comments, docs, UI copy, prompts, commit messages. Use a normal
+  dash "-" instead. The in-app agent follows the same rule.
 - No secrets in the repo (API keys, signing certs `*.p12/*.cer/*.p7b`, `.env*`). LLM keys live only on the backend.
 - Commit small and often with meaningful messages - commit history is judged.
 - Never add AI attribution to commits or PRs: no `Co-Authored-By: Claude ...` trailers, no "Generated with
