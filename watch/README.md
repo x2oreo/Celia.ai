@@ -34,7 +34,7 @@ full HarmonyOS **wearable** app (API 20+, like Watch 5 / Watch Ultimate) that ta
 run it on the **wearable emulator**. The emulator has no heart-rate sensor, so the demo uses scripted scenarios,
 always labelled as demo data.
 
-## Heart-rate sources (Settings page, tap to switch)
+## Heart-rate sources (Simulator page, tap to switch)
 
 | Source | Where it runs | Metric `source` |
 |---|---|---|
@@ -44,8 +44,8 @@ always labelled as demo data.
 ### Fast demo (only with `DEMO_MODE=true`)
 
 Scripted heart rate is **off by default** (`DEMO_MODE=false` in `watch/.env`): the watch uses the real sensor only,
-Settings shows no source/scenario/speed, and there is no fallback to scripted data. Set `DEMO_MODE=true` and rebuild
-to get it back. Then: Settings → Source: *Demo data* → Scenario: **Full demo** → Demo speed **4×** (default, `DEMO_SPEED` in `.env`).
+there is no Simulator page and no fallback to scripted data. Set `DEMO_MODE=true` and rebuild
+to get it back. Then: Simulator → Source: *Demo* → Scenario: **Full demo** → Speed **4x** (default, `DEMO_SPEED` in `.env`).
 It plays everything in ~75 s: high HR during exercise → slow recovery → startle at rest → low HR asleep →
 irregular rhythm → fall. In demo mode the timing rules (10 s sustain, alert cooldowns, 1-min recovery) run on
 scenario time so they speed up too; uploaded rows keep real timestamps.
@@ -74,28 +74,40 @@ watch shows "Waiting for heart rate…".
 | Low HRV / low SpO2 alerts | 🧪 simulated input, real rule | HRV < 20 ms while not exercising, SpO2 < 92 % → `vitals_alert` + alert screen (`vitalAlertFor`) |
 | SpO2, breathing rate | 🧪 simulated | ditto |
 
-Simulated values are plausible for the current state and heart rate (`MockedVitals`), tagged **sim** on the watch
-(Home shows HRV next to bpm). **Tap a sim tile** on the Vitals page (HRV, SpO2, Rhythm) to push that signal abnormal
-and see its alert ~3 s later. Heart-rate alerts need the limit crossed for `ALERT_SUSTAIN_SEC` (default 5 s),
-and listed in `payload.mocked` in the data. They show what the product does once Huawei opens these signals to
-watch apps.
+Simulated values are plausible for the current state and heart rate (`MockedVitals`), tagged **SIM** on the watch
+and listed in `payload.mocked` in the data. In a `DEMO_MODE` build the **Simulator** page pushes HRV, oxygen or
+rhythm abnormal and the alert lands ~3 s later. Heart-rate alerts need the limit crossed for `ALERT_SUSTAIN_SEC`
+(default 5 s). They show what the product does once Huawei opens these signals to watch apps.
 
-## Screens (Watch companion design W1–W7)
+## Screens (design: `docs/design/DESIGN.md` §2.3 and §7)
 
-Swipe pages: **Home** (W1: status, bpm, genotype · phone link, ring = bpm between your min and max) → **Vitals**
-(all inputs above) → **Check-in** (W4 + "Took nadolol") → **Settings** (source, demo scenario) → **Simulate**.
+The watch uses the phone's design system on true black: warm neutrals, coral for actions and the chart, the fixed
+risk shapes and words, Lucide icons. Lists are `ArcList` (items scale towards the curved edge, crown scrolls), a
+single bottom action is an `ArcButton`.
 
-Full-screen flows, most urgent wins (SOS > fall/alert > check-in > drug verdict):
+Swipe pages:
+
+| # | Page | What it shows |
+|---|---|---|
+| 1 | **Home** (W1) | bezel ring = where the bpm sits between your min and max (green / amber / red), status word + shape, bpm with a beating heart, "At rest · max 110", genotype · phone chip, drug badge, `DEMO DATA` badge on scripted data |
+| 2 | **Heart · 10 min** | average and range, a range chart (one capsule per 30 s, average dot) over your limit band with the max dashed, resting rate. Never a trace. |
+| 3 | **Vitals** | resting HR, HRV, oxygen, breathing, rhythm, stress, recovery, state, steps; each with Good / Okay / Worth a look / No data (same words and shapes as the phone) and `SIM` where simulated |
+| 4 | **Log** (W4) | Fine / Dizzy / Racing → `symptom`, "Took nadolol" → `medication_taken`, SOS |
+| 5 | **Settings** | phone pairing, today's limits and why, genotype, dose reminder, watch id |
+| 6 | **Simulator** | only in a `DEMO_MODE` build, every demo control in one panel (below) |
+
+Full-screen moments, most urgent wins (SOS > fall/alert > check-in > dose nudge > drug verdict > pairing):
 
 | Screen | When | Buttons |
 |---|---|---|
 | W2 heart rate high / W3 heart rate low | `hr_alert` for the current state's limit; low while asleep uses a gentle vibration | *I'm OK* → W4 check-in · *Need help* → W5 |
-| Fall detected (W2 style, 30 s) | accelerometer / Faint scenario / Simulate | *I'm OK* → W4 · *Need help* or no answer → W5 |
-| Irregular rhythm, slow recovery (W2 style) | `rhythm_alert` (simulated), slow `hr_recovery` | same as W2 |
-| W4 How do you feel? | after *I'm OK*, and as a page | Fine / Dizzy / Racing → `symptom` |
+| Fall detected (30 s, ring drains) | accelerometer / Faint scenario / Simulator | *I'm OK* → W4 · *Need help* or no answer → W5 |
+| Irregular rhythm, low HRV / oxygen, slow recovery | `rhythm_alert`, `vitals_alert` (simulated input), slow `hr_recovery` | same as W2 |
+| W4 How do you feel? | after *I'm OK* | Fine / Dizzy / Racing, *Not now* |
 | W5 SOS countdown (10 s) → SOS sent | *Need help* or unanswered fall | *Cancel*; at 0 an `sos` row is sent |
-| W6 drug verdict glance | a new QT-risk drug arrives via `watch_context` (or Simulate) | *Got it* |
-| W7 not on wrist | wear sensor / Simulate | - |
+| W6 drug verdict glance | a new QT-risk drug arrives via `watch_context` (or Simulator); shape and word of the real level | *Got it* |
+| Missed dose | reminder time + 2 h without a logged dose | *Took it* / *Not yet* |
+| W7 not on wrist | wear sensor / Simulator | - |
 
 **The watch never dials 112 itself** (auto-dialling emergency services from a test build is unsafe). The `sos` row
 is the trigger: the phone app / agent alerts emergency contacts and offers the 112 call.
@@ -114,7 +126,7 @@ is the trigger: the phone app / agent alerts emergency contacts and offers the 1
 | Fall | impact > 2.5 g, then still 1–4 s later → 30 s "Are you OK?" | `vitals/MotionAnalyzer.ets` |
 | SOS | *Need help* or unanswered fall → 10 s countdown → `sos` row | `WatchController.startSos()` |
 
-The sim-tile demo (Vitals page) drifts the signal over 2.5 s (refreshed every 250 ms), holds 10 s and recovers over
+A Simulator event (Low HRV, Low oxygen, Irregular rhythm) drifts the signal over 2.5 s (refreshed every 250 ms), holds 10 s and recovers over
 4 s (`anomalyProgress()`). A tapped anomaly uses a 1 s sustain (`ANOMALY_SUSTAIN_MS`) instead of 5 s, so the alert
 lands under 4 s after the tap (measured: HRV 3.0 s, SpO2 2.8 s, rhythm 1.5 s).
 
@@ -133,13 +145,23 @@ PPG heart rate can't show QT, so the watch adds context that matters for LQTS:
 
 | Signal | Source | Used for |
 |---|---|---|
-| **Rest vs. active** | accelerometer (`MotionAnalyzer`: std-dev of \|a\| over 4 s); scenario; Simulate page | Stricter high limit **at rest** (default 120) than during activity (140): a racing heart without exertion is the LQT2 pattern, high HR while exercising is the LQT1 one |
-| **Fall / faint** | accelerometer: impact > 2.5 g, then lying still 1–4 s later; *Faint* scenario; Simulate page | "Are you OK?" with a 30 s countdown and vibration. *I'm OK* → `fall_detected{response:"ok"}`. No answer → `fall_detected{response:"no_response"}` + SOS screen; the phone app/agent runs the emergency flow from that row |
-| **Watch on wrist** | `WEAR_DETECTION` sensor (not on the emulator); Simulate page | No HR alarms while off the wrist; `wear_state` rows so the dashboard can tell "not worn" from "no data" |
+| **Rest vs. active** | accelerometer (`MotionAnalyzer`: std-dev of \|a\| over 4 s); scenario; Simulator page | Stricter high limit **at rest** (default 120) than during activity (140): a racing heart without exertion is the LQT2 pattern, high HR while exercising is the LQT1 one |
+| **Fall / faint** | accelerometer: impact > 2.5 g, then lying still 1–4 s later; *Faint* scenario; Simulator page | "Are you OK?" with a 30 s countdown and vibration. *I'm OK* → `fall_detected{response:"ok"}`. No answer → `fall_detected{response:"no_response"}` + SOS screen; the phone app/agent runs the emergency flow from that row |
+| **Watch on wrist** | `WEAR_DETECTION` sensor (not on the emulator); Simulator page | No HR alarms while off the wrist; `wear_state` rows so the dashboard can tell "not worn" from "no data" |
 
-The emulator has an accelerometer (rest/active works from it) but no wear sensor. **Simulate page** (4th page):
-*Fall*, *Take watch off / Put watch on*, *State: auto → rest → active → asleep*, *Genotype*, *Risky drug on/off*
-(stand-in for the phone app's drug scan), *Med reminder in 10 s*. The page scrolls vertically (crown or swipe).
+The emulator has an accelerometer (rest/active works from it) but no wear sensor.
+
+### Simulator panel (last page, `DEMO_MODE=true` only)
+
+Every demo control lives here and nowhere else, so the other pages look and behave like the finished product:
+
+| Section | Controls |
+|---|---|
+| Heart rate | Source (sensor / demo), Scenario, Speed |
+| Events | Fall, Irregular rhythm, Low HRV, Low oxygen, Take watch off / Put watch on |
+| Context | State (auto / rest / active / asleep), Genotype, Risky drug (stand-in for the phone's drug check), Beta-blocker missed, Dose nudge, Reminder in 10 s |
+
+The panel scrolls vertically (crown or swipe).
 
 ## Always-on monitoring
 
