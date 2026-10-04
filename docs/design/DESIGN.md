@@ -1031,7 +1031,8 @@ QT dataset); no LLM text. Treatment lines name drugs only, never doses. Plain de
 Parts live in `components/EmergencyCardParts.ets`.
 
 1. **Glance.** Back chevron + caps "MEDICAL ALERT" in `card_fixed_alert`. Identity row: 48 vp initial avatar
-   (`card_fixed_alert_tint` circle, initial in `title-3` 800 `card_fixed_alert`; heart icon without a name), name in
+   (`card_fixed_alert_tint` circle, initial in `title-3` 800 `card_fixed_alert`; heart icon without a name; the
+   profile photo via `ProfileAvatar` (6.11) when it exists and "Show on card" is on, phone only), name in
    `title-2` 800, condition in `body-sm` `card_fixed_ink_2`. Chips (age, genotype, ICD): height 28, 1 vp
    `card_fixed_border`, radius 14. A 56 vp `danger` "Call {112}" button. Then **Do not give** as the Known-risk
    notice: `card_fixed_alert_tint`, 1 vp `card_fixed_alert_border` (`#F4B5AF`), radius 16, Known-risk shape +

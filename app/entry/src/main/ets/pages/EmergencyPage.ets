@@ -372,7 +372,8 @@ export struct EmergencyPage {
           condition: cardText(this.lang).condition,
           chips: [`${cardText(this.lang).genotype}: ${this.cardProfile().genotype === 'UNKNOWN' ? '?' :
             this.cardProfile().genotype}`,
-            this.cardProfile().hasIcd ? cardText(this.lang).icdYes : cardText(this.lang).icdNo]
+            this.cardProfile().hasIcd ? cardText(this.lang).icdYes : cardText(this.lang).icdNo],
+          photo: shownOnCard(this.cardProfile(), CardField.PHOTO)
         })
       }
       .width('100%')

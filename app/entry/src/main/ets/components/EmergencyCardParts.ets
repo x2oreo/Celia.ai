@@ -5,6 +5,8 @@
 import { AvoidGroup } from '../emergency/Responder';
 import { GenotypeFacts, GENERAL_PRECAUTIONS, LQTS_OVERVIEW, ProtocolStep } from '../emergency/LqtsFacts';
 import { RiskShape } from './Common';
+import { ProfileAvatar } from './ProfileAvatar';
+import { ProfilePhoto } from '../data/ProfilePhoto';
 
 // Caps label in a card colour: 12 fp / 700, +0.06em; alert colour for the critical ones.
 @ComponentV2
@@ -22,32 +24,53 @@ export struct CardCaps {
   }
 }
 
-// Who this is: initial avatar, name, condition, quiet chips (genotype, age, ICD).
+// Who this is: the profile photo (phone only, when shown on the card) or the initial, name, condition, quiet chips
+// (genotype, age, ICD).
 @ComponentV2
 export struct CardIdentity {
   @Param initial: string = '';     // '' → heart icon in the avatar
   @Param name: string = '';        // '' → condition only
   @Param condition: string = '';
   @Param chips: string[] = [];
+  @Param photo: boolean = false;   // the user shows the photo on the card (CardField.PHOTO)
+  @Local hasPhoto: boolean = false;
+  private stop: () => void = () => {
+  };
+
+  aboutToAppear(): void {
+    this.hasPhoto = ProfilePhoto.uri() !== '';
+    this.stop = ProfilePhoto.onChange((u: string) => {
+      this.hasPhoto = u !== '';
+    });
+  }
+
+  aboutToDisappear(): void {
+    this.stop();
+  }
 
   build() {
     Column({ space: 12 }) {
       Row({ space: 12 }) {
-        Stack() {
-          if (this.initial.length > 0) {
-            Text(this.initial)
-              .fontSize($r('app.float.font_title_3'))
-              .fontWeight(800)
-              .fontColor($r('app.color.card_fixed_alert'))
-          } else {
-            Image($r('app.media.ic_heart_fill')).width(22).height(22).fillColor($r('app.color.card_fixed_alert'))
+        if (this.photo && this.hasPhoto) {
+          ProfileAvatar({ side: 48, name: this.name, photo: true })
+            .accessibilityLevel('no')
+        } else {
+          Stack() {
+            if (this.initial.length > 0) {
+              Text(this.initial)
+                .fontSize($r('app.float.font_title_3'))
+                .fontWeight(800)
+                .fontColor($r('app.color.card_fixed_alert'))
+            } else {
+              Image($r('app.media.ic_heart_fill')).width(22).height(22).fillColor($r('app.color.card_fixed_alert'))
+            }
           }
+          .width(48)
+          .height(48)
+          .borderRadius(24)
+          .backgroundColor($r('app.color.card_fixed_alert_tint'))
+          .accessibilityLevel('no')
         }
-        .width(48)
-        .height(48)
-        .borderRadius(24)
-        .backgroundColor($r('app.color.card_fixed_alert_tint'))
-        .accessibilityLevel('no')
         Column({ space: 2 }) {
           if (this.name.length > 0) {
             Text(this.name)

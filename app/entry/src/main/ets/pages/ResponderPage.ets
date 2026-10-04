@@ -161,7 +161,8 @@ export struct ResponderPage {
         initial: nameInitial(this.shownName()),
         name: this.shownName(),
         condition: this.t().condition,
-        chips: this.whoChips()
+        chips: this.whoChips(),
+        photo: shownOnCard(this.p(), CardField.PHOTO)
       })
     }
     .width('100%')
