@@ -1322,8 +1322,11 @@ The tap-to-talk fallback is also untested end to end.
 - **Validated:** 407 phone tests (7 new: every genotype complete, genes match the domain table, no em dash and no
   doses, local emergency number in the protocol, no lidocaine or congenital isoproterenol advice); HAP builds from a
   clean checkout; on the emulator: Emergency tab card, full card scrolled end to end, Show all, About opened.
-- **Not validated:** the web card in `site/card/` still has the old layout; the card in other languages beyond the
-  glance layer (layers 3 and 4 stay English by design until a checked translation exists).
+- **Follow-ups:** the web card (`site/card/`) got the same layers; `data/export_card_site.py` now also exports
+  `LqtsFacts.ets`, so app and web show the same facts (checked in headless Chrome with a legacy in-link card). The
+  profile photo from the Settings session shows on the card when the user allows it (phone only, never in the QR).
+- **Not validated:** layers 3 and 4 in other languages (English by design until a checked translation exists); the
+  web card on a real phone.
 
 ### 2026-10-04 - Kaloyan + Claude Code: profile photo for the emergency card (branch `kaloyan/agent-home`)
 
