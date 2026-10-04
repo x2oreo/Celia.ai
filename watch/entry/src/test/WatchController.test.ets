@@ -78,7 +78,7 @@ export default function watchControllerTest() {
       expect(c.riskyDrugAt > 0).assertTrue();
       expect(c.verdictDrug).assertEqual('Clarithromycin');
       expect(c.limitHigh).assertEqual(130);
-      expect(c.limitReason).assertEqual('awake · drug');
+      expect(c.limitReason).assertEqual('awake');
       c.dismissVerdict();
       expect(c.verdictDrug).assertEqual('');
       c.toggleRiskyDrug();
@@ -96,7 +96,7 @@ export default function watchControllerTest() {
       expect(c.activityOverride).assertEqual('REST');
       expect(c.activity).assertEqual('REST');
       expect(c.limitHigh).assertEqual(110);
-      expect(c.limitReason).assertEqual('LQT2 · rest');
+      expect(c.limitReason).assertEqual('LQT2 at rest');
       c.cycleActivityOverride();
       c.cycleActivityOverride();
       expect(c.activity).assertEqual('ASLEEP');
