@@ -1282,3 +1282,19 @@ The tap-to-talk fallback is also untested end to end.
 - **Validated:** `tests/run-rls.sh` passes with 13 new checks (previous owner, late upload, unbind, first owner keeps
   pre-pairing rows, account delete); 407 phone tests (6 new); phone HAP builds.
 - **Not validated:** the migration is not applied to the live project yet; not run on the emulators.
+
+### 2026-10-04 - Kaloyan + Claude Code: Settings rebuilt as a grouped index (branch `kaloyan/agent-home`)
+
+- **Asked:** a cleaner Settings UI/UX, moving things where they belong.
+- **Found:** Settings mixed edit forms with navigation; name and notes needed a Save button while everything else
+  saved on change; notes duplicated Emergency details; contacts were deleted on one tap; the watch-SOS consent
+  switch (it sends the contacts to the server) was buried in Account; headers repeated their row titles.
+- **What the AI did:** proposed a new layout and asked two placement questions (the owner chose: contacts get their own page,
+  Test SOS stays, notes go). DESIGN.md 6.11 + 10.2 first, then `SettingsList.ets` (group, row, divider), Settings as
+  a profile card plus SAFETY / DEVICES / ACCOUNT AND PRIVACY groups with the state in words, a searchable
+  emergency-number sheet, `HeartProfilePage` (reuses the onboarding About step, saves on change),
+  `ContactsPage` (delete asks first, add sheet) with the consent card moved there as `SosAlertsCard`. Lucide `user`
+  icon added.
+- **Validated:** phone HAP builds; 407 phone tests pass; on the emulator: Settings, Your profile, Emergency
+  contacts, the add sheet, and number search + pick (saved, shown on the row).
+- **Not validated:** adding and removing a contact end to end on the emulator; the signed-out consent card.
