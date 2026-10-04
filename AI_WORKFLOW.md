@@ -1260,5 +1260,6 @@ The tap-to-talk fallback is also untested end to end.
 - **Validated:** 394 phone tests (5 new in `DemoHistory.test.ets`, including the missed-dose question on every
   weekday); all migrations applied to a throwaway Postgres with `tests/run-rls.sh` passing; queried the views as
   anon: 56 demo days plus today's live row, on/off works, other devices refused without the secret.
-- **Not validated:** the charts on the emulator (another session's watch alarm scenario held the shared phone
-  emulator); the migration is not applied to the live project yet.
+- **Live backend:** the migration was applied to the live project in one transaction and recorded with
+  `supabase migration repair` (the owner ran both; Claude Code's permission check blocked the production write).
+  The demo watch now serves 57 days from 6 Aug, and the phone's Health tab shows full 14-day lines, marked SIM.
