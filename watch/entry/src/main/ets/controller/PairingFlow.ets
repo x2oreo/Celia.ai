@@ -22,6 +22,8 @@ export class PairingFlow {
   @Trace pairScreen: PairScreen = 'LOADING';
   @Trace pairCode: string = '';
   @Trace pairSecondsLeft: number = 0;
+  /** The code's whole lifetime in seconds, so the ring can drain over it. */
+  @Trace pairTotalSeconds: number = 0;
   @Trace pairError: string = '';
 
   private api: PairingApi | undefined = undefined;
@@ -70,6 +72,7 @@ export class PairingFlow {
     this.pairCode = r.value.code;
     this.expiresMs = r.value.expiresAtMs;
     this.pairSecondsLeft = Math.max(0, Math.round((this.expiresMs - Date.now()) / 1000));
+    this.pairTotalSeconds = this.pairSecondsLeft;
     this.pairScreen = 'CODE';
     this.ticks = 0;
     this.timer = setInterval(() => {

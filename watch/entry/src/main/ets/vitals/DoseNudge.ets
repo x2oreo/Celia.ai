@@ -3,14 +3,16 @@
  * Decided on the watch from its own taps, so it works offline. Pure logic (state in, decision out), unit-tested.
  */
 
-/** Shown at most this many times a day: the first nudge plus two "Not yet" snoozes. */
+/** Shown at most this many times a day: the first nudge plus two "Not yet" snoozes (30 min each). */
 export const NUDGE_MAX_SHOWS = 3;
 export const NUDGE_GRACE_MS = 2 * 3600 * 1000;
-export const NUDGE_SNOOZE_MS = 3600 * 1000;
+export const NUDGE_SNOOZE_MS = 30 * 60 * 1000;
 
 export interface DoseState {
   /** Local day (YYYY-MM-DD) of the last `medication_taken`. */
   lastDoseDay: string;
+  /** When that dose was logged (ms), for "Nadolol taken 08:04"; 0 = unknown. */
+  lastDoseMs: number;
   /** Local day the counters below belong to. */
   nudgeDay: string;
   timesShown: number;
@@ -18,7 +20,7 @@ export interface DoseState {
 }
 
 export function emptyDoseState(): DoseState {
-  const s: DoseState = { lastDoseDay: '', nudgeDay: '', timesShown: 0, snoozeUntilMs: 0 };
+  const s: DoseState = { lastDoseDay: '', lastDoseMs: 0, nudgeDay: '', timesShown: 0, snoozeUntilMs: 0 };
   return s;
 }
 
@@ -46,7 +48,13 @@ export function forToday(s: DoseState, nowMs: number): DoseState {
   if (s.nudgeDay === today) {
     return s;
   }
-  const next: DoseState = { lastDoseDay: s.lastDoseDay, nudgeDay: today, timesShown: 0, snoozeUntilMs: 0 };
+  const next: DoseState = {
+    lastDoseDay: s.lastDoseDay,
+    lastDoseMs: s.lastDoseMs,
+    nudgeDay: today,
+    timesShown: 0,
+    snoozeUntilMs: 0
+  };
   return next;
 }
 
@@ -65,4 +73,9 @@ export function shouldNudge(s: DoseState, nowMs: number, hhmm: string): boolean 
 /** "Not yet" is offered while a later re-show is still allowed. */
 export function canSnooze(s: DoseState): boolean {
   return s.timesShown < NUDGE_MAX_SHOWS;
+}
+
+/** Time of today's logged dose (ms), or 0 when none was logged today. */
+export function doseTakenToday(s: DoseState, nowMs: number): number {
+  return s.lastDoseDay === dayKey(nowMs) && s.lastDoseMs > 0 ? s.lastDoseMs : 0;
 }

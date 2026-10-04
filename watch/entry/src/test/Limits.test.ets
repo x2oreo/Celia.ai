@@ -22,7 +22,7 @@ export default function limitsTest() {
     it('recent risky drug lowers high limits', 0, () => {
       const l = limitsFor('REST', 'LQT2', true, base);
       expect(l.high).assertEqual(100);
-      expect(l.reason).assertEqual('LQT2 · rest · drug');
+      expect(l.reason).assertEqual('LQT2 at rest');
     });
 
     it('stress = HR > resting × 1.35 at rest', 0, () => {

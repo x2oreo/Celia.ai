@@ -20,7 +20,7 @@ export default function doseNudgeTest() {
       expect(shouldNudge(s, at(11, 0) + 24 * 3600 * 1000, '08:00')).assertTrue();
     });
 
-    it('snooze 1 h, at most 3 shows a day', 0, () => {
+    it('snooze 30 min, at most 3 shows a day', 0, () => {
       let s: DoseState = forToday(emptyDoseState(), at(10, 0));
       s.timesShown = 1;
       s.snoozeUntilMs = at(11, 0);

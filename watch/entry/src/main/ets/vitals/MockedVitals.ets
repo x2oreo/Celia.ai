@@ -20,13 +20,15 @@ export type Anomaly = 'none' | 'hrv' | 'spo2' | 'rhythm';
 /** Low HRV while not exercising suggests strong sympathetic (stress) drive, a known LQT1/LQT2 trigger context. */
 export const HRV_LOW_MS = 20;
 export const SPO2_LOW = 92;
+/** The simulated wearer's usual HRV awake at rest (the low-HRV alert shows it as "usual 45"). */
+export const HRV_USUAL_MS = 45;
 
 /** Very fast heart rate without exertion is treated as a possible arrhythmia in the simulation (TdP story). */
 const IRREGULAR_AT_REST_BPM = 170;
 
 export function mockVitals(bpm: number, activity: Activity, rand: () => number): MockVitals {
   const jitter = (range: number): number => (rand() - 0.5) * range;
-  let hrv = 45;
+  let hrv = HRV_USUAL_MS;
   let breathing = 14;
   let spo2 = 97.5;
   if (activity === 'ACTIVE') {

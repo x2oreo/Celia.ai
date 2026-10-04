@@ -54,7 +54,7 @@ export const SCENARIOS: Scenario[] = [
   ], 234),
   scenario('rest', 'Resting', [rest(60, 68, 72), rest(60, 72, 66)], -1),
   // Normal workout + healthy recovery (~35 bpm drop in the first minute).
-  scenario('workout', 'Normal workout',
+  scenario('workout', 'Workout',
     [rest(5, 72, 74), move(15, 74, 128), move(25, 128, 132), rest(60, 130, 95), rest(60, 95, 80)], -1),
   // LQT1: exercise-triggered. Passes the exercise limit, then recovers slowly (< 12 bpm in 1 min).
   scenario('lqt1_exercise', 'LQT1 exercise',

@@ -12,6 +12,10 @@ export const NOTIFY_VITALS = 2;
 export const NOTIFY_FALL = 3;
 export const NOTIFY_SOS = 4;
 
+function capitalised(s: string): string {
+  return s.length > 0 ? `${s.charAt(0).toUpperCase()}${s.substring(1)}` : s;
+}
+
 /**
  * Watch notifications (Notification Kit) for alerts, and system reminders (reminderAgentManager) for medication.
  * Reminders are fired by the system, so they work even while our app is frozen or closed.
@@ -76,8 +80,8 @@ export class Notifier {
         hour: Number(m[1]),
         minute: Number(m[2]),
         daysOfWeek: [1, 2, 3, 4, 5, 6, 7],
-        title: `Time for ${medication}`,
-        content: 'Take your beta-blocker. Missed doses raise the risk.',
+        title: `Time for ${capitalised(medication)}`,
+        content: 'Your daily dose',
         ringDuration: 5,
         snoozeTimes: 2,
         timeInterval: 10 * 60,
@@ -100,8 +104,8 @@ export class Notifier {
       const timer: reminderAgentManager.ReminderRequestTimer = {
         reminderType: reminderAgentManager.ReminderType.REMINDER_TYPE_TIMER,
         triggerTimeInSeconds: seconds,
-        title: `Time for ${medication}`,
-        content: 'Take your beta-blocker. Missed doses raise the risk.',
+        title: `Time for ${capitalised(medication)}`,
+        content: 'Your daily dose',
         actionButton: [
           { title: 'Done', type: reminderAgentManager.ActionButtonType.ACTION_BUTTON_TYPE_CLOSE }
         ],

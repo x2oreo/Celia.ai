@@ -12,7 +12,7 @@ export interface BaseLimits {
 export interface HrLimits {
   high: number;
   low: number;
-  /** Short human-readable reason, shown on the watch ("LQT2 · rest"). */
+  /** Short human-readable reason, shown on the watch ("LQT2 at rest"). */
   reason: string;
 }
 
@@ -27,7 +27,7 @@ export function defaultBaseLimits(): BaseLimits {
 function stateLabel(activity: Activity): string {
   switch (activity) {
     case 'REST':
-      return 'rest';
+      return 'at rest';
     case 'ACTIVE':
       return 'active';
     case 'ASLEEP':
@@ -66,15 +66,9 @@ export function limitsFor(activity: Activity, genotype: Genotype, riskyDrug: boo
   if (riskyDrug) {
     high -= RISKY_DRUG_MARGIN;
   }
-  const parts: string[] = [];
-  if (genotype !== 'UNKNOWN') {
-    parts.push(genotype);
-  }
-  parts.push(stateLabel(activity));
-  if (riskyDrug) {
-    parts.push('drug');
-  }
-  const l: HrLimits = { high: high, low: low, reason: parts.join(' · ') };
+  // "LQT2 at rest". A risky drug is named by the caller ("lowered for Clarithromycin"), so it is not repeated here.
+  const reason = genotype !== 'UNKNOWN' ? `${genotype} ${stateLabel(activity)}` : stateLabel(activity);
+  const l: HrLimits = { high: high, low: low, reason: reason };
   return l;
 }
 

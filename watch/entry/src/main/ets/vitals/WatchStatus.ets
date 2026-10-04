@@ -3,6 +3,9 @@
  * unit-tested. The words and shapes are the phone's (DESIGN.md §6.10): Good, Okay, Worth a look, No data.
  * Alerts (red) are a separate thing and come from AlarmRules / MockedVitals, not from here.
  */
+import { Activity, Genotype } from '../model/WatchMetric';
+import { shortDrugName } from './DrugBadge';
+import { HrBucket } from './HrTrend';
 import { HRV_LOW_MS, SPO2_LOW } from './MockedVitals';
 
 export type Level = 'GOOD' | 'OKAY' | 'LOOK' | 'NONE';
@@ -114,6 +117,61 @@ export function ringRatio(bpm: number, low: number, high: number): number {
   }
   return Math.max(0.03, Math.min(1, (bpm - low) / span));
 }
+
+/** "At rest" / "Active" / "Asleep", '' when unknown. */
+export function stateWord(activity: Activity): string {
+  switch (activity) {
+    case 'REST':
+      return 'At rest';
+    case 'ACTIVE':
+      return 'Active';
+    case 'ASLEEP':
+      return 'Asleep';
+    default:
+      return '';
+  }
+}
+
+/**
+ * Home context line: "At rest · max 110". Asleep (or below the min) it shows the min instead, because that is the
+ * limit that matters then.
+ */
+export function contextLine(activity: Activity, zone: Zone, low: number, high: number): string {
+  const showMin = activity === 'ASLEEP' || zone === 'BELOW';
+  const limit = showMin ? `min ${low}` : `max ${high}`;
+  const s = stateWord(activity);
+  return s.length > 0 ? `${s} · ${limit}` : `${limit.charAt(0).toUpperCase()}${limit.substring(1)}`;
+}
+
+/** Settings "Limits now" sub-line: "LQT2 · at rest · lowered for Clarithromycin". */
+export function limitsWhy(genotype: Genotype, activity: Activity, riskyDrug: string): string {
+  const parts: string[] = [];
+  if (genotype !== 'UNKNOWN') {
+    parts.push(genotype);
+  }
+  const s = stateWord(activity).toLowerCase();
+  if (s.length > 0) {
+    parts.push(s);
+  }
+  if (riskyDrug.length > 0) {
+    parts.push(`lowered for ${shortDrugName(riskyDrug)}`);
+  }
+  return parts.length > 0 ? parts.join(' · ') : 'Standard limits';
+}
+
+/** Trend slots whose highest reading crossed the max ("3 over max"). */
+export function slotsOverMax(slots: HrBucket[], high: number): number {
+  let n = 0;
+  for (const b of slots) {
+    if (b.count > 0 && b.max > high) {
+      n += 1;
+    }
+  }
+  return n;
+}
+
+/** A typical healthy heart-rate drop one minute after exercise; the slow-recovery alert compares against it. */
+export const USUAL_RECOVERY_DROP_BPM: number = 20;
 
 /** Heartbeat glyph period: 1.1 s calm, quicker as the state gets more urgent (DESIGN.md §8). */
 export function beatPeriodMs(zone: Zone): number {

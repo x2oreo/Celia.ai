@@ -25,6 +25,10 @@ export class DoseStore {
       if (raw.length > 0) {
         const s = JSON.parse(raw) as DoseState;
         if (typeof s.lastDoseDay === 'string' && typeof s.timesShown === 'number') {
+          // Saved before the dose time was kept: the time is unknown.
+          if (typeof s.lastDoseMs !== 'number') {
+            s.lastDoseMs = 0;
+          }
           return s;
         }
       }

@@ -23,7 +23,8 @@ import {
 } from '../model/WatchMetric';
 import { BaseLimits, HrLimits, limitsFor } from '../vitals/Limits';
 import { ANOMALY_RAMP_MS, Anomaly, MOCKED_FIELDS } from '../vitals/MockedVitals';
-import { SCENARIOS } from '../vitals/Scenarios';
+import { SCENARIOS, Scenario } from '../vitals/Scenarios';
+import { stateWord } from '../vitals/WatchStatus';
 import { HrBucket, HrTrend, TrendSummary } from '../vitals/HrTrend';
 import { MetricOutbox } from '../sync/MetricOutbox';
 import { PatientContext, PatientContextClient } from '../sync/PatientContextClient';
@@ -37,6 +38,7 @@ import {
   NUDGE_SNOOZE_MS,
   canSnooze,
   dayKey,
+  doseTakenToday,
   emptyDoseState,
   forToday,
   shouldNudge
@@ -114,6 +116,11 @@ export class WatchController implements RulesHost {
   /** "Did you take nadolol?" glance (missed-dose nudge). */
   @Trace doseNudgeOpen: boolean = false;
   @Trace doseNudgeCanSnooze: boolean = true;
+  /** When today's dose was logged (ms), 0 = not yet today. */
+  @Trace doseTakenAt: number = 0;
+  /** Simulator running line: the last event fired ("Fall") and when. */
+  @Trace simEvent: string = '';
+  @Trace simEventAt: number = 0;
   /** This watch's id (first 8 chars shown in Settings). */
   @Trace deviceId: string = '';
   @Trace deviceIdOverridden: boolean = false;
@@ -163,6 +170,7 @@ export class WatchController implements RulesHost {
     this.demoMode = this.cfg.demoMode;
     this.sourceKind = this.demoMode ? this.cfg.defaultSource : 'SENSOR';
     this.demoSpeed = this.cfg.demoSpeed;
+    this.scenarioIdx = Math.max(0, SCENARIOS.findIndex((s: Scenario) => s.id === this.cfg.defaultScenario));
     this.genotype = this.cfg.genotype;
     this.base = {
       activeHigh: this.cfg.highBpm,
@@ -181,6 +189,7 @@ export class WatchController implements RulesHost {
     }
     this.doseStore = new DoseStore(ctx);
     this.dose = this.doseStore.load();
+    this.doseTakenAt = doseTakenToday(this.dose, Date.now());
     if (AppConfig.canUpload(this.cfg)) {
       // One HTTP session for every Supabase call (energy: shared connections, fewer TLS handshakes).
       const client = new RestClient(this.cfg.supabaseUrl, this.cfg.supabaseAnonKey);
@@ -242,6 +251,10 @@ export class WatchController implements RulesHost {
 
   get pairSecondsLeft(): number {
     return this.pairing.pairSecondsLeft;
+  }
+
+  get pairTotalSeconds(): number {
+    return this.pairing.pairTotalSeconds;
   }
 
   get pairError(): string {
@@ -357,6 +370,7 @@ export class WatchController implements RulesHost {
    * recover. The alert fires through the threshold rule with a 1 s demo sustain, ~3 s after the tap.
    */
   triggerAnomaly(kind: Anomaly): void {
+    this.markSimEvent(kind === 'rhythm' ? 'Irregular rhythm' : kind === 'hrv' ? 'Low HRV' : 'Low oxygen');
     this.rules.startAnomaly(kind, Date.now());
     Logger.info(`anomaly: ${kind}`);
     if (this.anomalyTimer >= 0) {
@@ -418,10 +432,12 @@ export class WatchController implements RulesHost {
   }
 
   simulateFall(): void {
+    this.markSimEvent('Fall');
     this.startFall();
   }
 
   toggleWorn(): void {
+    this.markSimEvent(this.onWrist ? 'Watch off' : 'Watch on');
     this.setWorn(!this.onWrist);
   }
 
@@ -438,6 +454,61 @@ export class WatchController implements RulesHost {
     const order: Genotype[] = ['UNKNOWN', 'LQT1', 'LQT2', 'LQT3'];
     this.genotype = order[(order.indexOf(this.genotype) + 1) % order.length];
     this.applyLimits();
+  }
+
+  // Direct setters for the simulator's chip groups (the cycle* methods above step through the same values).
+
+  setSource(kind: HrSourceKind): void {
+    if (this.demoMode && kind !== this.sourceKind) {
+      this.cycleSource();
+    }
+  }
+
+  setScenario(idx: number): void {
+    if (idx < 0 || idx >= SCENARIOS.length || idx === this.scenarioIdx) {
+      return;
+    }
+    this.scenarioIdx = idx;
+    if (this.sourceKind === 'SIMULATED') {
+      this.restart();
+    }
+  }
+
+  setDemoSpeed(speed: number): void {
+    if (DEMO_SPEEDS.indexOf(speed) < 0 || speed === this.demoSpeed) {
+      return;
+    }
+    this.demoSpeed = speed;
+    if (this.sourceKind === 'SIMULATED') {
+      this.restart();
+    }
+  }
+
+  setActivityOverride(o: ActivityOverride): void {
+    this.activityOverride = o;
+    this.activity = this.currentActivity(Date.now());
+    this.applyLimits();
+  }
+
+  setGenotype(g: Genotype): void {
+    this.genotype = g;
+    this.applyLimits();
+  }
+
+  setRiskyDrugOn(on: boolean): void {
+    if (on !== this.riskyDrug.length > 0) {
+      this.toggleRiskyDrug();
+    }
+  }
+
+  async setBetaBlockerMissed(missed: boolean): Promise<boolean> {
+    return missed === this.betaBlockerMissed ? true : this.toggleMissedBetaBlocker();
+  }
+
+  /** Simulator: one event, shown once in the running line. */
+  private markSimEvent(label: string): void {
+    this.simEvent = label;
+    this.simEventAt = Date.now();
   }
 
   // ---- User responses ------------------------------------------------------------------------------------------
@@ -495,6 +566,8 @@ export class WatchController implements RulesHost {
     this.record('medication_taken', v, now);
     this.dose = forToday(this.dose, now);
     this.dose.lastDoseDay = dayKey(now);
+    this.dose.lastDoseMs = now;
+    this.doseTakenAt = now;
     this.saveDose();
     this.doseNudgeOpen = false;
   }
@@ -504,7 +577,7 @@ export class WatchController implements RulesHost {
     this.logMedication();
   }
 
-  /** Dose nudge: "Not yet" snoozes 1 h (the nudge shows at most 3 times a day: first + 2 snoozes). */
+  /** Dose nudge: "Not yet" snoozes 30 min (the nudge shows at most 3 times a day: first + 2 snoozes). */
   doseNotYet(): void {
     this.dose.snoozeUntilMs = Date.now() + NUDGE_SNOOZE_MS;
     this.saveDose();
@@ -742,7 +815,7 @@ export class WatchController implements RulesHost {
     }
     this.alertKind = 'NONE';
     this.checkInOpen = false;
-    this.notifier.alert(NOTIFY_FALL, 'Fall detected', 'Open the watch and answer within 30 s, or SOS starts.');
+    this.notifier.alert(NOTIFY_FALL, '▲ Fall detected', 'Are you OK? Answer within 30 s, or an SOS is sent.');
     this.vibrate(2000);
     Logger.info('fall countdown started');
   }
@@ -752,6 +825,7 @@ export class WatchController implements RulesHost {
     if (t === 'TIMED_OUT') {
       this.finishFall('no_response');
       this.startSos('fall');
+      this.notifier.alert(NOTIFY_FALL, '▲ Fall detected', 'No answer. Sending an SOS.');
     } else if (t === 'VIBRATE') {
       this.vibrate(600);
     }
@@ -820,7 +894,7 @@ export class WatchController implements RulesHost {
     if (!this.sos.confirmDelivery(this.sync.has('sos'))) {
       return;
     }
-    this.notifier.alert(NOTIFY_SOS, 'SOS sent', 'Open Celia on your phone for the call and message buttons.');
+    this.notifier.alert(NOTIFY_SOS, '✓ SOS sent', 'Your phone is alerting your contacts.');
     Logger.info('SOS delivered');
   }
 
@@ -840,26 +914,32 @@ export class WatchController implements RulesHost {
     this.notifyAlert(kind, bpm);
   }
 
-  /** Mirrors an alert screen as a watch notification, so it stays in the list after the screen is dismissed. */
+  /**
+   * Mirrors an alert screen as a watch notification, so it stays in the list after the screen is dismissed. Copy
+   * pattern (DESIGN.md §7): shape + title, then value + state + limit; simulated signals say SIM.
+   */
   private notifyAlert(kind: AlertKind, value: number): void {
+    const state = stateWord(this.activity).toLowerCase();
+    const at = state.length > 0 ? ` ${state}` : '';
     switch (kind) {
       case 'HIGH':
-        this.notifier.alert(NOTIFY_HR, `Heart rate high: ${value} bpm`, `Above your ${this.limitReason} limit.`);
+        this.notifier.alert(NOTIFY_HR, '▲ Heart rate high',
+          `${value} bpm${at}. Limit ${this.limitHigh}. Tap to open.`);
         break;
       case 'LOW':
-        this.notifier.alert(NOTIFY_HR, `Heart rate low: ${value} bpm`, `Below your ${this.limitReason} limit.`);
+        this.notifier.alert(NOTIFY_HR, '▼ Heart rate low', `${value} bpm${at}. Limit ${this.limitLow}. Tap to open.`);
         break;
       case 'RHYTHM':
-        this.notifier.alert(NOTIFY_HR, 'Irregular rhythm', `At ${value} bpm (simulated signal). Sit down now.`);
+        this.notifier.alert(NOTIFY_HR, '▲ Irregular rhythm', `SIM${at.length > 0 ? ` ·${at}` : ''}. Sit down now.`);
         break;
       case 'RECOVERY':
-        this.notifier.alert(NOTIFY_HR, 'Slow heart-rate recovery', this.alertText);
+        this.notifier.alert(NOTIFY_HR, '▲ Slow recovery', `-${this.recoveryDrop} bpm in 1 min. Take it easy.`);
         break;
       case 'HRV':
-        this.notifier.alert(NOTIFY_VITALS, `HRV low: ${value} ms`, 'Simulated signal. Sit down and breathe slowly.');
+        this.notifier.alert(NOTIFY_VITALS, '▲ Low HRV', `${value} ms · SIM. Rest for a few minutes.`);
         break;
       case 'SPO2':
-        this.notifier.alert(NOTIFY_VITALS, `Oxygen low: ${value}%`, 'Simulated signal. Sit up and breathe slowly.');
+        this.notifier.alert(NOTIFY_VITALS, '▲ Low oxygen', `${value}% · SIM. Sit up and breathe deeply.`);
         break;
       default:
         break;

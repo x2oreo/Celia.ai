@@ -29,6 +29,8 @@ export interface AppConfigData {
   restingBpm: number;
   /** Fast-forward factor for demo scenarios. */
   demoSpeed: number;
+  /** Scenario id selected at start (vitals/Scenarios.ets), e.g. 'tour' or 'rest'. */
+  defaultScenario: string;
   /** HR must stay out of range this long before the alert screen. */
   alertSustainSec: number;
   /** Daily medication reminder "HH:MM"; empty = off. */
@@ -53,6 +55,7 @@ export class AppConfig {
       genotype: 'UNKNOWN',
       restingBpm: 65,
       demoSpeed: 4,
+      defaultScenario: 'tour',
       alertSustainSec: 5,
       medReminderTime: '08:00',
       demoMode: false
@@ -116,6 +119,9 @@ export class AppConfig {
     }
     if (src.demoSpeed === 1 || src.demoSpeed === 2 || src.demoSpeed === 4 || src.demoSpeed === 8) {
       target.demoSpeed = src.demoSpeed;
+    }
+    if (typeof src.defaultScenario === 'string' && src.defaultScenario.length > 0) {
+      target.defaultScenario = src.defaultScenario;
     }
     if (typeof src.alertSustainSec === 'number' && src.alertSustainSec >= 1 && src.alertSustainSec <= 60) {
       target.alertSustainSec = src.alertSustainSec;
