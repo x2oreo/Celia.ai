@@ -67,7 +67,8 @@ export class VitalsService {
       w.start({
         onSample: (s: VitalsSample) => this.ingest(s),
         onAlert: (a: VitalsAlert) => this.fire(a),
-        onAnswer: (kind: string) => this.answers.emit(kind)
+        onAnswer: (kind: string) => this.answers.emit(kind),
+        onBackfill: (samples: VitalsSample[]) => this.seed(samples)
       });
       this.watch = w;
       // Same silence check as the simulated source: no watch data for a while → WATCH_DISCONNECTED.
@@ -190,6 +191,14 @@ export class VitalsService {
     if (a !== undefined) {
       this.fire(a);
     }
+  }
+
+  // Readings the watch sent before the app started: history only, so screens open with data instead of empty.
+  private seed(samples: VitalsSample[]): void {
+    const live: VitalsSample[] = this.recent.slice();
+    const oldest: number = live.length > 0 ? live[0].ts : Number.MAX_SAFE_INTEGER;
+    this.recent = samples.filter((s: VitalsSample) => s.ts < oldest).concat(live).slice(-KEEP_SAMPLES);
+    log.info(`seeded ${samples.length} recent watch readings`);
   }
 
   // Alerts from slower checks outside the per-sample rules (e.g. BetaBlockerWatch's multi-day trend).
