@@ -1,5 +1,7 @@
 # S4 notify-sos
 
+> Status (4 Oct 2026): working log of stream S4; merged into `main`, entries folded into `AI_WORKFLOW.md`. Push and contact alerts still need secrets (see [`../handoff/B_DEPLOY.md`](../handoff/B_DEPLOY.md) steps 12-13).
+
 ## Notification Kit - what was confirmed before coding (2026-10-03)
 
 Sources: the SDK's own declaration files in DevEco Studio (`sdk/default/openharmony/ets/api`, SDK API 24, each

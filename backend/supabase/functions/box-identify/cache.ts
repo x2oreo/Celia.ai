@@ -28,11 +28,12 @@ function sameAnswer(a: CacheRow, b: { brand: string; ingredients: string[] }): b
   return a.brand.trim().toLowerCase() === b.brand.trim().toLowerCase() && norm(a.ingredients) === norm(b.ingredients);
 }
 
-// What a new AI answer may do to the existing row: never replace a deterministic or a confirmed row; a different
-// unconfirmed answer replaces it with its confirmations reset to 0.
-export function aiWrite(row: CacheRow | null, next: { brand: string; ingredients: string[] }):
+// What a new AI answer may do to the existing row: never replace a fresh deterministic or confirmed row; a different
+// unconfirmed answer replaces it with its confirmations reset to 0. A stale row (past the TTL) is no longer served,
+// so it is treated like a missing one and the new answer starts again from zero votes.
+export function aiWrite(row: CacheRow | null, next: { brand: string; ingredients: string[] }, now: number):
   { write: boolean; confirmations: number } {
-  if (row === null) return { write: true, confirmations: 0 };
+  if (row === null || !isFresh(row, now)) return { write: true, confirmations: 0 };
   if (row.method !== 'AI_WEB' || row.confirmations > 0) return { write: false, confirmations: row.confirmations };
   return { write: true, confirmations: sameAnswer(row, next) ? row.confirmations : 0 };
 }

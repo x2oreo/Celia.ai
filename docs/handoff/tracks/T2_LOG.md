@@ -1,5 +1,7 @@
 # T2 log - Agent brain
 
+> Status (4 Oct 2026): working log, merged into `main` and folded into `AI_WORKFLOW.md`. Paths under `app/build/` and `backend/eval/out/` are local build output and are not in git.
+
 Branch `kaloyan/t2-agent-brain`. Newest entry last. The integrator folds this into `AI_WORKFLOW.md` and `README.md`.
 
 ## 1. New tools (brief §1)

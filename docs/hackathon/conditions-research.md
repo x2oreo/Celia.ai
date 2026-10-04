@@ -27,6 +27,8 @@ css: |-
 
 # Beyond LQTS: Conditions for a HarmonyOS Health App
 
+> Status (4 Oct 2026): historical research brief from the start of the hackathon, used to choose LQTS. Not a description of the built app.
+
 **HackYeah 2026 · Huawei "Imagine What's Next" task · Research brief**<br>
 Prepared 3 Oct 2026 · Target hardware: Huawei Watch GT 5 Pro + GT 6 Pro + HarmonyOS phone/tablet
 

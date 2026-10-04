@@ -1,0 +1,76 @@
+{
+  "note": "Voiceover and in-app voices. scripts/audio/vo.py speaks each line with Kokoro (local, Apache-2.0) into public/audio/vo/<id>.mp3 and writes src/audio/vo-timing.json. Ola is fictional.",
+  "speed": 0.94,
+  "voices": {
+    "narrator": "af_heart",
+    "agent": "af_bella",
+    "user": "bf_emma"
+  },
+  "lines": [
+    {
+      "id": "hook",
+      "voice": "narrator",
+      "text": "One in two thousand people live with Long QT syndrome. For them, hundreds of everyday medicines can trigger a dangerous heart rhythm."
+    },
+    {
+      "id": "reveal",
+      "voice": "narrator",
+      "text": "Meet Celia.ai. A heart-safety companion you can talk to."
+    },
+    {
+      "id": "ask_user",
+      "voice": "user",
+      "text": "The doctor gave me Klacid for a sinus infection."
+    },
+    {
+      "id": "ask_agent",
+      "voice": "agent",
+      "text": "Klacid is clarithromycin. It's on the known-risk list, so please don't start it before you talk to your doctor."
+    },
+    {
+      "id": "verdict",
+      "voice": "narrator",
+      "text": "The verdict comes from fixed medical data. The AI only explains it."
+    },
+    {
+      "id": "scan",
+      "voice": "narrator",
+      "text": "Or scan the box. Sixty-eight thousand Polish packs, checked right on the phone."
+    },
+    {
+      "id": "watch",
+      "voice": "narrator",
+      "text": "Your watch keeps an eye on your heart rate. When something looks off, the agent checks in."
+    },
+    {
+      "id": "emergency",
+      "voice": "narrator",
+      "text": "And if you can't answer, it speaks for you. In thirteen languages."
+    },
+    {
+      "id": "trust",
+      "voice": "narrator",
+      "text": "The safety core runs on your phone. And you see everything that leaves it."
+    },
+    {
+      "id": "end",
+      "voice": "narrator",
+      "text": "Celia.ai. Know before you take it."
+    },
+    {
+      "id": "hook_v",
+      "voice": "narrator",
+      "text": "One in two thousand people have Long QT syndrome. Everyday medicines can trigger it."
+    },
+    {
+      "id": "watch_v",
+      "voice": "narrator",
+      "text": "Your watch keeps an eye on your heart rate."
+    },
+    {
+      "id": "emergency_v",
+      "voice": "narrator",
+      "text": "If you can't answer, it speaks for you."
+    }
+  ]
+}

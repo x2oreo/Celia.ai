@@ -1,5 +1,7 @@
 # S1 accounts
 
+> Status (4 Oct 2026): working log of stream S1; merged into `main`, entry folded into `AI_WORKFLOW.md`. Deploy steps were done on 4 Oct (see [`../handoff/B_DEPLOY.md`](../handoff/B_DEPLOY.md)).
+
 ## AI_WORKFLOW entry
 ### 2026-10-04 - Georgi + Claude Code: accounts and profile backup (branch `georgi/b-accounts`)
 - Asked: brief B1 (sign up, log in, stay signed in offline) and B2 (profile saved under the account), plus the §8

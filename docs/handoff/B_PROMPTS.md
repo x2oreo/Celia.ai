@@ -1,5 +1,7 @@
 # Workstream B - agent prompts
 
+> Status (4 Oct 2026): historical - the prompts that started the Workstream B agents. Kept as a record of how we worked with AI.
+
 Paste one prompt per terminal. Start each Claude Code session **inside its worktree** (create it first with
 `scripts/worktree.sh <stream>` from the main checkout). The plan they follow is `docs/handoff/B_PLAN.md`.
 

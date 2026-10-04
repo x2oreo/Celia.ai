@@ -67,7 +67,7 @@ export class ReminderService {
       return false;
     }
     await ReminderService.mark(r, 'TAKEN');
-    log.info(`dose ${r.medName} marked taken from the notification`);
+    log.info('dose marked taken from the notification');
     return true;
   }
 
@@ -81,7 +81,7 @@ export class ReminderService {
     }
     await cancelNotify(doseNotifyId(r.id));
     await ReminderService.mark(r, 'TAKEN');
-    log.info(`dose ${r.medName} marked taken from the home-screen card`);
+    log.info('dose marked taken from the home-screen card');
     return r.medName;
   }
 
@@ -147,7 +147,7 @@ export class ReminderService {
       log.info(`valid reminders before publish: ${valid.length}`);
       try {
         const id: number = await reminderAgentManager.publishReminder(req);
-        log.info(`published reminder ${id} for ${r.medName} at ${r.hour}:${r.minute}`);
+        log.info(`published reminder ${id}`);
         return id;
       } catch (first) {
         // Some system images reject repeating alarms with buttons; retry with the minimal request.

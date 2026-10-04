@@ -1,5 +1,7 @@
 # Celia (system assistant) integration - what exists, what access it needs, how to test (A9)
 
+> Status (4 Oct 2026): the seven intents are built and compile; routing from Celia stays unverified unless the README verification table says otherwise. A2A and FunctionComponent are not built.
+
 Researched 3 October 2026 from the Huawei developer guides (Chinese edition, read through Context7:
 `insight-intent-decorator-development`, `intents-skill-all-rec-content-search`, `agent-extension-ability`,
 `hmaf-a2a-dev-guide`, `hmaf-function`). Nothing here has been run on a real phone yet. Until the Sunday 08:00 test,

@@ -1,29 +1,59 @@
 # Tasks - feature expansion (F-19..F-47)
 
-> Next wave of features after the P0 core, as implementable tasks. These are **F-19..F-47** in
-> [`PRODUCT.md`](PRODUCT.md). P0 (F-01..F-10) still comes first; pull these in after the P0 freeze-check (see
-> [`PLAN.md`](PLAN.md)). New contracts are sketched in [`ARCHITECTURE.md`](ARCHITECTURE.md) under "Proposed
-> contracts" - confirm with the owner before coding.
+> **Planning document from the hackathon; status as of 4 Oct 2026.** These are the tasks we wrote on 3 Oct for
+> features **F-19..F-47** in [PRODUCT.md](PRODUCT.md). The status table below is checked against the code in
+> `app/entry/src/main/ets/`; the task bodies further down are the original plan and were not rewritten, so their
+> file names and acceptance checkboxes can differ from what was built (use the "Built in" column). How to verify
+> each feature: [README](../README.md#how-to-verify-each-feature-emulator).
 
-## Status (3 Oct 2026)
+## Status summary
 
-Built and running on the emulator: T1–T14, T16, T17, T19, T22–T24, T27–T30, plus:
-- **T7** saved chats (Chats page, New chat, rename/delete, `start_new_chat`);
-- **T11** in-app card language picker (13 languages, saved) and card viewer wording in 13 languages;
-- **T12** encrypted short links (`share`), revocable;
-- **T13** encrypted web report + optional validated AI summary (`/doctor-summary`);
-- **T15** phone → `watch_context` → Celia watch verdict glance (cloud path; Wear Engine still not wired);
-- **T20** five more intents (LogSymptom, TakeDose, ShowPharmacyCard, AddMedication, ReadEmergencyCard);
-- **T21** reminders with in-app fallback (system reminders need an AGC quota);
-- **T23** travel banner + localised pharmacy card;
-- **T25** read card aloud (medical part only);
-- **T26** fallback: map search for hospital / pharmacy / AED (full Map Kit needs a key);
-- **T27** `log_symptom` agent tool (red flags → SOS by rule).
+| Status | Tasks |
+|---|---|
+| Done | T1-T9, T11, T12, T14, T16, T17, T19, T22-T25, T27-T30 |
+| Done with a limit | T10 (watch SOS texts in test mode until Twilio is set), T13 (parts not yet seen on screen), T15 (cloud path, not Wear Engine), T20 (Celia routing unverified), T21 (in-app fallback), T26 (map search fallback) |
+| Partly done | T18 Live View (SOS countdown only) |
+| Not built | F-16 A2A agent, F-17 caregiver tablet, F-18 Brugada / CPVT pack (core features, no task here) |
 
-Partly built / blocked by approvals: T18 Live View (scenario approval; notification fallback, no HR/verdict updates),
-T21 "Taken" button on the system reminder (quota), T10 SOS via backend SMS from the phone (contacts would leave the
-phone; share-sheet path kept). Not built: F-17 caregiver tablet, F-18 Brugada/CPVT pack, A2A agent (HMAF).
-Unit tests: 211 Hypium (phone) + 43 Hypium (watch) + 68 Deno, all green. Details: README "How to verify each feature", ARCHITECTURE capability table.
+Unit tests and their current counts: README.
+
+| Task | Feature | Status | Built in (`app/entry/src/main/ets/` unless noted) |
+|---|---|---|---|
+| T1 | F-19 Combo check vs my meds | Done | `safety/ComboRules.ets`, `drugs/DrugChecker.ets` |
+| T2 | F-20 Safer alternatives | Done | `drugs/DrugDataset.ets`, `components/VerdictCard.ets` |
+| T3 | F-21 Lookup trace + confidence | Done | `drugs/DrugChecker.ets`, `components/VerdictCard.ets` ("How we know") |
+| T4 | F-22 BG + PL brand names | Done | `drugs/DrugDataset.ets` |
+| T5 | F-23 Check history | Done | `pages/HistoryPage.ets`, `data/LocalStore.ets` |
+| T6 | F-24 Dashboard | Done as the Today tab | `pages/HomePage.ets` |
+| T7 | F-25 Saved chats | Done | `pages/ChatsPage.ets`, `agent/AgentCore.ets` |
+| T8 | F-26 Country emergency numbers | Done | `safety/EmergencyNumbers.ets`, `common/EmergencyNumbers.ets` |
+| T9 | F-27 SOS escalation | Done (30 s countdown, not 60 s) | `emergency/SosController.ets`, `pages/SosPage.ets` |
+| T10 | F-28 SOS fan-out, location, cooldown, test SOS | Done with a limit: calls and share sheet from the phone; watch SOS texts / calls via `backend/supabase/functions/sos` (test mode until Twilio secrets are set) | `emergency/SosService.ets`, `emergency/SosMessage.ets` |
+| T11 | F-29 Card in 13 languages | Done (AI-written strings, native review pending) | `common/CardStrings.ets`, `site/card/` |
+| T12 | F-30 QR + share link | Done (encrypted, revocable) | `share/ShareService.ets`, `emergency/CardLink.ets` |
+| T13 | F-31 Doctor prep by specialty | Done as doctor visits; gallery, share and web block not yet seen on screen | `doctor/*`, `pages/DoctorVisit*.ets`, `pages/NewVisitPage.ets` |
+| T14 | F-32 Rich vitals | Done (HRV, oxygen, breathing simulated and labelled) | `vitals/Metrics.ets`, `vitals/AlarmRules.ets`, `pages/MetricPage.ets` |
+| T15 | F-33 Watch notice on risky check | Done via cloud (`watch_context` → watch glance); Wear Engine not wired | `vitals/WatchContextSync.ets`, `vitals/WearNotifier.ets` |
+| T16 | F-34 Settings | Done | `pages/SettingsPage.ets` and sub-pages |
+| T17 | Brand palette | Done (v2 design) | `resources/base/element/color.json` and `resources/dark/element/color.json`, [design/DESIGN.md](design/DESIGN.md) |
+| T18 | F-35 Live View | Partly: SOS countdown card; HR / verdict updates need a scenario approval | `emergency/LiveStatus.ets` |
+| T19 | F-36 Box barcode scan | Done (Polish register, teach a barcode) | `drugs/BarcodeService.ets`, `drugs/Gs1.ets`, `drugs/GtinCatalog.ets`, `rawfile/gtin_pl.json` |
+| T20 | F-37 More Celia intents | Built, unverified (5 more, 7 total) | `insightintents/*.ets`, `resources/base/profile/insight_intent.json` |
+| T21 | F-38 Medication reminders | Done; system reminders need an AGC quota, in-app fallback | `reminders/*`, `pages/RemindersPage.ets` |
+| T22 | F-39 Genotype trigger coach | Done (tip on Today) | `coach/Coach.ets` |
+| T23 | F-40 Travel and pharmacy mode | Done (travel banner, localised pharmacy card) | `emergency/TravelService.ets`, `pages/PharmacyCardPage.ets` |
+| T24 | F-41 Bystander mode | Done | `pages/BystanderPage.ets`, `bystander/Metronome.ets` |
+| T25 | F-42 Read card aloud | Done (medical part only) | `emergency/CardSpeech.ets`, `voice/VoiceOutput.ets` |
+| T26 | F-43 Nearby help | Fallback: map search; Map Kit needs a key | `emergency/NearbyHelp.ets` |
+| T27 | F-44 Symptom diary | Done (screen + `log_symptom` tool) | `agent/tools/SymptomTools.ets`, `pages/SymptomLogPage.ets` |
+| T28 | F-45 Locked data, open card | Done (needs a device screen lock) | `common/AppLock.ets`, `components/LockScreen.ets` |
+| T29 | F-46 Privacy ledger | Done | `common/Net.ets`, `privacy/Ledger.ets`, `pages/PrivacyPage.ets` |
+| T30 | F-47 Accessible and calm UI | Done; not checked with the screen reader on | `common/Motion.ets`, `accessibilityText` across components |
+
+Added later (Workstream B, 4 Oct; not tasks in this file): accounts and profile backup, 8-step onboarding,
+emergency details and first-responder view, doctor visits, feeling diary, notification categories, watch SOS page,
+Live View, lock-screen medical ID, NFC card tag, watch pairing. See [PRODUCT.md](PRODUCT.md#6-feature-catalogue-with-status)
+and [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Feature map
 
@@ -59,9 +89,6 @@ Unit tests: 211 Hypium (phone) + 43 Hypium (watch) + 68 Deno, all green. Details
 | Locked data, open card | **T28** |
 | Privacy ledger | **T29** |
 | Accessible & calm UI | **T30** |
-
-User accounts (revised 4 Oct, Workstream B1/B2): optional email + password sign-in; the profile and medicines are
-backed up under the account and the app stays usable offline (D6). The watch is linked with a 6-digit pairing code (see `watch/README.md`).
 
 ## Conventions for every task
 
@@ -113,7 +140,7 @@ about:" - never generated by the LLM, never phrased as an instruction.
 info only) → `UNKNOWN_DRUG`. External APIs are called only from the Edge Function.
 
 **Acceptance criteria:**
-- [ ] `DrugVerdict` gains `confidence: number` (0–1) and `trace: LookupStep[]`
+- [ ] `DrugVerdict` gains `confidence: number` (0-1) and `trace: LookupStep[]`
 - [ ] Verdict card has a collapsible "How we know" row listing the steps and the source
 - [ ] Offline: trace ends at the bundled step, still correct
 
@@ -133,7 +160,7 @@ info only) → `UNKNOWN_DRUG`. External APIs are called only from the Edge Funct
 **Verification:** unit tests with Latin + Cyrillic brand names. **Dependencies:** F-05 · **Files:** `data/`, `drugs.json`, `seed.sql`
 
 ### Checkpoint A
-- [ ] `app/scripts/test.sh` green · combo banner + alternatives + "How we know" visible on emulator · works offline
+- [x] `app/scripts/test.sh` green · combo banner + alternatives + "How we know" visible on emulator · works offline
 
 ---
 
@@ -179,7 +206,7 @@ sent to `/agent` (de-identified context as today).
 **Dependencies:** F-02 · **Files:** `data/LocalStore.ets`, `agent/AgentCore.ets`, `pages/AgentPage.ets`, `pages/ConversationsPage.ets`
 
 ### Checkpoint B
-- [ ] Fresh install → 3 checks → visible in history + dashboard; chats survive restart; no crashes
+- [x] Fresh install → 3 checks → visible in history + dashboard; chats survive restart; no crashes
 
 ---
 
@@ -256,7 +283,7 @@ documented in `AI_FEATURES.md` because personal data leaves the device.
 **Dependencies:** F-08, T11 · **Files:** `pages/EmergencyPage.ets`, `components/CardQr.ets`, `backend/supabase/functions/card/`
 
 ### Checkpoint C
-- [ ] Simulated LQT2 → countdown → no tap → SOS with country number + location · card in 3 languages · QR scans
+- [x] Simulated LQT2 → countdown → no tap → SOS with country number + location · card in 3 languages · QR scans (scan from a second phone not recorded)
 
 ---
 
@@ -311,15 +338,15 @@ card language, test SOS, watch status / disconnect, clear all data (confirm).
 
 ### T17: Brand palette  · Georgi · S
 
-**Description:** Define the app palette in `resources/base|dark/element/color.json` (one red accent for heart/emergency,
+**Description:** Define the app palette in `resources/base/element/color.json` and `resources/dark/element/color.json` (one red accent for heart/emergency,
 risk colours always paired with icon + text). Keep HarmonyOS system components.
 
 **Verification:** light + dark screenshots of every tab. **Dependencies:** none · **Files:** `color.json` (base, dark)
 
 ### Checkpoint D (complete)
 - [ ] Full demo flow on emulator, no crashes, every screen has loading / empty / error states
-- [ ] ARCHITECTURE capability table honest for Location, QR, SMS, email, Wear Engine
-- [ ] README "how to verify each feature" updated; `AI_WORKFLOW.md` updated
+- [x] ARCHITECTURE capability table honest for Location, QR, SMS, email, Wear Engine
+- [x] README "how to verify each feature" updated; `AI_WORKFLOW.md` updated
 
 ---
 
@@ -462,7 +489,7 @@ Shown in SOS screen and travel mode. Offline / no key → only the country numbe
 ### T27: Symptom diary (text or voice)  · F-44 · Kaloyan + Georgi · M
 
 **Description:** "Felt dizzy after climbing stairs" → emergency pre-filter first (F-04) → else `/agent` tool
-`log_symptom` returns a `SymptomEntry` (time, symptom enum, activity, severity 1–5, free note) → validated
+`log_symptom` returns a `SymptomEntry` (time, symptom enum, activity, severity 1-5, free note) → validated
 (enum check, ranges; invalid → save raw text only) → HR window ±10 min attached from vitals → diary list +
 doctor report section.
 
@@ -516,9 +543,9 @@ values), size. "What left my phone" screen: list, filter, export, clear. Backs t
 **Dependencies:** T17 · **Files:** `components/*`, `pages/*`, `resources/base/element/float.json`
 
 ### Checkpoint E
-- [ ] Barcode → verdict, reminder fires with app closed, bystander mode from widget, symptom diary entry - all on emulator
-- [ ] Every ⚠️ kit either works or has its fallback shown and documented
-- [ ] Privacy ledger shows every request made during the demo
+- [ ] Barcode → verdict, reminder fires with app closed, bystander mode from widget, symptom diary entry - all on emulator (all except the closed-app reminder, which needs an AGC quota)
+- [x] Every ⚠️ kit either works or has its fallback shown and documented
+- [x] Privacy ledger shows every request made during the demo
 
 ---
 

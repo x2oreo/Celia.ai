@@ -1,5 +1,7 @@
 # S3 onboarding
 
+> Status (4 Oct 2026): working log of stream S3; merged into `main`, entry folded into `AI_WORKFLOW.md`.
+
 ## AI_WORKFLOW entry
 ### 2026-10-03 - Georgi + Claude Code: 8-step onboarding (branch `georgi/b-onboarding`)
 - Asked: brief B3 - a simple onboarding that still gathers everything: welcome + consent, account, about you,

@@ -1,6 +1,8 @@
 import { hilog } from '@kit.PerformanceAnalysisKit';
 
 // Single hilog domain for the whole app. Filter on device with:  hdc hilog | grep CeliaAI
+// Messages are logged as public text, so never put health data in them: no medicine names, risk levels, heart
+// rates, genotype, contacts or what the user typed. Log ids, counts and kinds instead.
 const DOMAIN: number = 0xC1A0;
 const PREFIX: string = 'CeliaAI';
 

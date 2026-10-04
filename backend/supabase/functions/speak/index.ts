@@ -3,12 +3,15 @@
 // which the app plays directly with AudioRenderer.
 
 import { env, json, openaiFetch } from '../_shared/openai.ts';
+import { aiRateLimit } from '../_shared/rateLimit.ts';
 
 const MAX_CHARS = 1500;
 const VOICE_STYLE = 'Calm, warm and clear, like a kind nurse. Steady pace. Never dramatic, even for warnings.';
 
 Deno.serve(async (req: Request): Promise<Response> => {
   if (req.method !== 'POST') return json(405, { error: 'POST only' });
+  const limited = await aiRateLimit(req, { fn: 'speak', perCaller: 60, windowSec: 600 });
+  if (limited) return limited;
   const started = Date.now();
   let text: string;
   try {

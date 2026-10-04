@@ -1,5 +1,7 @@
 # S2 emergency
 
+> Status (4 Oct 2026): working log of stream S2; merged into `main`, entry folded into `AI_WORKFLOW.md`.
+
 ## AI_WORKFLOW entry
 ### 2026-10-04 - Georgi + Claude Code: configurable emergency profile and first-responder view (branch `georgi/b-emergency`)
 - Asked: brief B4 (configurable emergency profile, card, versioned share payload) and B5 (first-responder view with

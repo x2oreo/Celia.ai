@@ -1,5 +1,7 @@
 # B-widgets: home-screen widgets v2
 
+> Status (4 Oct 2026): built and merged into `main` (widgets v2, DESIGN.md section 11).
+
 Branch `georgi/b-widgets`, based on `kaloyan/agent-home`. Spec: DESIGN.md §11 "Home-screen widgets v2".
 
 ## Goal

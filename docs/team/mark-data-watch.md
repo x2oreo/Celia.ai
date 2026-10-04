@@ -1,5 +1,7 @@
 # Mark - Database, drug data & watch integration
 
+> Status (4 Oct 2026): historical role brief. Built: Supabase backend, drug dataset, `LocalStore`, `DrugChecker`, `SimulatedSource`, `AlarmRules`. Changed: a custom watch app (`watch/`) with a cloud relay replaced phone-side Wear Engine, and the migration and data file names differ from this plan.
+
 **You own:** the Supabase backend (schema, seed, `/drug-check` function, RLS), the curated drug dataset, the
 on-device `LocalStore` (RDB), `DrugChecker`, and the whole vitals pipeline: Wear Engine (real watch) +
 SimulatedSource (emulator) + AlarmRules.

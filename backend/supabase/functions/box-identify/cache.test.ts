@@ -19,10 +19,14 @@ Deno.test('AI rows need two distinct confirmations; every row expires after 30 d
 
 Deno.test('a new AI answer never replaces a confirmed or deterministic row', () => {
   const poison = { brand: 'Nurofen', ingredients: ['acetaminophen'] };
-  assertEquals(aiWrite(row('AI_WEB', 1), poison).write, false);
-  assertEquals(aiWrite(row('PRODUCT_DB', 0), poison).write, false);
-  assertEquals(aiWrite(row('AI_WEB', 0), poison), { write: true, confirmations: 0 });
-  assertEquals(aiWrite(null, poison), { write: true, confirmations: 0 });
+  assertEquals(aiWrite(row('AI_WEB', 1), poison, NOW).write, false);
+  assertEquals(aiWrite(row('PRODUCT_DB', 0), poison, NOW).write, false);
+  assertEquals(aiWrite(row('AI_WEB', 0), poison, NOW), { write: true, confirmations: 0 });
+  assertEquals(aiWrite(null, poison, NOW), { write: true, confirmations: 0 });
+  // Past the TTL a row is no longer served, so it must not block a fresh answer either.
+  const stale = CACHE_TTL_MS + 1;
+  assertEquals(aiWrite(row('AI_WEB', 1, stale), poison, NOW), { write: true, confirmations: 0 });
+  assertEquals(aiWrite(row('PRODUCT_DB', 0, stale), poison, NOW), { write: true, confirmations: 0 });
 });
 
 Deno.test('hint loses anything that could act as instructions', () => {

@@ -1,5 +1,7 @@
 # Georgi - Mobile app & features
 
+> Status (4 Oct 2026): historical role brief from the start of the hackathon. The app it describes is built; the current state is in the README and [`../ARCHITECTURE.md`](../ARCHITECTURE.md).
+
 **You own:** the DevEco project, app shell, navigation, every screen, visual design, the onboarding flow,
 the emergency card + SOS UX, and the home-screen widget. You are the integrator: other people's services plug
 into your screens.

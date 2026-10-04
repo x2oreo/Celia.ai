@@ -1,5 +1,7 @@
 # Workstream B - parallel plan (Georgi)
 
+> Status (4 Oct 2026): historical plan. All seven streams (S1-S7) and the later widgets stream were merged into `main`; each stream's log is in [`../workflow/`](../workflow/).
+
 How Workstream B (`docs/handoff/GEORGI_account_and_emergency.md`, "the brief") is split across parallel Claude Code
 agents, each in its own git worktree and branch. Read the brief first; this file adds who does what, which files each
 stream owns, and the rules that keep seven agents from breaking each other. Deadline: Sunday 4 October 2026, 11:00.

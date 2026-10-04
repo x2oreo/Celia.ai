@@ -1,0 +1,70 @@
+{
+  "note": "Scene order and lengths in frames at 30 fps. Neighbouring scenes overlap by xfade. Read by src/copy/script.ts and scripts/audio/score.py, so picture and score share one timeline.",
+  "fps": 30,
+  "hero": {
+    "xfade": 15,
+    "scenes": [
+      {
+        "id": "hook",
+        "frames": 285
+      },
+      {
+        "id": "reveal",
+        "frames": 150
+      },
+      {
+        "id": "ask",
+        "frames": 420
+      },
+      {
+        "id": "verdict",
+        "frames": 240
+      },
+      {
+        "id": "scan",
+        "frames": 240
+      },
+      {
+        "id": "watch",
+        "frames": 285
+      },
+      {
+        "id": "emergency",
+        "frames": 285
+      },
+      {
+        "id": "trust",
+        "frames": 180
+      },
+      {
+        "id": "end",
+        "frames": 210
+      }
+    ]
+  },
+  "vertical": {
+    "xfade": 12,
+    "scenes": [
+      {
+        "id": "hook",
+        "frames": 150
+      },
+      {
+        "id": "ask",
+        "frames": 345
+      },
+      {
+        "id": "watch",
+        "frames": 180
+      },
+      {
+        "id": "emergency",
+        "frames": 165
+      },
+      {
+        "id": "end",
+        "frames": 105
+      }
+    ]
+  }
+}

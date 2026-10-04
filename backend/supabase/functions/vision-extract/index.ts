@@ -4,6 +4,7 @@
 // Request: { imageBase64: <JPEG> }. Response: { drugs: [{ name, strength, confidence }], imageQuality }.
 
 import { env, json, openaiJson, outputText } from '../_shared/openai.ts';
+import { aiRateLimit } from '../_shared/rateLimit.ts';
 
 const MAX_IMAGE_BYTES = 4_000_000;
 
@@ -43,6 +44,8 @@ interface Extracted {
 
 Deno.serve(async (req: Request): Promise<Response> => {
   if (req.method !== 'POST') return json(405, { error: 'POST only' });
+  const limited = await aiRateLimit(req, { fn: 'vision-extract', perCaller: 20, windowSec: 600 });
+  if (limited) return limited;
   const started = Date.now();
   let image: string;
   try {

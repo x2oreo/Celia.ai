@@ -1,5 +1,7 @@
 # T3 - Screens: log
 
+> Status (4 Oct 2026): working log, merged into `main` and folded into `AI_WORKFLOW.md`.
+
 Branch `kaloyan/t3-screens`. Session of 4 October 2026 (emulator "Pura 90", 127.0.0.1:5555).
 
 ## Asked

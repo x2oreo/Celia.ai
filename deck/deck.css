@@ -1,0 +1,372 @@
+/* Celia.ai submission deck (DESIGN.md §10.2c). Tokens mirror site/assets/celia.css and docs/design/DESIGN.md.
+   Every slide is drawn at 1920 × 1080 and scaled to the window by deck.js. Print gives one slide per page. */
+
+@font-face {
+  font-family: "Figtree";
+  src: url("assets/figtree-var.woff2") format("woff2");
+  font-weight: 300 900;
+  font-display: block;
+}
+
+:root {
+  --bg: #F8F5F2;
+  --surface: #FFFFFF;
+  --surface-alt: #F3EFEB;
+  --border: #ECE6E1;
+  --border-strong: #D9D1CA;
+  --divider: #F1ECE8;
+  --ink: #1F1A17;
+  --ink-2: #3D3530;
+  --ink-3: #6B625C;
+  --ink-4: #8A817B;
+  --brand: #E5484D;
+  --brand-text: #C7353A;
+  --brand-tint: #FDECEC;
+  --on-brand: #FFFFFF;
+
+  /* Warm dark (DESIGN §2.2, landing §10.2b) */
+  --dk-bg: #120E0D;
+  --dk-surface: #1F1A17;
+  --dk-border: #332C28;
+  --dk-ink: #F5F0EC;
+  --dk-ink-3: #B8AEA8;
+  --dk-ink-4: #8A817B;
+  --dk-brand: #F26B6F;
+
+  /* Watch (DESIGN §2.3) */
+  --w-black: #000000;
+  --w-button: #2A2A2A;
+
+  /* Risk language (DESIGN §3): only ever with its shape and word */
+  --known: #D92D20; --known-tint: #FEE4E2; --known-text: #B42318;
+  --possible: #F79009; --possible-tint: #FEF0C7; --possible-text: #93370D;
+  --conditional: #EAAA08; --conditional-tint: #FEF7C3; --conditional-text: #854A0E;
+  --listed: #12B76A; --listed-tint: #DCFAE6; --listed-text: #067647;
+  --unknown: #667085; --unknown-tint: #EAECF0; --unknown-text: #475467;
+
+  --r-s: 12px; --r-m: 16px; --r-ml: 20px; --r-l: 24px; --r-xl: 32px;
+  --e1: 0 8px 24px rgba(31, 26, 23, 0.14);
+  --e-device: 0 30px 60px -20px rgba(31, 26, 23, 0.35), 0 12px 24px -12px rgba(31, 26, 23, 0.2);
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+
+  --font: "Figtree", "HarmonyOS Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+
+  --pad-x: 120px;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: #0B0908;
+  color: var(--ink);
+  font: 500 28px/1.4 var(--font);
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "tnum" 1;
+  overflow: hidden;
+}
+a { color: inherit; }
+
+/* ---------------- Stage ---------------- */
+.deck { position: fixed; inset: 0; }
+.slide {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 1920px; height: 1080px;
+  margin: -540px 0 0 -960px;
+  transform: scale(var(--k, 1));
+  background: var(--bg);
+  overflow: hidden;
+  padding: 96px var(--pad-x) 88px;
+  display: flex; flex-direction: column;
+  visibility: hidden;
+}
+.slide.is-active { visibility: visible; }
+.slide.dark { background: var(--dk-bg); color: var(--dk-ink); }
+.slide.black { background: var(--w-black); color: var(--dk-ink); }
+.slide.alt { background: var(--surface-alt); }
+
+/* Coral light is the only decoration */
+.glow {
+  position: absolute; pointer-events: none; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(229, 72, 77, 0.22), rgba(229, 72, 77, 0) 100%);
+}
+.dark .glow, .black .glow { background: radial-gradient(closest-side, rgba(242, 107, 111, 0.28), rgba(242, 107, 111, 0) 100%); }
+
+/* ---------------- Type ---------------- */
+.eyebrow {
+  font: 700 20px/1 var(--mono);
+  letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--brand-text);
+  margin: 0 0 28px;
+}
+.dark .eyebrow, .black .eyebrow { color: var(--dk-brand); }
+.h1 { font-size: 80px; line-height: 1.04; font-weight: 800; letter-spacing: -0.03em; margin: 0; max-width: 1400px; text-wrap: balance; }
+.h2 { font-size: 56px; line-height: 1.08; font-weight: 800; letter-spacing: -0.025em; margin: 0; text-wrap: balance; }
+.h3 { font-size: 32px; line-height: 1.2; font-weight: 700; letter-spacing: -0.01em; margin: 0; }
+.lead { font-size: 32px; line-height: 1.45; color: var(--ink-3); margin: 24px 0 0; max-width: 1180px; text-wrap: pretty; }
+.dark .lead, .black .lead { color: var(--dk-ink-3); }
+.body { font-size: 24px; line-height: 1.45; color: var(--ink-3); margin: 0; text-wrap: pretty; }
+.dark .body, .black .body { color: var(--dk-ink-3); }
+.coral { color: var(--brand-text); }
+.dark .coral, .black .coral { color: var(--dk-brand); }
+.muted { color: var(--ink-4); }
+.mono { font-family: var(--mono); }
+.label {
+  font: 700 16px/1 var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-4);
+}
+.dark .label, .black .label { color: var(--dk-ink-4); }
+.source {
+  position: absolute; left: var(--pad-x); right: var(--pad-x); bottom: 40px;
+  font: 500 15px/1.5 var(--mono); color: var(--ink-4); padding-right: 140px;
+}
+.dark .source, .black .source { color: var(--dk-ink-4); }
+.pageno {
+  position: absolute; right: var(--pad-x); bottom: 40px;
+  font: 600 15px/1.5 var(--mono); color: var(--ink-4); letter-spacing: 0.08em;
+}
+.dark .pageno, .black .pageno { color: var(--dk-ink-4); }
+
+.wordmark { font-weight: 800; letter-spacing: -0.04em; line-height: 0.9; white-space: nowrap; }
+.wordmark .dot { color: var(--brand); }
+.dark .wordmark .dot { color: var(--dk-brand); }
+.wordmark .ai { color: var(--ink-4); font-weight: 700; }
+.dark .wordmark .ai { color: var(--dk-ink-3); }
+
+/* ---------------- Pieces ---------------- */
+.card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-l);
+  padding: 32px;
+}
+.dark .card { background: var(--dk-surface); border-color: var(--dk-border); }
+.chip {
+  display: inline-flex; align-items: center; gap: 10px;
+  height: 44px; padding: 0 18px; border-radius: 22px;
+  font: 700 18px/1 var(--font); color: var(--ink-2);
+  background: var(--surface); border: 1px solid var(--border-strong);
+}
+.dark .chip { background: var(--dk-surface); border-color: var(--dk-border); color: var(--dk-ink); }
+.chip svg { width: 22px; height: 22px; }
+.ico { width: 28px; height: 28px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+
+/* Risk badge: colour + shape + word (DESIGN §3) */
+.risk {
+  display: inline-flex; align-items: center; gap: 10px;
+  height: 44px; padding: 0 18px 0 6px; border-radius: 22px;
+  font: 800 18px/1 var(--font); letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap;
+}
+.risk svg { width: 32px; height: 32px; flex: none; }
+.risk.known { background: var(--known-tint); color: var(--known-text); }
+.risk.possible { background: var(--possible-tint); color: var(--possible-text); }
+.risk.conditional { background: var(--conditional-tint); color: var(--conditional-text); }
+.risk.listed { background: var(--listed-tint); color: var(--listed-text); }
+.risk.unknown { background: var(--unknown-tint); color: var(--unknown-text); }
+
+/* Devices: renders of the landing page mock-ups (site/index.html); the frame and bezel are in the image */
+.dev { display: block; width: 100%; height: auto; filter: drop-shadow(0 34px 44px rgba(31, 26, 23, 0.18)) drop-shadow(0 6px 12px rgba(31, 26, 23, 0.08)); }
+.dark .dev, .black .dev { filter: drop-shadow(0 40px 70px rgba(0, 0, 0, 0.6)); }
+.wimg { display: block; width: 100%; height: auto; border-radius: 50%; }
+.wimg.sm { width: 132px; flex: none; }
+.dark .wimg, .black .wimg { box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.7); }
+
+.caption-t { font-size: 24px; font-weight: 800; letter-spacing: -0.01em; margin: 0; }
+.caption-b { font-size: 19px; line-height: 1.4; color: var(--ink-3); margin: 6px 0 0; text-wrap: pretty; }
+.dark .caption-b, .black .caption-b { color: var(--dk-ink-3); }
+
+/* Placeholder for files the team drops in later */
+.slot {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+  border: 2px dashed var(--border-strong); border-radius: var(--r-xl); color: var(--ink-4);
+  font: 600 20px/1.4 var(--mono); text-align: center;
+}
+.dark .slot { border-color: var(--dk-border); color: var(--dk-ink-4); }
+
+/* No motion anywhere: the deck is submitted as a PDF. */
+
+/* ---------------- Slide: title ---------------- */
+.silk-hero { position: absolute; right: -159px; top: -89px; width: 1178px; pointer-events: none; }
+.hero-dev { position: absolute; right: 300px; top: 130px; width: 380px; }
+.hero-watch { position: absolute; left: -170px; bottom: 50px; width: 250px; }
+.fchip {
+  position: absolute; display: flex; align-items: center; gap: 14px; padding: 14px 22px 14px 16px; white-space: nowrap;
+  background: var(--surface); color: var(--ink); border-radius: 18px; box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.5);
+  font-size: 20px; line-height: 1.25;
+}
+.fchip .rs { width: 40px; height: 40px; flex: none; }
+.fchip b { display: block; font-size: 21px; font-weight: 800; }
+.fchip .known-t { color: var(--known-text); }
+.fchip.sm { padding: 10px 18px; border-radius: 22px; font-weight: 700; font-size: 18px; gap: 8px; }
+.fchip.sm .ico { width: 20px; height: 20px; stroke-width: 2.4; }
+
+/* ---------------- Slide: 1 in 2,000 ---------------- */
+.dots circle { fill: var(--ink); opacity: 0.16; }
+.dots .one { fill: var(--brand); opacity: 1; }
+.dots .one-ring { fill: none; stroke: var(--brand); stroke-width: 2; opacity: 0.45; }
+
+/* ---------------- Diagrams ---------------- */
+.dg { position: relative; }
+.dg svg.wires { position: absolute; inset: 0; overflow: visible; pointer-events: none; }
+.wire { fill: none; stroke: var(--border-strong); stroke-width: 2; }
+.wire.ink { stroke: var(--ink-3); }
+.wire.coral { stroke: var(--brand); }
+.wire.dash { stroke-dasharray: 6 7; }
+.dark .wire { stroke: #4A403A; }
+.node {
+  position: absolute; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-m);
+  padding: 18px 22px;
+}
+.node .label { display: block; margin-bottom: 10px; font-size: 14px; }
+.node b { display: block; font-size: 22px; line-height: 1.2; font-weight: 800; letter-spacing: -0.01em; color: var(--ink); }
+.node p { margin: 6px 0 0; font-size: 17px; line-height: 1.4; color: var(--ink-3); }
+.region {
+  position: absolute; border-radius: var(--r-l); border: 1.5px dashed var(--border-strong);
+}
+.region > .label { position: absolute; left: 22px; top: -9px; background: var(--bg); padding: 0 10px; font-size: 14px; }
+.wire-label {
+  position: absolute; font: 600 14px/1.3 var(--mono); color: var(--ink-3); letter-spacing: 0.02em;
+  background: var(--bg); padding: 3px 8px; border-radius: 6px; white-space: nowrap;
+}
+
+/* ---------------- Print: one slide per page, final state ---------------- */
+@page { size: 1920px 1080px; margin: 0; }
+@media print {
+  html, body { height: auto; overflow: visible; background: none; }
+  .deck { position: static; }
+  .slide {
+    position: relative; left: auto; top: auto; margin: 0; transform: none !important;
+    visibility: visible; break-after: page; page-break-after: always;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .no-print { display: none !important; }
+  .print-only { display: block !important; }
+  .play.print-only { display: flex !important; }
+}
+.print-only { display: none; }
+
+
+/* ---------------- Chrome (screen only) ---------------- */
+.hud {
+  position: fixed; left: 0; right: 0; bottom: 0; height: 3px; background: rgba(255, 255, 255, 0.06); z-index: 5;
+}
+.hud i { display: block; height: 100%; width: 0; background: var(--brand); }
+.hint {
+  position: fixed; right: 18px; bottom: 14px; z-index: 5; font: 600 12px/1 var(--mono); color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 0.06em;
+}
+.hint.gone { display: none; }
+
+.black .caption-t, .dark .caption-t { color: var(--dk-ink); }
+
+/* Drug strip (slide 6): real dataset entries with their risk shape */
+.mq-row { overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); }
+.mq-track { display: flex; gap: 14px; width: max-content; }
+.pill-med {
+  display: inline-flex; align-items: center; gap: 12px; height: 60px; padding: 0 22px 0 12px; border-radius: 30px;
+  background: var(--surface); border: 1px solid var(--border); white-space: nowrap;
+}
+.pill-med svg { width: 34px; height: 34px; }
+.pill-med b { font-size: 22px; font-weight: 700; color: var(--ink); }
+.pill-med span { font: 800 13px/1 var(--font); letter-spacing: 0.05em; text-transform: uppercase; }
+.pill-med.known span { color: var(--known-text); }
+.pill-med.possible span { color: var(--possible-text); }
+.pill-med.conditional span { color: var(--conditional-text); }
+
+/* Platform kits (slide 13) */
+.st {
+  display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px 0 8px; border-radius: 15px; flex: none;
+  font: 700 13px/1 var(--mono); letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap;
+}
+.st .ico { width: 17px; height: 17px; stroke-width: 2.2; }
+.st.ok { background: var(--ink); color: var(--on-brand); }
+.st.dev { background: var(--surface); color: var(--ink-2); border: 1.5px solid var(--ink-3); }
+.st.fb { background: var(--surface-alt); color: var(--ink-3); border: 1.5px dashed var(--border-strong); }
+
+/* Architecture + pipeline nodes */
+.chip.sm { height: 34px; padding: 0 14px; font-size: 15px; border-radius: 17px; background: var(--surface-alt); border-color: var(--border); }
+.node.mini { width: 344px; height: 92px; padding: 14px 18px; }
+.node.mini b { font-size: 20px; }
+.node.mini p { font-size: 16px; margin-top: 4px; }
+.node.step { top: 40px; width: 250px; height: 140px; }
+.node.step b { font-size: 21px; }
+.arch-list { margin: 16px 0 0; padding: 0; list-style: none; display: grid; gap: 12px; }
+.arch-list li { font-size: 18px; line-height: 1.35; color: var(--dk-ink-3); padding-left: 22px; position: relative; }
+.arch-list li::before { content: ""; position: absolute; left: 2px; top: 9px; width: 8px; height: 8px; border-radius: 50%; background: var(--dk-brand); }
+.arch-list.ink li { color: var(--ink-3); }
+.arch-list.ink li::before { background: var(--ink-3); }
+
+/* Failure cards (slide 15) */
+.fail { display: flex; gap: 20px; padding: 26px 28px; align-items: flex-start; }
+.fail .ico { width: 40px; height: 40px; stroke-width: 1.6; color: var(--ink); margin-top: 2px; }
+.fail b { display: block; font-size: 24px; font-weight: 800; letter-spacing: -0.01em; }
+.fail p { margin: 8px 0 0; font-size: 19px; line-height: 1.4; color: var(--ink-3); }
+
+/* Evidence numbers (slide 16), Clara-style columns */
+.stats > div { padding: 0 40px; border-left: 1px solid var(--border-strong); }
+.stats > div:first-child { padding-left: 0; border-left: 0; }
+.stats .label { margin: 0 0 22px; }
+.stats .num { margin: 0; font-size: 150px; line-height: 0.9; font-weight: 800; letter-spacing: -0.05em; }
+.stats .unit { margin: 14px 0 18px; font-size: 32px; font-weight: 800; color: var(--ink-3); letter-spacing: -0.01em; }
+.stats .body { font-size: 21px; }
+
+/* Roadmap (slide 18) */
+.code { font-size: 19px; color: var(--ink-2); white-space: nowrap; background: var(--surface-alt); padding: 8px 14px; border-radius: 10px; }
+.node.step { height: 150px; }
+.s-ai .h1 { max-width: none; }
+.slot[hidden], [hidden] { display: none !important; }
+
+/* ---------------- 10-slide cut ---------------- */
+.play {
+  position: absolute; z-index: 2; left: 40px; bottom: 40px; display: flex; align-items: center; gap: 20px; padding: 16px 28px 16px 16px;
+  background: rgba(18, 14, 13, 0.86); border: 1px solid var(--dk-border); border-radius: 999px; color: var(--dk-ink); text-decoration: none;
+}
+.play-btn { width: 64px; height: 64px; border-radius: 50%; background: var(--brand); color: #fff; display: grid; place-items: center; }
+.play-btn .ico { width: 30px; height: 30px; margin-left: 4px; }
+.play b { display: block; font-size: 24px; font-weight: 800; }
+.play-url { display: block; margin-top: 4px; font: 600 18px/1.2 var(--mono); color: var(--dk-brand); }
+.ink-4 { color: var(--ink-4); }
+.facts { display: grid; grid-template-columns: repeat(4, 1fr); }
+.facts > div { padding: 0 36px; border-left: 1px solid var(--border-strong); }
+.facts > div:first-child { padding-left: 0; border-left: 0; }
+.facts .label { margin: 0 0 14px; }
+.fnum { margin: 0 0 12px; font-size: 76px; line-height: 84px; font-weight: 800; letter-spacing: -0.04em; white-space: nowrap; }
+.fnum span { color: var(--ink-4); }
+.facts .body { font-size: 20px; }
+
+.flow { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.flow li { display: flex; gap: 22px; padding: 22px 26px; border: 1px solid var(--border); border-radius: var(--r-l); background: var(--surface); }
+.flow li.strong { border: 1.5px solid var(--ink); }
+.flow b { display: block; font-size: 24px; font-weight: 800; letter-spacing: -0.01em; }
+.flow p { margin: 6px 0 0; font-size: 19px; line-height: 1.4; color: var(--ink-3); }
+.fl-n { flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--surface-alt); font: 800 18px/1 var(--mono); }
+.flow li.strong .fl-n { background: var(--ink); color: var(--on-brand); }
+.risk.sm { height: 38px; font-size: 14px; padding: 0 12px 0 7px; gap: 7px; }
+.risk.sm svg { width: 24px; height: 24px; }
+
+.wstep { margin: 0; }
+.wstep .label { margin: 26px 0 8px; }
+.wstep .caption-t { font-size: 22px; }
+.wstep .caption-b { font-size: 17px; }
+
+.em-points { display: grid; grid-template-columns: repeat(3, 1fr); gap: 36px; margin-top: 40px; }
+.em-points .ico { width: 34px; height: 34px; color: var(--brand); }
+.em-points b { display: block; margin-top: 14px; font-size: 24px; font-weight: 800; }
+.em-points p { margin: 8px 0 0; font-size: 19px; line-height: 1.4; color: var(--ink-3); }
+.fails.sm .fail { padding: 18px 20px; gap: 14px; }
+.fails.sm .fail .ico { width: 30px; height: 30px; }
+.fails.sm .fail b { font-size: 20px; }
+.fails.sm .fail p { font-size: 16px; margin-top: 4px; }
+
+.chip.kc .ico { width: 16px; height: 16px; stroke-width: 2.4; margin-right: -2px; }
+.chip.kc-ok { background: var(--ink); color: var(--on-brand); border-color: var(--ink); }
+.chip.kc-dev { background: var(--surface); border: 1.5px solid var(--ink-3); }
+.chip.kc-fb { background: var(--surface-alt); border: 1.5px dashed var(--border-strong); color: var(--ink-3); }
+
+.stats.sm .label { margin: 0 0 14px; }
+.stats.sm .num { font-size: 104px; }
+.stats.sm .body { margin-top: 14px; font-size: 19px; }
+
+.t-name { margin: 0; font-size: 24px; font-weight: 800; }
+.t-role { margin: 4px 0 0; font-size: 17px; color: var(--dk-ink-3); }
+.close-orb { display: block; width: 228px; margin: -54px; }
+.play.print-only { display: none; }
+@media print { .play.print-only { display: flex !important; } }

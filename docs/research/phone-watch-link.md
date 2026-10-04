@@ -1,5 +1,7 @@
 # Phone ↔ watch link in production (B17)
 
+> Status (4 Oct 2026): research and recommendation only. The cloud relay (watch to Supabase to phone) is what runs; Wear Engine is not used.
+
 Research for brief task B17. It compares Wear Engine, distributed data objects, Push Kit to the watch, and the
 cloud relay we run today, then recommends one. Researched 2026-10-03 against the official HarmonyOS guides (EN) and
 the local SDK typings (DevEco Studio 6.1.1, API 24: `hms/ets/api/@hms.health.wearEngine.d.ts`,
@@ -19,7 +21,7 @@ we can build.
 **Recommendation:** keep the cloud relay as the production path in Europe and harden it (B9 RLS binding, B16 energy
 work), add Push Kit to the standalone watch for server → watch messages when an AGC project exists, and put Wear
 Engine behind a capability check as a China-only adapter later. Reasons: it is the only path that works in our region
-and on the emulator, it already carries every message type we need (`watch/README.md` table), and the server-side
+and on the emulator, it already carries every message type we need (root README, "Watch app"), and the server-side
 SOS dispatch (`sos` function) has to exist anyway, because neither device can text or call by itself.
 
 ## 1. The cloud relay we run today
@@ -75,7 +77,7 @@ How to apply ([wearengine_apply]):
 What it would give Celia on a Chinese device: phone → watch verdict glance without the cloud (P2P message), template
 notification "Don't take X" with an "OK" button, and, with enterprise approval, the system's own heart-rate alarm
 on the phone even when our watch app is closed (`EVENT_HEART_RATE_ALARM`). That last one is the production answer to
-"monitoring is foreground-only" (`watch/README.md` "Always-on monitoring").
+"monitoring is foreground-only" (root README, "Watch app", and `watch-background-monitoring.md`).
 
 Adapter shape if ever enabled: a `WearEngineSource implements` the phone's existing vitals source interface, chosen
 at runtime when `getConnectedDevices()` returns a watch and authorization is granted, else the cloud source.
@@ -129,4 +131,4 @@ Kit and S6's watch app signed with that profile.
 - [data-sync-of-distributed-data-object] Cross-Device Sync of Distributed Data Objects - https://developer.huawei.com/consumer/en/doc/harmonyos-guides/data-sync-of-distributed-data-object
 - [uiability-cross-device-interaction] Cross-device call invocation - https://developer.huawei.com/consumer/en/doc/harmonyos-guides/uiability-cross-device-interaction
 - Push Kit regions and wearables - https://developer.huawei.com/consumer/en/doc/harmonyos-guides/push-kit-introduction
-- Repo: `watch/README.md`, `vitals/WatchCloudSource.ets`, `backend/supabase/functions/sos/`, `docs/hackathon/conditions-research.md` §3
+- Repo: root README "Watch app", `docs/research/watch-background-monitoring.md`, `vitals/WatchCloudSource.ets`, `backend/supabase/functions/sos/`, `docs/hackathon/conditions-research.md` §3

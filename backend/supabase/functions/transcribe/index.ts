@@ -3,6 +3,7 @@
 // Response: { text }. Audio is not stored or logged.
 
 import { env, json, openaiFetch, decodeBase64 } from '../_shared/openai.ts';
+import { aiRateLimit } from '../_shared/rateLimit.ts';
 
 const MAX_AUDIO_BYTES = 2_000_000; // ~60 s of 16 kHz mono PCM16
 // Medicine names bias the recogniser toward words people actually say to Celia (gpt-transcribe "keywords").
@@ -12,6 +13,8 @@ const KEYWORDS = ['Klacid', 'clarithromycin', 'ondansetron', 'Zofran', 'azithrom
 
 Deno.serve(async (req: Request): Promise<Response> => {
   if (req.method !== 'POST') return json(405, { error: 'POST only' });
+  const limited = await aiRateLimit(req, { fn: 'transcribe', perCaller: 60, windowSec: 600 });
+  if (limited) return limited;
   const started = Date.now();
   let audio: Uint8Array<ArrayBuffer>;
   let language = '';

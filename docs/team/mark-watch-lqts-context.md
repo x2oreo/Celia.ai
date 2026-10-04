@@ -1,5 +1,7 @@
 # Mark: early watch & Long QT context notes
 
+> Status (4 Oct 2026): early background notes, kept for the hardware findings and LQTS background. See the warning below.
+
 > ⚠️ **Written before the team plan existed.** `docs/ARCHITECTURE.md`, `docs/IDEA.md` and `docs/PLAN.md` win on
 > architecture and scope: phone-side Wear Engine, on-device data, Supabase Edge Functions, no custom watch app,
 > no NestJS and no `metrics` table. Use this file for the **hardware findings (§3–4)**, the **Long QT background (§2)**

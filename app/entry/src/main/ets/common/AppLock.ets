@@ -18,6 +18,7 @@ export class AppLock {
   private static enabled: boolean = false;
   private static state: LockState = 'UNLOCKED';
   private static backgroundSince: number = -1;
+  private static authInFlight: boolean = false;
   private static listeners: Listeners<boolean> = new Listeners<boolean>();
 
   // Called at startup (EntryAbility.onCreate): lock immediately when the user turned the lock on.
@@ -32,6 +33,12 @@ export class AppLock {
 
   static isLocked(): boolean {
     return AppLock.state === 'LOCKED';
+  }
+
+  // Private pages may only open when the app is unlocked. While the lock screen is up they would sit hidden under it,
+  // and while an emergency page is open from the lock screen (no overlay) they would be shown in clear.
+  static isUnlocked(): boolean {
+    return AppLock.state === 'UNLOCKED';
   }
 
   static onLockChange(cb: Listener<boolean>): () => void {
@@ -105,6 +112,11 @@ export class AppLock {
       onDone(true);
       return;
     }
+    if (AppLock.authInFlight) {
+      // A second tap while the auth widget is up: the first request answers.
+      return;
+    }
+    AppLock.authInFlight = true;
     try {
       const challenge: Uint8Array = cryptoFramework.createRandom().generateRandomSync(16).data;
       const authParam: userAuth.AuthParam = {
@@ -116,6 +128,7 @@ export class AppLock {
       const auth: userAuth.UserAuthInstance = userAuth.getUserAuthInstance(authParam, widgetParam);
       auth.on('result', {
         onResult: (result: userAuth.UserAuthResult) => {
+          AppLock.authInFlight = false;
           const ok: boolean = result.result === userAuth.UserAuthResultCode.SUCCESS;
           if (ok) {
             AppLock.set('UNLOCKED');
@@ -125,10 +138,11 @@ export class AppLock {
       });
       auth.start();
     } catch (e) {
-      // No screen lock / biometrics set up on the device: do not lock the user out of their own data.
-      log.warn(`user auth unavailable: ${JSON.stringify(e)}`);
-      AppLock.set('UNLOCKED');
-      onDone(true);
+      // A screen lock exists (checked above), so an error here (busy, system error, bad parameter) is a failed
+      // attempt, never a free pass. The user can try again; the emergency card stays reachable.
+      AppLock.authInFlight = false;
+      log.warn(`user auth failed to start: ${JSON.stringify(e)}`);
+      onDone(false);
     }
   }
 

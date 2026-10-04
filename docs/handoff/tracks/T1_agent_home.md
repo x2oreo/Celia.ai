@@ -1,6 +1,8 @@
 # T1 - Agent home (A3 → A1 → A2)
 
-Read `docs/handoff/tracks/README.md` first (scope change, rules, emulator lock), then sections 3-7 of
+> Status (4 Oct 2026): historical track brief; done and merged into `main`. Outcome in [`T1_LOG.md`](T1_LOG.md).
+
+Read `docs/handoff/tracks/TRACKS.md` first (scope change, rules, emulator lock), then sections 3-7 of
 `docs/handoff/KALOYAN_agent_and_ui.md`. Tasks A3, A1 and A2 there are yours, in the order below.
 
 ## Files you own

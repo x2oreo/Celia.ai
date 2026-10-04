@@ -30,6 +30,8 @@
 *.hap
 *.hsp
 *.app
+# Deck PDF exports (7-26 MB each): attach them to a release instead
+deck/*.pdf
 
 # Logs / dumps
 *.log

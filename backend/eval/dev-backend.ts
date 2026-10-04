@@ -1,6 +1,6 @@
 // Local backend for testing the app on the emulator without deploying: starts the AI Edge Functions and serves
 // them at http://127.0.0.1:8000/functions/v1/<name>, the same paths the app calls on Supabase.
-// Calls go to the real OpenAI API and cost money. See README.md → "Emulator against a local backend".
+// Calls go to the real OpenAI API and cost money. See the root README → "Run the backend locally for the emulator".
 const FN_DIR = new URL('../supabase/functions/', import.meta.url).pathname;
 const WRAP = new URL('./fn-wrap.ts', import.meta.url).pathname;
 // drug-check and box-identify need the Supabase database (label/box caches), so they are not served here.

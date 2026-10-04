@@ -1,5 +1,7 @@
 # Watch data for the phone and the agent
 
+> Status (4 Oct 2026): current reference. The views are in `backend/supabase/migrations/`; per the README, `watch_vitals_daily` is not deployed to the live project yet.
+
 The watch (`watch/`) uploads to `watch_metrics`. These read-only Supabase views turn it into something the phone
 and the agent can use with one GET each (anon key, filter by `device_id`, demo device `demo-watch-1`). Rows with
 `simulated = true` are demo data: label them in the UI.

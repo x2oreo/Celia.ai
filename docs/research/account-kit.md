@@ -1,5 +1,7 @@
 # HUAWEI ID sign-in with Account Kit (B18)
 
+> Status (4 Oct 2026): research only. HUAWEI ID sign-in is not built (no `huawei-signin` function, no Account Kit calls in the app); email + password via Supabase Auth is what ships.
+
 Research for brief task B18: HUAWEI ID as a second sign-in method next to S1's Supabase email + password. Written so
 S1 (owner of `account/*` and `AuthForm`) or S4 can implement it without re-researching. Researched 2026-10-03 against
 the official HarmonyOS guides and references (EN), Huawei's live OIDC discovery document, and the local SDK typings

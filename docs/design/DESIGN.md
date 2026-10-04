@@ -17,6 +17,57 @@ Units: lengths in `vp`, font sizes in `fp` (ArkUI). The design file uses px/dp, 
 
 ---
 
+## Contents
+
+- [1. Principles](#1-principles)
+- [2. Colour](#2-colour)
+  - [2.1 Brand and neutrals (light)](#21-brand-and-neutrals-light)
+  - [2.1a Chat and status resources (in `color.json`)](#21a-chat-and-status-resources-in-colorjson)
+  - [2.2 Dark mode (phone)](#22-dark-mode-phone)
+  - [2.3 Watch (true-black AMOLED only)](#23-watch-true-black-amoled-only)
+- [3. Risk language (fixed, semantic)](#3-risk-language-fixed-semantic)
+- [4. Typography](#4-typography)
+- [5. Spacing, radius, elevation](#5-spacing-radius-elevation)
+  - [5.1 Spacing (8 vp grid, with 4 and 12 half-steps)](#51-spacing-8-vp-grid-with-4-and-12-half-steps)
+  - [5.2 Radius](#52-radius)
+  - [5.3 Elevation](#53-elevation)
+  - [5.4 Touch targets](#54-touch-targets)
+- [6. Components](#6-components)
+  - [6.1 Buttons](#61-buttons)
+  - [6.2 Heart-rate chip and source badge](#62-heart-rate-chip-and-source-badge)
+  - [6.3 Chat bubbles and quick replies](#63-chat-bubbles-and-quick-replies)
+  - [6.4 Verdict card](#64-verdict-card)
+  - [6.5 Tab bar](#65-tab-bar)
+  - [6.6 Agent avatar: the silk orb](#66-agent-avatar-the-silk-orb)
+  - [6.6a Voice orb (hero of the conversation)](#66a-voice-orb-hero-of-the-conversation)
+  - [6.6b Icons: Lucide](#66b-icons-lucide)
+  - [6.7 States](#67-states)
+  - [6.8 Tool steps and agent cards](#68-tool-steps-and-agent-cards)
+  - [6.9 Medicine cards, detail sheet and dose status](#69-medicine-cards-detail-sheet-and-dose-status)
+  - [6.10 Health charts and the status box](#610-health-charts-and-the-status-box)
+  - [6.11 Settings list (grouped rows)](#611-settings-list-grouped-rows)
+- [7. Watch](#7-watch)
+- [8. Motion](#8-motion)
+- [9. Voice and content](#9-voice-and-content)
+- [10. Locked layout and screen specs](#10-locked-layout-and-screen-specs)
+  - [10.1 Direction (locked)](#101-direction-locked)
+  - [10.1a v2 layout (current direction)](#101a-v2-layout-current-direction)
+  - [10.2 Screens without a drawing (derived)](#102-screens-without-a-drawing-derived)
+  - [10.2a Shared web pages (opened from a link on any device)](#102a-shared-web-pages-opened-from-a-link-on-any-device)
+  - [10.2b Landing page (`site/index.html`)](#102b-landing-page-siteindexhtml)
+  - [10.2c Submission deck (`deck/index.html`)](#102c-submission-deck-deckindexhtml)
+  - [10.3 Still open](#103-still-open)
+  - [10.4 Extra resource names](#104-extra-resource-names)
+- [11. Workstream B screens](#11-workstream-b-screens)
+  - [Doctor visits and feeling diary (S5, B6/B15)](#doctor-visits-and-feeling-diary-s5-b6b15)
+  - [SOS sent state (S4, B8)](#sos-sent-state-s4-b8)
+  - [Accounts (S1, B1/B2)](#accounts-s1-b1b2)
+  - [Emergency details and first-responder view (S2, B4/B5)](#emergency-details-and-first-responder-view-s2-b4b5)
+  - [Onboarding (S3, B3)](#onboarding-s3-b3)
+  - [Home-screen widgets v2 (B-widgets)](#home-screen-widgets-v2-b-widgets)
+
+---
+
 ## 1. Principles
 
 | Principle | Meaning |
@@ -970,21 +1021,56 @@ cannot (blur, canvas, scroll-linked motion). It must still read as Celia: same t
 - **Rhythm of surfaces**: warm dark (`#120E0D`, from 2.2) for the hero, agent and closing; true black for the watch;
   `bg` / `surface_alt` for medicines, emergency and report. Coral light (orb glow, radial washes) is the only
   decoration. Risk colours still appear only on risk badges and emergencies.
-- **Signature**: the heartbeat field. A canvas behind the hero orb: a dot grid that a coral pulse ring sweeps through
-  on a lub-dub rhythm (~1.1 s), and that bends away from the cursor. It is a ripple, never an ECG trace.
+- **Orb**: the silk orb of 6.6, ported line for line to the web (`site/assets/silk-orb.js` ← `SilkOrb.ets`: same
+  Dawn palette, bands, blobs, soft edge, halo and state looks). Live canvas at hero (440), agent dock (104), tab bar
+  (56, four bands) and closing (140); inline sizes (24 / 40 / 56) are the still Dawn gradient with the sheen. No
+  rings and no orbit arc around it, anywhere.
+- **Signature**: the breathing field. A canvas behind the hero orb: a dot grid that one soft coral wave sweeps
+  through with each breath of the orb (4 s), and that bends away from the cursor. A single slow wave, never a double
+  beat, never an ECG trace.
 - **Type**: Figtree (self-hosted) as the stand-in for HarmonyOS Sans. Headlines reveal word by word (blur 10 px →
   0, rise 0.4em, 60 ms stagger); the context statement fills word by word as you scroll.
+- **Screens are the v2 screens** (10.1a, `docs/design/v2/`), drawn at 360 × 780 and scaled: Today in the hero,
+  Medicines in the medicine check, the agent stage, Emergency and Doctor visit. Watches are the v2 watch (§7,
+  `docs/design/v2-watches/`), drawn at 466 px from one renderer so every watch on the page is the same face.
 - **Storytelling**: the medicine check is a pinned phone (desktop) whose screen moves through Type → Scan → Photo →
-  Verdict as the steps scroll past. The agent conversation plays once when it enters view (live words, tool steps,
-  then the answer), with the orb label stating each state.
+  Verdict as the steps scroll past. The agent stage plays once when it enters view, as the user sees it: empty stage,
+  a starter chip is tapped, then live captions ("You: …", the agent's sentence lighting up word by word from 30%,
+  the QT-list step pill, the verdict card sliding in) while the dock label and the orb state follow. "Play again"
+  appears only after the whole exchange. The watch plays All good → Near your max → Above your max → check-in →
+  SOS countdown (10 s) → SOS sent, with clickable steps, and a gallery of five more v2 faces below.
 - **Interaction**: floating nav pill that changes theme over dark sections and slides an indicator to the active
   link; 3D tilt that follows the cursor on the hero phone and the emergency card; cursor spotlight on cards; the
   emergency card switches through the 13 card languages from `site/card/data.js`; a CPR metronome at 110 / min.
-- **Data**: the medicine marquee lists real entries from the dataset with their risk shape. Example numbers in the
-  report are labelled `SIMULATED`.
+- **Data**: the medicine marquee lists real entries from the dataset with their risk shape. The resting heart rate
+  chart is labelled `SIMULATED` and agrees with the Doctor visit brief next to it; watch faces with scripted data
+  carry `DEMO DATA` / `SIM` as on the watch. Icons are Lucide (6.6b) from the same set as the app.
 - **Motion**: Lenis smooth scroll + GSAP ScrollTrigger, both self-hosted (CSP is `'self'`). Entrances ease out
-  (`cubic-bezier(0.23, 1, 0.32, 1)`), 600–900 ms; loops only where they mean something (heartbeat, orb, scan line,
+  (`cubic-bezier(0.23, 1, 0.32, 1)`), 600–900 ms; loops only where they mean something (orb breath, scan line,
   metronome). `prefers-reduced-motion`: no smooth scroll, no scrub, no loops, everything visible.
+
+### 10.2c Submission deck (`deck/index.html`)
+
+The pitch deck for the jury: **10 slides**, read alone. A web page like the landing (10.2b), so web-only effects are
+allowed, and it still reads as Celia: same tokens, silk orb, risk language and voice.
+
+- **Canvas**: 1920 × 1080 slides scaled to the window; arrows / click to move, `P` prints one slide per page (PDF).
+- **Order**: title · problem · solution · medicine check + agent · demo · watch · emergency + bad day · platform +
+  wiring · evidence + AI workflow · team + close. One idea per slide; merge rather than add.
+- **Rhythm of surfaces**: `bg` for content slides; warm dark `#120E0D` for title, demo and close; true black only
+  behind the watch. Coral glow is the only decoration.
+- **Type**: Figtree only (self-hosted, stand-in for HarmonyOS Sans). Mono caps eyebrows in `brand-text`, +0.22em.
+  Big statement numbers in ink; at most one coral number per slide.
+- **Devices**: renders of the landing page's phone and watch mock-ups (10.2b is the newest design), captured at 3×
+  with the frame and bezel included, corners masked to the 58/384 frame radius. Never re-drawn by hand.
+- **Orb**: a still render of the silk orb (`site/assets/silk-orb.js`, §6.6), never a heartbeat or a double pulse.
+- **Diagrams**: inline SVG; 2 px `border-strong` wires, mono labels, 16 px nodes, dashed region = optional cloud,
+  `surface-alt` region = offline core. Every medical number carries a source line.
+- **Motion**: none. The deck is submitted as a PDF (`P` or headless print → 10 pages), so nothing animates: static
+  orb, static drug strip, the demo shown as its poster with a link.
+- **Sport & Healthcare variant** (`deck/sport-health.html`, `deck/sport.css`): the same deck reframed for the
+  category. Order: title · problem · solution · sport (run chart with the moving limit) · medicine check · demo ·
+  watch + emergency · market + fit (rings, gap table) · business model + go-to-market · team + close. Extra styles only in `sport.css`, tokens only.
 
 ### 10.3 Still open
 

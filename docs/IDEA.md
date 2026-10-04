@@ -1,111 +1,134 @@
 # Celia.ai - the idea
 
-> Working name. **Naming risk:** "Celia" is the international name of Huawei's own system assistant (小艺 / Xiaoyi).
-> Using it for our product is ambiguous (judges are Huawei). Options: keep `Celia.ai` as repo name and give our agent
-> its own persona name, *integrating with* Huawei's Celia via Intents Kit. Decide in the first hour.
-> Below: **"the agent"** = our in-app agent; **"Celia"** = Huawei's system assistant.
+> **Status (4 Oct 2026, final hackathon day):** built and running on the HarmonyOS emulator (API 20+). Items that
+> need a real phone, a watch or a platform approval are marked "built, unverified". The per-feature check list is
+> the README table [How to verify each feature](../README.md#how-to-verify-each-feature-emulator); the full product
+> description is [PRODUCT.md](PRODUCT.md).
+
+**Naming.** "Celia" is also the international name of Huawei's system assistant (小艺 / Xiaoyi). We keep
+`Celia.ai` as the product name, call our in-app assistant **"the agent"** in the UI, and integrate *with* Huawei's
+Celia through Intents Kit. Below, "the agent" = our in-app agent; "Celia" = Huawei's system assistant.
 
 ## One-liner
 
-An **agent-first heart-safety companion for people with Long QT syndrome** on HarmonyOS: an AI agent you can talk
-to about your syndrome, that checks every medicine before you take it, watches your heart through your Huawei watch,
+An **agent-first heart-safety companion for people with Long QT syndrome** on HarmonyOS: an agent you talk to
+about your condition, that checks every medicine before you take it, watches your heart rate through a watch app,
 and takes over in an emergency. The safety core (verdicts, emergency card, profile) works fully offline; cloud
 features are optional and every request the phone makes is listed in an on-phone ledger.
 
 ## Problem
 
-- **Long QT syndrome (LQTS)**: inherited ion-channel disease, ~1 in 2,000 people. Can trigger *torsades de pointes*
-  → fainting or sudden cardiac death, often in young people.
-- Triggers are known and preventable: **hundreds of common drugs prolong QT** (antibiotics, antiemetics,
-  antidepressants, antihistamines…), low potassium/magnesium (vomiting, diarrhoea), and genotype-specific triggers
-  (LQT1 exercise/swimming, LQT2 sudden noise/emotion, LQT3 rest/sleep).
-- Patients have to remember all this alone, at the pharmacy, abroad, or at the ER - where staff may not know LQTS.
+- **Long QT syndrome (LQTS)** is an inherited ion-channel disease in about 1 in 2,000 people. It can trigger
+  *torsades de pointes*: fainting or sudden cardiac death, often in young people.
+- The triggers are known and mostly preventable: **hundreds of common drugs prolong QT** (antibiotics,
+  antiemetics, antidepressants, antihistamines), low potassium or magnesium (vomiting, diarrhoea), and
+  genotype-specific triggers (LQT1 exercise and swimming, LQT2 sudden noise and emotion, LQT3 rest and sleep).
+- Patients carry all of this alone: at the pharmacy, abroad, at the dentist, or in an ER where staff may not know
+  LQTS.
 
-## Solution - an agent at the centre, the ecosystem around it
+## User story
 
-| Layer | What it does | HarmonyOS capability |
-|---|---|---|
-| **Agent (chat + voice)** | Talk about your syndrome, meds, symptoms, "can I take this?", "what do I do now?" Agent calls tools; never invents a medical verdict | In-app LLM agent; **Intents Kit** so Celia can call us; (stretch) **Agent Framework Kit A2A** |
-| **Medicine check** | Type, say, or **photograph** a box → active ingredient → deterministic QT-risk verdict → agent explains + drafts question for doctor | **Core Vision OCR** (on-device), Scan Kit (barcode) |
-| **Watch guard** | Live heart rate + heart-rate alarm events from the Huawei watch; abnormal → agent proactively checks in, watch gets an alert | **Wear Engine Kit** (sensor + monitor + notify clients) |
-| **Emergency mode** | Emergency card (diagnosis, drugs to avoid, ICE contacts), one-tap 112, card readable by paramedics | Home **widget (Form Kit)**, notifications, (stretch) Live View |
-| **Daily companion** | Dose reminders, genotype trigger coach, symptom diary, travel & pharmacy card, privacy ledger | reminderAgentManager, Location Kit, Intents Kit |
-| **Doctor / caregiver** | Event log + doctor report; (stretch) caregiver tablet gets alerts device-to-device | ArkData RDB, (stretch) distributed data object / continuation |
-
-**Digital sovereignty angle (matches the task's Oniro/Europe framing):** the deterministic core (drug
-verdicts, emergency card, profile, medicines, chats) runs and is stored on the phone and needs no network. Cloud
-features are optional: watch metrics go to our Supabase project keyed by a device id, and the agent, voice and photo
-paths go through our Edge Functions to OpenAI. With an account, the profile (including name and contacts) and the
-medicine list are backed up to the user's own row in our Supabase project, readable only by that login and deletable
-from Settings; without one they never leave the phone, and nothing personal ever goes to the AI. The full list is in
-`AI_FEATURES.md` §3 and the README "What leaves the phone" table.
+> Anna, 24, has LQT2. Her dentist prescribes an antibiotic. At the pharmacy she points her phone at the box: the
+> app reads the barcode, finds clarithromycin and shows **Known risk** in red, with the reason, safer options to
+> ask about, and an interaction warning against the escitalopram she already takes. The agent explains it in plain
+> words and adds it to her next doctor visit. That night her watch sees a sudden heart-rate spike at rest: the
+> phone asks "Are you OK?" for 30 seconds, then offers to call 112 and her mother, and shows a card that tells the
+> paramedic what not to give her.
 
 ## Who uses it
 
-- **Primary:** person with diagnosed LQTS (and their parents, if the patient is a child/teen).
-- **Secondary:** pharmacist/ER staff reading the emergency card; cardiologist reading the report.
+| User | What they get |
+|---|---|
+| Person with diagnosed LQTS (or the parent of a child with LQTS) | Medicine checks, reminders, heart-rate watch, agent, SOS |
+| Pharmacist, ER staff, bystander | Emergency card (13 languages, QR link, first-responder view, CPR help) |
+| Cardiologist, dentist, GP | Doctor-visit page: "please don't prescribe" list, medicines, symptoms, heart summary |
 
-## Challenge areas (task asks for ≥1; combining is a plus)
+## Solution - an agent at the centre, the ecosystem around it
 
-- **Human-Centric Technology** - quality of life, safety for a vulnerable group. *Primary.*
-- **Intelligent Experiences** - agent, on-device OCR, contextual (vitals-aware) proactive help. *Primary.*
-- **Spatial** - light touch only (location sent with SOS). Don't force it.
+| Layer | What it does (as built) | HarmonyOS capability |
+|---|---|---|
+| **Agent (voice + text)** | Talk or type about your condition, medicines, symptoms and plans. 18 on-device tools (check a drug, log a symptom or dose, open screens, prepare a doctor visit, start SOS). Emergency words skip the model. | In-app agent (OpenAI via our Edge Functions), Intents Kit so Celia can call us |
+| **Medicine check** | Type, scan a barcode, or photograph a box → active ingredient → deterministic QT-risk verdict, interactions with my medicines, safer alternatives, "How we know" trace | Scan Kit, Core Vision text recognition (on-device) |
+| **Heart watch** | Watch app streams heart rate and simple metrics; fixed rules per genotype raise alerts; the phone checks in | Wearable app (API 20+) → Supabase → phone; phone-side simulation on the emulator, labelled `SIMULATED` |
+| **Emergency** | Emergency card, 30 s "Are you OK?" SOS countdown, call 112 / contacts, first-responder view, CPR metronome, pharmacy card, nearby help | Live View, notifications, NFC tag write, Form Kit widgets (incl. lock-screen medical ID) |
+| **Daily companion** | Dose reminders, genotype tip of the day, symptom log and feeling diary, travel banner, app lock, privacy ledger | reminderAgentManager, Location Kit, User Authentication Kit |
+| **Doctor visits** | Per-visit page for a kind of doctor, encrypted share link, optional validated AI summary | Local storage + Supabase Storage (encrypted on the phone) |
 
-## Scope rules (from the judging criteria)
+**Digital sovereignty angle** (matches the task's Oniro/Europe framing): the deterministic core (drug verdicts,
+emergency card, profile, medicines, chats) runs and is stored on the phone and needs no network. Cloud features
+are optional: watch metrics go to our Supabase project (EU), and the agent, voice and photo paths go through our
+Edge Functions to OpenAI. With an account, the profile and medicines are backed up to the user's own row,
+readable only by that login and deletable from Settings. The full list is in
+[AI_FEATURES.md](../AI_FEATURES.md) section 3 and the README "What leaves the phone" table.
 
-1. "Working narrow solution > broad concept" → **LQTS only** for the build. Brugada/CPVT = one slide "condition
-   packs" (architecture supports it, drug list is data).
-2. **Verdicts are deterministic** (curated drug list). The LLM explains and chooses tools. Wrong/invalid model output
-   → typed validation → safe fallback. We demo this on purpose.
-3. **Everything core runs on the emulator** (judges' default). Watch = real-device bonus with a simulated vitals
-   source on the emulator, clearly labelled.
-4. Everything is built fresh in this repo; third-party data/libraries (e.g. CredibleMeds-derived drug list) are cited
-   in README + AI_WORKFLOW.md.
+## Challenge areas (the task asks for at least one)
 
-## MVP features (priority)
+- **Human-Centric Technology** - quality of life and safety for a vulnerable group. *Primary.*
+- **Intelligent Experiences** - agent with tools, on-device OCR and barcode, vitals-aware proactive help. *Primary.*
+- **Spatial** - light touch only (location in the SOS message, travel banner, nearby help).
 
-**P0 - must work in the demo**
-1. Onboarding: condition (LQTS + genotype LQT1/2/3/unknown), current meds, ICE contacts, emergency notes.
-2. Agent chat (text; voice if Core Speech works in English) with tools: `check_drug`, `get_my_meds`,
-   `add_med`, `get_vitals_summary`, `show_emergency_card`, `start_emergency`, `explain_condition`.
-3. Medicine check: type name **and** photo of box (on-device OCR) → verdict card (Known risk / Possible risk /
-   Conditional / Not listed) + explanation + "ask your doctor" text.
-4. Emergency card screen + SOS flow (call 112 / ICE, show card).
-5. Vitals: live HR from watch (real device) **or** simulated scenarios (emulator); rules engine → alert → agent
-   proactive message.
+## Scope rules we kept
 
-**P1 - strong extras**
-6. **Intents Kit**: `CheckDrugSafety`, `ShowEmergencyCard` - "Celia, can I take ibuprofen?"
-7. Home-screen **widget**: emergency card / last med check.
-8. Watch notification via Wear Engine on alarm ("Heart rate high - open the app").
-9. Doctor report (event log + meds + flagged drugs) as shareable page/PDF.
+1. **Working narrow solution over broad concept:** LQTS only. Brugada / CPVT are a "condition packs" idea, not
+   built.
+2. **Verdicts are deterministic** (curated drug list + fixed interaction rules). The LLM explains and chooses
+   tools. Invalid model output → typed validation → safe fallback. Unit-tested.
+3. **Everything core runs on the emulator.** Heart data on the emulator is simulated and labelled so.
+4. **Built fresh in this repo.** Third-party data and libraries are cited in README and `AI_WORKFLOW.md`.
 
-**P2 - only if ahead**
-10. A2A agent (AgentExtensionAbility) so Celia can hold a conversation with our agent.
-11. Caregiver tablet: distributed alert / app continuation.
-12. Brugada/CPVT condition pack (data + 1 rule).
+## What is built (summary)
+
+| Area | Status |
+|---|---|
+| Welcome, account (optional), 8-step onboarding | Built, seen on the emulator |
+| v2 layout: Today · Medicines · orb (agent stage) · Health · Emergency | Built, seen on the emulator |
+| Drug check by name, interactions, alternatives, barcode (Polish register, about 68k packs), teach-a-barcode | Built, seen on the emulator |
+| Photo of a box (agent camera button) | Built; gallery fallback seen on the emulator, camera capture unverified |
+| Agent: text, voice (live and tap-to-talk), saved chats, page tools, confirm-before-write dose logging | Built; dose confirmation card unit-tested only |
+| Health tab: per-metric cards and pages, trends from the cloud | Built; with simulated rows only (no real watch rows yet) |
+| SOS countdown, watch SOS, Live View, notifications per kind | Built; Live View and notification buttons unverified on a real phone |
+| Emergency card (13 languages, QR link, read aloud, NFC write), first-responder view, pharmacy card, nearby help | Built; NFC unverified (needs hardware) |
+| Doctor visits (gallery, visit page, share, AI summary) | Built; gallery cards, share and web block not yet seen on screen |
+| Reminders, symptom log, feeling diary, coach tip, travel banner, app lock, privacy ledger | Built |
+| Seven home-screen widgets (incl. lock-screen medical ID) | Built; lock-screen placement unverified |
+| Seven Celia intents (`insight_intent.json`) | Built and compiled; routing from Celia unverified (needs a real phone with Celia) |
+| Watch app (wearable emulator): heart rate, alerts, check-in, fall → SOS, 6-digit pairing | Built, runs on the wearable emulator |
+
+## Not built / next
+
+| Item | Why not / what it needs |
+|---|---|
+| A2A agent (Agent Framework Kit `AgentExtensionAbility`) so Celia can hold a conversation with our agent | Not built; HMAF availability outside China unclear |
+| Wear Engine on a real Huawei watch | Not wired; GT watches have no network API, and the team had no HarmonyOS phone to pair. Wrist alerts fall back to a phone notification + haptic |
+| Caregiver tablet (distributed alert / continuation) | Not built |
+| Brugada / CPVT condition pack | Not built (the drug list is data, so it is a data task) |
+| In-app Map Kit map | Needs a Map Kit key; the app opens a map search instead |
+| System reminder "Taken" button | Needs an AppGallery Connect quota; in-app fallback works while the app runs |
+| Real SMS / calls from the `sos` function | Needs Twilio secrets on the server; until then it records a test run |
+| Sick-day electrolyte guard, QTc log, family screening leaflet | Ideas only |
 
 ## Demo story (3 min)
 
-1. Hook: "Hundreds of everyday drugs can stop the heart of 1 in 2,000 people. They usually find out in the ER."
-2. **Agent:** "Hi, I've got a sinus infection, the doctor gave me this." → photograph box (clarithromycin) → 🔴
-   *Known risk of torsades* → agent explains, suggests asking about alternatives, adds note to doctor report.
-3. **Celia (system):** "Celia, can I take ondansetron?" → our intent answers without opening the app.
-4. **Watch:** teammate's heart rate (or simulated LQT2 scenario) spikes → watch buzzes → agent: "I noticed your
-   heart rate jumped to 165 while resting. Are you OK? Did you faint?" → user: "I feel dizzy" → agent starts
-   emergency mode: card + 112.
-5. **Robustness:** show the model returning garbage → app falls back to the deterministic answer (tests in repo).
-6. Close: offline safety core, ledger of what leaves the phone, open platform, condition packs next.
+1. **Hook:** "Hundreds of everyday drugs can stop the heart of 1 in 2,000 people. They usually find out in the ER."
+2. **Agent:** "The dentist gave me this" → scan or photograph the box (clarithromycin) → **Known risk** → the agent
+   explains, offers alternatives to ask about, and the visit page picks it up.
+3. **Celia (system):** "Celia, can I take ondansetron?" → our intent answers from the deterministic check (needs a
+   real phone with Celia; otherwise shown as built).
+4. **Watch:** a simulated LQT2 scenario spikes the heart rate → alert → 30 s "Are you OK?" → call 112 / contacts,
+   emergency card and first-responder view.
+5. **Robustness:** the model returns garbage or reassurance about a risky drug → the app drops it and shows the
+   deterministic answer (unit tests in the repo).
+6. **Close:** offline safety core, ledger of what leaves the phone, condition packs next.
 
 ## Judging map
 
 | Criterion (weight) | How we score |
 |---|---|
-| Originality 20% | Agent-first + watch-aware + system-callable medicine safety; not another symptom tracker |
-| Usefulness 20% | Narrow, real user (LQTS), concrete preventable harm, works end-to-end |
-| Technical execution 20% | Deterministic verdicts, schema-validated LLM output, error/timeouts handled, unit tests, no secrets |
-| Platform capabilities 20% | Wear Engine, Core Vision OCR, Intents Kit (+ HMAF), Form widget, RDB, notifications |
-| Demo 10% | Real app on emulator + real watch on borrowed device; label what's simulated |
-| Reproducibility 10% | README with versions, `.hap` in releases, frequent commits, AI_WORKFLOW.md |
+| Originality 20% | Agent-first, watch-aware, system-callable medicine safety; not another symptom tracker |
+| Usefulness 20% | Narrow real user (LQTS), concrete preventable harm, works end to end |
+| Technical execution 20% | Deterministic verdicts, validated LLM output, timeouts and fallbacks, unit tests (app, watch, backend), no secrets |
+| Platform capabilities 20% | Intents Kit, Form Kit widgets, Live View, Scan Kit, Core Vision, NFC, reminders, User Authentication, Location, wearable app |
+| Demo 10% | Real app on the emulator plus the watch app on the wearable emulator; simulated parts labelled |
+| Reproducibility 10% | README with versions and scripts, `.hap`, frequent commits, `AI_WORKFLOW.md` |
 
 *Not a medical device. Decision support only; always "ask your doctor or pharmacist".*

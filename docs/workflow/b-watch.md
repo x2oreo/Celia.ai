@@ -1,5 +1,7 @@
 # S6 watch
 
+> Status (4 Oct 2026): working log of stream S6; merged into `main`, entry folded into `AI_WORKFLOW.md`. `watch/.env` and `watch/build/` are local files, not in git.
+
 ## AI_WORKFLOW entry
 ### 2026-10-04 - Georgi + Claude Code: watch internals, energy, background research (branch `georgi/b-watch`)
 - Asked: brief B16 - a build-and-install script for the watch, split `WatchController` (sensors, rules, SOS, sync,

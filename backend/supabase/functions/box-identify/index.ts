@@ -14,6 +14,7 @@ import { type Candidate, type ResolveDeps, resolveHit } from './resolve.ts';
 import { AI_PROMPT_VERSION, hasAi, translateInn, webIdentify } from './ai.ts';
 import { aiWrite, cleanHint, servable } from './cache.ts';
 import { clientIp } from '../_shared/clientIp.ts';
+import { aiRateLimit } from '../_shared/rateLimit.ts';
 
 interface Row {
   gtin: string; brand: string; ingredients: string[]; unresolved: string[]; strength: string; form: string;
@@ -80,7 +81,7 @@ async function deep(db: SupabaseClient, gtin: string, country: string, hint: str
   }
   const candidate: Candidate = { ...c, method: 'AI_WEB' };
   const row = await cached(db, gtin);
-  const w = aiWrite(row, candidate);
+  const w = aiWrite(row, candidate, Date.now());
   if (w.write) {
     if (row !== null && w.confirmations === 0) {
       await db.from('box_confirmations').delete().eq('gtin', gtin);   // a different answer starts from zero votes
@@ -133,6 +134,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
   const key = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? Deno.env.get('SUPABASE_SECRET_KEY') ?? '';
   const db = createClient(Deno.env.get('SUPABASE_URL')!, key);
   const stage = body.action === 'confirm' ? 'confirm' : body.stage === 'deep' ? 'deep' : 'fast';
+  if (stage === 'deep' && hasAi()) {
+    const limited = await aiRateLimit(req, { fn: 'box-deep', perCaller: 20, windowSec: 600 });
+    if (limited) return limited;
+  }
   const res = stage === 'confirm' ? await confirm(db, req, gtin, body)
     : stage === 'deep' ? await deep(db, gtin, country, cleanHint(body.hint))
     : await fast(db, gtin, country);

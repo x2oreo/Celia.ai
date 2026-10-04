@@ -1,5 +1,7 @@
 # Prompt: AI layer test agent
 
+> Status (4 Oct 2026): historical prompt. The AI layer it tests (branch `kaloyan/ai-layer`) is on `main`; the eval harness is in `backend/eval/`.
+
 Paste everything below the line into a fresh Claude Code session started in the repo root.
 
 ---

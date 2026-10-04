@@ -1,5 +1,7 @@
 # Workstream A - Agent experience and UI/UX redesign (Kaloyan)
 
+> Status (4 Oct 2026): historical brief. A1-A6, A10 and A11 (proposal) were done through the tracks in [`tracks/`](tracks/TRACKS.md). A9: the seven intents are built, routing from Celia is unverified; A2A and FunctionComponent are not built. A7 (watch look) and A8 (dark mode) moved to the owner's v2 design, which is on `main`.
+
 You are an agent working in the Celia.ai repo. This file is your whole brief. Read it fully, then read `CLAUDE.md`
 and `docs/design/DESIGN.md` before touching code. A second agent works in parallel on Workstream B
 (`docs/handoff/GEORGI_account_and_emergency.md`): accounts, onboarding, emergency, notifications, platform

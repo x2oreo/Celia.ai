@@ -1,8 +1,31 @@
-# Regression pass - 3 Oct 2026 (branch `app_development`)
+# Regression pass - 3 Oct 2026
 
-After finishing the features the docs still listed as missing (TASKS T7, T11–T13, T15, T20, T22, T23, T25–T27, T29,
+> **Record of the regression pass on 3 Oct 2026** (branch `app_development`). Numbers and screens below are from
+> that day; current test counts and the per-feature check list are in the
+> [README](../README.md#how-to-verify-each-feature-emulator). Status of the open findings was re-checked against
+> the code on 4 Oct.
+
+After finishing the features the docs still listed as missing (TASKS T7, T11-T13, T15, T20, T22, T23, T25-T27, T29,
 T30), we checked that nothing else broke. Several Claude Code sessions worked in the same tree that afternoon (box
 barcode identification, encrypted share links, medicine info); this pass covers the combined tree.
+
+## How to run a regression pass
+
+All commands from the repo root. `source app/env.sh` first puts `hvigorw`, `ohpm` and `hdc` on the PATH.
+
+| Step | Command | Expected |
+|---|---|---|
+| 1. Phone unit tests (Hypium, no device) | `app/scripts/test.sh` | summary with 0 failures; non-zero exit on failure |
+| 2. Backend unit tests (Deno) | `npx -y deno test --no-lock backend/supabase/functions/` | 0 failed |
+| 3. Backend type check | `npx -y deno check --no-lock backend/supabase/functions/*/index.ts` | clean |
+| 4. Watch unit tests | `cd watch && source env.sh && hvigorw test -p module=entry -p coverage=false --no-daemon` | 0 failures |
+| 5. Accounts RLS (throw-away local Postgres) | `backend/supabase/tests/run-rls.sh` | `ALL ACCOUNTS RLS CHECKS PASSED` |
+| 6. Emulator up and locked (several worktrees share one emulator) | `app/scripts/emu.sh up` then `app/scripts/emu.sh lock <name>` | "Emulator up." / lock taken |
+| 7. Build, install, launch, screenshot | `app/scripts/run.sh` | screenshot in `app/build/screenshot.jpeg` |
+| 8. Walk the flows from the terminal | `app/scripts/ui.sh list`, `ui.sh tapt "Medicines"`, `ui.sh shot <file>` | screens as in the README table |
+| 9. Release the emulator | `app/scripts/emu.sh unlock` | - |
+
+With the watch emulator also attached, set `HDC_TARGET=127.0.0.1:5555` for `run.sh` and `ui.sh`.
 
 ## Automated
 
@@ -11,23 +34,25 @@ barcode identification, encrypted share links, medicine info); this pass covers 
 | App unit tests (Hypium, local) | `app/scripts/test.sh` | **188 run, 0 failures** (was 157 with 3 failures + 2 errors at the start) |
 | Backend unit tests (Deno) | `npx -y deno test --no-lock backend/supabase/functions/` | **59 passed, 0 failed** |
 | Backend type check | `npx -y deno check --no-lock backend/supabase/functions/*/index.ts` | clean |
-| Strict ArkTS build | `hvigorw … assembleHap` | BUILD SUCCESSFUL, no new warnings (8 pre-existing warnings in `share/ShareCrypto.ets`) |
+| Strict ArkTS build | `hvigorw --mode module -p module=entry@default -p product=default assembleHap --no-daemon` (inside `app/`) | BUILD SUCCESSFUL, no new warnings (8 pre-existing warnings in `share/ShareCrypto.ets`) |
 
 The 5 failures at the start came from the tests themselves: the "offline" agent suites called the real backend set
 in the developer's `LocalConfig.ets`. `Config.forceOffline(true)` in `test/List.test.ets` makes them independent.
 
-## On the emulator (Pura 90, API 24) - screenshots in `app/build/regression/` (not committed)
+## On the emulator (Pura 90, API 24)
+
+Screenshots were saved to `app/build/regression/` (not committed).
 
 | Flow | Result |
 |---|---|
-| Launch → Home | ✅ ring, status chips, agent card, interactions, **tip of the day** card (`TIP FOR LQT2`) |
+| Launch → Home (before the v2 layout) | ✅ ring, status chips, agent card, interactions, **tip of the day** card (`TIP FOR LQT2`) |
 | Medicines → medicine sheet | ✅ risk band, what it's for, tips, interactions with my medicines (DESIGN §6.9) |
 | Emergency → nearby help, card language, read aloud | ✅ chips for 13 languages, Polish card renders; **bug found and fixed:** card labels (Genotype, Medicines…) stayed in the old language - `@Builder` params are by value, the card is now keyed on the language |
 | Emergency → QR → encrypted short link | ✅ `celia-share.vercel.app/card/#<id>.<key>` generated live; **bug found and fixed:** the hint said "nothing is uploaded" for the encrypted link |
 | Remove this link → confirm dialog | ✅ dialog with Cancel / Remove link (danger) |
 | Card language persists | ✅ Polish still selected after reinstall |
 
-Not walked on the emulator this time, because you were using it by hand (box scan in progress): chats, reminders,
+Not walked on the emulator this time, because a teammate was using it by hand (box scan in progress): chats, reminders,
 doctor prep summary, symptom log via chat, SOS countdown, bystander, settings/ledger, widgets, intents. Their logic
 is covered by the unit tests above; run them with `app/scripts/run.sh` + `app/scripts/ui.sh` when the emulator is free.
 
@@ -39,19 +64,16 @@ is covered by the unit tests above; run them with `app/scripts/run.sh` + `app/sc
 | Removed/unknown link, pl + de | ✅ title, emergency line and call button translated |
 | Report page XSS (bpm/day from a crafted payload) | fixed and verified live by the share session |
 
-## Findings still open
+## Findings from this pass
 
-1. **Deploys needed** (you said you deploy): `agent` + `realtime-session` (new `log_symptom` tool, prompt 2026-10-03.4),
-   `med-info` (prefix-matching banned-words filter), new `doctor-summary`, the Vercel site (card wording in 13
-   languages), and GitHub Pages (now publishes only `card/` + `assets/`).
-2. The agent greets "Morning, Anna" at 01:10 (greeting by hour looks off at night).
-3. Card viewer: the one-line explanation under "This card link was replaced or removed" is still English.
-4. The 13-language page strings in `site/card/index.html` and the medicine tips in `drugs/DrugInfo.ets` were written
-   by AI - have a native speaker / the team review them before the demo.
-5. Needs approvals or a real device: Live View HR/verdict updates (AGC scenario), "Taken" button on system reminders
-   (AGC quota), Wear Engine, Map Kit in-app map, Celia routing of the 7 intents, on-device English TTS.
-6. Not built by decision: SOS SMS from the phone via the backend (contacts would leave the phone), F-17 caregiver
-   tablet, F-18 Brugada/CPVT pack, A2A agent.
+| # | Finding | Status (4 Oct, from the code) |
+|---|---|---|
+| 1 | Deploys needed: `agent` + `realtime-session` (new `log_symptom` tool), `med-info`, new `doctor-summary`, Vercel site, GitHub Pages | Deployed on 3 Oct (see below); later agent prompt changes need another deploy (README) |
+| 2 | The agent greeted "Morning, Anna" at 01:10 | Fixed: between 00:00 and 05:00 the greeting is plain "Hi" (`components/agent/AgentLogic.ets`) |
+| 3 | Card viewer: the line under "This card link was replaced or removed" is still English | Open: `goneBody` in `site/card/index.html` is not in the translation table |
+| 4 | The 13-language strings in `site/card/index.html` and the medicine tips in `drugs/DrugInfo.ets` were written by AI | Open: needs a native speaker / team review |
+| 5 | Needs approvals or a real device: Live View HR / verdict updates, "Taken" on system reminders (AGC quota), Wear Engine, Map Kit in-app map, Celia routing of the 7 intents, on-device English TTS | Open (built, unverified or fallback) |
+| 6 | Not built by decision: SOS SMS from the phone via the backend, F-17 caregiver tablet, F-18 Brugada / CPVT pack, A2A agent | Still not built. Since then the watch SOS goes through the `sos` function to contacts the user opted in (Settings → Account) |
 
 ## Code + security review fixes (same day)
 

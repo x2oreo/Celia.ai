@@ -1,0 +1,100 @@
+/* Sport & Healthcare deck (sport-health.html): extra pieces on top of deck.css. Same tokens, no new colours. */
+
+
+/* Slide 4: a run, the limit that moves with it, and the rules beside it */
+.sp-chart { position: relative; width: 1080px; flex: none; padding: 28px 40px 18px; }
+.sp-chart svg { display: block; margin-top: 10px; overflow: visible; }
+.sp-key { margin: 0; display: flex; align-items: center; gap: 10px; font: 700 16px/1 var(--font); color: var(--ink-3); }
+.sp-key i { display: inline-block; width: 28px; height: 0; border-top: 4px solid var(--ink); border-radius: 2px; }
+.sp-key i.lim { border-top: 3px dashed var(--brand); margin-left: 18px; }
+.sp-band { fill: var(--surface-alt); }
+.sp-grid line { stroke: var(--divider); stroke-width: 1.5; }
+.sp-ax text { font: 600 14px/1 var(--mono); fill: var(--ink-4); text-anchor: end; }
+.sp-ax text[text-anchor="start"] { text-anchor: start; }
+.sp-t { font: 700 13px/1 var(--mono); letter-spacing: 0.14em; fill: var(--ink-4); }
+.sp-lt { font: 700 15px/1 var(--mono); fill: var(--brand-text); }
+.sp-lim { fill: none; stroke: var(--brand); stroke-width: 3; stroke-dasharray: 9 7; }
+.sp-hr { fill: none; stroke: var(--ink); stroke-width: 4.5; stroke-linejoin: round; stroke-linecap: round; }
+.sp-dot { fill: var(--known); stroke: var(--surface); stroke-width: 4; }
+.sp-dot.amber { fill: var(--possible); }
+.sp-rec { stroke: var(--ink-4); stroke-width: 1.5; stroke-dasharray: 3 4; }
+.sp-call {
+  position: absolute; display: flex; align-items: center; gap: 12px; padding: 12px 18px 12px 12px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-l); box-shadow: var(--e1);
+  font-size: 16px; line-height: 1.3; color: var(--ink-3);
+}
+.sp-call .rs { width: 34px; height: 34px; flex: none; }
+.sp-call b { display: block; font-size: 18px; font-weight: 800; color: var(--ink); }
+
+.sp-feats { flex: 1; display: grid; gap: 30px; align-content: start; padding-top: 8px; }
+.sp-feats > div { display: flex; gap: 20px; }
+.sp-feats .ico { width: 34px; height: 34px; color: var(--brand); margin-top: 2px; }
+.sp-feats b { display: block; font-size: 24px; font-weight: 800; letter-spacing: -0.01em; }
+.sp-feats p { margin: 6px 0 0; font-size: 19px; line-height: 1.4; color: var(--ink-3); }
+
+.sp-coach { display: flex; align-items: center; gap: 12px; margin-top: 34px; }
+.sp-coach .label { margin-right: 10px; }
+.sp-coach .chip.sm { height: 40px; font-size: 16px; padding: 0 16px 0 12px; gap: 8px; background: var(--surface); }
+.sp-coach .chip .ico { width: 20px; height: 20px; stroke-width: 2; }
+
+/* Slide 5: real sport-bag medicines from the dataset */
+.sp-kit { display: flex; flex-wrap: wrap; gap: 10px; }
+
+/* Slide 9: who it helps */
+.sp-who { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-top: 48px; }
+.sp-who .card { padding: 28px 28px 30px; }
+.sp-who .ico { width: 38px; height: 38px; color: var(--brand); stroke-width: 1.7; }
+.sp-who .label { display: block; margin: 20px 0 8px; }
+.sp-who b { display: block; font-size: 28px; font-weight: 800; letter-spacing: -0.015em; }
+.sp-who p { margin: 8px 0 0; font-size: 19px; line-height: 1.4; color: var(--ink-3); }
+.sp-lead { fill: none; stroke: var(--ink-4); stroke-width: 1.5; stroke-dasharray: 3 4; }
+
+/* Slide 7 (dark): emergency points under the watch steps */
+.sp-dk .ico { color: var(--dk-brand); }
+.sp-dk b { color: var(--dk-ink); }
+.sp-dk p { color: var(--dk-ink-3); }
+.sp-bad { position: relative; margin: 18px 0 40px; padding-top: 18px; border-top: 1px solid var(--dk-border); font-size: 18px; color: var(--dk-ink-3); }
+.sp-bad .label { margin-right: 18px; }
+
+/* Slide 8: market rings and the gap table */
+.sp-mkt { width: 600px; flex: none; }
+.sp-mkt svg { display: block; }
+.m-out { fill: var(--surface-alt); }
+.m-mid { fill: var(--border); }
+.m-in { fill: var(--brand); }
+.m-n { font: 800 48px/1 var(--font); letter-spacing: -0.03em; fill: var(--ink); text-anchor: middle; }
+.m-l { font: 700 14px/1 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; fill: var(--ink-3); text-anchor: middle; }
+.m-n.in, .m-l.in { fill: var(--on-brand); }
+.m-n.in { font-size: 36px; }
+.m-l.in { font-size: 11px; }
+.sp-more { list-style: none; margin: 26px 0 0; padding: 0; display: grid; gap: 12px; }
+.sp-more li { font-size: 19px; line-height: 1.4; color: var(--ink-3); }
+.sp-more b { color: var(--ink); }
+
+.sp-tbl { width: 100%; border-collapse: collapse; font-size: 18px; }
+.sp-tbl th { font: 700 13px/1.25 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-4); padding: 0 10px 14px; text-align: center; vertical-align: bottom; }
+.sp-tbl td { padding: 13px 10px; border-top: 1px solid var(--border); text-align: center; color: var(--ink-4); font-size: 20px; }
+.sp-tbl td:first-child { text-align: left; color: var(--ink-2); font-size: 19px; font-weight: 600; padding-left: 0; }
+.sp-tbl .me { background: var(--surface); }
+.sp-tbl th.me { color: var(--brand-text); border-radius: var(--r-s) var(--r-s) 0 0; padding-top: 14px; }
+.sp-tbl td.y { color: var(--brand); font-size: 22px; }
+.sp-tbl td.h { color: var(--ink-3); }
+.sp-tkey { margin: 12px 0 0; font: 600 14px/1 var(--mono); color: var(--ink-4); }
+.sp-why { margin-top: 26px; padding: 22px 28px; }
+.sp-why .label { display: block; margin-bottom: 8px; }
+.sp-why p { margin: 0; font-size: 19px; line-height: 1.45; color: var(--ink-3); }
+
+/* Slide 9: plans, go-to-market, traction */
+.sp-plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 44px; }
+.sp-plans .card { padding: 28px 32px; }
+.sp-plans .card.strong { border: 1.5px solid var(--ink); }
+.sp-plans .label { display: block; }
+.sp-price { margin: 14px 0 6px; font-size: 56px; line-height: 1; font-weight: 800; letter-spacing: -0.04em; }
+.sp-price span { font-size: 20px; font-weight: 700; color: var(--ink-4); letter-spacing: 0; }
+.sp-plans b { display: block; font-size: 24px; font-weight: 800; margin-top: 14px; }
+.sp-plans p:last-child { margin: 6px 0 0; font-size: 18px; line-height: 1.4; color: var(--ink-3); }
+.node.sp-ph { top: 10px; width: 536px; height: 170px; }
+.node.sp-ph b { font-size: 22px; }
+.sp-trac { position: absolute; left: var(--pad-x); right: var(--pad-x); bottom: 76px; display: flex; align-items: center; gap: 32px; padding: 20px 30px; font-size: 19px; color: var(--ink-3); }
+.sp-trac b { font-size: 30px; font-weight: 800; color: var(--ink); letter-spacing: -0.02em; margin-right: 4px; }
+.sp-trac b.coral { color: var(--brand-text); }

@@ -1,0 +1,8 @@
+node_modules/
+out/
+.remotion/
+.audio-venv/
+.asr-venv/
+.audio-models/
+public/audio/**/*.wav
+public/audio/*.wav

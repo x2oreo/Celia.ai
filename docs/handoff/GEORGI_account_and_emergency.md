@@ -1,5 +1,7 @@
 # Workstream B - Accounts, onboarding, emergency and platform integrations (Georgi)
 
+> Status (4 Oct 2026): historical brief. B1-B10 and B12-B16 are built and merged (see the README verification table; Push and the real-phone parts of Live View, NFC and lock screen are unverified). B11: stage 1 only (one-way Twilio call), dry run until secrets are set. B17 and B18: research only in [`../research/`](../research/); HUAWEI ID sign-in is not built.
+
 You are an agent working in the Celia.ai repo. This file is your whole brief. Read it fully, then read `CLAUDE.md`
 and `docs/design/DESIGN.md` before touching code. A second agent works in parallel on Workstream A
 (`docs/handoff/KALOYAN_agent_and_ui.md`): the agent screen, the orb, navigation and the visual pass over the app.

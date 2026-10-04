@@ -110,7 +110,7 @@ export struct OnboardingPage {
     this.finishing = true;
     const profile: Profile = finalProfile(this.draft);
     await LocalStore.get().saveProfile(profile);
-    log.info(`profile saved: ${profile.genotype}, ${this.meds.length} meds, ${profile.contacts.length} contacts, ` +
+    log.info(`profile saved: ${this.meds.length} meds, ${profile.contacts.length} contacts, ` +
       `onboarding took ${Math.round((Date.now() - this.startedAt) / 1000)} s`);
     this.navStack.clear();
   }

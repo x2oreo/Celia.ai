@@ -63,7 +63,7 @@ export class BetaBlockerWatch {
       VitalsService.get().report(alert);
       const reply: AgentReply = { text: alert.message, actions: [], fallback: false };
       AgentCore.get().pushProactive(reply);
-      log.info(`asked about ${f.med.name}: baseline ${f.baselineBpm}, evidence ${f.evidence}${label}`);
+      log.info(`asked about a beta-blocker dose${label}`);
       return f;
     } catch (e) {
       log.warn(`check failed: ${JSON.stringify(e)}`);

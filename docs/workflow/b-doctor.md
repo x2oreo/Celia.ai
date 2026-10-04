@@ -1,5 +1,7 @@
 # S5 doctor
 
+> Status (4 Oct 2026): working log of stream S5; merged into `main`, entry folded into `AI_WORKFLOW.md`.
+
 ## AI_WORKFLOW entry
 ### 2026-10-03 - Georgi + Claude Code: doctor visits with questions (B6) and feeling diary (B15) (branch `georgi/b-doctor`)
 - Asked: saved doctor visits (specialty, date, reason, worries → deterministic brief → AI summary), names and

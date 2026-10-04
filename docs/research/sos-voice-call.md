@@ -1,5 +1,7 @@
 # SOS voice call to emergency contacts (B11)
 
+> Status (4 Oct 2026): stage 1 is built (`sos/twilio.ts` places a one-way call that reads the alert). Stages 2 and 3 are not built. Without Twilio secrets the `sos` function records a dry run.
+
 Design for brief task B11, after reviewing the team's earlier project **Heartbeat / QTShield**
 ([x2oreo/heartbeat](https://github.com/x2oreo/heartbeat), commit `fc7d4b8`), which the brief calls "Cardbeat". Written
 so whoever owns `backend/supabase/functions/sos/` (S4) can implement it stage by stage. Researched 2026-10-03 against

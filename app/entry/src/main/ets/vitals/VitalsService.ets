@@ -216,7 +216,7 @@ export class VitalsService {
     if (this.recentAlerts.length > KEEP_ALERTS) {
       this.recentAlerts.shift();
     }
-    log.info(`alert ${a.kind} ${a.severity ?? ''} hr=${a.hr}`);
+    log.info(`alert ${a.kind} ${a.severity ?? ''}`);
     LocalStore.get().logEvent('VITALS_ALERT', JSON.stringify(a));
     this.alerts.emit(a);
   }

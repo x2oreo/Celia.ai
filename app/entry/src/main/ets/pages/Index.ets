@@ -62,11 +62,18 @@ import { RouteRequest } from '../common/RouteRequest';
 import { AgentReply, EmergencyPayload, UiAction } from '../model/AgentTypes';
 import { DrugIntake, symptomAfterDrugText } from '../drugs/DrugIntake';
 
+// Pages a stranger may open from the lock screen: they show only the emergency card and first-aid facts.
+function isEmergencyRoute(route: string): boolean {
+  return route === Routes.SOS || route === Routes.BYSTANDER || route === Routes.RESPONDER;
+}
+
 @Entry
 @ComponentV2
 struct Index {
   @Provider('navStack') navStack: NavPathStack = new NavPathStack();
   @Local locked: boolean = false;
+  // A private page asked for while the app is locked (or showing only the emergency card): opened after unlock.
+  private deferredRoute: string = '';
   // Heart-rate check-in sheet (design B3)
   @Local checkIn: boolean = false;
   @Local checkInText: string = '';
@@ -95,6 +102,11 @@ struct Index {
     TravelService.detect();   // only with location already allowed; never asks
     AppLock.onLockChange((locked: boolean) => {
       this.locked = locked;
+      if (AppLock.isUnlocked() && this.deferredRoute !== '') {
+        const route: string = this.deferredRoute;
+        this.deferredRoute = '';
+        this.openRoute(route);
+      }
     });
     this.locked = AppLock.isLocked();
     ReminderService.handleLaunch();
@@ -130,6 +142,10 @@ struct Index {
     if (route === '') {
       return;
     }
+    if (!AppLock.isUnlocked() && !isEmergencyRoute(route)) {
+      this.deferredRoute = route;
+      return;
+    }
     const names: string[] = this.navStack.getAllPathName();
     if (names.length > 0 && names[names.length - 1] === route) {
       return;
@@ -145,6 +161,10 @@ struct Index {
 
   // "Ask the agent" from anywhere: bring the stage to the front (once). A running SOS stays where it is.
   private openChat(): void {
+    if (!AppLock.isUnlocked()) {
+      this.deferredRoute = Routes.AGENT_CHAT;
+      return;
+    }
     if (this.chatInFront() || this.navStack.getAllPathName().includes(Routes.SOS)) {
       return;
     }

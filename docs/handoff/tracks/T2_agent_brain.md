@@ -1,6 +1,8 @@
 # T2 - Agent brain (A4, then A10)
 
-Read `docs/handoff/tracks/README.md` first (scope change, rules, emulator lock), then sections 3-7 of
+> Status (4 Oct 2026): historical track brief; done and merged into `main`. Outcome in [`T2_LOG.md`](T2_LOG.md).
+
+Read `docs/handoff/tracks/TRACKS.md` first (scope change, rules, emulator lock), then sections 3-7 of
 `docs/handoff/KALOYAN_agent_and_ui.md`. Task A4 there is yours, then A10.
 
 ## Files you own

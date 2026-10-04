@@ -17,6 +17,7 @@
     document.body.classList.add('is-ready');
   }
   if (gsap && ST) gsap.registerPlugin(ST);
+  if (window.SilkOrb) window.SilkOrb.mountAll();
 
   function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
   function onVisible(el, cb, threshold) {
@@ -37,17 +38,6 @@
     var probe = new Image();
     probe.onload = function () { img.src = img.getAttribute('data-src'); fill(img); };
     probe.src = img.getAttribute('data-src');
-  });
-  document.querySelectorAll('video[data-src]').forEach(function (video) {
-    var poster = video.getAttribute('data-poster');
-    if (poster) {
-      var p = new Image();
-      p.onload = function () { video.poster = poster; };
-      p.src = poster;
-    }
-    video.addEventListener('loadedmetadata', function () { fill(video); }, { once: true });
-    video.preload = 'metadata';
-    video.src = video.getAttribute('data-src');
   });
 
   /* ---------------- Smooth scroll ---------------- */
@@ -184,8 +174,8 @@
   onScroll();
 
   /* ---------------- Heartbeat field (canvas) ---------------- */
-  // A dot grid that a coral pulse sweeps through on a lub-dub rhythm and that bends away from the cursor.
-  // It is a ripple from the orb, never a trace of a heart signal.
+  // A dot grid that one soft wave sweeps through with each breath of the orb (4 s) and that bends away from the
+  // cursor. A single slow wave, never a double beat, never a trace of a heart signal (DESIGN §6.6).
   function Field(canvas, center, host) {
     var ctx = canvas.getContext('2d');
     var dots = [];
@@ -194,7 +184,7 @@
     var mouse = { x: -9999, y: -9999 };
     var running = false;
     var lastBeat = 0;
-    var GAP = 30, PERIOD = 1100, SPEED = 0.42, WIDTH = 30;
+    var GAP = 30, PERIOD = 4000, SPEED = 0.2, WIDTH = 46;
 
     function resize() {
       W = canvas.clientWidth; H = canvas.clientHeight;
@@ -215,7 +205,6 @@
       if (now - lastBeat > PERIOD) {
         lastBeat = now;
         waves.push({ t: now, s: 1 });
-        setTimeout(function () { waves.push({ t: performance.now(), s: 0.55 }); }, 190);
       }
       draw(now);
       requestAnimationFrame(frame);
@@ -273,7 +262,7 @@
   }
   var heroSec = document.querySelector('.hero');
   var closeSec = document.querySelector('.closing');
-  if ($('heroField')) Field($('heroField'), document.querySelector('.orb-hero'), heroSec);
+  if ($('heroField')) Field($('heroField'), $('heroSilk'), heroSec);
   if ($('closeField')) Field($('closeField'), $('closeOrb'), closeSec);
 
   /* ---------------- Hero: 3D tilt + depth parallax ---------------- */
@@ -307,7 +296,7 @@
 
   // Illustrative heart rate on the drawn screens.
   (function () {
-    var els = [$('heroBpm'), $('heroWatchBpm'), $('watchBpm')].filter(Boolean);
+    var els = [$('heroBpm')].filter(Boolean);
     if (reduce || !els.length) return;
     setInterval(function () {
       if (document.hidden) return;
@@ -455,134 +444,241 @@
     });
   }
 
-  /* ---------------- Agent conversation ---------------- */
-  (function () {
-    var convo = $('convo'), orb = $('voiceOrb'), label = $('voiceLabel');
-    if (!convo || !orb) return;
-    var user = $('cUser'), s1 = $('cStep1'), s2 = $('cStep2'), agent = $('cAgent'), card = $('cCard'), replay = $('cReplay');
-    var mode = 'off', amp = 0, token = 0, looping = false;
+  /* ---------------- Watch v2 faces (DESIGN §7, v2-watches) ---------------- */
+  // One renderer for every watch on the page, so the hero, and the sequence draw the same face.
+  var ZONE = { calm: '#12B76A', elev: '#FDB022', alert: '#F04438', brand: '#F26B6F' };
+  var GAUGE = 80.56;   // 290° of the circle, open at the bottom
+  function bezel(mode, zone, frac) {
+    var c = ZONE[zone] || ZONE.calm;
+    var o = '<svg class="bezel" viewBox="0 0 466 466" aria-hidden="true">';
+    if (mode === 'gauge') {
+      o += '<circle class="trk" cx="233" cy="233" r="213" pathLength="100" stroke-dasharray="' + GAUGE + ' 100" transform="rotate(125 233 233)"/>';
+      o += '<circle cx="233" cy="233" r="213" pathLength="100" stroke="' + c + '" stroke-dasharray="' + (GAUGE * frac).toFixed(2) + ' 100" transform="rotate(125 233 233)"/>';
+    } else if (mode === 'ring' || mode === 'count') {
+      o += '<circle class="trk" cx="233" cy="233" r="213"/>';
+      o += '<circle class="arc" cx="233" cy="233" r="213" pathLength="100" stroke="' + c + '" stroke-dasharray="100 100" stroke-dashoffset="0" transform="rotate(-90 233 233)"/>';
+    } else {
+      o += '<circle class="trk" cx="233" cy="233" r="213"/>';
+    }
+    return o + '</svg>';
+  }
+  function gaugeFrac(bpm) { return Math.max(0.02, Math.min(1, (bpm - 45) / (110 - 45))); }
+  var FACES = {
+    home: { label: 'Watch home: 72 beats per minute, all good, at rest, max 110.', zone: 'calm',
+      html: function () { return bezel('gauge', 'calm', gaugeFrac(72)) + '<div class="wf-in"><span class="w-badge">DEMO DATA</span><span class="w-status" style="color:#12B76A;margin-top:10px"><i class="w-dot"></i>All good</span><span class="w-hero">72</span><span class="w-unit">bpm</span><span class="w-line">At rest · max 110</span><div class="w-chips"><span class="w-chip">LQT2</span><span class="w-chip">Phone ✓</span></div></div><div class="w-dots"><i class="on"></i><i></i><i></i><i></i><i></i></div>'; } },
+    near: { label: 'Near your max: 104 beats per minute at rest, max 110.', zone: 'elev',
+      html: function () { return bezel('gauge', 'elev', gaugeFrac(104)) + '<div class="wf-in"><span class="w-badge">DEMO DATA</span><span class="w-status" style="color:#FDB022;margin-top:10px">▲ Near your max</span><span class="w-hero">104</span><span class="w-unit">bpm</span><span class="w-line">At rest · max 110</span><div class="w-chips"><span class="w-chip">LQT2</span><span class="w-chip">Syncing…</span></div></div><div class="w-dots"><i class="on"></i><i></i><i></i><i></i><i></i></div>'; } },
+    high: { label: 'Heart rate high: 165 beats per minute at rest. Limit 110, LQT2 at rest. I\'m OK or Need help.', zone: 'alert',
+      html: function () { return bezel('ring', 'alert') + '<div class="wf-in"><span class="w-cap" style="color:#F97066">▲ HEART RATE HIGH</span><span class="w-hero" style="color:#F04438">165</span><span class="w-unit">bpm · at rest</span><span class="w-line sm">Limit 110 · LQT2 at rest</span><div class="w-btns"><span class="w-btn">I\'m OK</span><span class="w-btn red">Need help</span></div></div>'; } },
+    checkin: { label: 'Check-in: How do you feel? Fine, Dizzy or Racing.', zone: 'brand',
+      html: function () { return bezel('ring', 'brand') + '<div class="wf-in"><span class="w-title">How do you feel?</span><div class="w-feel"><span class="fine"><b>✓</b>Fine</span><span class="dizzy"><b>≈</b>Dizzy</span><span class="racing"><b>♥</b>Racing</span></div><span class="w-line sm" style="margin-top:14px">Racing = palpitations</span></div>'; } },
+    sos: { label: 'Sending SOS to your phone and contacts. Cancel.', zone: 'alert',
+      html: function () { return bezel('count', 'alert') + '<div class="wf-in"><span class="w-cap" style="color:#F97066">SOS</span><span class="w-title">Sending SOS</span><span class="w-hero" data-count-sos>10</span><span class="w-line sm">to your phone and contacts</span><div class="w-btns"><span class="w-btn white">Cancel</span></div></div>'; } },
+    sent: { label: 'SOS sent. Your phone is alerting your contacts. I have Long QT syndrome. Call 112.', zone: 'calm',
+      html: function () { return bezel('ring', 'calm') + '<div class="wf-in"><span class="w-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span class="w-title">SOS sent</span><span class="w-line sm">Your phone is alerting your contacts.</span><span class="w-bystander">I have Long QT syndrome. Call 112.</span><div class="w-btns" style="margin-top:14px"><span class="w-btn">Done</span></div></div>'; } },
+    verdict: { zone: 'alert',
+      html: function () { return bezel('none') + '<div class="wf-in"><svg class="w-shape" aria-hidden="true"><use href="#r-known"/></svg><span class="w-title" style="font-size:36px">Clarithromycin</span><span class="w-status" style="color:#F97066;font-size:26px;margin-top:4px">Known risk</span><span class="w-line sm">Ask your doctor before you take it.</span><span class="w-line sm" style="color:#8A817B">Your watch now watches more closely.</span><div class="w-btns" style="margin-top:14px"><span class="w-btn">Got it</span></div></div>'; } },
+    dose: { zone: 'brand',
+      html: function () { return bezel('ring', 'brand') + '<div class="wf-in"><span class="w-cap" style="color:#F26B6F">DAILY DOSE</span><span class="w-title" style="margin-top:6px">Did you take Nadolol?</span><span class="w-line sm">Skipped beta-blocker doses raise the risk.</span><div class="w-btns"><span class="w-btn coral">Took it</span><span class="w-btn">Not yet</span></div></div>'; } },
+    low: { zone: 'elev',
+      html: function () { return bezel('ring', 'elev') + '<div class="wf-in"><span class="w-cap" style="color:#FDB022">▼ HEART RATE LOW</span><span class="w-hero" style="color:#FDB022">38</span><span class="w-unit">bpm · asleep</span><span class="w-line sm">Limit 45 · LQT3 asleep</span><span class="w-line sm" style="color:#FDB022">Gentle wake-up tone</span><div class="w-btns"><span class="w-btn">I\'m OK</span><span class="w-btn red">Need help</span></div></div>'; } },
+    irregular: { zone: 'elev',
+      html: function () { return bezel('ring', 'elev') + '<div class="wf-in"><span class="w-cap" style="color:#FDB022">▲ IRREGULAR RHYTHM</span><span class="w-title" style="color:#FDB022;font-size:64px;margin-top:6px">Irregular</span><span class="w-unit"><span class="w-sim">SIM</span>· at rest</span><span class="w-line sm">Sit down and breathe slowly.</span><div class="w-btns"><span class="w-btn">I\'m OK</span><span class="w-btn red">Need help</span></div></div>'; } },
+    trend: { zone: 'calm',
+      html: function () {
+        // 20 slots × 30 s: grey range capsule with a white average tick; slots over the max turn red.
+        var lo = [62, 64, 63, 66, 65, 68, 70, 74, 80, 86, 92, 100, 104, 108, 98, 90, 84, 78, 74, 70];
+        var hi = [70, 72, 71, 74, 76, 78, 82, 86, 94, 100, 108, 114, 118, 116, 108, 98, 92, 86, 80, 76];
+        var y = function (v) { return 100 - (v - 45) * 1.2; };
+        var s = '<svg class="w-trend" viewBox="0 0 300 120" aria-hidden="true"><line class="lim" x1="0" x2="300" y1="' + y(110) + '" y2="' + y(110) + '"/><line class="lim" x1="0" x2="300" y1="' + y(45) + '" y2="' + y(45) + '"/>';
+        for (var i = 0; i < 20; i++) {
+          var x = 8 + i * 14.5, a = (lo[i] + hi[i]) / 2;
+          s += '<line class="cap' + (hi[i] > 110 ? ' over' : '') + '" x1="' + x + '" x2="' + x + '" y1="' + y(hi[i]) + '" y2="' + y(lo[i]) + '"/><line class="tick" x1="' + (x - 4) + '" x2="' + (x + 4) + '" y1="' + y(a) + '" y2="' + y(a) + '"/>';
+        }
+        s += '</svg>';
+        return bezel('none') + '<div class="wf-in"><span class="w-cap" style="color:#B8AEA8">LAST 10 MIN</span><span style="font-size:68px;font-weight:800;line-height:1;margin-top:6px">88 <small style="font-size:24px;color:#B8AEA8;font-weight:500">avg bpm</small></span><span class="w-line sm">Range 62–118 · <span style="color:#F97066">▲ 3 over max</span></span>' + s + '<span class="w-line sm" style="margin-top:0">Resting 62 bpm</span></div>';
+      } }
+  };
+  function renderFace(el, name) {
+    var f = FACES[name];
+    if (!f) return;
+    el.innerHTML = '<div class="wf">' + f.html() + '</div>';
+    el.setAttribute('data-face', name);
+    if (f.label && el.getAttribute('role') === 'img') el.setAttribute('aria-label', f.label);
+  }
+  document.querySelectorAll('.watch[data-face]').forEach(function (w) {
+    if (w.id !== 'wseqFace') renderFace(w, w.getAttribute('data-face'));
+  });
 
-    function setState(state, text) {
-      mode = state;
-      orb.setAttribute('data-state', state === 'hearing' ? 'listening' : state);
+  (function () {
+    var face = $('wseqFace'), list = $('wseqSteps'), glow = $('wseqGlow'), host = $('wseq');
+    if (!face || !list) return;
+    var items = Array.prototype.slice.call(list.querySelectorAll('li'));
+    var order = items.map(function (li) { return li.getAttribute('data-face'); });
+    var HOLD = { home: 2800, near: 2600, high: 3400, checkin: 3200, sent: 3600 };
+    var cur = -1, timer = 0, visible = false;
+
+    function show(i, auto) {
+      clearTimeout(timer); clearInterval(timer);
+      cur = i;
+      var name = order[i];
+      renderFace(face, name);
+      var col = ZONE[FACES[name].zone];
+      glow.style.background = col;
+      items.forEach(function (li, j) { li.classList.toggle('is-on', j === i); li.style.setProperty('--dotc', col); });
+      if (reduce) return;
+      if (name === 'sos') {
+        var arc = face.querySelector('.arc'), num = face.querySelector('[data-count-sos]'), n = 10;
+        requestAnimationFrame(function () { requestAnimationFrame(function () {
+          if (!arc) return;
+          arc.style.transition = 'stroke-dasharray 10s linear, stroke-dashoffset 10s linear';
+          arc.setAttribute('stroke-dasharray', '0 100');
+          arc.setAttribute('stroke-dashoffset', '-100');
+        }); });
+        timer = setInterval(function () {
+          n -= 1;
+          if (num) num.textContent = String(Math.max(n, 0));
+          if (n <= 0) { clearInterval(timer); if (visible) show(i + 1, true); }
+        }, 1000);
+        return;
+      }
+      if (auto !== false && visible) timer = setTimeout(function () { show((i + 1) % order.length, true); }, HOLD[name] || 3000);
+    }
+    items.forEach(function (li, j) {
+      li.setAttribute('tabindex', '0');
+      li.addEventListener('click', function () { show(j, true); });
+      li.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); show(j, true); } });
+    });
+    show(0, false);
+    if (reduce) return;
+    onVisible(host, function (vis) {
+      visible = vis;
+      if (vis) show(cur < 0 ? 0 : cur, true); else { clearTimeout(timer); clearInterval(timer); }
+    }, 0.35);
+  })();
+
+  /* ---------------- Agent stage (v2 02 → 03): what the user actually sees ---------------- */
+  (function () {
+    var phone = $('agentPhone'), host = $('agentSilk');
+    if (!phone || !host || !host._orb) return;
+    var orb = host._orb;
+    var labelWrap = $('dockLabel'), label = $('dockLabelT'), glow = $('dockGlow');
+    var liveState = $('liveState'), you = $('capYou'), ag = $('capAgent'), step = $('capStep'), stepL = $('capStepL');
+    var card = $('capCard'), more = $('capShow'), starter = $('starterKlacid'), timeEl = $('voiceTime');
+    var replay = $('cReplay');
+    var stepsLi = Array.prototype.slice.call(document.querySelectorAll('#stageSteps li'));
+    var token = 0, clock = 0, phase = 'OFF', amp = 0;
+    var YOU = 'Can I take Klacid for my sinus infection?';
+
+    function hl(st) { stepsLi.forEach(function (li) { li.classList.toggle('is-on', li.getAttribute('data-st') === st); }); }
+    function setState(ph, text, who) {
+      phase = ph;
+      orb.setPhase(ph);
       label.textContent = text;
+      labelWrap.setAttribute('data-who', who || 'agent');
+      glow.classList.toggle('user', who === 'user');
     }
-    function ampLoop(t) {
-      var target = 0;
-      var s = t / 1000;
-      if (mode === 'speaking') target = 0.35 + 0.4 * Math.abs(Math.sin(s * 9.1) * Math.sin(s * 3.3)) + Math.random() * 0.15;
-      else if (mode === 'hearing') target = 0.2 + 0.35 * Math.abs(Math.sin(s * 7.3) * Math.cos(s * 2.1));
-      else if (mode === 'listening') target = 0.08 * Math.abs(Math.sin(s * 2));
-      amp += (target - amp) * 0.18;
-      orb.style.setProperty('--amp', amp.toFixed(3));
-      if (looping) requestAnimationFrame(ampLoop);
-    }
-    function show(el) { el.classList.add('on'); }
-    function stepRun(el) {
-      var l = el.querySelector('.ts-l');
-      l.textContent = l.getAttribute('data-run');
-      el.classList.remove('done'); el.classList.add('run'); show(el);
-      return l.textContent;
-    }
-    function stepDone(el) {
-      var l = el.querySelector('.ts-l');
-      l.textContent = l.getAttribute('data-done');
-      el.classList.remove('run'); el.classList.add('done');
+    // Synthetic voice level: the orb and its glow respond as they do to real audio (DESIGN 10.1a 03).
+    function levelLoop(t) {
+      var s = t / 1000, target = 0;
+      if (phase === 'SPEAKING') target = 0.35 + 0.45 * Math.abs(Math.sin(s * 8.3) * Math.sin(s * 2.9));
+      else if (phase === 'HEARING') target = 0.25 + 0.4 * Math.abs(Math.sin(s * 6.1) * Math.cos(s * 1.7));
+      amp += (target - amp) * 0.2;
+      orb.setLevel(amp);
+      var liveMode = phone.getAttribute('data-mode') === 'live';
+      glow.style.opacity = liveMode ? (0.6 + 0.4 * amp).toFixed(3) : '0.3';
+      glow.style.transform = 'scale(' + (liveMode ? 1.1 + 0.2 * amp : 1).toFixed(3) + ')';
+      requestAnimationFrame(levelLoop);
     }
     function prepAgent() {
-      agent.textContent = '';
-      agent.getAttribute('data-text').split(' ').forEach(function (w, i, all) {
+      ag.textContent = '';
+      ag.getAttribute('data-text').split(' ').forEach(function (w, i, all) {
         var sp = document.createElement('span');
         sp.className = 'tw';
         sp.textContent = w + (i < all.length - 1 ? ' ' : '');
-        agent.appendChild(sp);
+        ag.appendChild(sp);
       });
-      agent.setAttribute('aria-label', agent.getAttribute('data-text'));
+    }
+    function tick() {
+      clock += 1;
+      timeEl.textContent = Math.floor(clock / 60) + ':' + ('0' + (clock % 60)).slice(-2);
     }
     function reset() {
-      [user, s1, s2, agent, card, replay].forEach(function (el) { el.classList.remove('on', 'run', 'done', 'interim'); });
-      user.textContent = '';
+      phone.setAttribute('data-mode', 'empty');
+      [you, ag, step, card, more].forEach(function (el) { el.classList.remove('on', 'done', 'interim'); });
+      liveState.classList.remove('gone');
+      liveState.textContent = "I'm listening";
+      you.textContent = '';
+      stepL.textContent = 'Checking the QT list';
+      starter.classList.remove('pressed');
       prepAgent();
+      clock = 0; timeEl.textContent = '0:00';
+      replay.hidden = true;
+      setState('OFF', 'Tap to talk');
+      hl('off');
     }
     function finalState() {
-      reset();
-      user.textContent = user.getAttribute('data-text');
-      stepDone(s1); stepDone(s2);
-      agent.querySelectorAll('.tw').forEach(function (w) { w.classList.add('v'); });
-      [user, s1, s2, agent, card].forEach(show);
-      setState('off', 'Tap to talk');
+      phone.setAttribute('data-mode', 'live');
+      liveState.classList.add('gone');
+      you.textContent = 'You: ' + YOU;
+      stepL.textContent = 'Checked the QT list';
+      step.classList.add('done');
+      [you, ag, step, card, more].forEach(function (el) { el.classList.add('on'); });
+      ag.querySelectorAll('.tw').forEach(function (w) { w.classList.add('said'); });
+      timeEl.textContent = '0:42';
+      setState('LISTENING', "I'm listening", 'user');
     }
     async function play() {
       var my = ++token;
       var alive = function () { return my === token; };
+      var timer = 0;
       reset();
-      setState('listening', "I'm listening");
+      await wait(1400); if (!alive()) return;
+      starter.classList.add('pressed');
+      await wait(450); if (!alive()) return;
+      phone.setAttribute('data-mode', 'live');
+      timer = setInterval(function () { if (alive()) tick(); else clearInterval(timer); }, 1000);
+      setState('CONNECTING', 'Connecting…');
+      await wait(800); if (!alive()) return;
+      setState('LISTENING', "I'm listening", 'user');
       await wait(900); if (!alive()) return;
-      setState('hearing', 'Listening…');
-      show(user); user.classList.add('interim');
-      var words = user.getAttribute('data-text').split(' ');
+      setState('HEARING', 'Listening…', 'user'); hl('hearing');
+      liveState.classList.add('gone');
+      you.classList.add('on', 'interim');
+      var words = YOU.split(' ');
       for (var i = 0; i < words.length; i++) {
-        user.textContent = words.slice(0, i + 1).join(' ');
-        await wait(170); if (!alive()) return;
+        you.textContent = 'You: ' + words.slice(0, i + 1).join(' ');
+        await wait(190); if (!alive()) return;
       }
-      user.classList.remove('interim');
-      await wait(350); if (!alive()) return;
-      setState('thinking', stepRun(s1) + '…');
-      await wait(1300); if (!alive()) return;
-      stepDone(s1);
-      setState('thinking', stepRun(s2) + '…');
-      await wait(1200); if (!alive()) return;
-      stepDone(s2);
-      setState('speaking', 'Speaking');
-      show(agent);
-      var tws = agent.querySelectorAll('.tw');
+      you.classList.remove('interim');
+      await wait(300); if (!alive()) return;
+      setState('THINKING', 'Checking the QT list…'); hl('thinking');
+      step.classList.add('on');
+      await wait(1600); if (!alive()) return;
+      step.classList.add('done'); stepL.textContent = 'Checked the QT list';
+      setState('SPEAKING', 'Speaking'); hl('speaking');
+      ag.classList.add('on');
+      var tws = ag.querySelectorAll('.tw');
       for (var k = 0; k < tws.length; k++) {
-        tws[k].classList.add('v');
-        await wait(105); if (!alive()) return;
+        tws[k].classList.add('said');
+        await wait(150); if (!alive()) return;
       }
-      show(card);
-      await wait(500); if (!alive()) return;
-      setState('off', 'Tap to talk');
-      show(replay);
+      await wait(250); if (!alive()) return;
+      card.classList.add('on');
+      await wait(700); if (!alive()) return;
+      more.classList.add('on');
+      setState('LISTENING', "I'm listening", 'user'); hl('');
+      clearInterval(timer);
+      await wait(400); if (!alive()) return;
+      replay.hidden = false;   // only once the whole exchange has played out
     }
 
-    if (reduce) { finalState(); show(replay); replay.style.display = 'none'; return; }
-    looping = true; requestAnimationFrame(ampLoop);
+    if (reduce) { prepAgent(); finalState(); return; }
+    reset();
+    requestAnimationFrame(levelLoop);
     var started = false;
-    onVisible(convo, function (vis) {
-      if (vis && !started) { started = true; play(); }
-    }, 0.35);
+    onVisible(phone, function (vis) { if (vis && !started) { started = true; play(); } }, 0.45);
     replay.addEventListener('click', function () { play(); });
-    orb.parentElement.addEventListener('click', function () { play(); });
-  })();
-
-  /* ---------------- Watch row: rings draw, SOS ring drains over 10 s ---------------- */
-  (function () {
-    var row = $('watchRow'), count = $('sosCount');
-    if (!row) return;
-    if (reduce || !('IntersectionObserver' in window)) { row.classList.add('is-in'); return; }
-    var timer = 0, visible = false;
-    function cycle() {
-      clearTimeout(timer);
-      row.classList.remove('is-draining');
-      count.textContent = '10';
-      timer = setTimeout(function () {
-        if (!visible) return;
-        row.classList.add('is-draining');
-        var n = 10;
-        var tick = function () {
-          n -= 1;
-          count.textContent = String(Math.max(n, 0));
-          if (n > 0 && visible) timer = setTimeout(tick, 1000);
-          else if (visible) timer = setTimeout(cycle, 1800);
-        };
-        timer = setTimeout(tick, 1000);
-      }, 1600);
-    }
-    onVisible(row, function (vis) {
-      visible = vis;
-      if (vis) { row.classList.add('is-in'); cycle(); } else clearTimeout(timer);
-    }, 0.3);
   })();
 
   /* ---------------- Emergency card: 13 languages + tilt ---------------- */

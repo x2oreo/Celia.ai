@@ -1,13 +1,17 @@
 # Running Celia on a real Huawei phone
 
+> **Status (4 Oct 2026):** the scripts and steps below are checked against `app/scripts/device.sh`; the app has not
+> yet been installed on a real phone (section 6). Everything a real phone adds is "built, unverified" until then.
+
 Everything needed to get the phone app from this repo onto a physical device. The emulator path is in the
-[README](../README.md#build--run); this file is only about a real phone.
+[README](../README.md#run-it-yourself); this file is only about a real phone.
 
 Short version, once the one-time setup below is done:
 
 ```bash
 app/scripts/device.sh check   # preflight: phone, API level, signing, backend
-app/scripts/device.sh         # build → install → launch → screenshot
+app/scripts/device.sh         # build → install → launch → screenshot (app/build/device-screenshot.jpeg)
+app/scripts/device.sh udid    # print the phone's UDID (for a manual AppGallery Connect debug profile)
 ```
 
 ## 1. What the phone must be
@@ -17,7 +21,7 @@ app/scripts/device.sh         # build → install → launch → screenshot
 | **HarmonyOS 6.0 or newer** (API 20+) | `compatibleSdkVersion` is `6.0.0(20)` - a hard task requirement. Phones on HarmonyOS 4.x / EMUI (Android-based) cannot install the app at all. Check: Settings → About phone → HarmonyOS version. |
 | Developer mode on | Settings → About phone → tap **Build number** 7× → back → System → **Developer options** → **USB debugging** on. |
 | USB cable that carries data | Accept the "Allow USB debugging?" prompt on the phone when it appears. |
-| A screen lock (PIN) | Only for App lock (F-46); the rest works without it. |
+| A screen lock (PIN) | Only for App lock (F-45); the rest works without it. |
 
 `deviceTypes` is `["phone"]`, so tablets and 2-in-1s are refused by the installer.
 
@@ -63,7 +67,8 @@ app/scripts/device.sh
 ```
 
 It stops with a clear message when the phone is missing, below API 20, unsigned, or the backend points at the laptop.
-Several devices attached (phone + emulator is handled; two phones is not): `HDC_TARGET=<serial> app/scripts/device.sh`.
+An empty backend is only a warning (the app runs offline). Phone + emulator attached: the emulator is ignored. Two
+phones attached: pick one with `HDC_TARGET=<serial> app/scripts/device.sh`.
 
 By hand:
 ```bash
@@ -84,14 +89,19 @@ once. The items below are the ones a real phone adds or changes:
 | Voice (agent, live voice) | Real microphone - grant the permission on first use. Needs the backend. |
 | Read the card aloud (T25) | On-device voice if the phone has an English TTS voice, cloud `/speak` otherwise. |
 | Location / travel banner (T23) | Real position - grant "while in use". The country is resolved on the phone; nothing is uploaded. |
-| App lock (F-46) | Fingerprint / face / PIN via the system prompt. Needs a screen lock set. |
+| App lock (F-45) | Fingerprint / face / PIN via the system prompt. Needs a screen lock set. |
 | Haptics | CPR metronome (110/min) and alert vibration are only felt on hardware. |
 | SOS call | **The call button opens the real dialler with the real emergency number. Do not place the call.** Use Settings → Test SOS. |
-| Widgets (F-12) | Long-press the home screen → add "Check a medicine" (2×2) and "Medical alert" (2×4). |
+| Widgets (F-12) | Long-press the app icon or the home screen → Widgets: The agent, Next dose, Resting heart rate, Can I take this?, How are you feeling?, Medical alert (2×4, opens the help guide), Medical ID (lock screen). Lock-screen placement is real-phone only. |
 | Celia intents (F-11) | Only testable here: ask Celia/Xiaoyi "can I take ibuprofen". Needs a region and system version where Celia routes to third-party intents - not guaranteed. |
 | Reminders (F-38) | System agent reminders need an AppGallery Connect quota; without it the in-app fallback notifies while the app runs. |
 | Emergency card QR | Scan it with a second phone on mobile data to prove the link works off the local network. |
-| Watch pairing | Heart data stays `SIMULATED` unless a paired watch app uploads to the same Supabase project. |
+| Watch pairing | Settings → Devices → Watch → type the 6-digit code shown by the Celia watch app. Heart data stays `SIMULATED` unless a paired watch uploads to the same Supabase project. |
+| Box photo from the agent | Agent → camera button opens the real camera (the emulator only has the gallery fallback). |
+| Notifications (B7) | Dose due → Taken / Open buttons; SOS countdown → I'm OK / Open. The emulator does not draw these buttons. |
+| SOS Live View (B13) | Start an SOS countdown and lock the screen: the live card ticks. May need Live View approval on a real phone. |
+| NFC card tag (B14) | Emergency → Show card as QR → Write to NFC tag → hold an NTAG213+ sticker; read it with another phone. |
+| Push: watch SOS (B12) | Needs an AGC project with Push Kit and the service-account key in Supabase secrets. `hdc hilog \| grep PushToken` shows why there is no token. |
 
 ## 5. When it fails
 
@@ -108,6 +118,8 @@ once. The items below are the ones a real phone adds or changes:
 | A feature returns error `201` | Permission denied - grant it in Settings → Apps → Celia. |
 
 ## 6. Verified before a phone was attached (3 Oct 2026)
+
+Counts are from 3 Oct; current counts are in the README.
 
 | Check | Result |
 |---|---|

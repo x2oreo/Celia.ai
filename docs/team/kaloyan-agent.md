@@ -1,5 +1,7 @@
 # Kaloyan - Agent & AI (+ coordination)
 
+> Status (4 Oct 2026): historical role brief. Built: `AgentCore`, the tool layer, the `/agent` function, intents, OCR (`vision-extract`) and voice. A2A is not built. Some file names here are early guesses (for example the system prompt ended up in `backend/supabase/functions/_shared/prompt.ts`).
+
 **You own:** everything that makes this "agent-first": `AgentCore` in the app, the tool layer, the `/agent` Edge
 Function (LLM loop), Intents Kit entry points, OCR service, voice (stretch), A2A (stretch), and the two AI docs.
 You also run checkpoints and talk to the Huawei mentors.
@@ -17,7 +19,7 @@ Skills to load before coding: `celia-agent`, `harmonyos-kits`, `arkts-language`,
      OpenAI Realtime API with the same tools.
    - Stateless relay: one model step per call. The tool loop runs in the app (`AgentCore`), tools execute
      on-device, so name, contacts and notes never leave the phone (the context that is sent is listed in
-     `AI_FEATURES.md` §3). Contract: `backend/supabase/functions/README.md`.
+     `AI_FEATURES.md` §3). Contract: root README, "Agent and Edge Functions".
    - Return "hello" first, deploy, and give Georgie the URL.
 4. **System prompt v1** (`backend/supabase/functions/agent/prompt.ts`): role, LQTS facts by genotype, the rules
    (never give a verdict yourself, always use `check_drug`, always end medical advice with "ask your doctor or

@@ -1,5 +1,7 @@
 # S7 research
 
+> Status (4 Oct 2026): working log of stream S7 (docs only); merged into `main`. The research itself is in [`../research/`](../research/).
+
 ## AI_WORKFLOW entry
 ### 2026-10-03 - Georgi + Claude Code: platform research for Push, Live View, phone ↔ watch, HUAWEI ID (branch `georgi/b-research`)
 - Asked: research B12 (Push Kit), B13 (Live View + lock-screen medical ID), B17 (phone ↔ watch link), B18 (Account

@@ -27,7 +27,7 @@ export class WearNotifier {
     const name: string = o.verdict.ingredient === '' ? o.verdict.query : o.verdict.ingredient;
     const text: string = o.combo.kind !== 'NONE' ? o.combo.reason :
       `${name} has a known risk for long QT. Don't take it before asking your doctor.`;
-    log.info(`wrist alert (watch not connected - phone fallback): ${name}`);
+    log.info('wrist alert (watch not connected - phone fallback): risky medicine check');
     pulse(300);
     notify(NOTIFY_RISKY_CHECK, `Careful with ${name}`, text, false);
     // The watch is told only when the user confirms they took it ("I took it", drugs/DrugIntake.ets): checking a

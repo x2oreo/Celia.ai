@@ -1,5 +1,7 @@
 # Live View and lock-screen presence (B13)
 
+> Status (4 Oct 2026): built in `app/entry/src/main/ets/emergency/LiveStatus.ets` (Live View with a notification fallback) and the Medical ID widget. The fallback runs on the emulator; Live View on a real phone needs approval and is unverified.
+
 Research for brief task B13, written so stream S4 can implement without re-reading the Huawei docs. Researched
 2026-10-03 against the official HarmonyOS guides and references (EN) and the local SDK typings (DevEco Studio 6.1.1,
 API 24: `hms/ets/api/@hms.core.liveview.*.d.ts`, `openharmony/ets/api/@ohos.window.d.ts`).

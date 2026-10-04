@@ -1,5 +1,7 @@
 # T1 log - Agent home
 
+> Status (4 Oct 2026): working log, merged into `main` and folded into `AI_WORKFLOW.md`. The tab-0 agent layout described here was later replaced by the owner's v2 design.
+
 ## A3 - split `AgentPage.ets` (2026-10-04)
 
 **Asked:** pure refactor of `pages/AgentPage.ets` (1,110 lines) into `components/agent/`, behaviour unchanged.

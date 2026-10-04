@@ -107,7 +107,7 @@ export class DrugIntake {
     }
     const rec: IntakeRecord = { name: name, risk: risk, ts: now, watchSynced: synced };
     await LocalStore.get().setSetting(KEY_LAST, JSON.stringify(rec));
-    log.info(`intake logged: ${name} (${risk}), watch ${synced ? 'told' : 'not reached'}`);
+    log.info(`intake logged, watch ${synced ? 'told' : 'not reached'}`);
     return rec;
   }
 

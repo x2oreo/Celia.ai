@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Celia.ai pitch deck</title>
+<meta name="description" content="Celia.ai: a heart-safety agent that keeps people with Long QT syndrome active and safe, on HarmonyOS phone and watch. HackYeah 2026, Sport &amp; Healthcare.">
+<link rel="preload" href="assets/figtree-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="deck.css">
+<link rel="stylesheet" href="sport.css">
+</head>
+<body>
+
+<!-- Icons (line, 24 grid) and risk shapes (DESIGN §3) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="r-known" viewBox="0 0 24 24"><path d="M8 2h8l6 6v8l-6 6H8l-6-6V8z" fill="var(--known)"/><path d="M8.5 8.5l7 7m0-7l-7 7" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></symbol>
+    <symbol id="r-possible" viewBox="0 0 24 24"><path d="M12 2.5l10.5 18.5H1.5z" fill="var(--possible)"/><path d="M12 9v5.5" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><circle cx="12" cy="17.8" r="1.4" fill="#fff"/></symbol>
+    <symbol id="r-conditional" viewBox="0 0 24 24"><path d="M12 1.5L22.5 12 12 22.5 1.5 12z" fill="var(--conditional)"/><path d="M12 7.5v5.5" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><circle cx="12" cy="16.3" r="1.4" fill="#fff"/></symbol>
+    <symbol id="r-listed" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10.5" fill="var(--listed)"/><path d="M7 12.4l3.2 3.2L17 8.8" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="r-unknown" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5" fill="none" stroke="var(--unknown)" stroke-width="2.2" stroke-dasharray="3 2.6"/><path d="M9.6 9.4a2.5 2.5 0 114 2c-.9.6-1.6 1.1-1.6 2.3" stroke="var(--unknown)" stroke-width="2" fill="none" stroke-linecap="round"/><circle cx="12" cy="16.9" r="1.2" fill="var(--unknown)"/></symbol>
+
+    <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></symbol>
+    <symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 8h3l1.6-2.2h6.8L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.2" r="3.4"/></symbol>
+    <symbol id="i-keyboard" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2.5"/><path d="M7 10h.01M10.5 10h.01M14 10h.01M17 10h.01M8 14h8"/></symbol>
+    <symbol id="i-barcode" viewBox="0 0 24 24"><path d="M4 7V5h3M17 5h3v2M20 17v2h-3M7 19H4v-2M7.5 9v6M10 9v6M13 9v6M16.5 9v6"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.1a4.3 4.3 0 0 1 7.5 2.7C19.5 15.4 12 20 12 20z"/></symbol>
+    <symbol id="i-watch" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6"/><path d="M9 6.5L9.6 3h4.8l.6 3.5M9 17.5l.6 3.5h4.8l.6-3.5M12 9.5V12l1.6 1.2"/></symbol>
+    <symbol id="i-card" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M7 10h6M7 14h10"/><path d="M16.5 8.6l.9.9-.9.9-.9-.9z" fill="currentColor"/></symbol>
+    <symbol id="i-sos" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+    <symbol id="i-wave" viewBox="0 0 24 24"><path d="M4 10v4M8 7v10M12 4v16M16 7v10M20 10v4"/></symbol>
+    <symbol id="i-swim" viewBox="0 0 24 24"><circle cx="16.5" cy="6.5" r="2"/><path d="M5 11.5l4-2.5 3 2 2.5-1.5M2.5 16c1.6 1.2 3.2 1.2 4.8 0s3.2-1.2 4.8 0 3.2 1.2 4.8 0 3.2-1.2 4.8 0M2.5 20c1.6 1.2 3.2 1.2 4.8 0s3.2-1.2 4.8 0 3.2 1.2 4.8 0 3.2-1.2 4.8 0"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0M3 8.5a8.5 8.5 0 0 1 2.2-4.2M21 8.5a8.5 8.5 0 0 0-2.2-4.2"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M19.5 14.5A8 8 0 0 1 9.5 4.5a8 8 0 1 0 10 10z"/><path d="M15.5 4h3l-3 3.5h3M19 9.5h2l-2 2.3h2"/></symbol>
+    <symbol id="i-pill" viewBox="0 0 24 24"><rect x="2.8" y="8.2" width="18.4" height="7.6" rx="3.8" transform="rotate(-35 12 12)"/><path d="M9.8 8.9l4.4 6.2"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7a2.5 2.5 0 0 1-2.5 2.5H10l-4.5 4v-4h0A2.5 2.5 0 0 1 4 13.5z"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-device" viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="2.5"/><path d="M11 17.5h2"/></symbol>
+    <symbol id="i-replay" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4.5h4.5"/></symbol>
+    <symbol id="i-offline" viewBox="0 0 24 24"><path d="M2.5 8.5a14 14 0 0 1 5-2.9M21.5 8.5a14 14 0 0 0-8.1-3.4M5.5 12a9.5 9.5 0 0 1 3.4-2M18.5 12a9.5 9.5 0 0 0-2.3-1.6M9 15.5a4.5 4.5 0 0 1 6 0M12 19h.01M3 3l18 18"/></symbol>
+    <symbol id="i-bot" viewBox="0 0 24 24"><rect x="4" y="8" width="16" height="11" rx="3"/><path d="M12 8V4.5M9 13h.01M15 13h.01M9.5 16h5"/><circle cx="12" cy="4" r="1"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></symbol>
+    <symbol id="i-unlink" viewBox="0 0 24 24"><path d="M9.5 14.5l-2 2a3.2 3.2 0 0 1-4.5-4.5l2.5-2.5M14.5 9.5l2-2a3.2 3.2 0 0 1 4.5 4.5l-2.5 2.5M8 4v2.5M4 8h2.5M16 20v-2.5M20 16h-2.5"/></symbol>
+    <symbol id="i-question" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" stroke-dasharray="3 2.5"/><path d="M9.8 9.6a2.3 2.3 0 1 1 3.4 2c-.8.5-1.2 1-1.2 2M12 16.6h.01"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6.5h11M9 12h11M9 17.5h11M4.5 6.5h.01M4.5 12h.01M4.5 17.5h.01"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></symbol>
+    <symbol id="i-doc" viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4M10 12h5M10 16h5"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.8 3.8 5.8 3.8 9s-1.2 6.2-3.8 9c-2.6-2.8-3.8-5.8-3.8-9S9.4 5.8 12 3z"/></symbol>
+    <symbol id="i-run" viewBox="0 0 24 24"><circle cx="14.5" cy="4.5" r="2"/><path d="M6 11.5l3.5-3 4 .5 2.5 3.5 3 1M9.5 8.5L8 14l4 2.5-1.5 5M8 14l-3.5 4.5"/></symbol>
+    <symbol id="i-fall" viewBox="0 0 24 24"><circle cx="6" cy="8" r="2"/><path d="M9 10.5l4.5 2.5 5-1.5M13.5 13l-2.5 4.5M11 17.5l4.5 1.5M3 21h18"/></symbol>
+    <symbol id="i-gauge" viewBox="0 0 24 24"><path d="M4 16a8 8 0 1 1 16 0"/><path d="M12 16l4-5M4 19.5h16"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><path d="M3 6l6 6 4-4 8 9"/><path d="M21 11.5V17h-5.5"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3.5 19.5a5.5 5.5 0 0 1 11 0M15.5 5.2a3 3 0 0 1 0 5.6M17.5 14.2a5.5 5.5 0 0 1 3 5.3"/></symbol>
+    <symbol id="i-steth" viewBox="0 0 24 24"><path d="M6 3.5v5a4 4 0 0 0 8 0v-5M10 12.5v2a4.5 4.5 0 0 0 9 0V12"/><circle cx="19" cy="10" r="2"/></symbol>
+    <symbol id="i-whistle" viewBox="0 0 24 24"><path d="M3 12.5a5 5 0 0 0 9.6 2L21 11V7.5h-9.5A5 5 0 0 0 3 12.5z"/><circle cx="8" cy="12.5" r="1.4"/><path d="M14 4.5v3"/></symbol>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M1 1.5L8.5 5 1 8.5" fill="none" stroke="#B5ABA3" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <marker id="arrow-ink" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M1 1.5L8.5 5 1 8.5" fill="none" stroke="#6B625C" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <marker id="arrow-coral" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M1 1.5L8.5 5 1 8.5" fill="none" stroke="#E5484D" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker>
+  </defs>
+</svg>
+
+<main class="deck" id="deck">
+
+<!-- 1 · Title ============================================================== -->
+<section class="slide dark s-title" data-title="Celia.ai">
+  <div class="glow" style="width:1400px;height:1400px;right:-330px;top:-200px"></div>
+  <img class="silk-hero" src="media/orb-hero.webp" alt="" aria-hidden="true">
+  <div class="hero-dev">
+    <img class="dev" src="media/d-today.webp" alt="Today screen: the agent reminds Ola that the 14:00 nadolol is due, next dose, resting heart rate from the watch">
+    <img class="wimg hero-watch" src="media/f-home.webp" alt="Watch: All good, 72 bpm at rest, max 110">
+    <span class="fchip" style="right:-150px;top:150px"><svg class="rs"><use href="#r-known"/></svg><span><b class="known-t">Known risk</b>Klacid → clarithromycin</span></span>
+    <span class="fchip sm" style="left:-120px;top:440px"><svg class="ico"><use href="#i-run"/></svg>Limits tuned for training</span>
+  </div>
+
+  <p class="eyebrow" style="position:relative">HackYeah 2026 · Sport &amp; Healthcare</p>
+  <div style="position:relative;margin-top:auto;margin-bottom:auto;max-width:1000px">
+    <h1 class="wordmark" style="font-size:200px">Celia<span class="dot">.</span><span class="ai">ai</span></h1>
+    <p style="font-size:72px;font-weight:800;letter-spacing:-0.035em;line-height:1;margin:36px 0 0">Stay active.<br>Ask before you take it.</p>
+    <p class="lead" style="max-width:820px;margin-top:28px">A heart-safety agent that lets people with Long QT syndrome keep moving. It checks every medicine, watches the heart on the wrist through training and sleep, and speaks for you in an emergency.</p>
+  </div>
+  <p style="position:relative;margin:0;font-size:26px;font-weight:700;color:var(--dk-ink-3)">Native HarmonyOS, phone + watch · by <span style="color:var(--dk-brand)">Double Oreo</span></p>
+</section>
+
+<!-- 2 · The problem ========================================================= -->
+<section class="slide" data-title="The problem">
+  <p class="eyebrow">The problem</p>
+  <div style="display:flex;gap:80px;align-items:flex-start">
+    <div style="flex:1">
+      <h2 class="h1" style="max-width:1000px"><span style="white-space:nowrap">1 in 2,000</span> people have Long QT syndrome.</h2>
+      <p class="lead" style="max-width:940px">Their heart takes longer to recharge between beats. A hard sprint, a swim, an ordinary antibiotic or a sudden alarm can tip it into a rhythm that stops it. Most look healthy, and many simply stop moving out of fear.</p>
+    </div>
+    <div style="flex:none;margin-top:-20px">
+      <svg class="dots" id="dots" width="520" height="418" viewBox="0 0 828 666" role="img" aria-label="2,000 dots; one is highlighted"></svg>
+      <p class="label" style="margin:14px 0 0;text-align:right">Each dot is one person · <span class="coral">●</span> one has LQTS</p>
+    </div>
+  </div>
+
+  <div class="marquee" style="margin:40px calc(var(--pad-x) * -1) 0">
+    <div class="mq-row"><div class="mq-track" id="mqA"></div></div>
+  </div>
+
+  <div class="facts" style="margin-top:auto;margin-bottom:58px">
+    <div><p class="label">The hidden trigger</p><p class="fnum">250<span>+</span></p><p class="body">medicines can lengthen the QT. Harmless for most people; for them, possibly the last prescription.</p></div>
+    <div><p class="label">Three types</p><p class="fnum" style="font-size:54px;line-height:84px">Effort · Startle · Sleep</p><p class="body">LQT1 swimming, LQT2 an alarm clock, LQT3 a slow heart at night.</p></div>
+    <div><p class="label">Sport, with a plan</p><p class="fnum">ESC 2020</p><p class="body">guidelines let many treated patients keep playing. Between check-ups, nothing watches.</p></div>
+    <div><p class="label">Time to act</p><p class="fnum coral">4–6 min</p><p class="body">without CPR. A coach or teammate is often the first one there.</p></div>
+  </div>
+</section>
+
+<!-- 3 · The solution ======================================================== -->
+<section class="slide" data-title="The solution">
+  <p class="eyebrow">The solution</p>
+  <h2 class="h2">One companion, from the pitch to the doctor's office.</h2>
+  <div class="dg" style="position:absolute;left:120px;top:250px;width:1680px;height:770px">
+    <svg class="wires" width="1680" height="770" viewBox="0 0 1680 770" aria-hidden="true">
+      <path class="wire dash"  d="M690 200 C 630 200, 625 140, 570 140"/>
+      <path class="wire dash"  d="M690 470 C 600 470, 540 470, 470 470"/>
+      <path class="wire dash"  d="M990 300 L 1120 300"/>
+    </svg>
+    <span class="wire-label" style="left:520px;top:458px">via cloud</span>
+
+    <div class="node" style="left:30px;top:60px;width:540px;padding:26px 30px">
+      <span class="label">Celia · system assistant · Intents Kit</span>
+      <b style="font-size:32px">“Celia, can I use Ventolin before my run?”</b>
+      <p style="font-size:19px">Check a medicine, open the card, log a symptom or a dose, hands-free and without opening the app.</p>
+    </div>
+
+    <figure style="position:absolute;left:180px;top:300px;width:290px;margin:0;text-align:center">
+      <img class="wimg" src="media/f-checkin.webp" alt="Watch check-in: How do you feel? Fine, Dizzy, Racing">
+      <p class="caption-t" style="margin-top:22px">Watch</p>
+      <p class="caption-b">Heart rate in training and sleep, SOS</p>
+    </figure>
+
+    <figure style="position:absolute;left:690px;top:0;width:300px;margin:0;text-align:center">
+      <img class="dev" src="media/d-agent.webp" alt="The agent answers by voice: Klacid is clarithromycin, on the known-risk list; Known risk card">
+      <p class="caption-t" style="margin-top:20px">Phone</p>
+      <p class="caption-b">Talk, check, remember, remind</p>
+    </figure>
+
+    <figure style="position:absolute;left:1120px;top:0;width:250px;margin:0">
+      <img class="dev" src="media/d-emergency.webp" alt="Emergency tab: Start SOS, Call 112, responder view, medical card">
+      <p class="caption-t" style="margin-top:18px;font-size:22px">Emergency</p>
+      <p class="caption-b" style="font-size:17px">SOS, a card by QR in 13 languages, Live View</p>
+    </figure>
+    <figure style="position:absolute;left:1430px;top:0;width:250px;margin:0">
+      <img class="dev" src="media/d-doctor.webp" alt="Doctor visit brief: heart rate, medicines, how you felt, questions to ask">
+      <p class="caption-t" style="margin-top:18px;font-size:22px">Doctor visit</p>
+      <p class="caption-b" style="font-size:17px">A one-page safety brief, shared by link</p>
+    </figure>
+  </div>
+</section>
+
+<!-- 4 · Sport ================================================================ -->
+<section class="slide" data-title="Active, not afraid">
+  <p class="eyebrow">Sport, without the fear</p>
+  <h2 class="h2" style="max-width:1500px">The watch knows when you train, and moves your limits with you.</h2>
+  <div style="display:flex;gap:56px;margin-top:44px">
+    <div class="card sp-chart">
+      <div style="display:flex;justify-content:space-between;align-items:baseline">
+        <p class="label" style="margin:0">One evening run · LQT1 profile</p>
+        <p class="sp-key"><i class="hr"></i>Heart rate <i class="lim"></i>Your limit</p>
+      </div>
+      <svg width="1000" height="470" viewBox="0 0 1000 470" role="img" aria-label="Heart rate across a 45 minute run. The limit is 120 at rest and 130 while active. A spike to 138 triggers an alert; after stopping, the heart rate drops only 11 bpm in 60 seconds, flagged as slow recovery.">
+        <rect x="162" y="30" width="511" height="390" class="sp-band"/>
+        <text x="174" y="408" class="sp-t">ACTIVE · steps + motion</text>
+        <text x="72" y="408" class="sp-t">REST</text>
+        <text x="706" y="408" class="sp-t">REST</text>
+        <g class="sp-grid">
+          <line x1="60" y1="420" x2="980" y2="420"/><line x1="60" y1="344" x2="980" y2="344"/><line x1="60" y1="268" x2="980" y2="268"/><line x1="60" y1="192" x2="980" y2="192"/><line x1="60" y1="116" x2="980" y2="116"/>
+        </g>
+        <g class="sp-ax">
+          <text x="48" y="425">60</text><text x="48" y="349">80</text><text x="48" y="273">100</text><text x="48" y="197">120</text><text x="48" y="121">140</text>
+          <text x="60" y="452" text-anchor="start">0 min</text><text x="264" y="452">10</text><text x="469" y="452">20</text><text x="673" y="452">30</text><text x="980" y="452" text-anchor="end">45</text>
+        </g>
+        <path class="sp-lim" d="M60 192 H162 V154 H673 V192 H980"/>
+        <text x="980" y="184" class="sp-lt" text-anchor="end">120 at rest</text>
+        <text x="176" y="144" class="sp-lt">130 while active (LQT1: 140 − 10)</text>
+        <polyline class="sp-hr" points="60,374 121,367 162,352 203,283 264,222 326,196 407,181 469,173 530,165 561,143 591,124 612,135 632,162 673,169 694,165 714,200 755,253 816,298 898,329 980,344"/>
+        <path class="sp-lead" d="M420 52 L 591 114"/><path class="sp-lead" d="M800 52 L 698 156"/>
+        <circle cx="591" cy="124" r="9" class="sp-dot"/>
+        <circle cx="694" cy="165" r="9" class="sp-dot amber"/>
+        <line x1="591" y1="124" x2="694" y2="124" class="sp-rec"/>
+        <line x1="694" y1="124" x2="694" y2="156" class="sp-rec"/>
+      </svg>
+      <span class="sp-call" style="left:250px;top:64px"><svg class="rs"><use href="#r-known"/></svg><span><b>138 bpm, over your limit</b>Watch asks “I'm OK” or “Need help”</span></span>
+      <span class="sp-call" style="left:700px;top:64px"><svg class="rs"><use href="#r-possible"/></svg><span><b>Slow recovery</b>Only −11 bpm 60 s after you stop</span></span>
+    </div>
+    <div class="sp-feats">
+      <div><svg class="ico"><use href="#i-gauge"/></svg><div><b>Knows when you move</b><p>Accelerometer and steps tell rest, training and sleep apart. Each has its own limit.</p></div></div>
+      <div><svg class="ico"><use href="#i-heart"/></svg><div><b>Limits by genotype</b><p>LQT1 lower while active, LQT2 lower at rest, LQT3 an earlier low alarm. A risky medicine tightens all of them for 72 h.</p></div></div>
+      <div><svg class="ico"><use href="#i-down"/></svg><div><b>Recovery after effort</b><p>Peak against 60 s after you stop. A drop under 12 bpm is flagged.</p></div></div>
+      <div><svg class="ico"><use href="#i-fall"/></svg><div><b>A fall on the track</b><p>Hard impact, then stillness: “Are you OK?” for 30 s, then SOS with your location.</p></div></div>
+    </div>
+  </div>
+  <div class="sp-coach">
+    <span class="label" style="flex:none">Daily coach, by genotype</span>
+    <span class="chip sm"><svg class="ico"><use href="#i-swim"/></svg>LQT1: never swim alone</span>
+    <span class="chip sm"><svg class="ico"><use href="#i-run"/></svg>LQT1: warm up, no all-out sprints</span>
+    <span class="chip sm"><svg class="ico"><use href="#i-bell"/></svg>LQT2: no sudden loud alarms</span>
+    <span class="chip sm"><svg class="ico"><use href="#i-moon"/></svg>LQT3: keep night monitoring on</span>
+  </div>
+</section>
+
+<!-- 5 · The agent =========================================================== -->
+<section class="slide" data-title="Safe by construction">
+  <p class="eyebrow">Medicine check + agent</p>
+  <div style="display:flex;gap:56px;flex:1">
+    <div style="width:750px;flex:none;display:flex;flex-direction:column">
+      <h2 class="h1" style="font-size:72px">Verdicts come from fixed data. <span class="ink-4">The AI only explains.</span></h2>
+      <ol class="flow" style="margin-top:44px">
+        <li><span class="fl-n">1</span><div><b>Type it, scan it, photograph it or say it</b><p>At the pharmacy, the gym or abroad. Barcode to ingredient for ~68k Polish packs.</p></div></li>
+        <li class="strong"><span class="fl-n">2</span><div><b>The medicine list decides</b><p>137 medicines, brand → ingredient, combination rules. Offline. Same medicine, same answer.</p></div></li>
+        <li><span class="fl-n">3</span><div><b>The AI explains, and is checked</b><p>Plain words and safer options to ask about. Text that contradicts the verdict is thrown away.</p></div></li>
+      </ol>
+      <p class="label" style="margin:30px 0 12px">In the kit bag, from the dataset</p>
+      <div class="sp-kit">
+        <span class="risk conditional sm"><svg><use href="#r-conditional"/></svg>Ventolin · Conditional</span>
+        <span class="risk conditional sm"><svg><use href="#r-conditional"/></svg>Gripex · Conditional</span>
+        <span class="risk conditional sm"><svg><use href="#r-conditional"/></svg>Imodium · Conditional</span>
+        <span class="risk listed sm"><svg><use href="#r-listed"/></svg>Nurofen · Not listed</span>
+        <span class="risk known sm"><svg><use href="#r-known"/></svg>Klacid · Known risk</span>
+      </div>
+    </div>
+    <div style="flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:28px;align-items:start;margin-top:40px">
+      <figure style="margin:0"><img class="dev" src="media/d-scan.webp" alt="Scan a box: barcode found, Klacid 500"><figcaption><p class="label" style="margin:22px 0 8px">01 · Scan</p><p class="caption-b">Point at the barcode.</p></figcaption></figure>
+      <figure style="margin:0"><img class="dev" src="media/d-verdict.webp" alt="Known risk: Klacid is clarithromycin; ask your doctor about amoxicillin or doxycycline"><figcaption><p class="label" style="margin:22px 0 8px">02 · Verdict</p><p class="caption-b">Colour, shape and word.</p></figcaption></figure>
+      <figure style="margin:0"><img class="dev" src="media/d-agent.webp" alt="Voice: the agent explains the verdict in plain words"><figcaption><p class="label" style="margin:22px 0 8px">03 · Talk</p><p class="caption-b">The agent says it plainly.</p></figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<!-- 6 · Demo ================================================================= -->
+<section class="slide dark" data-title="Demo">
+  <div class="glow" style="width:1600px;height:1100px;left:160px;top:-300px"></div>
+  <div style="position:relative;display:flex;justify-content:space-between;align-items:flex-end">
+    <div>
+      <p class="eyebrow">See it working</p>
+      <h2 class="h1">Demo</h2>
+    </div>
+    <p class="body" style="max-width:640px;text-align:right;font-size:22px">Recorded on the HarmonyOS emulator (API 20) and a Huawei watch. Simulated heart data is labelled <span class="mono" style="font-size:17px;border:1.5px solid currentColor;border-radius:6px;padding:2px 6px">SIMULATED</span> on screen.</p>
+  </div>
+  <div style="position:relative;margin-top:44px;width:1680px;height:720px;border-radius:var(--r-xl);overflow:hidden;background:#000;box-shadow:0 0 0 1px var(--dk-border)">
+    <video id="demo" class="no-print" src="../site/media/demo.mp4" poster="../site/media/demo-poster.jpg" controls playsinline preload="metadata" style="width:100%;height:100%;display:block;object-fit:contain;background:#000"></video>
+    <img class="print-only" src="../site/media/demo-poster.jpg" alt="Still from the demo video: the medicine check, Klacid is clarithromycin, known risk" style="width:100%;height:100%;object-fit:contain;background:#000">
+    <span class="play print-only">
+      <span class="play-btn"><svg class="ico"><use href="#i-play"/></svg></span>
+      <span><b>Click to play · 1:12</b><span class="play-url">Video embedded in this PDF · also demo.mp4</span></span>
+    </span>
+  </div>
+</section>
+
+<!-- 7 · Watch + emergency ===================================================== -->
+<section class="slide black" data-title="On the wrist">
+  <div class="glow" style="width:1500px;height:800px;left:210px;top:220px;opacity:.45"></div>
+  <p class="eyebrow" style="position:relative">On the wrist, and on the bad day</p>
+  <h2 class="h2" style="position:relative">A question first, a siren only if you don't answer.</h2>
+  <p class="lead" style="position:relative;font-size:28px;max-width:1500px">A native HarmonyOS watch app. Limits follow your genotype and whether you rest, train or sleep. When you can't explain, the card does.</p>
+  <div style="position:relative;display:grid;grid-template-columns:repeat(6,1fr);gap:40px;margin-top:44px">
+    <svg width="1680" height="20" viewBox="0 0 1680 20" style="position:absolute;left:0;top:108px" aria-hidden="true">
+      <line  x1="120" y1="10" x2="1560" y2="10" stroke="#3A322D" stroke-width="2" stroke-dasharray="2 10" stroke-linecap="round"/>
+    </svg>
+    <figure class="wstep"><img class="wimg" src="media/f-home.webp" alt="All good, 72 bpm at rest, max 110"><figcaption><p class="label">01 · Calm</p><p class="caption-t">All good</p><p class="caption-b">Inside your own limits.</p></figcaption></figure>
+    <figure class="wstep"><img class="wimg" src="media/f-near.webp" alt="Near your max: 104 bpm at rest"><figcaption><p class="label">02 · Closer</p><p class="caption-t">Near your max</p><p class="caption-b">Amber before red.</p></figcaption></figure>
+    <figure class="wstep"><img class="wimg" src="media/f-high.webp" alt="Heart rate high: 165 bpm at rest; I'm OK or Need help"><figcaption><p class="label">03 · Alert</p><p class="caption-t">Racing at rest</p><p class="caption-b">“I'm OK” or “Need help”.</p></figcaption></figure>
+    <figure class="wstep"><img class="wimg" src="media/f-checkin.webp" alt="How do you feel? Fine, Dizzy, Racing"><figcaption><p class="label">04 · Check-in</p><p class="caption-t">How do you feel?</p><p class="caption-b">One tap answers.</p></figcaption></figure>
+    <figure class="wstep"><img class="wimg" src="media/f-sos.webp" alt="Sending SOS in 10 seconds; Cancel"><figcaption><p class="label">05 · No answer</p><p class="caption-t">SOS countdown</p><p class="caption-b">10 seconds to cancel.</p></figcaption></figure>
+    <figure class="wstep"><img class="wimg" src="media/f-sent.webp" alt="SOS sent. I have Long QT syndrome. Call 112."><figcaption><p class="label">06 · Help</p><p class="caption-t">SOS sent</p><p class="caption-b">Tells a bystander what to do.</p></figcaption></figure>
+  </div>
+  <div class="em-points sp-dk" style="position:relative;margin-top:auto;margin-bottom:12px">
+    <div><svg class="ico"><use href="#i-sos"/></svg><b>SOS with location</b><p>After a fall or a racing heart with no answer. Also on the lock screen.</p></div>
+    <div><svg class="ico"><use href="#i-globe"/></svg><b>A card in 13 languages</b><p>By QR on anyone's phone, no app. Written in advance, never machine-guessed.</p></div>
+    <div><svg class="ico"><use href="#i-heart"/></svg><b>A guide for the coach</b><p>Three steps, a call button and a CPR metronome at 110 a minute.</p></div>
+  </div>
+  <p class="sp-bad"><span class="label">Designed for the bad day</span>No signal: check, card and offline agent still work · Watch drops: no stale numbers · No location: SOS still goes</p>
+</section>
+
+<!-- 8 · Market + fit ========================================================== -->
+<section class="slide" data-title="Market and fit">
+  <p class="eyebrow">Market + fit</p>
+  <h2 class="h2" style="max-width:1500px">A group nobody builds for, and an engine that scales past it.</h2>
+  <div style="display:flex;gap:64px;margin-top:40px">
+    <div class="sp-mkt">
+      <svg width="600" height="470" viewBox="0 0 600 470" role="img" aria-label="People with Long QT syndrome: about 4 million worldwide, about 225 thousand in the EU, about 19 thousand in Poland">
+        <circle cx="300" cy="235" r="230" class="m-out"/>
+        <circle cx="300" cy="320" r="145" class="m-mid"/>
+        <circle cx="300" cy="392" r="73" class="m-in"/>
+        <text x="300" y="70" class="m-n">~4M</text><text x="300" y="100" class="m-l">worldwide</text>
+        <text x="300" y="232" class="m-n">~225k</text><text x="300" y="262" class="m-l">in the EU · next</text>
+        <text x="300" y="392" class="m-n in">~19k</text><text x="300" y="420" class="m-l in">Poland · first</text>
+      </svg>
+      <ul class="sp-more">
+        <li><b>+ their families.</b> Each first-degree relative has a 1 in 2 chance of carrying the gene.</li>
+        <li><b>+ the same engine, new data.</b> Brugada and CPVT, and anyone prescribed a QT-prolonging drug.</li>
+      </ul>
+    </div>
+    <div style="flex:1">
+      <p class="label" style="margin:0 0 16px">What exists today, and the gap</p>
+      <table class="sp-tbl">
+        <thead><tr><th></th><th class="me">Celia.ai</th><th>QT drug lists</th><th>ECG wearables</th><th>Smartwatch health</th><th>Pill reminders</th></tr></thead>
+        <tbody>
+          <tr><td>Check a medicine by brand or barcode</td><td class="me y">●</td><td class="h">◐</td><td>–</td><td>–</td><td class="h">◐</td></tr>
+          <tr><td>Heart rate limits by genotype and activity</td><td class="me y">●</td><td>–</td><td>–</td><td class="h">◐</td><td>–</td></tr>
+          <tr><td>Recovery after exercise, for LQTS</td><td class="me y">●</td><td>–</td><td>–</td><td class="h">◐</td><td>–</td></tr>
+          <tr><td>Emergency card, SOS, bystander guide</td><td class="me y">●</td><td>–</td><td>–</td><td class="h">◐</td><td>–</td></tr>
+          <tr><td>Explains in plain words, by voice</td><td class="me y">●</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+          <tr><td>Doctor brief between visits</td><td class="me y">●</td><td>–</td><td class="h">◐</td><td class="h">◐</td><td>–</td></tr>
+        </tbody>
+      </table>
+      <p class="sp-tkey">● yes · ◐ partly, generic or not LQTS-specific · – no</p>
+      <div class="card sp-why">
+        <span class="label">Why now</span>
+        <p>Sport is back on the table for treated patients (ESC 2020). A heart-rate sensor is already on millions of wrists. Agents like Celia can now answer “can I take this?” by voice, if the answer comes from fixed data.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 9 · Business model + go-to-market ========================================= -->
+<section class="slide s-ai" data-title="Business model">
+  <p class="eyebrow">Business model + go-to-market</p>
+  <h2 class="h2">Safety stays free. The care around it pays.</h2>
+  <div class="sp-plans">
+    <div class="card"><span class="label">Every patient</span><p class="sp-price">Free</p><b>The safety core</b><p>Medicine check, emergency card, SOS, watch alerts, coach. Never behind a paywall.</p></div>
+    <div class="card"><span class="label">Patients + families · B2C</span><p class="sp-price">€4.99<span> / month</span></p><b>Celia+</b><p>Family view of heart status, long history and trends, unlimited doctor briefs, cloud voice agent.</p></div>
+    <div class="card strong"><span class="label">Clinics + sports clubs · B2B</span><p class="sp-price">€2<span> / person / month</span></p><b>Care and team licence</b><p>Clinics: brief inbox and adherence between visits. Clubs: coach view and the roster's emergency cards.</p></div>
+  </div>
+  <p class="label" style="margin:44px 0 0">Go-to-market</p>
+  <div class="dg" style="width:1680px;height:190px;margin-top:6px">
+    <svg class="wires" width="1680" height="190" viewBox="0 0 1680 190" aria-hidden="true">
+      <path class="wire ink" marker-end="url(#arrow-ink)" d="M540 95 L 572 95"/>
+      <path class="wire ink" marker-end="url(#arrow-ink)" d="M1110 95 L 1142 95"/>
+    </svg>
+    <div class="node sp-ph" style="left:0"><span class="label">01 · 0–6 months · Poland</span><b>Pilot with one arrhythmia clinic</b><p>Patients onboarded by their cardiologist; AppGallery launch; feedback from the LQTS patient community.</p></div>
+    <div class="node sp-ph" style="left:572px;border:1.5px solid var(--ink)"><span class="label" style="color:var(--ink)">02 · 6–18 months · trust</span><b>CE mark as medical software</b><p>EU MDR (expected class IIa), ISO 13485, a validation study of the verdicts. Clinic licences start.</p></div>
+    <div class="node sp-ph" style="left:1144px"><span class="label">03 · 18–36 months · EU</span><b>Clubs, new markets, new data</b><p>13-language card opens the EU. Sports clubs and federations. Brugada and CPVT datasets.</p></div>
+  </div>
+  <div class="card sp-trac">
+    <span class="label" style="flex:none">Built in 24 h</span>
+    <span><b>552</b> tests, 0 failing</span><span><b>348</b> commits</span><span><b class="coral">137</b> medicines</span><span><b>13</b> card languages</span>
+    <span class="body" style="font-size:18px;margin-left:auto">Low cost to serve: verdicts on the device, the model only explains.</span>
+  </div>
+</section>
+
+<!-- 10 · Team + close ======================================================== -->
+<section class="slide dark" data-title="Ask before you take it">
+  <div class="glow" style="width:1500px;height:1500px;right:-500px;top:-400px"></div>
+  <div style="position:relative;display:flex;gap:96px;flex:1;align-items:center">
+    <div style="width:960px;flex:none">
+      <div style="position:relative;width:960px;height:540px;border-radius:var(--r-xl);overflow:hidden;background:var(--dk-surface);box-shadow:0 0 0 1px var(--dk-border)">
+        <img id="team-photo" src="media/team.jpg" alt="The Double Oreo team at HackYeah 2026" style="width:100%;height:100%;object-fit:cover;display:block">
+        <div class="slot" id="team-slot" hidden style="position:absolute;inset:20px">
+          <svg class="ico" style="width:56px;height:56px;stroke-width:1.4"><use href="#i-camera"/></svg>
+          <span>Drop the team photo at <b>deck/media/team.jpg</b> (16:9)</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:56px;margin-top:32px;align-items:baseline">
+        <p class="wordmark" style="margin:0;font-size:48px">Double <span style="color:var(--dk-brand)">Oreo</span></p>
+        <div><p class="t-name">Kaloyan</p><p class="t-role">The agent and voice</p></div>
+        <div><p class="t-name">Georgi</p><p class="t-role">The app and emergency</p></div>
+        <div><p class="t-name">Mark</p><p class="t-role">Data and the watch</p></div>
+      </div>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;text-align:center">
+      <img class="close-orb" src="media/orb-close.webp" alt="" aria-hidden="true">
+      <p style="font-size:84px;line-height:1;font-weight:800;letter-spacing:-0.04em;margin:28px 0 0">Ask before<br>you take it.</p>
+      <div style="background:#fff;padding:16px;border-radius:var(--r-l);width:240px;height:240px;margin-top:48px"><img src="media/qr-hap.svg" alt="QR code to download the Celia.ai phone .hap" style="width:100%;height:100%;display:block"></div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<div class="hud no-print" aria-hidden="true"><i id="bar"></i></div>
+<div class="hint no-print" id="hint">← → to move · F fullscreen · P print to PDF</div>
+<script src="deck.js"></script>
+</body>
+</html>

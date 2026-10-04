@@ -1,5 +1,7 @@
 # Workstream B - pending deploy steps (coordinator / Georgi)
 
+> Status (4 Oct 2026): steps 1-11 done on 4 Oct (see "Done on 4 Oct 2026" below; the "none of the steps below has been done yet" line is from when the list was written). Steps 12-13 (Huawei Push and Twilio secrets) are still open, so a watch SOS runs as a dry run.
+
 Everything Workstream B still needs on the live Supabase project, in order. Collected from the stream notes
 (`docs/workflow/b-accounts.md` "B9 plan and deploy order" and "Coordinator actions", `b-notify-sos.md` "For the
 coordinator", `b-doctor.md` "Coordinator actions", `b-research.md` B11 notes). All code is merged on
@@ -47,7 +49,7 @@ reach contacts: until then no dispatch is recorded and the phone says the server
 
 12. [ ] Huawei Push: `supabase secrets set HUAWEI_PUSH_PROJECT_ID=... HUAWEI_PUSH_SA_KEY=...` (needs an AGC project
     with Push Kit and a service-account key; receiving pushes needs a Chinese-mainland phone).
-13. [ ] SOS to contacts (B11, see `backend/supabase/functions/sos/README.md`): `SOS_WEBHOOK_SECRET`, Vault secrets
+13. [ ] SOS to contacts (B11, see the root README, "SOS texts and calls"): `SOS_WEBHOOK_SECRET`, Vault secrets
     `sos_function_url` and `sos_webhook_secret`, and Twilio `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` /
     `TWILIO_FROM_NUMBER`. Without them the `sos` function records `dry_run`. A Twilio trial account only reaches
     verified numbers.

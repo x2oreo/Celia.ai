@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Celia.ai AI deck</title>
+<meta name="description" content="Celia.ai: an AI heart-safety agent for people with Long QT syndrome, where fixed data decides and the model explains. HackYeah 2026, Artificial Intelligence.">
+<link rel="preload" href="assets/figtree-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="deck.css">
+<link rel="stylesheet" href="ai.css">
+</head>
+<body>
+
+<!-- Icons (line, 24 grid) and risk shapes (DESIGN §3) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="r-known" viewBox="0 0 24 24"><path d="M8 2h8l6 6v8l-6 6H8l-6-6V8z" fill="var(--known)"/><path d="M8.5 8.5l7 7m0-7l-7 7" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></symbol>
+    <symbol id="r-possible" viewBox="0 0 24 24"><path d="M12 2.5l10.5 18.5H1.5z" fill="var(--possible)"/><path d="M12 9v5.5" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><circle cx="12" cy="17.8" r="1.4" fill="#fff"/></symbol>
+    <symbol id="r-conditional" viewBox="0 0 24 24"><path d="M12 1.5L22.5 12 12 22.5 1.5 12z" fill="var(--conditional)"/><path d="M12 7.5v5.5" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><circle cx="12" cy="16.3" r="1.4" fill="#fff"/></symbol>
+    <symbol id="r-listed" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10.5" fill="var(--listed)"/><path d="M7 12.4l3.2 3.2L17 8.8" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="r-unknown" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5" fill="none" stroke="var(--unknown)" stroke-width="2.2" stroke-dasharray="3 2.6"/><path d="M9.6 9.4a2.5 2.5 0 114 2c-.9.6-1.6 1.1-1.6 2.3" stroke="var(--unknown)" stroke-width="2" fill="none" stroke-linecap="round"/><circle cx="12" cy="16.9" r="1.2" fill="var(--unknown)"/></symbol>
+
+    <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></symbol>
+    <symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 8h3l1.6-2.2h6.8L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.2" r="3.4"/></symbol>
+    <symbol id="i-keyboard" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2.5"/><path d="M7 10h.01M10.5 10h.01M14 10h.01M17 10h.01M8 14h8"/></symbol>
+    <symbol id="i-barcode" viewBox="0 0 24 24"><path d="M4 7V5h3M17 5h3v2M20 17v2h-3M7 19H4v-2M7.5 9v6M10 9v6M13 9v6M16.5 9v6"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.1a4.3 4.3 0 0 1 7.5 2.7C19.5 15.4 12 20 12 20z"/></symbol>
+    <symbol id="i-watch" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6"/><path d="M9 6.5L9.6 3h4.8l.6 3.5M9 17.5l.6 3.5h4.8l.6-3.5M12 9.5V12l1.6 1.2"/></symbol>
+    <symbol id="i-card" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M7 10h6M7 14h10"/><path d="M16.5 8.6l.9.9-.9.9-.9-.9z" fill="currentColor"/></symbol>
+    <symbol id="i-sos" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+    <symbol id="i-wave" viewBox="0 0 24 24"><path d="M4 10v4M8 7v10M12 4v16M16 7v10M20 10v4"/></symbol>
+    <symbol id="i-swim" viewBox="0 0 24 24"><circle cx="16.5" cy="6.5" r="2"/><path d="M5 11.5l4-2.5 3 2 2.5-1.5M2.5 16c1.6 1.2 3.2 1.2 4.8 0s3.2-1.2 4.8 0 3.2 1.2 4.8 0 3.2-1.2 4.8 0M2.5 20c1.6 1.2 3.2 1.2 4.8 0s3.2-1.2 4.8 0 3.2 1.2 4.8 0 3.2-1.2 4.8 0"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0M3 8.5a8.5 8.5 0 0 1 2.2-4.2M21 8.5a8.5 8.5 0 0 0-2.2-4.2"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M19.5 14.5A8 8 0 0 1 9.5 4.5a8 8 0 1 0 10 10z"/><path d="M15.5 4h3l-3 3.5h3M19 9.5h2l-2 2.3h2"/></symbol>
+    <symbol id="i-pill" viewBox="0 0 24 24"><rect x="2.8" y="8.2" width="18.4" height="7.6" rx="3.8" transform="rotate(-35 12 12)"/><path d="M9.8 8.9l4.4 6.2"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7a2.5 2.5 0 0 1-2.5 2.5H10l-4.5 4v-4h0A2.5 2.5 0 0 1 4 13.5z"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-device" viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="2.5"/><path d="M11 17.5h2"/></symbol>
+    <symbol id="i-replay" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4.5h4.5"/></symbol>
+    <symbol id="i-offline" viewBox="0 0 24 24"><path d="M2.5 8.5a14 14 0 0 1 5-2.9M21.5 8.5a14 14 0 0 0-8.1-3.4M5.5 12a9.5 9.5 0 0 1 3.4-2M18.5 12a9.5 9.5 0 0 0-2.3-1.6M9 15.5a4.5 4.5 0 0 1 6 0M12 19h.01M3 3l18 18"/></symbol>
+    <symbol id="i-bot" viewBox="0 0 24 24"><rect x="4" y="8" width="16" height="11" rx="3"/><path d="M12 8V4.5M9 13h.01M15 13h.01M9.5 16h5"/><circle cx="12" cy="4" r="1"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></symbol>
+    <symbol id="i-unlink" viewBox="0 0 24 24"><path d="M9.5 14.5l-2 2a3.2 3.2 0 0 1-4.5-4.5l2.5-2.5M14.5 9.5l2-2a3.2 3.2 0 0 1 4.5 4.5l-2.5 2.5M8 4v2.5M4 8h2.5M16 20v-2.5M20 16h-2.5"/></symbol>
+    <symbol id="i-question" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" stroke-dasharray="3 2.5"/><path d="M9.8 9.6a2.3 2.3 0 1 1 3.4 2c-.8.5-1.2 1-1.2 2M12 16.6h.01"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6.5h11M9 12h11M9 17.5h11M4.5 6.5h.01M4.5 12h.01M4.5 17.5h.01"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></symbol>
+    <symbol id="i-doc" viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4M10 12h5M10 16h5"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.8 3.8 5.8 3.8 9s-1.2 6.2-3.8 9c-2.6-2.8-3.8-5.8-3.8-9S9.4 5.8 12 3z"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l7.5 3v5.5c0 4.6-3.2 8.3-7.5 9.5-4.3-1.2-7.5-4.9-7.5-9.5V6z"/><path d="M8.8 12.2l2.3 2.3 4.3-4.6"/></symbol>
+    <symbol id="i-compare" viewBox="0 0 24 24"><path d="M4 7.5h13M13.5 4l3.5 3.5-3.5 3.5M20 16.5H7M10.5 13L7 16.5l3.5 3.5"/></symbol>
+    <symbol id="i-steth" viewBox="0 0 24 24"><path d="M6 3.5v5a4 4 0 0 0 8 0v-5M10 12.5v2a4.5 4.5 0 0 0 9 0V12"/><circle cx="19" cy="10" r="2"/></symbol>
+    <symbol id="m-yes" viewBox="0 0 30 30"><circle cx="15" cy="15" r="13" fill="var(--ink)"/><path d="M9.5 15.3l3.8 3.8 7.2-7.6" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="m-half" viewBox="0 0 30 30"><circle cx="15" cy="15" r="12" fill="none" stroke="var(--ink-3)" stroke-width="2"/><path d="M15 3a12 12 0 0 0 0 24z" fill="var(--ink-3)"/></symbol>
+    <symbol id="m-no" viewBox="0 0 30 30"><circle cx="15" cy="15" r="12" fill="none" stroke="var(--border-strong)" stroke-width="2"/><path d="M10.5 15h9" stroke="var(--ink-4)" stroke-width="2.4" stroke-linecap="round"/></symbol>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M1 1.5L8.5 5 1 8.5" fill="none" stroke="#B5ABA3" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <marker id="arrow-ink" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M1 1.5L8.5 5 1 8.5" fill="none" stroke="#6B625C" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <marker id="arrow-coral" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M1 1.5L8.5 5 1 8.5" fill="none" stroke="#E5484D" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker>
+  </defs>
+</svg>
+
+<main class="deck" id="deck">
+
+<!-- 1 · Title ============================================================== -->
+<section class="slide dark s-title" data-title="Celia.ai">
+  <div class="glow" style="width:1400px;height:1400px;right:-330px;top:-200px"></div>
+  <img class="silk-hero" src="media/orb-hero.webp" alt="" aria-hidden="true">
+  <div class="hero-dev">
+    <img class="dev" src="media/d-agent.webp" alt="The agent answers by voice: Klacid is clarithromycin, on the known-risk list; Known risk card">
+    <img class="wimg hero-watch" src="media/f-verdict.webp" alt="Watch: clarithromycin, known risk, pushed from the phone">
+    <span class="fchip" style="right:-150px;top:150px"><svg class="rs"><use href="#r-known"/></svg><span><b class="known-t">Known risk</b>Klacid → clarithromycin</span></span>
+    <span class="fchip sm" style="left:-150px;top:440px"><svg class="ico"><use href="#i-shield"/></svg>Model output validated</span>
+  </div>
+
+  <p class="eyebrow" style="position:relative">HackYeah 2026 · Artificial Intelligence</p>
+  <div style="position:relative;margin-top:auto;margin-bottom:auto;max-width:1000px">
+    <h1 class="wordmark" style="font-size:200px">Celia<span class="dot">.</span><span class="ai">ai</span></h1>
+    <p style="font-size:72px;font-weight:800;letter-spacing:-0.035em;line-height:1;margin:36px 0 0">The data decides.<br>The AI explains.</p>
+    <p class="lead" style="max-width:820px;margin-top:28px">An AI agent for people with Long QT syndrome. Say, scan or photograph a medicine and get one plain, checked answer, and what to ask your doctor instead.</p>
+  </div>
+  <p style="position:relative;margin:0;font-size:26px;font-weight:700;color:var(--dk-ink-3)">Native HarmonyOS, phone + watch · by <span style="color:var(--dk-brand)">Double Oreo</span></p>
+</section>
+
+<!-- 2 · The problem ========================================================= -->
+<section class="slide" data-title="The problem">
+  <p class="eyebrow">The problem</p>
+  <div style="display:flex;gap:80px;align-items:flex-start">
+    <div style="flex:1">
+      <h2 class="h1" style="max-width:1000px">The answer exists. <span class="ink-4">It's just unreadable when it matters.</span></h2>
+      <p class="lead" style="max-width:940px">1 in 2,000 people have Long QT syndrome. For them an ordinary antibiotic can stop the heart. The risk lists are written for clinicians, by ingredient, in English. At the pharmacy they hold a box called Klacid, and a general chatbot answers fluently, with no guarantee it's right.</p>
+    </div>
+    <div style="flex:none;margin-top:-20px">
+      <svg class="dots" id="dots" width="520" height="418" viewBox="0 0 828 666" role="img" aria-label="2,000 dots; one is highlighted"></svg>
+      <p class="label" style="margin:14px 0 0;text-align:right">Each dot is one person · <span class="coral">●</span> one has LQTS</p>
+    </div>
+  </div>
+
+  <div class="marquee" style="margin:36px calc(var(--pad-x) * -1) 0">
+    <div class="mq-row"><div class="mq-track" id="mqA"></div></div>
+  </div>
+
+  <div class="facts" style="margin-top:auto;margin-bottom:58px">
+    <div><p class="label">Hidden in plain sight</p><p class="fnum">250<span>+</span></p><p class="body">medicines can lengthen the QT. The list is long, technical and keeps changing.</p></div>
+    <div><p class="label">Brand ≠ ingredient</p><p class="fnum">68k</p><p class="body">medicine packs in Poland alone. The box never says “QT”.</p></div>
+    <div><p class="label">Fluent ≠ correct</p><p class="fnum" style="font-size:54px;line-height:84px">“It's safe”</p><p class="body">is the one sentence an unchecked model must never say about a risky drug.</p></div>
+    <div><p class="label">Time to act</p><p class="fnum coral">4–6 min</p><p class="body">without CPR. Most GPs never meet a patient with LQTS.</p></div>
+  </div>
+</section>
+
+<!-- 3 · Role of AI ========================================================== -->
+<section class="slide" data-title="Where the AI works">
+  <p class="eyebrow">The role of AI · how the parts work together</p>
+  <h2 class="h2">AI hears, reads and explains. Fixed rules guard both ends.</h2>
+  <div class="dg" style="width:1680px;height:262px;margin-top:56px">
+    <svg class="wires" width="1680" height="262" viewBox="0 0 1680 262" aria-hidden="true">
+      <path class="wire ink" marker-end="url(#arrow-ink)" d="M250 100 L 282 100"/>
+      <path class="wire ink" marker-end="url(#arrow-ink)" d="M536 100 L 568 100"/>
+      <path class="wire ink" marker-start="url(#arrow-ink)" marker-end="url(#arrow-ink)" d="M822 100 L 854 100"/>
+      <path class="wire ink" marker-end="url(#arrow-ink)" d="M1108 100 L 1140 100"/>
+      <path class="wire ink" marker-end="url(#arrow-ink)" d="M1394 100 L 1426 100"/>
+      <path class="wire coral dash" marker-end="url(#arrow-coral)" d="M411 200 L 411 246"/>
+      <path class="wire coral dash" marker-end="url(#arrow-coral)" d="M1267 200 L 1267 246"/>
+    </svg>
+    <div class="node pipe"><span class="tag ai">AI</span><span class="label">01 · Perceive</span><b>Hear it, read it, scan it</b><p>Speech-to-text tuned to drug names, on-device OCR, barcode → pack</p></div>
+    <div class="node pipe" style="left:286px"><span class="tag rule">Rule</span><span class="label">02 · Gate</span><b>Emergency words first</b><p>Fainting or chest pain goes straight to SOS, before any model</p></div>
+    <div class="node pipe" style="left:572px;border:1.5px solid var(--brand)"><span class="tag ai">AI</span><span class="label">03 · Agent</span><b>Model picks the tools</b><p>gpt-6.1-sol, max 5 steps a turn; the tools run on the phone</p></div>
+    <div class="node pipe" style="left:858px;border:1.5px solid var(--ink)"><span class="tag rule">Rule</span><span class="label">04 · Drug list</span><b>The verdict</b><p>137 medicines, brand → ingredient, CYP combo rules. Offline.</p></div>
+    <div class="node pipe" style="left:1144px"><span class="tag rule">Rule</span><span class="label">05 · Validator</span><b>Checks every word</b><p>Reassurance or a missing risk → fixed wording instead</p></div>
+    <div class="node pipe" style="left:1430px"><span class="tag out">You</span><span class="label">06 · Answer</span><b>Card + plain words</b><p>Card built from data, said aloud; you confirm every change</p></div>
+    <span class="wire-label coral" style="left:300px;top:232px;color:var(--brand-text)">red flag → SOS countdown, no AI</span>
+    <span class="wire-label coral" style="left:1162px;top:232px;color:var(--brand-text)">invalid → deterministic text</span>
+  </div>
+
+  <p class="label" style="margin:auto 0 18px">What the AI does for the person · the task's directions</p>
+  <div class="dirs" style="margin-bottom:56px">
+    <div class="card"><svg class="ico"><use href="#i-doc"/></svg><b>Complex information, made plain</b><p>A clinician's risk category becomes one sentence about the box in your hand.</p></div>
+    <div class="card"><svg class="ico"><use href="#i-mic"/></svg><b>Accessible by voice and language</b><p>Talk instead of type, English or Polish. The emergency card reads aloud in 13 languages.</p></div>
+    <div class="card"><svg class="ico"><use href="#i-compare"/></svg><b>Compare possible actions</b><p>Safer options to ask about, and how it mixes with what you already take.</p></div>
+    <div class="card"><svg class="ico"><use href="#i-steth"/></svg><b>A workflow automated</b><p>A one-page doctor brief, with a short AI summary checked before it's shown.</p></div>
+  </div>
+</section>
+
+<!-- 4 · Use case ============================================================ -->
+<section class="slide" data-title="One concrete case">
+  <p class="eyebrow">A concrete use case</p>
+  <div style="display:flex;gap:56px;flex:1">
+    <div style="width:760px;flex:none;display:flex;flex-direction:column">
+      <h2 class="h2" style="font-size:60px">Ola has LQT2. The pharmacy hands her Klacid.</h2>
+      <ol class="flow" style="margin-top:36px">
+        <li><span class="fl-n">1</span><div><b>She scans the box, or just asks</b><p>Barcode → clarithromycin. A photo is read on the device; a voice question works too.</p></div></li>
+        <li class="strong"><span class="fl-n">2</span><div><b>The list decides: Known risk</b><p>Same box, same answer, offline. Checked against her nadolol as well.</p></div></li>
+        <li><span class="fl-n">3</span><div><b>The agent explains, in plain words</b><p>Why it matters for her, and what to ask about instead: amoxicillin, doxycycline.</p></div></li>
+        <li><span class="fl-n">4</span><div><b>It follows through</b><p>If she takes it anyway, her watch tightens heart-rate limits for 72 h. The check lands in her doctor brief.</p></div></li>
+      </ol>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:auto;margin-bottom:56px">
+        <span class="risk known sm"><svg><use href="#r-known"/></svg>Known risk</span>
+        <span class="risk possible sm"><svg><use href="#r-possible"/></svg>Possible</span>
+        <span class="risk conditional sm"><svg><use href="#r-conditional"/></svg>Conditional</span>
+        <span class="risk listed sm"><svg><use href="#r-listed"/></svg>Not listed</span>
+        <span class="risk unknown sm"><svg><use href="#r-unknown"/></svg>Unknown</span>
+      </div>
+    </div>
+    <div style="flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:28px;align-items:start;margin-top:40px">
+      <figure style="margin:0"><img class="dev" src="media/d-scan.webp" alt="Scan a box: barcode found, Klacid 500"><figcaption><p class="label" style="margin:22px 0 8px">01 · Scan</p><p class="caption-b">Point at the barcode.</p></figcaption></figure>
+      <figure style="margin:0"><img class="dev" src="media/d-verdict.webp" alt="Known risk: Klacid is clarithromycin; ask your doctor about amoxicillin or doxycycline"><figcaption><p class="label" style="margin:22px 0 8px">02 · Verdict</p><p class="caption-b">Colour, shape and word.</p></figcaption></figure>
+      <figure style="margin:0"><img class="dev" src="media/d-agent.webp" alt="Voice: the agent explains the verdict in plain words"><figcaption><p class="label" style="margin:22px 0 8px">03 · Talk</p><p class="caption-b">The agent says it plainly.</p></figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<!-- 5 · Trust + control ===================================================== -->
+<section class="slide" data-title="Trust and control">
+  <p class="eyebrow">Capabilities, limits, control</p>
+  <h2 class="h2">Every answer is checkable. Every action is yours.</h2>
+  <div class="tri" style="margin-top:44px">
+    <div class="card">
+      <p class="label">What it can do</p>
+      <ul class="ticks">
+        <li>Name the ingredient behind a brand, a barcode or a photo</li>
+        <li>Give a verdict for 137 QT medicines and their combinations</li>
+        <li>Explain it plainly, by text or voice, in English or Polish</li>
+        <li>Answer offline with a rule-based agent when there's no signal</li>
+      </ul>
+    </div>
+    <div class="card">
+      <p class="label">What it won't do</p>
+      <ul class="ticks no">
+        <li>Diagnose, or advise starting or stopping a medicine</li>
+        <li>Read QT or rhythm: a wrist heart rate is not an ECG</li>
+        <li>Call an unknown medicine “safe”: it stays Unknown, grey and dashed</li>
+        <li>Claim full interaction coverage: combo rules are a curated subset</li>
+      </ul>
+    </div>
+    <div class="card strong">
+      <p class="label" style="color:var(--ink)">How you verify and stay in control</p>
+      <ul class="ticks">
+        <li>The verdict card is built from data, never from model text</li>
+        <li>Any AI text carries an <span class="mono ai-badge">AI SUMMARY</span> badge</li>
+        <li>Saving a medicine or sharing the card needs your tap; SOS can be cancelled</li>
+        <li>A privacy ledger lists every request that left the phone</li>
+      </ul>
+    </div>
+  </div>
+  <div class="stats sm" style="display:grid;grid-template-columns:repeat(4,1fr);margin-top:auto;margin-bottom:48px">
+    <div><p class="label">Tests</p><p class="num">552</p><p class="body">phone, watch and backend. 0 failing.</p></div>
+    <div><p class="label">Tool routing</p><p class="num">9<span class="of">/10</span></p><p class="body">correct in our 5-task agent benchmark</p></div>
+    <div><p class="label">Per model step</p><p class="num">2.1<span class="of">s</span></p><p class="body">to 2.4 s; 20 s timeout → offline agent</p></div>
+    <div><p class="label">Personal fields sent to AI</p><p class="num coral">0</p><p class="body">no name, contacts or notes, blocked in code</p></div>
+  </div>
+</section>
+
+<!-- 6 · Demo ================================================================= -->
+<section class="slide dark" data-title="Demo">
+  <div class="glow" style="width:1600px;height:1100px;left:160px;top:-300px"></div>
+  <div style="position:relative;display:flex;justify-content:space-between;align-items:flex-end">
+    <div>
+      <p class="eyebrow">See it working</p>
+      <h2 class="h1">Demo</h2>
+    </div>
+    <p class="body" style="max-width:640px;text-align:right;font-size:22px">Recorded on the HarmonyOS emulator (API 20) and a Huawei watch. Simulated heart data is labelled <span class="mono" style="font-size:17px;border:1.5px solid currentColor;border-radius:6px;padding:2px 6px">SIMULATED</span> on screen.</p>
+  </div>
+  <div style="position:relative;margin-top:44px;width:1680px;height:720px;border-radius:var(--r-xl);overflow:hidden;background:#000;box-shadow:0 0 0 1px var(--dk-border)">
+    <video id="demo" class="no-print" src="../site/media/demo.mp4" poster="../site/media/demo-poster.jpg" controls playsinline preload="metadata" style="width:100%;height:100%;display:block;object-fit:contain;background:#000"></video>
+    <img class="print-only" src="../site/media/demo-poster.jpg" alt="Still from the demo video: the medicine check, Klacid is clarithromycin, known risk" style="width:100%;height:100%;object-fit:contain;background:#000">
+    <span class="play print-only">
+      <span class="play-btn"><svg class="ico"><use href="#i-play"/></svg></span>
+      <span><b>Click to play · 1:12</b><span class="play-url">Video embedded in this PDF · also demo.mp4</span></span>
+    </span>
+  </div>
+</section>
+
+<!-- 7 · Technical decisions + wiring ======================================================== -->
+<section class="slide" data-title="Technical decisions">
+  <p class="eyebrow">Technical decisions · how it's wired</p>
+  <h2 class="h2">The model never holds the verdict. It runs one step at a time.</h2>
+  <p class="lead" style="font-size:26px;margin-top:16px;max-width:none">A wrong “safe” can kill: the tool loop runs on the phone, the verdict stays offline, no keys on the device.</p>
+
+  <div class="dg arch" style="position:absolute;left:120px;top:300px;width:1680px;height:660px">
+    <svg class="wires" width="1680" height="660" viewBox="0 0 1680 660" aria-hidden="true">
+      <path class="wire ink"  marker-end="url(#arrow-ink)" d="M190 268 L 190 172"/>
+      <path class="wire ink"  marker-start="url(#arrow-ink)" marker-end="url(#arrow-ink)" d="M330 172 L 330 222 L 560 222 L 560 266"/>
+      <path class="wire ink"  marker-start="url(#arrow-ink)" marker-end="url(#arrow-ink)" d="M700 172 L 700 266"/>
+      <path class="wire ink"  marker-start="url(#arrow-ink)" marker-end="url(#arrow-ink)" d="M828 100 L 852 100"/>
+      <path class="wire ink"  marker-end="url(#arrow-ink)" d="M1464 268 L 1464 172"/>
+      <path class="wire ink"  marker-end="url(#arrow-ink)" d="M886 514 L 914 514"/>
+    </svg>
+
+    <div class="region" style="left:0;top:0;width:1680px;height:192px"><span class="label">Optional cloud · EU region</span></div>
+    <div class="node" style="left:24px;top:34px;width:388px;height:136px"><span class="label">Supabase · Postgres</span><b>Watch rows &amp; shares</b><p>heart rate, alerts, SOS · encrypted share blobs</p></div>
+    <div class="node" style="left:440px;top:34px;width:388px;height:136px"><span class="label">Edge Functions</span><b>/agent · /drug-check · /speak</b><p>one model step; the tools run on the phone</p></div>
+    <div class="node" style="left:856px;top:34px;width:388px;height:136px"><span class="label">Language model</span><b>gpt-6.1-sol, via the backend</b><p>strict JSON; prompt versioned and logged</p></div>
+    <div class="node" style="left:1272px;top:34px;width:384px;height:136px"><span class="label">Web viewer · Vercel</span><b>Card &amp; report links</b><p>end-to-end encrypted; the key stays in the link</p></div>
+
+    <span class="wire-label" style="left:24px;top:206px">heart rate · alerts · SOS</span>
+    <span class="wire-label" style="left:350px;top:236px">genotype + risky drug ⇄ watch data</span>
+    <span class="wire-label" style="left:712px;top:206px">HTTPS · de-identified</span>
+    <span class="wire-label" style="left:1284px;top:206px">E2E-encrypted link</span>
+
+    <div class="node" style="left:0;top:270px;width:380px;height:390px;background:#000;border-color:#000;color:var(--dk-ink);padding:26px 28px">
+      <span class="label" style="color:var(--dk-ink-4)">Watch app · ArkTS</span>
+      <b style="color:var(--dk-ink);font-size:26px">Celia on the wrist</b>
+      <ul class="arch-list">
+        <li>Sensor Service Kit: heart rate + motion (real watch)</li>
+        <li>Alarm rules tuned to the genotype</li>
+        <li>Check-in → SOS countdown</li>
+        <li>Outbox: sends when back online</li>
+      </ul>
+    </div>
+
+    <div class="node" style="left:460px;top:270px;width:1220px;height:390px;padding:22px 24px">
+      <span class="label" style="color:var(--ink)">Phone app · ArkTS + ArkUI · API 20</span>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <span class="chip sm kc kc-dev"><svg class="ico"><use href="#i-device"/></svg>Celia · Intents Kit</span><span class="chip sm kc kc-ok"><svg class="ico"><use href="#i-check"/></svg>Form Kit widgets</span><span class="chip sm kc kc-ok"><svg class="ico"><use href="#i-check"/></svg>Live View Kit</span><span class="chip sm kc kc-ok"><svg class="ico"><use href="#i-check"/></svg>Scan Kit</span><span class="chip sm kc kc-fb"><svg class="ico"><use href="#i-replay"/></svg>Core Vision OCR</span><span class="chip sm kc kc-fb"><svg class="ico"><use href="#i-replay"/></svg>Core Speech</span><span class="chip sm kc kc-dev"><svg class="ico"><use href="#i-device"/></svg>Location Kit</span>
+      </div>
+    </div>
+    <div class="node" style="left:484px;top:392px;width:402px;height:244px;background:var(--surface);border:1.5px solid var(--ink)">
+      <span class="label" style="color:var(--ink)">Agent</span>
+      <b>AgentCore · tool loop</b>
+      <ul class="arch-list ink">
+        <li>SafetyGate before the model</li>
+        <li>ResponseValidator after it</li>
+        <li>OfflineAgent with no signal</li>
+      </ul>
+    </div>
+    <div class="region" style="left:914px;top:392px;width:742px;height:244px;background:var(--surface-alt);border-style:solid;border-color:var(--border)"><span class="label" style="background:var(--surface-alt);border-radius:6px">Offline core · no network needed</span></div>
+    <div class="node mini" style="left:934px;top:418px"><b>DrugChecker</b><p>137 medicines · combo rules</p></div>
+    <div class="node mini" style="left:1292px;top:418px"><b>Box identify</b><p>barcode → 68k packs · photo OCR</p></div>
+    <div class="node mini" style="left:934px;top:526px"><b>LocalStore</b><p>encrypted RDB: profile, meds, chats</p></div>
+    <div class="node mini" style="left:1292px;top:526px"><b>Emergency &amp; SOS</b><p>card in 13 languages · countdown</p></div>
+  </div>
+</section>
+
+<!-- 8 · Market + fit ======================================================== -->
+<section class="slide" data-title="Market and fit">
+  <p class="eyebrow">Market + fit</p>
+  <h2 class="h2">Start where the need is sharp. Then the engine scales.</h2>
+  <div style="display:flex;gap:80px;margin-top:40px;flex:1">
+    <div style="width:700px;flex:none">
+      <svg class="mkt" width="700" height="600" viewBox="0 0 700 600" role="img" aria-label="Market sizes: 4.1 million people with LQTS worldwide, 225 thousand in the EU, 8 thousand patients as the year-3 target">
+        <circle class="r1" cx="350" cy="300" r="295"/>
+        <circle class="r2" cx="350" cy="405" r="190"/>
+        <circle class="r3" cx="350" cy="502" r="93"/>
+        <text class="n" x="350" y="98">4.1M</text>
+        <text class="t" x="350" y="136">with LQTS worldwide</text>
+        <text class="n" x="350" y="300">225k</text>
+        <text class="t" x="350" y="338">people in the EU</text>
+        <text class="n w" x="350" y="508">8k</text>
+        <text class="t w" x="350" y="542">patients, year 3</text>
+      </svg>
+      <p class="body" style="font-size:20px;margin-top:20px">Launch in <b style="color:var(--ink)">Poland + Bulgaria</b>, where our brand data already lives (~22k people). Next, the same engine with a new rule pack: <b style="color:var(--ink)">Brugada, CPVT, G6PD deficiency</b> (about 400M people, also a drug-avoid list).</p>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column">
+      <table class="mx">
+        <thead><tr><th></th><th>Plain answer from a brand name</th><th>Verdict from fixed data</th><th>Knows your genotype + meds</th><th>Watch + SOS</th></tr></thead>
+        <tbody>
+          <tr class="us"><td><b>Celia.ai</b><span>agent + rules, phone + watch</span></td><td><svg class="mk"><use href="#m-yes"/></svg></td><td><svg class="mk"><use href="#m-yes"/></svg></td><td><svg class="mk"><use href="#m-yes"/></svg></td><td><svg class="mk"><use href="#m-yes"/></svg></td></tr>
+          <tr><td><b>General AI chatbots</b><span>fluent, unchecked</span></td><td><svg class="mk"><use href="#m-yes"/></svg></td><td><svg class="mk"><use href="#m-no"/></svg></td><td><svg class="mk"><use href="#m-half"/></svg></td><td><svg class="mk"><use href="#m-no"/></svg></td></tr>
+          <tr><td><b>QT drug lists</b><span>accurate, for clinicians</span></td><td><svg class="mk"><use href="#m-no"/></svg></td><td><svg class="mk"><use href="#m-yes"/></svg></td><td><svg class="mk"><use href="#m-no"/></svg></td><td><svg class="mk"><use href="#m-no"/></svg></td></tr>
+          <tr><td><b>Pill and interaction apps</b><span>generic, no QT logic</span></td><td><svg class="mk"><use href="#m-no"/></svg></td><td><svg class="mk"><use href="#m-half"/></svg></td><td><svg class="mk"><use href="#m-half"/></svg></td><td><svg class="mk"><use href="#m-no"/></svg></td></tr>
+          <tr><td><b>Smartwatch health apps</b><span>one limit for everyone</span></td><td><svg class="mk"><use href="#m-no"/></svg></td><td><svg class="mk"><use href="#m-no"/></svg></td><td><svg class="mk"><use href="#m-no"/></svg></td><td><svg class="mk"><use href="#m-half"/></svg></td></tr>
+        </tbody>
+      </table>
+      <div class="why" style="margin-top:auto;margin-bottom:56px">
+        <div><p class="label">Why now</p><p>On-device OCR and speech, an assistant in the OS (Celia, Intents Kit), and a watch on the wrist.</p></div>
+        <div><p class="label">Why us</p><p>The AI is useful here only because it's fenced in. That fence is the product.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 9 · Business model ====================================================== -->
+<section class="slide" data-title="Business model">
+  <p class="eyebrow">Business model + go-to-market</p>
+  <h2 class="h2">Free where it saves a life. Paid where it saves time.</h2>
+  <div class="tiers" style="margin-top:44px">
+    <div class="card">
+      <p class="label">Free · patients</p>
+      <p class="price">€0</p>
+      <p class="tier-b">Medicine check by text, scan, photo or voice. Emergency card in 13 languages, SOS, offline agent.</p>
+      <p class="tier-n">Safety is never behind a paywall.</p>
+    </div>
+    <div class="card strong">
+      <p class="label" style="color:var(--ink)">Plus · patients + families</p>
+      <p class="price">€4.99<span>/ month · €39 / year</span></p>
+      <p class="tier-b">Watch app with genotype limits, hands-free voice agent, doctor brief with AI summary, family alerts.</p>
+      <p class="tier-n">The everyday layer, for people who live with it.</p>
+    </div>
+    <div class="card">
+      <p class="label">Care · clinics + insurers</p>
+      <p class="price">€30<span>/ patient / year</span></p>
+      <p class="tier-b">Set up by the cardiologist, a brief before each visit, the clinic's own drug notes, adherence trends.</p>
+      <p class="tier-n">Fewer avoidable ER visits; aggregate data only.</p>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:40px;margin-top:auto;margin-bottom:48px">
+    <div class="dg" style="flex:1;height:250px">
+      <p class="label" style="margin:0 0 18px">Go-to-market</p>
+      <div class="gtm">
+        <div class="node"><span class="label">2027 · Q1</span><b>Pilot</b><p>2 inherited-arrhythmia clinics in PL + BG; AppGallery launch</p></div>
+        <div class="node"><span class="label">2027</span><b>Evidence + MDR</b><p>class IIa path; patient groups and pharmacists as channels</p></div>
+        <div class="node"><span class="label">2028</span><b>Scale</b><p>EU languages, new condition packs, Huawei Health + Celia distribution</p></div>
+      </div>
+    </div>
+    <div class="card plan">
+      <p class="label">Year-3 plan · an estimate, not a result</p>
+      <p class="arr">≈ €0.27M <span>ARR</span></p>
+      <p class="line"><span>3,000 Plus × €39</span><b>€117k</b></p>
+      <p class="line"><span>5,000 Care patients × €30</span><b>€150k</b></p>
+      <p class="line"><span>AI cost per answer (verdict runs offline)</span><b>&lt; €0.01</b></p>
+    </div>
+  </div>
+</section>
+
+<!-- 10 · Team + close ======================================================== -->
+<section class="slide dark" data-title="Ask before you take it">
+  <div class="glow" style="width:1500px;height:1500px;right:-500px;top:-400px"></div>
+  <div style="position:relative;display:flex;gap:96px;flex:1;align-items:center">
+    <div style="width:960px;flex:none">
+      <div style="position:relative;width:960px;height:540px;border-radius:var(--r-xl);overflow:hidden;background:var(--dk-surface);box-shadow:0 0 0 1px var(--dk-border)">
+        <img id="team-photo" src="media/team.jpg" alt="The Double Oreo team at HackYeah 2026" style="width:100%;height:100%;object-fit:cover;display:block">
+        <div class="slot" id="team-slot" hidden style="position:absolute;inset:20px">
+          <svg class="ico" style="width:56px;height:56px;stroke-width:1.4"><use href="#i-camera"/></svg>
+          <span>Drop the team photo at <b>deck/media/team.jpg</b> (16:9)</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:56px;margin-top:32px;align-items:baseline">
+        <p class="wordmark" style="margin:0;font-size:48px">Double <span style="color:var(--dk-brand)">Oreo</span></p>
+        <div><p class="t-name">Kaloyan</p><p class="t-role">The agent and voice</p></div>
+        <div><p class="t-name">Georgi</p><p class="t-role">The app and emergency</p></div>
+        <div><p class="t-name">Mark</p><p class="t-role">Data and the watch</p></div>
+      </div>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;text-align:center">
+      <img class="close-orb" src="media/orb-close.webp" alt="" aria-hidden="true">
+      <p style="font-size:84px;line-height:1;font-weight:800;letter-spacing:-0.04em;margin:28px 0 0">Ask before<br>you take it.</p>
+      <div style="background:#fff;padding:16px;border-radius:var(--r-l);width:240px;height:240px;margin-top:48px"><img src="media/qr-hap.svg" alt="QR code to download the Celia.ai phone .hap" style="width:100%;height:100%;display:block"></div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<div class="hud no-print" aria-hidden="true"><i id="bar"></i></div>
+<div class="hint no-print" id="hint">← → to move · F fullscreen · P print to PDF</div>
+<script src="deck.js"></script>
+</body>
+</html>

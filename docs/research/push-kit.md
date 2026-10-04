@@ -1,5 +1,7 @@
 # Push Kit (B12): server-sent alerts to the phone
 
+> Status (4 Oct 2026): built (`account/PushToken.ets`, `push_tokens` migration, `sos/huaweiPush.ts`) but unverified: it needs an AGC project with Push Kit, the service-account secrets and a Chinese-mainland phone.
+
 Research for brief task B12, written so stream S4 can implement without re-reading the Huawei docs. Researched
 2026-10-03 against the official HarmonyOS guides (EN, pulled from developer.huawei.com) and the local SDK typings
 (DevEco Studio 6.1.1, API 24, `hms/ets/api/@hms.core.push.pushService.d.ts`).
@@ -224,7 +226,7 @@ export async function sendPush(cfg: PushConfig, tokens: string[], title: string,
 | Firewall | Device must reach ports 5223 and 443 | same |
 
 Test steps once a token exists: launch the app → `hdc shell hilog -x | grep PushToken` shows no error → row in
-`push_tokens` → insert a simulated `sos` row (`backend/supabase/functions/sos/README.md` "Manual end-to-end") →
+`push_tokens` → insert a simulated `sos` row (root README, "SOS texts and calls") →
 notification appears, tap opens the SOS page → `sos_dispatches.detail.push.ok = true`.
 
 ## Possible alternative for the watch (Poland)

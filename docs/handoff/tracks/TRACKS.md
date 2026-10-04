@@ -1,5 +1,7 @@
 # Workstream A - parallel tracks
 
+> Status (4 Oct 2026): historical. All three tracks and the integrator work are merged into `main`. Each track has a brief (`T<n>_*.md`) and a log (`T<n>_LOG.md`); emulator screenshots are in `shots/t0`, `shots/t1`, `shots/t3`. Index: the root [README](../../../README.md#documentation).
+
 Workstream A (`docs/handoff/KALOYAN_agent_and_ui.md`) is split into three build tracks that run at the same time,
 each in its own git worktree and branch, plus one integrator. Read this file first, then your track file.
 

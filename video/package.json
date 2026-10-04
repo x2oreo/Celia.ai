@@ -1,0 +1,35 @@
+{
+  "name": "celia-video",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Celia.ai launch film, built as code with Remotion.",
+  "type": "module",
+  "scripts": {
+    "audio:setup": "python3 -m venv .audio-venv && .audio-venv/bin/pip install -q kokoro-onnx soundfile scipy && mkdir -p .audio-models && curl -sSL -o .audio-models/kokoro-v1.0.onnx https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/kokoro-v1.0.onnx && curl -sSL -o .audio-models/voices-v1.0.bin https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/voices-v1.0.bin",
+    "audio": ".audio-venv/bin/python scripts/audio/vo.py && .audio-venv/bin/python scripts/audio/sfx.py && .audio-venv/bin/python scripts/audio/score.py",
+    "studio": "remotion studio",
+    "typecheck": "tsc --noEmit",
+    "render:hero": "remotion render Hero16x9 out/demo-raw.mp4 --codec=h264 --crf=20 --pixel-format=yuv420p --audio-codec=aac --audio-bitrate=320k && node scripts/loudnorm.mjs out/demo-raw.mp4 ../site/media/demo.mp4",
+    "render:poster": "remotion still Hero16x9 out/demo-poster.png --frame=960 && ffmpeg -y -loglevel error -i out/demo-poster.png -q:v 3 ../site/media/demo-poster.jpg",
+    "render:vertical": "remotion render Vertical9x16 out/vertical-raw.mp4 --codec=h264 --crf=20 --pixel-format=yuv420p --audio-codec=aac --audio-bitrate=320k && node scripts/loudnorm.mjs out/vertical-raw.mp4 out/celia-vertical.mp4",
+    "render": "npm run typecheck && npm run render:hero && npm run render:poster && npm run render:vertical",
+    "contact": "node scripts/stills.mjs Hero16x9 && node scripts/stills.mjs Vertical9x16",
+    "stills": "node scripts/stills.mjs"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.532",
+    "@remotion/google-fonts": "4.0.532",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "remotion": "4.0.532"
+  },
+  "devDependencies": {
+    "@remotion/bundler": "4.0.532",
+    "@remotion/renderer": "4.0.532",
+    "@types/react": "19.2.18",
+    "typescript": "5.9.3"
+  },
+  "allowScripts": {
+    "esbuild@0.28.1": true
+  }
+}

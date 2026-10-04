@@ -1,34 +1,301 @@
 # AI workflow
 
-How AI tools were used to build Celia.ai, as required by Challenge Rules §4. Append one entry per session.
+How AI tools were used to build Celia.ai, as required by Challenge Rules §4 (deliverable 6). The top of this file is
+a summary; the [session log](#sessions) below it is append-only, one entry per working session, written as we went.
+The AI features that ship inside the product (models, inference flow, validation, privacy) are described separately
+in [`AI_FEATURES.md`](AI_FEATURES.md).
 
-## Tools
+## Contents
 
-| Tool | Use |
+1. [Summary](#summary)
+2. [Tools, models and MCP servers](#tools-models-and-mcp-servers)
+3. [Reusable instructions: CLAUDE.md and Agent Skills](#reusable-instructions-claudemd-and-agent-skills)
+4. [How we worked: ideation to debugging](#how-we-worked-ideation-to-debugging)
+5. [How AI output was reviewed and tested](#how-ai-output-was-reviewed-and-tested)
+6. [Limitations, failed approaches and lessons](#limitations-failed-approaches-and-lessons)
+7. [Pre-existing work and third-party components](#pre-existing-work-and-third-party-components)
+8. [Session log index](#session-log-index)
+9. [Sessions](#sessions) (the full log)
+
+## Summary
+
+- **One coding agent, many sessions.** Every line of code, data and docs in this repo was written during the
+  challenge by three team members (Kaloyan, Mark, Georgi), each working with **Claude Code** (Claude Opus 5.5).
+  Larger pieces ran as several Claude Code sessions in parallel (git worktrees, one integrator session that merges).
+- **Thin platform knowledge, fixed by grounding.** HarmonyOS / ArkTS is badly covered in model training data, so the
+  agent was made to check APIs before writing them: **Context7 MCP** for the HarmonyOS guides and API references
+  (and the OpenAI API docs), the SDK's own `.d.ts` files when Context7 was missing, and nine project **Agent Skills**
+  in `.claude/skills/`.
+- **`CLAUDE.md` is the main reusable instruction.** It sets the platform (API 20 minimum, emulator), strict ArkTS,
+  the design-system rule, the safety rule ("verdicts come from deterministic data; the LLM only explains"), no
+  secrets, no em dashes, and no AI attribution in commits.
+- **Humans decide, the agent proposes.** Plans, design choices and every medical rule were approved by the developer
+  in the session; commits are made by the team members themselves.
+- **Verified by running it.** Strict ArkTS builds with no warnings, Hypium unit tests (418 phone and 99 watch at
+  the last README count), 75 Deno tests for the Edge Functions, a paid live eval of the AI layer
+  (`backend/eval/`), and the agent driving the emulator itself (`hdc`, `uitest`, screenshots it reads back).
+- **In the product,** the AI is OpenAI (Responses API, Realtime, transcription, TTS) behind Supabase Edge Functions;
+  see [`AI_FEATURES.md`](AI_FEATURES.md).
+
+## Tools, models and MCP servers
+
+| Tool / model | Where | What it was used for |
+|---|---|---|
+| **Claude Code** with **Claude Opus 5.5** | Development (all team members) | Research, planning, architecture, ArkTS / TypeScript / SQL code, tests, emulator testing, docs, landing page, deck, film |
+| Claude Code sub-agents and parallel sessions | Development | Read-only research agents, a test agent for the live eval, three parallel track sessions plus one integrator (separate git worktrees) |
+| **Context7 MCP** | Development | Current docs: HarmonyOS guides and references (`/websites/developer_huawei_consumer_cn_doc_harmonyos-guides`, `..._harmonyos-references`) and the OpenAI API (`/websites/developers_openai_api`). When it was not connected, the agent read developer.huawei.com, the OpenHarmony docs repo and the SDK `.d.ts` files instead (noted in those sessions) |
+| **Supabase MCP** | Development | Deploying an Edge Function (`med-info`, with the JWT check on) in one session |
+| Playwright / headless Chrome | Development only | Rendering and checking the web pages (share viewer, landing page) and the slide deck, printing the deck to PDF |
+| Claude Design | Design (owner) | The v2 visual design of the app screens and the "Dawn" silk orb, applied in code by Claude Code sessions |
+| Agent Skills (`.claude/skills/`) | Development | Project knowledge loaded on demand, see the next section |
+| **OpenAI API** (`gpt-6.1-sol`, `gpt-realtime-2.1`, `gpt-transcribe`, `gpt-4o-mini-tts`) | **In the product** | The in-app agent and its helpers, behind our Edge Functions. Model choice and validation: [`AI_FEATURES.md`](AI_FEATURES.md) |
+| Kokoro-82M (`kokoro-onnx`), OpenAI Whisper | Launch film only, run locally | Voices for the film; Whisper only checks that every spoken line is intelligible. Not shipped in the app |
+
+## Reusable instructions: CLAUDE.md and Agent Skills
+
+**`CLAUDE.md`** (repo root) is loaded into every Claude Code session. It holds the project idea, the platform and
+stack, and the rules every agent follows: verify HarmonyOS APIs via Context7 before writing them, read
+`docs/design/DESIGN.md` before any UI work and use its tokens, write strict ArkTS, do not port React/Android
+patterns, build through the terminal loop, English only, no em dashes, no secrets, small commits without AI
+attribution, deterministic medical verdicts with validated model output, and keep this file updated.
+
+**Agent Skills** (`.claude/skills/<name>/SKILL.md`), written for this project at the start of the challenge:
+
+| Skill | One line |
 |---|---|
-| Claude Code (Claude Opus 5.5) | Research, architecture planning, code generation, tests, docs |
-| Context7 MCP | Up-to-date HarmonyOS docs (`/websites/developer_huawei_consumer_cn_doc_harmonyos-guides`) and OpenAI API docs (`/websites/developers_openai_api`) |
-| Project Agent Skills (`.claude/skills/`) | HarmonyOS/ArkTS rules, LQTS domain facts, Celia/HMAF integration, build loop |
-| OpenAI API (in the product) | Agent model behind `/agent` - see `AI_FEATURES.md` |
+| `harmonyos-docs` | Where to get authoritative HarmonyOS / ArkTS docs (Context7 ids, official pages); the router to the other skills |
+| `hackyeah-huawei` | The task text, Challenge Rules, hard requirements (API 20+, emulator, `.hap`), the 7 deliverables and judging |
+| `celia-agent` | Making the app agent-native: Agent Framework Kit, A2A, Intents Kit (`@InsightIntentEntry`), in-app agent, AI safety rules |
+| `lqts-domain` | LQTS medical knowledge: genotypes and triggers, CredibleMeds risk categories, emergency facts, safety design |
+| `arkts-language` | Strict ArkTS rules and the fix for each `arkts-no-*` compiler error |
+| `arkui-development` | ArkUI components, V1/V2 state management, Navigation, resources, dialogs, animation |
+| `harmonyos-app-model` | Stage model project config: `app.json5`, `module.json5`, abilities, permissions, HAP/HAR/HSP |
+| `harmonyos-build-deploy` | The terminal loop: `hvigorw` build, signing, `hdc` install / launch / logs / screenshots, emulator |
+| `harmonyos-kits` | Catalog of `@kit.*` system kits with minimal patterns (network, storage, AI, speech, vision, scan, widgets...) |
 
-## Pre-existing work
+Other reusable instructions in the repo: `docs/design/DESIGN.md` (design tokens, risk language, voice and copy
+rules, read before any UI change), the track briefs in `docs/handoff/` (used to split work across parallel
+sessions), and the in-product prompts in `backend/supabase/functions/_shared/prompt.ts` (versioned, see
+`AI_FEATURES.md`).
 
+## How we worked: ideation to debugging
+
+1. **Ideation.** Ideas were brainstormed with Claude Code against the official task text, the Challenge Rules (both
+   in the `hackyeah-huawei` skill and `docs/hackathon/`) and our team's earlier LQTS web app (design reference only,
+   see below). The team chose the idea ("an agent you talk to, verdicts from fixed data"); `docs/IDEA.md` and
+   `docs/PRODUCT.md` were written and kept current with the agent's help.
+2. **Architecture.** The agent proposed options and the developer picked them in the session: the tool loop runs on
+   the phone and the backend is a stateless relay; OpenAI as provider; on-device OCR and speech first with cloud
+   fallbacks; write actions need a confirm card; a red-flag gate runs before any model call. See
+   `docs/ARCHITECTURE.md`.
+3. **Implementation.** Feature by feature, each session in its own branch: AI layer (Kaloyan), watch app and SOS
+   backend (Mark), app features and platform kits (Georgi). Bigger workstreams were split into parallel Claude Code
+   sessions with a written brief per track, a list of owned files, an emulator lock (`app/scripts/emu.sh`) and one
+   integrator who merges.
+4. **Testing.** Unit tests are written with the code (Hypium for ArkTS, Deno for the Edge Functions). A paid live eval
+   harness (`backend/eval/`) runs the real functions against the real OpenAI API with device-identical tool outputs.
+   Claude Code drives the emulator itself: unsigned `hdc install`, `uitest uiInput` taps, `uitest dumpLayout`, and
+   screenshots it reads back (`app/scripts/ui.sh`).
+5. **Debugging.** hilog filtered on the `CeliaAI` domain, the SDK's `.d.ts` files as ground truth for API shapes,
+   clean-worktree builds before every push, and a fix-then-re-run loop on every eval failure. Each session entry
+   records what was validated and, just as important, what was not.
+
+## How AI output was reviewed and tested
+
+- **Every session ends with a written check.** Each log entry has "Validated" and "Not validated" lines, so claims
+  that were not tested stay visible.
+- **Builds and tests.** `hvigorw assembleHap` with strict ArkTS and zero warnings; `app/scripts/test.sh` (Hypium);
+  `deno check` and `deno test` for the backend; RLS checks (`backend/supabase/tests/run-rls.sh`).
+- **Live AI eval.** `backend/eval/agent-eval.ts` (24 agent cases with PASS / SAFE (caught) / FAIL outcomes and a
+  false-positive count), `audio-eval.ts`, `vision-eval.ts`, `realtime-smoke.ts`, and free request-validation checks.
+  The eval found real bugs (typographic apostrophes, Polish reassurance, off-topic answers, status pass-through)
+  that were fixed and re-tested; see the 2026-10-03 eval entries.
+- **On the emulator.** Flows were walked through by the agent with screenshots, and by the team by hand.
+- **Human review.** The developer approved plans and medical rules, read the diffs, and committed. Medical facts
+  were checked against the `lqts-domain` skill and its sources; model output in the product is never trusted
+  without the validator.
+
+## Limitations, failed approaches and lessons
+
+**Limitations of the AI workflow**
+- HarmonyOS knowledge in the model is thin and often from the old Java / FA-model era; without Context7 or the SDK
+  `.d.ts` files the agent guessed wrong import paths and APIs.
+- Several sessions in one working tree could see each other's uncommitted files; one emulator shared by many
+  sessions needed a lock.
+- Some things could not be verified by the agent: a real Huawei phone and watch, Celia's routing of third-party
+  intents outside China, Core Speech English, camera capture, and how the film sounds to a human ear.
+
+**Failed approaches and things we changed course on**
+- hvigor skipped unreferenced files, so new modules "compiled" until they were imported and then failed.
+- The first emergency regex matched "help me find an alternative"; JavaScript `\b` does not work next to Polish
+  letters. Both were narrowed and covered by tests.
+- The response validator first missed typographic apostrophes (`it’s safe`), had no Polish patterns, and flagged a
+  correct "that does not mean it is safe" as reassurance. Found by the live eval, then fixed.
+- The model happily wrote a pizza poem until the prompt got an off-topic rule.
+- Hosting the share pages on Supabase failed (Edge Functions and Storage serve HTML as plain text); they moved to
+  static pages on Vercel with the data encrypted on the phone.
+- `@Builder` arguments are passed by value, so screens showed stale values; this bit three times in one night.
+- A commit carried another session's imports and did not build on its own; from then on every push was built and
+  tested in a clean worktree first.
+
+**Lessons**
+- Ground the agent in docs and the SDK before it writes platform code; skills plus Context7 paid for themselves.
+- Keep medical decisions out of the model and test the guard rails with a paid eval, not by reading prompts.
+- Parallel agent sessions work when each owns a list of files and only one session merges.
+- Write the log as you go: "not validated" lines are what kept the README and demo honest.
+
+## Pre-existing work and third-party components
+
+Everything not listed here was written in this repo during the challenge. The README's "Pre-existing / third-party
+components" paragraph lists the same items.
+
+**Earlier work and templates**
 - **HeartBeat / QTShield** (`github.com/x2oreo/HeartBeat`) is our team's earlier LQTS web app. It was used as
   **design reference only**: Claude Code read it and summarised what worked and what didn't. No code, prompts or data
   were copied. Everything in this repo was written fresh during the challenge.
-- DevEco Studio 6.1.1 project template (config files and default icons in `watch/`).
-- `@ohos/hypium` 1.0.29, `@ohos/hamock` 1.0.0 (test framework, ohpm).
+- DevEco Studio 6.1.1 project template (Empty Ability: hvigor files, `EntryAbility` skeleton, Hypium test harness,
+  default icons) for both `app/` and `watch/`.
+
+**Libraries**
+- `@ohos/hypium` (1.0.24 in `app/`, 1.0.29 in `watch/`) and `@ohos/hamock` 1.0.0 (test framework, ohpm).
 - Lucide icons (`lucide-static` 1.51.0, ISC licence): the phone app's `ic_*.svg` glyphs, strokes outlined to fills
   with `oslllo-svg-fixer` so ArkUI `fillColor` can tint them. The risk shapes (`ic_risk_*`) are our own.
-- `@supabase/supabase-js` 2.x (npm, in the `sos` Edge Function), `@std/assert` 1.x (jsr, Deno tests).
-- Twilio Programmable Messaging + Voice REST API (external service for SOS SMS and calls; keys in Supabase secrets).
+- `@supabase/supabase-js` 2.x (in the `sos`, `drug-check` and `box-identify` Edge Functions), `@std/assert` 1.x (jsr,
+  Deno tests).
 - `npm:jose@5` (npm, in the `sos` Edge Function and its test): signs the service-account JWT (PS256) for Huawei Push
-  Kit. Huawei Push Kit server API (external service for the watch-SOS push to the patient's phone; service-account
+  Kit.
+
+**External services and public APIs**
+- OpenAI API (the in-product AI, see `AI_FEATURES.md`). Hosting: Supabase (Edge Functions, Postgres, Storage) and
+  Vercel (static viewer pages in `site/`, which hold no data).
+- Twilio Programmable Messaging + Voice REST API (external service for SOS SMS and calls; keys in Supabase secrets).
+- Huawei Push Kit server API (external service for the watch-SOS push to the patient's phone; service-account
   key goes in Supabase secrets, not set yet). `rawfile/sos_live.png` (Live View picture) was generated by a script in
   this repo, not a third-party asset.
-- Figtree variable font (SIL OFL 1.1, Fontsource build), self-hosted in `site/assets/fonts/` for the landing page.
+- Public medicine APIs called by `/drug-check` and `/box-identify`: NLM RxNav, openFDA drug labels, AEMPS CIMA,
+  UPCitemdb (free trial API) and Open Food / Products / Beauty Facts (ODbL). Only a medicine name or a barcode is
+  sent.
+- Google Maps search URLs for "nearby help" (no key, no location sent by the app).
+
+**Data sources** (curated into our own files; the list is a demo subset, not a medical device)
+- Drug risk categories from the public CredibleMeds QTdrugs lists; brand names from the Polish (URPL) and Bulgarian
+  (BDA) medicine registers; box barcodes and product data from the Polish medicines register export; WHO ATC
+  index; GS1 country prefixes; emergency numbers from the EU 112 pages; CPR guidance from ERC / AHA; genotype
+  triggers from Schwartz et al. (2001) and the HRS/EHRA/APHRS 2013 consensus. Details in README "Data sources".
+
+**Media and web**
+- The three demo voice clips in `app/entry/src/main/resources/rawfile/voice/` were made with the macOS system voice
+  (`say`); they stand in for the microphone on the emulator when `DEMO_VOICE_INPUT` is on.
+- Figtree variable font (SIL OFL 1.1, Fontsource build), self-hosted in `site/assets/fonts/` for the landing page
+  (and copied to `deck/assets/` for the deck; also used in the film).
 - GSAP 3.13 + ScrollTrigger (GSAP standard no-charge licence) and Lenis 1.3 (MIT), self-hosted in
   `site/assets/vendor/` for the landing page's scroll animations and smooth scrolling.
+- Lucide icons (ISC, `lucide-static` 0.544.0) inlined as an SVG sprite in the landing page; licence in
+  `site/assets/vendor/LUCIDE-LICENSE.txt`.
+- Remotion 4.0 (`remotion`, `@remotion/cli`, `@remotion/bundler`, `@remotion/renderer`, `@remotion/google-fonts`;
+  Remotion licence, free for teams of up to 3), React 19 and JetBrains Mono (SIL OFL 1.1, Google Fonts, fetched at
+  render time) for the launch film in `video/`.
+- Film sound, in `video/`: Kokoro-82M voice model (Apache-2.0 weights) run locally with `kokoro-onnx` (MIT) for the
+  voiceover and the in-app voices; OpenAI Whisper (MIT) run locally only to check that every spoken line is
+  intelligible in the final mix (not shipped). The score and effects are synthesized from code
+  (`video/scripts/audio/`, with numpy, scipy and soundfile), with no samples or stock music.
+- Deck tooling (not shipped): headless Chrome via Playwright for screenshots and PDF printing, `pypdf` to embed the
+  demo video in the PDF.
+
+## Session log index
+
+Entries are in the order they were appended, not strictly by time (several people and sessions worked in parallel).
+
+**AI layer, voice and agent UI (Kaloyan)**
+
+| # | Date | Session |
+|---|---|---|
+| 1 | 2026-10-03 | [AI layer research, plan and first implementation](#2026-10-03---ai-layer-research-plan-and-first-implementation-kaloyan) |
+| 2 | 2026-10-03 | [Voice, photo, Realtime, Intents](#2026-10-03-cont---voice-photo-realtime-intents-kaloyan) |
+| 3 | 2026-10-03 | [Model selection and first live calls](#2026-10-03-cont---model-selection-and-first-live-calls-kaloyan) |
+| 4 | 2026-10-03 | [Live eval of the AI layer](#2026-10-03-cont---live-eval-of-the-ai-layer-kaloyan-with-a-claude-code-test-agent) |
+| 5 | 2026-10-03 | [Fixing what the live eval found](#2026-10-03-cont---fixing-what-the-live-eval-found-kaloyan-with-claude-code) |
+| 6 | 2026-10-03 | [Merging the app from main and wiring the AI into it](#2026-10-03-cont---merging-the-app-from-main-and-wiring-the-ai-into-it-kaloyan-with-claude-code) |
+| 7 | 2026-10-03 | [Testing on the emulator, driven by Claude Code](#2026-10-03-cont---testing-on-the-emulator-driven-by-claude-code-kaloyan) |
+| 8 | 2026-10-03 | [UI redesign to the design system](#2026-10-03-cont---ui-redesign-to-the-design-system-kaloyan-with-claude-code) |
+| 9 | 2026-10-03 | [Voice-first conversation with the agent](#2026-10-03-cont---voice-first-conversation-with-the-agent-kaloyan-with-claude-code) |
+
+**Watch app, SOS backend and watch data (Mark)**
+
+| # | Date | Session |
+|---|---|---|
+| 10 | 2026-10-03 | [Watch app](#2026-10-03---mark--claude-code-watch-app) |
+| 11 | 2026-10-03 | [SOS backend (parallel session, branch `sos-backend`)](#2026-10-03---mark--claude-code-sos-backend-parallel-session-branch-sos-backend) |
+| 12 | 2026-10-03 | [Missed beta-blocker check](#2026-10-03---mark--claude-code-missed-beta-blocker-check-branch-beta-blocker-check) |
+| 13 | 2026-10-03 | [Watch data the phone was ignoring](#2026-10-03---mark--claude-code-watch-data-the-phone-was-ignoring) |
+| 14 | 2026-10-03 | [Using watch doses and "How do you feel?" answers](#2026-10-03---mark--claude-code-using-watch-doses-and-how-do-you-feel-answers) |
+
+**App features on `app_development` (Georgi)**
+
+| # | Date | Session |
+|---|---|---|
+| 15 | 2026-10-03 | [Emergency-card link fallbacks and branch merges](#2026-10-03---georgi--claude-code-emergency-card-link-fallbacks-and-branch-merges-branch-app_development) |
+| 16 | 2026-10-03 | [Chat history and new chats for the agent](#2026-10-03---georgi--claude-code-chat-history-and-new-chats-for-the-agent-branch-app_development) |
+| 17 | 2026-10-03 | [Medicine info and a redesigned reminders page](#2026-10-03---georgi--claude-code-medicine-info-and-a-redesigned-reminders-page-branch-app_development) |
+| 18 | 2026-10-03 | [Encrypted share links for the emergency card and doctor report](#2026-10-03---georgi--claude-code-encrypted-share-links-for-the-emergency-card-and-doctor-report-branch-app_development) |
+| 19 | 2026-10-03 | [Online check for any medicine, step 1](#2026-10-03---georgi--claude-code-online-check-for-any-medicine-step-1-branch-app_development) |
+| 20 | 2026-10-03 | [Everything on Supabase, so links work from any device](#2026-10-03---georgi--claude-code-everything-on-supabase-so-links-work-from-any-device-branch-app_development) |
+| 21 | 2026-10-03 | [Identify any medicine box by barcode, online](#2026-10-03---georgi--claude-code-identify-any-medicine-box-by-barcode-online-branch-app_development) |
+| 22 | 2026-10-04 | [Scanning a box showed nothing](#2026-10-04---georgi--claude-code-scanning-a-box-showed-nothing-branch-app_development) |
+| 23 | 2026-10-03 | [Finish what the docs still promised, then a regression pass](#2026-10-03---georgi--claude-code-finish-what-the-docs-still-promised-then-a-regression-pass-branch-app_development) |
+
+**Phone app integration, v2 design and Health tab (Kaloyan)**
+
+| # | Date | Session |
+|---|---|---|
+| 24 | 2026-10-03 | [Get the phone app ready for a real Huawei device](#2026-10-03---kaloyan--claude-code-get-the-phone-app-ready-for-a-real-huawei-device-branch-main) |
+| 25 | 2026-10-03 (evening) | [Final-pass plan, honesty fixes, voice without a mic, Trends](#2026-10-03-evening---kaloyan--claude-code-final-pass-plan-honesty-fixes-voice-without-a-mic-trends-branch-kaloyanfinal-pass) |
+| 26 | 2026-10-03 (night) | [Workstream A in three parallel agent sessions and one integrator](#2026-10-03-night---kaloyan--claude-code-workstream-a-in-three-parallel-agent-sessions-and-one-integrator-branch-kaloyanagent-home) |
+| 27 | 2026-10-03 (night) | [Interactions everywhere a medicine is handled](#2026-10-03-night---kaloyan--claude-code-interactions-everywhere-a-medicine-is-handled-branch-kaloyanagent-home) |
+| 28 | 2026-10-04 (early) | [Doctor visits as a history of pages](#2026-10-04-early---kaloyan--claude-code-doctor-visits-as-a-history-of-pages-branch-kaloyanagent-home) |
+| 29 | 2026-10-04 (early morning) | [The owner's v2 design applied; integrator re-check](#2026-10-04-early-morning---kaloyan--claude-code-the-owners-v2-design-applied-integrator-re-check-branch-kaloyanagent-home) |
+| 30 | 2026-10-04 (morning) | [Health tab with every watch metric and one chart system](#2026-10-04-morning---kaloyan--claude-code-health-tab-with-every-watch-metric-and-one-chart-system-branch-kaloyanagent-home) |
+| 31 | 2026-10-04 (morning) | [Real watch data on the phone, with a Watch / Simulated switch](#2026-10-04-morning---kaloyan--claude-code-real-watch-data-on-the-phone-with-a-watch--simulated-switch-branch-kaloyanagent-home) |
+| 43 | 2026-10-04 (night) | [Workstream B merged into the v2 app, live backend deployed](#2026-10-04-night---kaloyan--claude-code-workstream-b-merged-into-the-v2-app-live-backend-deployed-branch-kaloyanagent-home) |
+| 44 | 2026-10-04 | [60 days of simulated watch history](#2026-10-04---kaloyan--claude-code-60-days-of-simulated-watch-history-branch-kaloyanagent-home) |
+| 45 | 2026-10-04 | [Watch readings per account, kept on the phone](#2026-10-04---kaloyan--claude-code-watch-readings-per-account-kept-on-the-phone-branch-kaloyanagent-home) |
+| 46 | 2026-10-04 | [Settings rebuilt as a grouped index](#2026-10-04---kaloyan--claude-code-settings-rebuilt-as-a-grouped-index-branch-kaloyanagent-home) |
+| 47 | 2026-10-04 | [Layered emergency card with more about LQTS](#2026-10-04---kaloyan--claude-code-layered-emergency-card-with-more-about-lqts-branch-kaloyanagent-home) |
+| 48 | 2026-10-04 | [Profile photo for the emergency card](#2026-10-04---kaloyan--claude-code-profile-photo-for-the-emergency-card-branch-kaloyanagent-home) |
+| 49 | 2026-10-04 | [`main` merged into `kaloyan/agent-home`, then to `main`](#2026-10-04---kaloyan--claude-code-main-merged-into-kaloyanagent-home-then-to-main) |
+
+**Workstream B: platform kits, accounts, emergency, onboarding (Georgi)**
+
+| # | Date | Session |
+|---|---|---|
+| 32 | 2026-10-03 | [Platform research for Push, Live View, phone ↔ watch, HUAWEI ID](#2026-10-03---georgi--claude-code-platform-research-for-push-live-view-phone--watch-huawei-id-branch-georgib-research) |
+| 33 | 2026-10-04 | [Watch internals, energy, background research](#2026-10-04---georgi--claude-code-watch-internals-energy-background-research-branch-georgib-watch) |
+| 34 | 2026-10-03 | [Doctor visits with questions (B6) and feeling diary (B15)](#2026-10-03---georgi--claude-code-doctor-visits-with-questions-b6-and-feeling-diary-b15-branch-georgib-doctor) |
+| 35 | 2026-10-03 | [Actionable notifications and an honest watch SOS](#2026-10-03---georgi--claude-code-actionable-notifications-and-an-honest-watch-sos-branch-georgib-notify-sos) |
+| 36 | 2026-10-04 | [Live View, lock-screen medical ID and Push Kit](#2026-10-04---georgi--claude-code-live-view-lock-screen-medical-id-and-push-kit-branch-georgib-notify-sos) |
+| 37 | 2026-10-04 | [Accounts and profile backup](#2026-10-04---georgi--claude-code-accounts-and-profile-backup-branch-georgib-accounts) |
+| 38 | 2026-10-04 | [SOS contacts under the account and RLS by account (B10, B9)](#2026-10-04---georgi--claude-code-sos-contacts-under-the-account-and-rls-by-account-b10-b9-branch-georgib-accounts) |
+| 39 | 2026-10-04 | [Configurable emergency profile and first-responder view](#2026-10-04---georgi--claude-code-configurable-emergency-profile-and-first-responder-view-branch-georgib-emergency) |
+| 40 | 2026-10-04 | [NFC handover of the emergency card, B14](#2026-10-04---georgi--claude-code-nfc-handover-of-the-emergency-card-b14-branch-georgib-emergency) |
+| 41 | 2026-10-03 | [8-step onboarding](#2026-10-03---georgi--claude-code-8-step-onboarding-branch-georgib-onboarding) |
+| 42 | 2026-10-04 | [Merging Workstream B into georgi/integration](#2026-10-04---georgi--claude-code-merging-workstream-b-into-georgiintegration) |
+
+**Widgets, launch film and decks (Georgi)**
+
+| # | Date | Session |
+|---|---|---|
+| 50 | 2026-10-04 | [Home-screen widgets v2](#2026-10-04---georgi--claude-code-home-screen-widgets-v2-branch-georgib-widgets-from-kaloyanagent-home) |
+| 51 | 2026-10-04 | [Launch film as code (`video/`)](#2026-10-04---georgi--claude-code-launch-film-as-code-video) |
+| 52 | 2026-10-04 | [Launch film on the v2 design, with sound](#2026-10-04---georgi--claude-code-launch-film-on-the-v2-design-with-sound) |
+| 53 | 2026-10-04 | [Submission deck (`deck/`)](#2026-10-04---georgi--claude-code-submission-deck-deck) |
+| 54 | 2026-10-04 | [Sport & Healthcare deck (`deck/sport-health.html`)](#2026-10-04---georgi--claude-code-sport--healthcare-deck-decksport-healthhtml) |
+
+**Submission hardening and documentation (Georgi)**
+
+| # | Date | Session |
+|---|---|---|
+| 55 | 2026-10-04 | [Whole-repo security and quality review](#2026-10-04---georgi--claude-code-whole-repo-security-and-quality-review-high-and-medium-fixes) |
+| 56 | 2026-10-04 | [Documentation audit and one README](#2026-10-04---georgi--claude-code-documentation-audit-and-one-readme) |
 
 ## Sessions
 
@@ -1392,3 +1659,183 @@ The tap-to-talk fallback is also untested end to end.
 - **Not validated:** the DUE / MISSED dose card and its Taken tap on the emulator (a reminder created after its time
   starts tomorrow, so a due dose cannot be set up from the UI; covered by unit tests); the 30-minute `onUpdateForm`
   tick; the recent-checks rows with real checks (the demo profile has none); dark mode.
+
+### 2026-10-04 - Georgi + Claude Code: launch film as code (`video/`)
+
+- **Asked:** a 60–75 s 16:9 product film for the landing page plus a 25–30 s 9:16 social cut, built as code from the
+  design system, with no screenshots and no Huawei marks; honest about simulated data and "heart rate only".
+- **Produced:** a Remotion project in `video/`. `theme/tokens.ts` copies `color.json`, `float.json` and DESIGN.md
+  (the only hex values in the project); `theme/motion.ts` turns DESIGN §8 into frame functions (heartbeat keyframes,
+  4 s breathing, 240 ms verdict reveal, 280 ms sheet). The real screens are rebuilt as React components (voice orb,
+  live words, tool step, verdict card, HR ring, check-in sheet, watch W1/W2, SOS ring, QR card, Polish web card,
+  privacy ledger, box scan). The UI copy comes from the app (`DrugChecker.reasonFor`, `string.json`,
+  `gtin_pl.json`, `card/data.js`). There are 9 scenes, shared by both cuts with `wide`/`tall` layouts. VO lines are
+  slots in `copy/script.ts`; `public/vo.mp3` / `music.mp3` are mixed when present (music ducks −12 dB).
+- **Decisions:** the high-HR watch alert is amber (W2) and red appears first on the SOS ring; the bystander card is
+  in Polish; the patient (Ola Nowak) is fictional; the box is a generic carton; the end card has no URL yet.
+- **Validated:** `tsc --noEmit` passes under strict mode. Each scene was checked as a contact-sheet still against
+  `docs/design/*.png` and fixed (verdict scroll, scan box hidden by the sheet, Polish chips overflowing). Renders:
+  `site/media/demo.mp4` (72.0 s, 1920×1080, H.264, 12 MB), `site/media/demo-poster.jpg`, and
+  `video/out/celia-vertical.mp4` (27.4 s, 1080×1920, 5.5 MB). ffmpeg `blackdetect` found no black frames.
+- **Not validated:** the cuts are silent because there is no VO or music yet. The film has not been watched on the
+  deployed landing page.
+
+### 2026-10-04 - Georgi + Claude Code: launch film on the v2 design, with sound
+
+- **Asked:** "go to main and pull the latest design … make the video" from the real designs, and "we need really
+  good sound for the video too".
+- **Found:** `main` already matched our branch; the newest design (DESIGN.md v2, `docs/design/v2/`,
+  `docs/design/v2-watches/`) lived on `origin/kaloyan/agent-home`. It was read from there with `git archive` into a
+  scratch folder, leaving the working tree (with uncommitted landing work) untouched.
+- **Produced (picture):** the film follows v2: the silk orb ("Dawn" palette, bands, blobs, halo) ported from
+  `site/assets/silk-orb.js` as a frame-pure canvas (state integrated from frame 0, so any frame renders alone);
+  Today (01) on the reveal; the agent stage (02 → 03) with "You:" captions, the agent's sentence in title-2 with
+  unspoken words at 30 %, tool pill, compact Known-risk card and the floating orb dock; Details → full verdict sheet;
+  watch v2 (gauge home with DEMO DATA, "Near / Above your max", heart-rate-high alert with the limit line);
+  Emergency tab v2 (Start SOS, Call 112, responder view) into the countdown and QR; the bystander card as the v3
+  glance layer in Polish. Icons are the app's Lucide fills. Copy follows §9 (no em dashes); card languages match
+  `site/card/data.js` (Türkçe, not Svenska).
+- **Produced (sound):** `scripts/audio/vo.py` speaks `src/copy/vo.json` with Kokoro (narrator `af_heart`, the agent
+  `af_bella`, Ola `bf_emma`) and writes word timings plus a per-frame loudness envelope, so the captions and the
+  orb follow the real voice. `score.py` synthesizes a D-major score from `src/copy/timeline.json` (pads, felt piano,
+  kalimba arpeggio, sub, bell blooms, risers, convolution reverb; soft thumps on the hook ripples; the bed thins at
+  the watch alert). `sfx.py` makes taps, orb wake, tool done, card, sheet, scan lock, watch haptic and alert tone,
+  SOS ticks, chime and ledger ticks. `audio/Soundtrack.tsx` places voices and effects on the exact scene frames that
+  cause them and ducks the music −12 dB under every voice; `scripts/loudnorm.mjs` brings each render to −16 LUFS.
+- **Decisions:** the watch alert is now red, as drawn in v2-watches 7 (this replaces the earlier "amber alert"
+  choice); scene lengths follow the voice (hero 72.5 s, vertical 29.9 s); the vertical cut has its own shorter
+  narrator lines.
+- **Validated:** `tsc --noEmit` passes. Contact sheets of both cuts checked against the v2 drawings. Whisper
+  transcribes every line of both final mixes correctly and in order ("Klacid" heard as "Clacid"). Both cuts measure
+  −16.0 LUFS with peaks at −1.4 / −1.5 dBFS; `blackdetect` finds no black frames. `site/media/demo.mp4` 72.6 s,
+  16 MB; `video/out/celia-vertical.mp4` 29.9 s, 7.3 MB.
+- **Not validated:** nobody has listened to the mix yet; the score's taste and the TTS voices need a human ear.
+  Not watched on the deployed landing page.
+
+### 2026-10-04 - Georgi + Claude Code: submission deck (`deck/`)
+
+- **Asked:** a clean pitch deck in the style of an earlier pitch (cream, big type, mono eyebrows) but on our design
+  system: title, problem, solution/ecosystem, demo video, tech stack, team, wiring diagram, plus whatever the Huawei
+  criteria still need. Read-alone submission, HTML, Figtree only, real screens; later "use the newest designs".
+- **Plan (AI, approved step by step):** brainstorm mapped to the six judging criteria → 20 slides: a four-slide
+  problem arc from Georgi's earlier pitch (1 in 2,000, what QT is, three triggers, Torsades, medicines as the hidden
+  trigger), then answer, ecosystem, "the list decides, the AI explains", demo, app, watch, platform kits with honest
+  status, architecture, failure handling, evidence, AI workflow, roadmap, team, close.
+- **Produced:** `deck/index.html`, `deck.css`, `deck.js` (no dependencies): 1920 × 1080 slides scaled to the window,
+  keyboard/click/swipe, print to PDF one slide per page. Generated visuals: 2,000-dot field, ECG QT illustration,
+  Torsades trace, drug strip from real dataset entries, heartbeat field on the title. First pass used crops of the
+  v2 design mock-ups; after review every phone and watch image was swapped for real emulator captures of the built
+  apps from `main` (`docs/screenshots/b`, `docs/handoff/tracks/shots`), since the shipped UI (Agent / Medicines /
+  Heart / Emergency tabs, the real watch faces) had moved on from the mock-ups. DESIGN.md §10.2c added.
+- **Validated:** every slide rendered in headless Chrome at 1920 × 1080 and checked by eye; overlaps fixed and
+  re-rendered; print-to-PDF gives 20 pages. Medical numbers checked against the `lqts-domain` skill (prevalence
+  1 : 2,000 instead of 1 : 2,500) and carry source lines; kit statuses taken from ARCHITECTURE.md; test and commit
+  counts from the newest README (`kaloyan/agent-home`).
+- **Not validated / open:** the team photo is a placeholder until `deck/media/team.jpg` exists; the PDF needs the public video URL in `deck.js`. Mortality figures from the earlier
+  pitch were reworded to what the cited sources say (≈50 % of untreated symptomatic patients within 10 years).
+- **Revision (same day):** the deck had to be **10 slides**. Problem slides 2-7 merged into one (1 in 2,000 dot field,
+  drug strip, four facts), app tour and safety diagram into one agent slide, kits into the wiring diagram, evidence
+  and AI workflow into one, team and close into one; roadmap cut. All devices re-shot from the landing page
+  (`site/index.html`, the newest design: new Today / Talk tabs, silk orb, agent voice screen) with Playwright at 3×
+  in reduced-motion state, so every screen is the settled final frame; the title and close use the live silk orb.
+  Validated: all 10 slides rendered and checked, print gives 10 pages. The landing lists Wear Engine for the watch;
+  the deck keeps the ARCHITECTURE.md status (Sensor Service Kit, sync via Supabase).
+- **Revision 2:** the deck is submitted as a PDF, so every moving part was removed: entrance animations, line draws,
+  the scrolling drug strip and the live orb (now a still render of the same silk-orb code). The video became its
+  poster with a "Watch the demo" link. `deck/Celia-ai-deck.pdf` printed from headless Chrome, 10 pages, checked page
+  by page.
+- **Revision 3:** the demo has to play. The HTML deck plays `deck/media/demo.mp4` again (print shows the poster). The
+  PDF gets the MP4 embedded (pypdf): a Screen annotation with a Rendition action over the video frame (plays inline
+  in Adobe Acrobat / Reader), the same file as a FileAttachment on the "Click to play" button and in the attachments
+  panel (opens in the system player in most desktop viewers). Browsers and macOS Preview cannot play video inside a
+  PDF. Verified the embedded file is byte-identical to the MP4.
+
+### 2026-10-04 - Georgi + Claude Code: Sport & Healthcare deck (`deck/sport-health.html`)
+
+- **Asked:** we also enter the HackYeah "Sport & Healthcare" competition (max 10-slide PDF; judged on Idea &
+  Innovation 30 %, Relation to Category 20 %, Practical Applicability 20 %, Design 20 %, Completeness 10 %). Copy the
+  Huawei deck into a new file and adapt it to the category, keeping the design.
+- **Produced:** `deck/sport-health.html` + `deck/sport.css` (same `deck.css`, `deck.js`, media and tokens; no new
+  colours). Title, problem, solution, medicine check, watch and emergency slides reframed for an active life. New
+  slide 4 "Sport, without the fear": an SVG run chart showing the watch's state-aware limit (120 at rest, 130 active
+  for LQT1), an over-limit alert and a slow-recovery flag, plus the rules behind it and the genotype coach tips. The
+  wiring and evidence slides became one "Practical value + evidence" slide (patient, family, coach, cardiologist;
+  tests, commits, medicines, languages). Kit-bag medicines on the check slide come from `DrugDataset.ets`.
+  `deck/Celia-ai-deck-sport-health.pdf`: headless Chrome print, 10 pages, demo MP4 embedded on page 6 with the same
+  pypdf method as the main deck.
+- **Validated:** every claim on the sport slide traced to code: `Limits.ets` (base 140/120/100, LQT1 active -10, LQT2
+  rest -10, LQT3 low +5, risky drug -10), `RecoveryTracker.ets` (peak vs 60 s later, < 12 bpm = slow, 20 s minimum
+  bout), `MotionAnalyzer.ets` (rest / active / fall), `WatchController.ets` (30 s fall countdown then SOS),
+  `Coach.ets` (tips). Drug categories checked in the dataset (salbutamol, pseudoephedrine, loperamide conditional;
+  ibuprofen not listed). All 10 pages rendered and checked by eye; overlaps fixed; embedded video byte-identical.
+- **Not validated / open:** the run chart is an illustration of the rules, not a recorded session. The ESC 2020
+  sports-cardiology point is cited from the guideline title, not quoted. Team photo is still the placeholder.
+- **Revision (same day): business side.** Asked to add market fit and the business case and keep 10 slides. Watch
+  and emergency merged into one dark slide (watch steps, three emergency points, a bad-day line). The practical-value
+  slide became two: **Market + fit** (rings: ~4M worldwide, ~225k EU, ~19k Poland from prevalence 1 : 2,000 ×
+  population, labelled as estimates; families and other channelopathies as expansion; a gap table against QT drug
+  lists, ECG wearables, smartwatch health and pill reminders; why now) and **Business model + go-to-market** (free
+  safety core, Celia+ for families (€4.99 a month), clinic and club licence (€2 per person a month); pilot in Poland → CE marking under EU MDR → EU and
+  clubs; build stats). Prices are marked as proposals and the competitor table as our qualitative reading, not a
+  survey. PDF re-printed (10 pages) and the demo re-embedded on page 6.
+
+### 2026-10-04 - Georgi + Claude Code: whole-repo security and quality review, high and medium fixes
+
+- **Asked:** review the whole app (not only the current diff) for code quality and security, then fix the high and
+  medium findings.
+- **Review (AI):** Claude Code read the backend functions, every RLS migration, the phone app's network, lock,
+  drug-check and pairing code, the watch sync and the site viewers. 10 findings: 3 critical (watch SOS delivery: a
+  401/403 row blocks the outbox, the SOS cap is shared by the project, a lost watch secret has no reset path), 4 high,
+  3 medium. The critical ones are left for a separate decision.
+- **Fixed:**
+  - App lock: an auth call that throws no longer unlocks (a screen lock exists, so it counts as a failed attempt);
+    a second tap while the auth widget is up is ignored. Private pages (notification taps, cards, "ask the agent")
+    no longer open while the app is locked or showing only the emergency card from the lock screen; they open after
+    unlock. Only SOS, bystander and first-responder pages are allowed from the lock screen.
+  - Pairing: failed code guesses are counted per caller (account, else a hashed client address), 10 per 5 minutes,
+    with a project ceiling of 300, so one script can no longer block pairing for everyone
+    (`20261004140000_rate_limits.sql`).
+  - OpenAI cost: `agent`, `realtime-session`, `speak`, `transcribe`, `vision-extract` and the box-identify deep
+    search now go through `_shared/rateLimit.ts`: a per-caller limit plus a project daily cap (`AI_DAILY_CAP`,
+    default 5000), counted in Postgres (`ai_rate_take`, service role only) with an in-memory fallback. The app
+    already treats a non-200 answer as a fallback.
+  - Box cache: an AI row past the 30-day TTL no longer blocks a new answer (`aiWrite` treats stale rows as absent);
+    test added.
+  - Logs: medicine names, risk levels, heart rates, genotype and reminder medicine names removed from hilog lines
+    (the Logger logs everything as public); the rule is written in `Logger.ets`.
+  - Repo size: the deck reads the demo video and poster from `site/media/` (duplicate copies removed);
+    `deck/*.pdf` ignored in git (attach the PDFs to a release).
+- **Validated:** phone app builds (`assembleHap`); backend `deno check` on all functions and `deno test` (75
+  passed). Not validated: the new migration is not yet applied to the hosted project, and the lock flows were not
+  re-tested on the emulator.
+
+### 2026-10-04 - Georgi + Claude Code: documentation audit and one README
+
+- **Asked:** check every Markdown file against the app so it is current, well structured and understandable; make
+  the README the best possible; then remove every README outside the root and put everything in one README,
+  including how to run each part yourself.
+- **Produced:** Claude Code split the audit across five parallel sub-agents (architecture; AI docs; product and
+  planning docs; component READMEs; hackathon working notes), each told to verify claims against the code, edit only
+  its own files, and report what in the root README contradicted the code. Results:
+  - `docs/ARCHITECTURE.md`, `AI_FEATURES.md`, `docs/IDEA.md`, `docs/PRODUCT.md` rewritten around what is built;
+    `PLAN.md`, `TASKS.md`, `REGRESSION.md`, `REAL_DEVICE.md` given status headers and done / not-done tables; every
+    hackathon working note given a one-line status; this file given a summary and a session index.
+  - Root `README.md` rebuilt: problem, features, safety diagram, HarmonyOS kits and permissions, architecture
+    diagram, "Run it yourself" for all four parts (phone, watch, backend, web pages) with versions, configuration
+    keys, signing, helper scripts and secrets, five-minute demo, the feature verification table grouped by area,
+    "How each part works" (Edge Functions and agent contract, Celia intents, watch rules and data, SOS pipeline,
+    film, decks), tests and the AI eval harness, privacy, repo layout, one documentation map, third-party list, team.
+  - The 14 READMEs outside the root were merged into it and deleted. Content that is research, not reference, moved
+    to its own doc: the watch's background-monitoring research to
+    `docs/research/watch-background-monitoring.md`; the Workstream A track rules to `docs/handoff/tracks/TRACKS.md`.
+    Links and code comments that pointed at the old files now point to the root README sections.
+  - README screenshots copied from the deck's emulator captures into `docs/media/`.
+- **Validated:** test counts re-run before quoting them (phone 418, watch 99, backend 75, all passing); a script
+  checked every relative Markdown link and heading anchor in the repo (no broken ones) and that no file contains an
+  em dash. Sub-agent findings fixed in the README: stale test counts, prompt version (`2026-10-04.1`), widget count
+  and names (7), demo voice clip count (8), watch data access (owner-only plus watch secret, no longer "shared key"),
+  SOS contact migrations (applied).
+- **Not validated / open:** the README's demo-video link points to the file in the repo until a public URL exists;
+  mermaid diagrams were checked by reading, not rendered; older session entries above still mention
+  `watch/README.md` and other removed READMEs, as a record of what was written at the time.
+

@@ -7,6 +7,7 @@ import { buildInstructions, PROMPT_VERSION } from '../_shared/prompt.ts';
 import { TOOLS } from '../_shared/tools.ts';
 import { env, json, openaiJson } from '../_shared/openai.ts';
 import { parseContext } from '../_shared/validate.ts';
+import { aiRateLimit } from '../_shared/rateLimit.ts';
 
 const VOICE_RULES = `
 VOICE MODE: you are speaking out loud. Keep every answer to one to three short sentences. Never read lists or
@@ -20,6 +21,8 @@ interface ClientSecretResponse {
 
 Deno.serve(async (req: Request): Promise<Response> => {
   if (req.method !== 'POST') return json(405, { error: 'POST only' });
+  const limited = await aiRateLimit(req, { fn: 'realtime-session', perCaller: 10, windowSec: 600 });
+  if (limited) return limited;
   const started = Date.now();
   let instructions: string;
   try {

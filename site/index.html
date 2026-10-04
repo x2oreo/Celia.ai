@@ -6,7 +6,7 @@
 <title>Celia.ai — heart safety for Long QT syndrome</title>
 <meta name="description" content="An agent-first heart-safety companion for people with Long QT syndrome: medicine checks from a fixed list, a watch that keeps an eye on your heart rate, and an emergency card strangers can act on.">
 <meta name="theme-color" content="#120E0D">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27%3E%3Ccircle cx=%2712%27 cy=%2712%27 r=%2711%27 fill=%27%23E5484D%27/%3E%3Ccircle cx=%279%27 cy=%279%27 r=%273.4%27 fill=%27%23fff%27 opacity=%27.55%27/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27%3E%3Cdefs%3E%3CradialGradient id=%27g%27 cx=%2740%25%27 cy=%2737%25%27 r=%2765%25%27%3E%3Cstop offset=%270%27 stop-color=%27%23FFCEB0%27/%3E%3Cstop offset=%27.6%27 stop-color=%27%23F27470%27/%3E%3Cstop offset=%271%27 stop-color=%27%23D4609C%27/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx=%2712%27 cy=%2712%27 r=%2711%27 fill=%27url(%23g)%27/%3E%3C/svg%3E">
 <link rel="preload" href="assets/fonts/figtree-var.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="assets/celia.css">
 <link rel="stylesheet" href="assets/landing.css">
@@ -16,31 +16,60 @@
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
-    <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></symbol>
-    <symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 8h3l1.6-2.2h6.8L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.2" r="3.4"/></symbol>
-    <symbol id="i-keyboard" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2.5"/><path d="M7 10h.01M10.5 10h.01M14 10h.01M17 10h.01M8 14h8"/></symbol>
-    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.4-4.4"/></symbol>
-    <symbol id="i-barcode" viewBox="0 0 24 24"><path d="M4 7V5h3M17 5h3v2M20 17v2h-3M7 19H4v-2M7.5 9v6M10 9v6M13 9v6M16.5 9v6"/></symbol>
-    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
-    <symbol id="i-phone" viewBox="0 0 24 24"><path d="M6.6 3.5h2.6l1.4 4.2-2 1.3a11 11 0 0 0 6.4 6.4l1.3-2 4.2 1.4v2.6a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 4.6 5.7a2 2 0 0 1 2-2.2z"/></symbol>
-    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.8 3.8 5.8 3.8 9s-1.2 6.2-3.8 9c-2.6-2.8-3.8-5.8-3.8-9S9.4 5.8 12 3z"/></symbol>
-    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></symbol>
-    <symbol id="i-device" viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="2.5"/><path d="M11 17.5h2"/></symbol>
-    <symbol id="i-doc" viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4M10 12h5M10 16h5"/></symbol>
-    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></symbol>
-    <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6.5h11M9 12h11M9 17.5h11M4.5 6.5h.01M4.5 12h.01M4.5 17.5h.01"/></symbol>
-    <symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="M11 12l8.5-8.5M16 7l2.5 2.5M14 9l2 2"/></symbol>
-    <symbol id="i-hands" viewBox="0 0 24 24"><path d="M12 4v4M8.5 5.5l1.5 3M15.5 5.5l-1.5 3M5 13h14M7 13l1.5 7h7L17 13"/></symbol>
-    <symbol id="i-sos" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
-    <symbol id="i-wave" viewBox="0 0 24 24"><path d="M4 10v4M8 7v10M12 4v16M16 7v10M20 10v4"/></symbol>
-    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
-    <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
-    <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor" stroke="none"/></symbol>
-    <symbol id="i-image" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="9" cy="10" r="1.8"/><path d="M20.5 16l-5-5-8.5 8.5"/></symbol>
-    <symbol id="i-heart" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></symbol>
-
-    <symbol id="i-heart-o" viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.1a4.3 4.3 0 0 1 7.5 2.7C19.5 15.4 12 20 12 20z"/></symbol>
-    <symbol id="i-replay" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4.5h4.5"/></symbol>
+    <!-- Lucide icons (lucide.dev, ISC), the same set as the app (DESIGN.md §6.6b) -->
+    <symbol id="l-alarm-clock" viewBox="0 0 24 24"><svg class="lucide lucide-alarm-clock" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <circle cx="12" cy="13" r="8" /> <path d="M12 9v4l2 2" /> <path d="M5 3 2 6" /> <path d="m22 6-3-3" /> <path d="M6.38 18.7 4 21" /> <path d="M17.64 18.67 20 21" /></symbol>
+    <symbol id="l-arrow-right" viewBox="0 0 24 24"><svg class="lucide lucide-arrow-right" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M5 12h14" /> <path d="m12 5 7 7-7 7" /></symbol>
+    <symbol id="l-audio-lines" viewBox="0 0 24 24"><svg class="lucide lucide-audio-lines" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M2 10v3" /> <path d="M6 6v11" /> <path d="M10 3v18" /> <path d="M14 8v7" /> <path d="M18 5v13" /> <path d="M22 10v3" /></symbol>
+    <symbol id="l-bell" viewBox="0 0 24 24"><svg class="lucide lucide-bell" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M10.268 21a2 2 0 0 0 3.464 0" /> <path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326" /></symbol>
+    <symbol id="l-camera" viewBox="0 0 24 24"><svg class="lucide lucide-camera" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z" /> <circle cx="12" cy="13" r="3" /></symbol>
+    <symbol id="l-chart-column" viewBox="0 0 24 24"><svg class="lucide lucide-chart-column" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M3 3v16a2 2 0 0 0 2 2h16" /> <path d="M18 17V9" /> <path d="M13 17V5" /> <path d="M8 17v-3" /></symbol>
+    <symbol id="l-check" viewBox="0 0 24 24"><svg class="lucide lucide-check" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M20 6 9 17l-5-5" /></symbol>
+    <symbol id="l-chevron-down" viewBox="0 0 24 24"><svg class="lucide lucide-chevron-down" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="m6 9 6 6 6-6" /></symbol>
+    <symbol id="l-chevron-left" viewBox="0 0 24 24"><svg class="lucide lucide-chevron-left" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="m15 18-6-6 6-6" /></symbol>
+    <symbol id="l-chevron-right" viewBox="0 0 24 24"><svg class="lucide lucide-chevron-right" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="m9 18 6-6-6-6" /></symbol>
+    <symbol id="l-circle-check" viewBox="0 0 24 24"><svg class="lucide lucide-circle-check" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <circle cx="12" cy="12" r="10" /> <path d="m9 12 2 2 4-4" /></symbol>
+    <symbol id="l-copy" viewBox="0 0 24 24"><svg class="lucide lucide-copy" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <rect width="14" height="14" x="8" y="8" rx="2" ry="2" /> <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></symbol>
+    <symbol id="l-file-text" viewBox="0 0 24 24"><svg class="lucide lucide-file-text" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" /> <path d="M14 2v4a2 2 0 0 0 2 2h4" /> <path d="M10 9H8" /> <path d="M16 13H8" /> <path d="M16 17H8" /></symbol>
+    <symbol id="l-globe" viewBox="0 0 24 24"><svg class="lucide lucide-globe" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <circle cx="12" cy="12" r="10" /> <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" /> <path d="M2 12h20" /></symbol>
+    <symbol id="l-hand-heart" viewBox="0 0 24 24"><svg class="lucide lucide-hand-heart" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M11 14h2a2 2 0 0 0 0-4h-3c-.6 0-1.1.2-1.4.6L3 16" /> <path d="m14.45 13.39 5.05-4.694C20.196 8 21 6.85 21 5.75a2.75 2.75 0 0 0-4.797-1.837.276.276 0 0 1-.406 0A2.75 2.75 0 0 0 11 5.75c0 1.2.802 2.248 1.5 2.946L16 11.95" /> <path d="m2 15 6 6" /> <path d="m7 20 1.6-1.4c.3-.4.8-.6 1.4-.6h4c1.1 0 2.1-.4 2.8-1.2l4.6-4.4a1 1 0 0 0-2.75-2.91" /></symbol>
+    <symbol id="l-heart" viewBox="0 0 24 24"><svg class="lucide lucide-heart" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5" /></symbol>
+    <symbol id="l-history" viewBox="0 0 24 24"><svg class="lucide lucide-history" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /> <path d="M3 3v5h5" /> <path d="M12 7v5l4 2" /></symbol>
+    <symbol id="l-hospital" viewBox="0 0 24 24"><svg class="lucide lucide-hospital" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M12 7v4" /> <path d="M14 21v-3a2 2 0 0 0-4 0v3" /> <path d="M14 9h-4" /> <path d="M18 11h2a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2h2" /> <path d="M18 21V5a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16" /></symbol>
+    <symbol id="l-house" viewBox="0 0 24 24"><svg class="lucide lucide-house" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" /> <path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></symbol>
+    <symbol id="l-id-card" viewBox="0 0 24 24"><svg class="lucide lucide-id-card" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M16 10h2" /> <path d="M16 14h2" /> <path d="M6.17 15a3 3 0 0 1 5.66 0" /> <circle cx="9" cy="11" r="2" /> <rect x="2" y="5" width="20" height="14" rx="2" /></symbol>
+    <symbol id="l-image" viewBox="0 0 24 24"><svg class="lucide lucide-image" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <rect width="18" height="18" x="3" y="3" rx="2" ry="2" /> <circle cx="9" cy="9" r="2" /> <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" /></symbol>
+    <symbol id="l-key-round" viewBox="0 0 24 24"><svg class="lucide lucide-key-round" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z" /> <circle cx="16.5" cy="7.5" r=".5" fill="currentColor" /></symbol>
+    <symbol id="l-keyboard" viewBox="0 0 24 24"><svg class="lucide lucide-keyboard" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M10 8h.01" /> <path d="M12 12h.01" /> <path d="M14 8h.01" /> <path d="M16 12h.01" /> <path d="M18 8h.01" /> <path d="M6 8h.01" /> <path d="M7 16h10" /> <path d="M8 12h.01" /> <rect width="20" height="16" x="2" y="4" rx="2" /></symbol>
+    <symbol id="l-languages" viewBox="0 0 24 24"><svg class="lucide lucide-languages" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="m5 8 6 6" /> <path d="m4 14 6-6 2-3" /> <path d="M2 5h12" /> <path d="M7 2h1" /> <path d="m22 22-5-10-5 10" /> <path d="M14 18h6" /></symbol>
+    <symbol id="l-list" viewBox="0 0 24 24"><svg class="lucide lucide-list" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M3 5h.01" /> <path d="M3 12h.01" /> <path d="M3 19h.01" /> <path d="M8 5h13" /> <path d="M8 12h13" /> <path d="M8 19h13" /></symbol>
+    <symbol id="l-lock" viewBox="0 0 24 24"><svg class="lucide lucide-lock" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <rect width="18" height="11" x="3" y="11" rx="2" ry="2" /> <path d="M7 11V7a5 5 0 0 1 10 0v4" /></symbol>
+    <symbol id="l-map-pin" viewBox="0 0 24 24"><svg class="lucide lucide-map-pin" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" /> <circle cx="12" cy="10" r="3" /></symbol>
+    <symbol id="l-message-circle" viewBox="0 0 24 24"><svg class="lucide lucide-message-circle" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719" /></symbol>
+    <symbol id="l-mic-off" viewBox="0 0 24 24"><svg class="lucide lucide-mic-off" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M12 19v3" /> <path d="M15 9.34V5a3 3 0 0 0-5.68-1.33" /> <path d="M16.95 16.95A7 7 0 0 1 5 12v-2" /> <path d="M18.89 13.23A7 7 0 0 0 19 12v-2" /> <path d="m2 2 20 20" /> <path d="M9 9v3a3 3 0 0 0 5.12 2.12" /></symbol>
+    <symbol id="l-mic" viewBox="0 0 24 24"><svg class="lucide lucide-mic" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M12 19v3" /> <path d="M19 10v2a7 7 0 0 1-14 0v-2" /> <rect x="9" y="2" width="6" height="13" rx="3" /></symbol>
+    <symbol id="l-package" viewBox="0 0 24 24"><svg class="lucide lucide-package" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z" /> <path d="M12 22V12" /> <polyline points="3.29 7 12 12 20.71 7" /> <path d="m7.5 4.27 9 5.15" /></symbol>
+    <symbol id="l-phone" viewBox="0 0 24 24"><svg class="lucide lucide-phone" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384" /></symbol>
+    <symbol id="l-pill" viewBox="0 0 24 24"><svg class="lucide lucide-pill" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z" /> <path d="m8.5 8.5 7 7" /></symbol>
+    <symbol id="l-play" viewBox="0 0 24 24"><svg class="lucide lucide-play" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z" /></symbol>
+    <symbol id="l-plus" viewBox="0 0 24 24"><svg class="lucide lucide-plus" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M5 12h14" /> <path d="M12 5v14" /></symbol>
+    <symbol id="l-qr-code" viewBox="0 0 24 24"><svg class="lucide lucide-qr-code" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <rect width="5" height="5" x="3" y="3" rx="1" /> <rect width="5" height="5" x="16" y="3" rx="1" /> <rect width="5" height="5" x="3" y="16" rx="1" /> <path d="M21 16h-3a2 2 0 0 0-2 2v3" /> <path d="M21 21v.01" /> <path d="M12 7v3a2 2 0 0 1-2 2H7" /> <path d="M3 12h.01" /> <path d="M12 3h.01" /> <path d="M12 16v.01" /> <path d="M16 12h1" /> <path d="M21 12v.01" /> <path d="M12 21v-1" /></symbol>
+    <symbol id="l-rotate-ccw" viewBox="0 0 24 24"><svg class="lucide lucide-rotate-ccw" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /> <path d="M3 3v5h5" /></symbol>
+    <symbol id="l-scan-barcode" viewBox="0 0 24 24"><svg class="lucide lucide-scan-barcode" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M3 7V5a2 2 0 0 1 2-2h2" /> <path d="M17 3h2a2 2 0 0 1 2 2v2" /> <path d="M21 17v2a2 2 0 0 1-2 2h-2" /> <path d="M7 21H5a2 2 0 0 1-2-2v-2" /> <path d="M8 7v10" /> <path d="M12 7v10" /> <path d="M17 7v10" /></symbol>
+    <symbol id="l-search" viewBox="0 0 24 24"><svg class="lucide lucide-search" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="m21 21-4.34-4.34" /> <circle cx="11" cy="11" r="8" /></symbol>
+    <symbol id="l-settings" viewBox="0 0 24 24"><svg class="lucide lucide-settings" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915" /> <circle cx="12" cy="12" r="3" /></symbol>
+    <symbol id="l-share-2" viewBox="0 0 24 24"><svg class="lucide lucide-share-2" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <circle cx="18" cy="5" r="3" /> <circle cx="6" cy="12" r="3" /> <circle cx="18" cy="19" r="3" /> <line x1="8.59" x2="15.42" y1="13.51" y2="17.49" /> <line x1="15.41" x2="8.59" y1="6.51" y2="10.49" /></symbol>
+    <symbol id="l-shield-check" viewBox="0 0 24 24"><svg class="lucide lucide-shield-check" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /> <path d="m9 12 2 2 4-4" /></symbol>
+    <symbol id="l-siren" viewBox="0 0 24 24"><svg class="lucide lucide-siren" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M7 18v-6a5 5 0 1 1 10 0v6" /> <path d="M5 21a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-1a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2z" /> <path d="M21 12h1" /> <path d="M18.5 4.5 18 5" /> <path d="M2 12h1" /> <path d="M12 2v1" /> <path d="m4.929 4.929.707.707" /> <path d="M12 12v6" /></symbol>
+    <symbol id="l-smartphone" viewBox="0 0 24 24"><svg class="lucide lucide-smartphone" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <rect width="14" height="20" x="5" y="2" rx="2" ry="2" /> <path d="M12 18h.01" /></symbol>
+    <symbol id="l-smile" viewBox="0 0 24 24"><svg class="lucide lucide-smile" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <circle cx="12" cy="12" r="10" /> <path d="M8 14s1.5 2 4 2 4-2 4-2" /> <line x1="9" x2="9.01" y1="9" y2="9" /> <line x1="15" x2="15.01" y1="9" y2="9" /></symbol>
+    <symbol id="l-stethoscope" viewBox="0 0 24 24"><svg class="lucide lucide-stethoscope" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M11 2v2" /> <path d="M5 2v2" /> <path d="M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1" /> <path d="M8 15a6 6 0 0 0 12 0v-3" /> <circle cx="20" cy="10" r="2" /></symbol>
+    <symbol id="l-store" viewBox="0 0 24 24"><svg class="lucide lucide-store" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M15 21v-5a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v5" /> <path d="M17.774 10.31a1.12 1.12 0 0 0-1.549 0 2.5 2.5 0 0 1-3.451 0 1.12 1.12 0 0 0-1.548 0 2.5 2.5 0 0 1-3.452 0 1.12 1.12 0 0 0-1.549 0 2.5 2.5 0 0 1-3.77-3.248l2.889-4.184A2 2 0 0 1 7 2h10a2 2 0 0 1 1.653.873l2.895 4.192a2.5 2.5 0 0 1-3.774 3.244" /> <path d="M4 10.95V19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8.05" /></symbol>
+    <symbol id="l-timer" viewBox="0 0 24 24"><svg class="lucide lucide-timer" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <line x1="10" x2="14" y1="2" y2="2" /> <line x1="12" x2="15" y1="14" y2="11" /> <circle cx="12" cy="14" r="8" /></symbol>
+    <symbol id="l-users" viewBox="0 0 24 24"><svg class="lucide lucide-users" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /> <path d="M16 3.128a4 4 0 0 1 0 7.744" /> <path d="M22 21v-2a4 4 0 0 0-3-3.87" /> <circle cx="9" cy="7" r="4" /></symbol>
+    <symbol id="l-watch" viewBox="0 0 24 24"><svg class="lucide lucide-watch" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M12 10v2.2l1.6 1" /> <path d="m16.13 7.66-.81-4.05a2 2 0 0 0-2-1.61h-2.68a2 2 0 0 0-2 1.61l-.78 4.05" /> <path d="m7.88 16.36.8 4a2 2 0 0 0 2 1.61h2.72a2 2 0 0 0 2-1.61l.81-4.05" /> <circle cx="12" cy="12" r="6" /></symbol>
+    <symbol id="l-x" viewBox="0 0 24 24"><svg class="lucide lucide-x" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M18 6 6 18" /> <path d="m6 6 12 12" /></symbol>
+    <symbol id="l-zap" viewBox="0 0 24 24"><svg class="lucide lucide-zap" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z" /></symbol>
+    <!-- Risk shapes: the fixed verdict language (DESIGN.md §3), never from an icon set -->
     <symbol id="r-known" viewBox="0 0 24 24"><path d="M8 2h8l6 6v8l-6 6H8l-6-6V8z" fill="var(--known)"/><path d="M8.5 8.5l7 7m0-7l-7 7" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></symbol>
     <symbol id="r-possible" viewBox="0 0 24 24"><path d="M12 2.5l10.5 18.5H1.5z" fill="var(--possible)"/><path d="M12 9v5.5" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><circle cx="12" cy="17.8" r="1.4" fill="#fff"/></symbol>
     <symbol id="r-conditional" viewBox="0 0 24 24"><path d="M12 1.5L22.5 12 12 22.5 1.5 12z" fill="var(--conditional)"/><path d="M12 7.5v5.5" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><circle cx="12" cy="16.3" r="1.4" fill="#fff"/></symbol>
@@ -66,7 +95,7 @@
       <a href="#emergency" data-nav="emergency">Emergency</a>
       <a href="#built" data-nav="built">How it's built</a>
     </nav>
-    <a class="btn btn-brand btn-sm" href="#demo"><svg class="ic" aria-hidden="true"><use href="#i-play"/></svg>Demo</a>
+    <a class="btn btn-brand btn-sm" href="#demo"><svg class="ic ic-fill" aria-hidden="true"><use href="#l-play"/></svg>Demo</a>
   </div>
 </header>
 
@@ -83,57 +112,71 @@
       <h1 class="h-display" data-split="hero">Ask before you take&nbsp;it.</h1>
       <p class="lead" data-hero>Celia.ai checks every medicine against your heart, keeps an eye on your heart rate through your watch, and tells strangers exactly what to do when you can't.</p>
       <div class="cta-row" data-hero>
-        <a class="btn btn-brand btn-lg" href="#demo"><svg class="ic" aria-hidden="true"><use href="#i-play"/></svg>Watch the demo</a>
-        <a class="btn btn-glass btn-lg" href="#check">See how it works<svg class="ic" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+        <a class="btn btn-brand btn-lg" href="#demo"><svg class="ic ic-fill" aria-hidden="true"><use href="#l-play"/></svg>Watch the demo</a>
+        <a class="btn btn-glass btn-lg" href="#check">See how it works<svg class="ic" aria-hidden="true"><use href="#l-arrow-right"/></svg></a>
       </div>
       <ul class="facts" role="list" data-hero>
-        <li><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>Works offline</li>
-        <li><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>Verdicts from a fixed list, never from AI</li>
-        <li><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>HarmonyOS phone + watch</li>
+        <li><svg class="ic" aria-hidden="true"><use href="#l-check"/></svg>Works offline</li>
+        <li><svg class="ic" aria-hidden="true"><use href="#l-check"/></svg>Verdicts from a fixed list, never from AI</li>
+        <li><svg class="ic" aria-hidden="true"><use href="#l-check"/></svg>HarmonyOS phone + watch</li>
       </ul>
     </div>
 
     <div class="hero-stage" id="heroStage">
-      <div class="hero-orb" id="heroOrb" aria-hidden="true">
-        <span class="halo-ring r1"></span><span class="halo-ring r2"></span>
-        <span class="orb orb-hero"></span>
-      </div>
+      <div class="hero-orb" id="heroOrb" aria-hidden="true"><span class="silk-hero" id="heroSilk" data-silk data-size="440"></span></div>
 
       <div class="tilt" id="heroTilt">
-        <!-- Phone: Home (DESIGN B1). media/hero-phone.png replaces the drawn screen. -->
+        <!-- Phone: Today (v2 screen 01). media/hero-phone.png replaces the drawn screen. -->
         <div class="device-sizer phone-sizer hero-phone" data-slot>
-          <div class="phone" role="img" aria-label="The Celia.ai home screen: resting heart rate 72 from the watch, medicines OK, and the agent offering to check a new prescription.">
+          <div class="phone" role="img" aria-label="The Celia.ai Today screen: the agent reminds Ola that the 14:00 nadolol is due, the next dose with a Taken button, resting heart rate 72 from the watch, and four quick actions.">
             <div class="screen">
-              <div class="status"><span>9:41</span><span>5G · 82%</span></div>
-              <div class="home-head">
-                <div><p class="home-date">Saturday, 3 October</p><p class="home-hi">Hi Ola</p></div>
+              <div class="status"><span>13:50</span><span>5G · 82%</span></div>
+              <div class="today-head">
+                <div><p class="home-date">Saturday, 3 October</p><p class="home-hi">Good afternoon, Ola</p></div>
                 <span class="geno-chip">LQT2</span>
+                <span class="round-btn"><svg class="ic" aria-hidden="true"><use href="#l-settings"/></svg></span>
               </div>
-              <div class="hr-ring">
-                <svg viewBox="0 0 220 220" aria-hidden="true">
-                  <circle cx="110" cy="110" r="96" class="hr-track"/>
-                  <circle cx="110" cy="110" r="96" class="hr-arc" pathLength="100"/>
-                </svg>
-                <div class="hr-center">
-                  <svg class="ic hr-heart heartbeat" aria-hidden="true"><use href="#i-heart"/></svg>
-                  <span class="hr-num" id="heroBpm">72</span>
-                  <span class="hr-unit">bpm · resting</span>
-                  <span class="src-badge">WATCH</span>
+              <div class="card agent-line">
+                <span class="orb orb-40"></span>
+                <p>Your 14:00 nadolol is due soon. Want me to log it with you?</p>
+                <svg class="ic chev" aria-hidden="true"><use href="#l-chevron-right"/></svg>
+              </div>
+              <div class="card next-dose">
+                <div class="row-between"><span class="caps-l">NEXT DOSE</span><span class="link-coral">All reminders ›</span></div>
+                <div class="dose-row">
+                  <span class="well-44"><svg class="ic" aria-hidden="true"><use href="#l-pill"/></svg></span>
+                  <div class="dose-txt"><b>Nadolol 40 mg</b><span>Due at 14:00 · in 10 min</span></div>
+                  <span class="taken-pill"><svg class="ic" aria-hidden="true"><use href="#l-check"/></svg>Taken</span>
                 </div>
               </div>
-              <div class="status-chips">
-                <span><svg aria-hidden="true"><use href="#r-listed"/></svg>Medicines OK</span>
-                <span>Gentle alarm on</span>
+              <div class="card resting">
+                <div class="mini-ring">
+                  <svg viewBox="0 0 84 84" aria-hidden="true"><circle cx="42" cy="42" r="36" class="mr-track"/><circle cx="42" cy="42" r="36" class="mr-arc" pathLength="100"/></svg>
+                  <div class="mr-center"><b id="heroBpm">72</b><span>bpm</span></div>
+                  <span class="src-badge">WATCH</span>
+                </div>
+                <div class="resting-body">
+                  <span class="caps-l">RESTING · 7 DAYS</span>
+                  <svg class="spark" viewBox="0 0 150 40" aria-hidden="true">
+                    <path class="spark-area" d="M4 22 L28 18 L52 24 L76 14 L100 20 L124 26 L146 30 L146 40 L4 40 Z"/>
+                    <polyline class="spark-line" points="4,22 28,18 52,24 76,14 100,20 124,26 146,30"/>
+                    <circle cx="146" cy="30" r="3.5" class="spark-dot"/>
+                  </svg>
+                  <span class="resting-cap">64 avg · 2 lower than last week</span>
+                </div>
+                <svg class="ic chev" aria-hidden="true"><use href="#l-chevron-right"/></svg>
               </div>
-              <div class="agent-card">
-                <div class="agent-card-h"><span class="orb orb-28"></span><b>The agent</b><time>08:10</time></div>
-                <p>Morning, Ola. Everything looks calm. Got a new prescription? I can check it in seconds.</p>
-                <div class="agent-card-a"><span class="pbtn brand"><svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg>Scan a box</span><span class="pbtn quiet">Ask something</span></div>
+              <div class="tiles">
+                <span class="tile"><i><svg class="ic" aria-hidden="true"><use href="#l-scan-barcode"/></svg></i>Scan a box</span>
+                <span class="tile"><i><svg class="ic" aria-hidden="true"><use href="#l-smile"/></svg></i>Log how I feel</span>
+                <span class="tile"><i><svg class="ic" aria-hidden="true"><use href="#l-stethoscope"/></svg></i>Doctor visit</span>
+                <span class="tile"><i><svg class="ic" aria-hidden="true"><use href="#l-pill"/></svg></i>Check a medicine</span>
               </div>
               <div class="tabbar">
-                <span class="on"><span class="orb orb-24"></span>Agent</span>
-                <span><svg class="ic" aria-hidden="true"><use href="#i-device"/></svg>Medicines</span>
-                <span><svg class="ic" aria-hidden="true"><use href="#i-heart-o"/></svg>Heart</span>
+                <span class="on"><svg class="ic" aria-hidden="true"><use href="#l-house"/></svg>Today</span>
+                <span><svg class="ic" aria-hidden="true"><use href="#l-pill"/></svg>Medicines</span>
+                <span class="tab-orb"><span class="tab-disc"><span data-silk data-size="56" data-small></span><i class="say-dot"></i></span>Talk</span>
+                <span><svg class="ic" aria-hidden="true"><use href="#l-heart"/></svg>Health</span>
                 <span class="sos"><i>SOS</i>Emergency</span>
               </div>
             </div>
@@ -146,30 +189,20 @@
           <div class="float-in">
             <div class="mini-verdict">
               <svg aria-hidden="true"><use href="#r-known"/></svg>
-              <div><b>KNOWN RISK</b><span>Klacid → clarithromycin</span></div>
+              <div><b>Known risk</b><span>Klacid → clarithromycin</span></div>
             </div>
           </div>
         </div>
         <div class="float f-step" data-depth="0.8" aria-hidden="true">
-          <div class="float-in">
-            <div class="tool-step done"><span class="tool-well"><svg class="ic" aria-hidden="true"><use href="#i-search"/></svg></span>Checked Klacid against the QT list<svg class="ic tick" aria-hidden="true"><use href="#i-check"/></svg></div>
-          </div>
+          <div class="float-in"><div class="qt-pill"><svg class="ic" aria-hidden="true"><use href="#l-check"/></svg>Checked the QT list</div></div>
         </div>
-        <div class="float f-offline" data-depth="1" aria-hidden="true">
-          <div class="float-in"><div class="offline-strip"><i></i>I'm offline, but medicine checks still work.</div></div>
+        <div class="float f-caption" data-depth="1" aria-hidden="true">
+          <div class="float-in"><div class="caption-chip"><i></i>Speaking</div></div>
         </div>
         <div class="float f-watch" data-depth="1.6" aria-hidden="true">
           <div class="float-in">
             <div class="device-sizer watch-sizer">
-              <div class="watch">
-                <svg class="ring" viewBox="0 0 466 466"><circle cx="233" cy="233" r="212" class="ring-track"/><circle cx="233" cy="233" r="212" class="ring-arc calm" pathLength="100" style="--arc:38"/></svg>
-                <div class="watch-face">
-                  <span class="w-status calm"><i></i>All good</span>
-                  <span class="w-bpm" id="heroWatchBpm">72</span>
-                  <span class="w-unit">bpm</span>
-                  <span class="w-chip">LQT2 · Phone ✓</span>
-                </div>
-              </div>
+              <div class="watch" data-face="home"></div>
             </div>
           </div>
         </div>
@@ -237,6 +270,8 @@
 </section>
 
 <!-- ================= CHECK (pinned story) ================= -->
+
+<!-- ================= CHECK (pinned story) ================= -->
 <section class="sec check" id="check" aria-labelledby="check-h">
   <div class="wrap">
     <div class="sec-head">
@@ -248,22 +283,22 @@
       <div class="story-steps">
         <div class="story-rail" aria-hidden="true"><span id="storyFill"></span></div>
         <article class="step" data-step="0">
-          <p class="step-k"><svg class="ic" aria-hidden="true"><use href="#i-search"/></svg>Type</p>
+          <p class="step-k"><svg class="ic" aria-hidden="true"><use href="#l-search"/></svg>Type</p>
           <h3 class="step-t">Any name you see on a box.</h3>
           <p>Klacid, Fromilid, klarytromycyna, кларитромицин. Brand names and other-language generics all lead to the same ingredient.</p>
         </article>
         <article class="step" data-step="1">
-          <p class="step-k"><svg class="ic" aria-hidden="true"><use href="#i-barcode"/></svg>Scan</p>
+          <p class="step-k"><svg class="ic" aria-hidden="true"><use href="#l-scan-barcode"/></svg>Scan</p>
           <h3 class="step-t">Point at the barcode.</h3>
           <p>EAN and GS1 codes on the box map straight to the ingredient inside, before you've read a word of the label.</p>
         </article>
         <article class="step" data-step="2">
-          <p class="step-k"><svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg>Photograph</p>
+          <p class="step-k"><svg class="ic" aria-hidden="true"><use href="#l-camera"/></svg>Photograph</p>
           <h3 class="step-t">No barcode? Take a photo.</h3>
           <p>The phone reads the text on the box, on the device, and finds the ingredient hiding in it.</p>
         </article>
         <article class="step" data-step="3">
-          <p class="step-k"><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>The answer</p>
+          <p class="step-k"><svg class="ic" aria-hidden="true"><use href="#l-check"/></svg>The answer</p>
           <h3 class="step-t">One verdict, from data.</h3>
           <p>Colour, shape and word, the reason in plain English, what to ask your doctor about instead, and a check against everything you already take.</p>
         </article>
@@ -272,43 +307,43 @@
       <div class="story-stage">
         <div class="stage-glow" aria-hidden="true"></div>
         <div class="device-sizer phone-sizer story-phone">
-          <div class="phone" id="storyPhone" data-step="0" role="img" aria-label="The medicine check on the phone: typing a name, scanning a barcode, photographing a box, and the verdict for Klacid.">
+          <div class="phone" id="storyPhone" data-step="0" role="img" aria-label="The medicine check on the phone: typing a name on the Medicines screen, scanning a barcode, photographing a box, and the verdict for Klacid.">
             <div class="screen">
-              <!-- 0: Medicines + typing (B4) -->
+              <!-- 0: Medicines (v2 screen 05) + typing -->
               <div class="scr scr-type">
-                <div class="status"><span>9:41</span><span>5G · 82%</span></div>
-                <p class="scr-title">Medicines</p>
+                <div class="status"><span>13:50</span><span>5G · 82%</span></div>
+                <div class="page-head"><p class="scr-title">Medicines</p><span class="round-btn"><svg class="ic" aria-hidden="true"><use href="#l-history"/></svg></span><span class="round-btn"><svg class="ic" aria-hidden="true"><use href="#l-settings"/></svg></span></div>
                 <div class="search-row">
-                  <div class="search-field"><svg class="ic" aria-hidden="true"><use href="#i-search"/></svg><span>Can I take <b id="typeText"></b><i class="caret"></i></span></div>
-                  <span class="cam-btn"><svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg></span>
+                  <div class="search-field"><svg class="ic" aria-hidden="true"><use href="#l-search"/></svg><span>Can I take <b id="typeText"></b><i class="caret"></i></span></div>
+                  <span class="cam-btn"><svg class="ic" aria-hidden="true"><use href="#l-camera"/></svg></span>
                 </div>
                 <div class="suggest" id="suggest"><svg aria-hidden="true"><use href="#r-known"/></svg><div><b>Klacid</b><span>clarithromycin · Macrolide antibiotic</span></div></div>
-                <p class="caps">RECENTLY CHECKED</p>
-                <div class="recent">
-                  <span><svg aria-hidden="true"><use href="#r-listed"/></svg>Ibuprofen</span>
-                  <span><svg aria-hidden="true"><use href="#r-known"/></svg>Zofran</span>
-                  <span><svg aria-hidden="true"><use href="#r-possible"/></svg>Ofloxacin</span>
+                <div class="row-between pad-x"><p class="caps">TODAY'S DOSES</p><span class="link-coral sm">All ›</span></div>
+                <div class="doses">
+                  <div class="dose taken"><span>08:00</span><b>Nadolol</b><em><svg class="ic" aria-hidden="true"><use href="#l-check"/></svg>Taken 08:04</em></div>
+                  <div class="dose due"><span>14:00 · Due</span><b>Nadolol</b><i class="taken-pill sm"><svg class="ic" aria-hidden="true"><use href="#l-check"/></svg>Taken</i></div>
+                  <div class="dose later"><span>20:00</span><b>Nadolol</b><em>Later</em></div>
                 </div>
-                <p class="caps">MY MEDICINES · 2</p>
+                <p class="caps pad-x">MY MEDICINES · 3</p>
                 <div class="med-grid">
-                  <div><svg aria-hidden="true"><use href="#r-listed"/></svg><b>Nadolol</b><span>Beta blocker</span><i>40 mg</i></div>
-                  <div><svg aria-hidden="true"><use href="#r-listed"/></svg><b>Cetirizine</b><span>Antihistamine</span><i>10 mg</i></div>
+                  <div><span class="risk listed xs"><svg aria-hidden="true"><use href="#r-listed"/></svg>Not listed</span><b>Nadolol</b><span>40 mg · twice daily</span></div>
+                  <div><span class="risk listed xs"><svg aria-hidden="true"><use href="#r-listed"/></svg>Not listed</span><b>Ibuprofen</b><span>400 mg · as needed</span></div>
                 </div>
               </div>
-              <!-- 1: Barcode scan (B5) -->
+              <!-- 1: Barcode scan -->
               <div class="scr scr-scan">
-                <div class="cam-top"><span class="cam-x">✕</span><span>Scan a box</span></div>
+                <div class="cam-top"><span class="cam-x"><svg class="ic" aria-hidden="true"><use href="#l-x"/></svg></span><span>Scan a box</span></div>
                 <div class="vf">
                   <span class="corner c1"></span><span class="corner c2"></span><span class="corner c3"></span><span class="corner c4"></span>
                   <svg class="barcode" viewBox="0 0 160 70" aria-hidden="true"><g id="bars"></g><text x="80" y="68" text-anchor="middle">5 909990 123457</text></svg>
                   <span class="vf-line"></span>
                 </div>
-                <div class="found-pill"><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>Found: Klacid 500</div>
+                <div class="found-pill"><svg class="ic" aria-hidden="true"><use href="#l-check"/></svg>Found: Klacid 500</div>
                 <p class="cam-hint">Hold the barcode inside the frame</p>
               </div>
               <!-- 2: Photo OCR -->
               <div class="scr scr-photo">
-                <div class="cam-top"><span class="cam-x">✕</span><span>Photo of the box</span></div>
+                <div class="cam-top"><span class="cam-x"><svg class="ic" aria-hidden="true"><use href="#l-x"/></svg></span><span>Photo of the box</span></div>
                 <div class="pack">
                   <div class="pack-face">
                     <span class="pack-brand"><mark class="ocr-box">KLACID</mark></span>
@@ -364,178 +399,227 @@
 <section class="sec dark agent" id="agent" data-theme="dark" aria-labelledby="agent-h">
   <div class="agent-wash" aria-hidden="true"></div>
   <div class="wrap agent-grid">
-    <div class="agent-voice">
-      <div class="voice-orb" id="voiceOrb" data-state="off" aria-hidden="true">
-        <span class="halo h1"></span><span class="halo h2"></span>
-        <span class="orb orb-voice"></span>
-        <svg class="orbit" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48"/></svg>
-      </div>
-      <p class="voice-label" id="voiceLabel" aria-live="polite">Tap to talk</p>
-      <div class="dock" aria-hidden="true">
-        <span class="dock-side"><svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg></span>
-        <span class="dock-mic"><svg class="ic" aria-hidden="true"><use href="#i-mic"/></svg></span>
-        <span class="dock-side"><svg class="ic" aria-hidden="true"><use href="#i-keyboard"/></svg></span>
-      </div>
-    </div>
-
     <div class="agent-copy">
       <h2 id="agent-h" class="h-2" data-split>Talk it through. The list still decides.</h2>
-      <p class="sub" data-reveal>Ask out loud, the way you'd ask a pharmacist. The agent picks the right tool, shows each step it takes, and explains in plain words. The verdict itself always comes from the medicine list; if the model's words ever disagree with it, they're thrown away.</p>
+      <p class="sub" data-reveal>Tap the orb and ask out loud, the way you'd ask a pharmacist. You see your own words, each check the agent makes, and the answer growing as it's spoken. The verdict card underneath comes from the medicine list; if the model's words ever disagree with it, they're thrown away.</p>
 
-      <div class="convo" id="convo" aria-label="Example conversation">
-        <p class="bubble-user" id="cUser" data-text="I feel sick. Can I take Zofran with my nadolol?"></p>
-        <div class="tool-step" id="cStep1"><span class="tool-well"><svg class="ic" aria-hidden="true"><use href="#i-search"/></svg></span><span class="ts-l" data-run="Checking Zofran against the QT list" data-done="Checked Zofran against the QT list"></span><span class="dots"><i></i><i></i><i></i></span><svg class="ic tick" aria-hidden="true"><use href="#i-check"/></svg></div>
-        <div class="tool-step" id="cStep2"><span class="tool-well"><svg class="ic" aria-hidden="true"><use href="#i-list"/></svg></span><span class="ts-l" data-run="Comparing it with your 2 medicines" data-done="Compared it with your 2 medicines"></span><span class="dots"><i></i><i></i><i></i></span><svg class="ic tick" aria-hidden="true"><use href="#i-check"/></svg></div>
-        <p class="agent-text" id="cAgent" data-text="Zofran is ondansetron, and it's on the known-risk list, so I'd skip it. Your nadolol is fine to keep taking. Want me to add a note for your GP about what helps with nausea instead?"></p>
-        <div class="mini-verdict in-convo" id="cCard"><svg aria-hidden="true"><use href="#r-known"/></svg><div><b>KNOWN RISK</b><span>Zofran → ondansetron</span></div></div>
-        <button class="replay" id="cReplay" type="button"><svg class="ic" aria-hidden="true"><use href="#i-replay"/></svg>Play again</button>
+      <ol class="stage-steps" id="stageSteps" aria-label="What happens on the agent screen">
+        <li data-st="off"><b>Tap to talk</b><span>The orb waits at the bottom. The microphone only opens when you tap it.</span></li>
+        <li data-st="hearing"><b>Listening</b><span>A neutral halo follows your voice, and your words are written out.</span></li>
+        <li data-st="thinking"><b>Checking</b><span>The bands line up and spin while it checks the QT list.</span></li>
+        <li data-st="speaking"><b>Speaking</b><span>The orb swells with its voice; words light up as they're said.</span></li>
+      </ol>
+      <button class="replay" id="cReplay" type="button" hidden><svg class="ic" aria-hidden="true"><use href="#l-rotate-ccw"/></svg>Play again</button>
+    </div>
+
+    <div class="agent-stage-col">
+      <div class="stage-glow warm" aria-hidden="true"></div>
+      <div class="device-sizer phone-sizer agent-phone">
+        <div class="phone" id="agentPhone" data-mode="empty" role="img" aria-label="The agent screen. Ola asks: Can I take Klacid for my sinus infection? The agent checks the QT list and answers: Klacid is clarithromycin. It's on the known-risk list, so please don't start it before you talk to your doctor. A Known risk card for Klacid follows.">
+          <div class="screen stage-screen">
+            <div class="status"><span>13:52</span><span>5G · 82%</span></div>
+            <div class="stage-head">
+              <span class="ghost-btn"><svg class="ic" aria-hidden="true"><use href="#l-chevron-down"/></svg></span>
+              <span class="stage-empty-only stage-pills"><span class="pill-btn">Chats</span><span class="round-btn"><svg class="ic" aria-hidden="true"><use href="#l-plus"/></svg></span></span>
+              <span class="stage-live-only voice-timer">VOICE · <span id="voiceTime">0:00</span></span>
+            </div>
+
+            <!-- 02 Empty stage -->
+            <div class="stage-empty">
+              <p class="stage-line">Your 14:00 nadolol is due soon. Want me to log it with you?</p>
+              <p class="caps">ASK ME</p>
+              <span class="starter" id="starterKlacid">Can I take Klacid for my sinus infection?</span>
+              <span class="starter">How was my heart this week?</span>
+              <p class="caps">OR GO STRAIGHT TO</p>
+              <div class="feature-chips"><span>Scan a box</span><span>Log how I feel</span><span>Doctor visit</span><span>Trends</span></div>
+            </div>
+
+            <!-- 03 Live voice: captions -->
+            <div class="stage-live">
+              <p class="live-state" id="liveState">I'm listening</p>
+              <p class="cap-you" id="capYou"></p>
+              <p class="cap-agent" id="capAgent" data-text="Klacid is clarithromycin. It's on the known-risk list, so please don't start it before you talk to your doctor."></p>
+              <div class="qt-pill" id="capStep"><span class="dots"><i></i><i></i><i></i></span><svg class="ic tick" aria-hidden="true"><use href="#l-check"/></svg><span id="capStepL">Checking the QT list</span></div>
+              <div class="v2-verdict" id="capCard">
+                <div class="v2v-head"><svg aria-hidden="true"><use href="#r-known"/></svg><div><b>Known risk</b><span>Klacid → clarithromycin</span></div></div>
+                <div class="v2v-actions"><span class="mini-btn ink">Ask your doctor</span><span class="mini-btn line">Details</span></div>
+              </div>
+              <p class="show-convo" id="capShow"><svg class="ic" aria-hidden="true"><use href="#l-chevron-down"/></svg>Show conversation</p>
+            </div>
+
+            <!-- Orb dock (OrbDock): label, then side button · orb 104 · Aa -->
+            <div class="stage-fade" aria-hidden="true"></div>
+            <div class="orb-dock">
+              <p class="dock-label" id="dockLabel"><i></i><span id="dockLabelT">Tap to talk</span></p>
+              <div class="dock-row">
+                <span class="dock-side stage-empty-only"><svg class="ic" aria-hidden="true"><use href="#l-scan-barcode"/></svg></span>
+                <span class="dock-side ink stage-live-only"><svg class="ic" aria-hidden="true"><use href="#l-x"/></svg><small>End</small></span>
+                <span class="dock-orb"><span class="dock-glow" id="dockGlow"></span><span id="agentSilk" data-silk data-size="104"></span></span>
+                <span class="dock-side aa">Aa</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-
-      <ul class="points" role="list">
-        <li data-reveal><svg class="ic" aria-hidden="true"><use href="#i-wave"/></svg><div><p class="t">Voice first</p><p>Both sides are written out as they're spoken.</p></div></li>
-        <li data-reveal><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg><div><p class="t">Shows its work</p><p>Every lookup appears as a step you can see.</p></div></li>
-        <li data-reveal><svg class="ic" aria-hidden="true"><use href="#i-device"/></svg><div><p class="t">Still answers offline</p><p>No signal? It says so, and checks keep working.</p></div></li>
-      </ul>
     </div>
   </div>
 </section>
 
-<!-- ================= WATCH ================= -->
+<!-- ================= WATCH (v2-watches) ================= -->
 <section class="sec black" id="watch" data-theme="dark" aria-labelledby="watch-h">
   <div class="wrap">
     <div class="sec-head center">
       <h2 id="watch-h" class="h-2" data-split>Your watch keeps an eye on your heart rate.</h2>
-      <p class="sub" data-reveal>Alarms are tuned to your genotype. After you log a risky medicine, the watch watches more closely for 72 hours. If you stop answering, it asks for help.</p>
+      <p class="sub" data-reveal>The ring is a gauge between your own limits, tuned to your genotype. Near a limit it turns amber, past it the watch asks if you're OK, and if you don't answer it sends for help.</p>
     </div>
 
-    <div class="watch-row" id="watchRow">
-      <figure class="watch-fig g-calm" data-reveal>
-        <div class="watch-glow" aria-hidden="true"></div>
-        <div class="device-sizer watch-sizer">
-          <div class="watch" role="img" aria-label="Watch home: 72 beats per minute, all good.">
-            <svg class="ring" viewBox="0 0 466 466" aria-hidden="true"><circle cx="233" cy="233" r="212" class="ring-track"/><circle cx="233" cy="233" r="212" class="ring-arc calm draw" pathLength="100" style="--arc:38"/></svg>
-            <div class="watch-face">
-              <span class="w-status calm"><i></i>All good</span>
-              <span class="w-bpm" id="watchBpm">72</span>
-              <span class="w-unit"><svg class="ic heartbeat" aria-hidden="true"><use href="#i-heart"/></svg>bpm</span>
-              <span class="w-chip">LQT2 · Phone ✓</span>
-            </div>
-          </div>
+    <div class="wseq" id="wseq">
+      <div class="wseq-stage">
+        <div class="watch-glow" id="wseqGlow" aria-hidden="true"></div>
+        <div class="device-sizer watch-sizer wseq-watch">
+          <div class="watch" id="wseqFace" data-face="home" role="img" aria-live="polite" aria-label="Watch home: 72 beats per minute, all good, at rest, max 110."></div>
         </div>
-        <figcaption><b>Calm.</b> A green ring and your heart rate, nothing more.</figcaption>
-      </figure>
-
-      <figure class="watch-fig g-elev" data-reveal>
-        <div class="watch-glow" aria-hidden="true"></div>
-        <div class="device-sizer watch-sizer">
-          <div class="watch" role="img" aria-label="Heart rate high alert: 165 beats per minute at rest, with I'm OK and Need help buttons.">
-            <svg class="ring" viewBox="0 0 466 466" aria-hidden="true"><circle cx="233" cy="233" r="212" class="ring-track"/><circle cx="233" cy="233" r="212" class="ring-arc elevated draw pulse-ring" pathLength="100" style="--arc:100"/></svg>
-            <div class="watch-face">
-              <span class="w-alert">HEART RATE HIGH</span>
-              <span class="w-bpm amber">165</span>
-              <span class="w-unit">bpm · at rest</span>
-              <span class="w-btns"><span class="w-btn">I'm OK</span><span class="w-btn red">Need help</span></span>
-            </div>
-          </div>
-        </div>
-        <figcaption><b>Checks in.</b> A racing heart at rest gets a question, not a siren.</figcaption>
-      </figure>
-
-      <figure class="watch-fig g-alert" data-reveal>
-        <div class="watch-glow" aria-hidden="true"></div>
-        <div class="device-sizer watch-sizer">
-          <div class="watch" role="img" aria-label="SOS countdown: calling 112 in 10 seconds, with a Cancel button.">
-            <svg class="ring" viewBox="0 0 466 466" aria-hidden="true"><circle cx="233" cy="233" r="212" class="ring-track"/><circle cx="233" cy="233" r="212" class="ring-arc alert drain" pathLength="100" style="--arc:100"/></svg>
-            <div class="watch-face">
-              <span class="w-alert red">EMERGENCY</span>
-              <span class="w-title">Calling 112</span>
-              <span class="w-count"><span id="sosCount">10</span> s</span>
-              <span class="w-btn white">Cancel</span>
-            </div>
-          </div>
-        </div>
-        <figcaption><b>Asks for help.</b> No answer, and your contacts get your location.</figcaption>
-      </figure>
+      </div>
+      <ol class="wseq-steps" id="wseqSteps">
+        <li data-face="home"><b>All good</b><span>Your heart rate, where it sits between your min and max, and the limit right now.</span></li>
+        <li data-face="near"><b>Near your max</b><span>Within 10% of your limit the gauge turns amber. Nothing rings yet.</span></li>
+        <li data-face="high"><b>Above your max</b><span>The limit and the reason, in words. Always two answers: I'm OK or Need help.</span></li>
+        <li data-face="checkin"><b>Celia checks in</b><span>A coral ring means Celia is asking, not alarming. Racing = palpitations.</span></li>
+        <li data-face="sos"><b>SOS</b><span>Need help, or no answer: a 10-second countdown you can cancel.</span></li>
+        <li data-face="sent"><b>Help is on the way</b><span>Your phone alerts your contacts. The watch shows a line for whoever is helping.</span></li>
+      </ol>
     </div>
 
-    <p class="honest" data-reveal><svg class="ic" aria-hidden="true"><use href="#i-heart"/></svg>Heart rate only. Celia.ai never measures QT and never draws an ECG.</p>
+    <div class="wgal" aria-label="More watch screens">
+      <figure data-reveal><div class="device-sizer watch-sizer"><div class="watch" data-face="verdict"></div></div><figcaption>Risky medicine, pushed from the phone</figcaption></figure>
+      <figure data-reveal><div class="device-sizer watch-sizer"><div class="watch" data-face="dose"></div></div><figcaption>Missed dose: a nudge, not a risk</figcaption></figure>
+      <figure data-reveal><div class="device-sizer watch-sizer"><div class="watch" data-face="low"></div></div><figcaption>Low while asleep wakes you gently</figcaption></figure>
+      <figure data-reveal><div class="device-sizer watch-sizer"><div class="watch" data-face="trend"></div></div><figcaption>The last 10 minutes against your limits</figcaption></figure>
+      <figure data-reveal><div class="device-sizer watch-sizer"><div class="watch" data-face="irregular"></div></div><figcaption>Simulated signals always say SIM</figcaption></figure>
+    </div>
+
+    <p class="honest" data-reveal><svg class="ic ic-fill" aria-hidden="true"><use href="#l-heart"/></svg>Never QT, never an ECG. The watch shows what it measures, and marks what it simulates.</p>
   </div>
 </section>
 
 <!-- ================= EMERGENCY ================= -->
 <section class="sec emergency" id="emergency" aria-labelledby="em-h">
-  <div class="wrap em-grid">
-    <div class="em-card-col">
-      <div class="card-tilt" id="cardTilt">
-        <article class="alert-card" aria-label="Example emergency card" aria-live="polite">
-          <span class="card-sheen" aria-hidden="true"></span>
-          <header class="alert-band">
-            <svg class="ic" aria-hidden="true"><use href="#i-heart"/></svg>
-            <span id="cardTitle">MEDICAL ALERT</span>
-          </header>
-          <div class="alert-body">
-            <p class="alert-name">Ola Nowak</p>
-            <p class="alert-cond" id="cardCond">Long QT syndrome (LQTS) — inherited heart rhythm disorder</p>
-            <div class="alert-chips"><span>LQT2</span><span>ICD-10 I45.81</span></div>
-            <div class="avoid"><p id="cardAvoid">Do NOT give QT-prolonging drugs (e.g. ondansetron, macrolide or quinolone antibiotics, haloperidol, methadone). Check every drug at crediblemeds.org.</p></div>
-            <p class="alert-meds"><b id="cardMedsL">Current medicines</b> nadolol 40 mg daily</p>
-          </div>
-          <div class="alert-call"><svg class="ic" aria-hidden="true"><use href="#i-phone"/></svg>Call 112</div>
-        </article>
-      </div>
-      <div class="langs" id="langs" role="group" aria-label="Card language"></div>
-    </div>
-
-    <div class="em-copy">
+  <div class="wrap">
+    <div class="sec-head">
       <h2 id="em-h" class="h-2" data-split>When you can't explain, the card does.</h2>
-      <p class="sub" data-reveal>A paramedic, a pharmacist or a stranger on the tram gets what they need in seconds: the condition, the drugs to avoid, and who to call. Try the languages.</p>
-      <ul class="feature-list" role="list">
-        <li data-reveal><span class="fi"><svg class="ic" aria-hidden="true"><use href="#i-sos"/></svg></span><div><p class="t">SOS that counts down</p><p>Miss a check-in and a 10-second countdown starts. Then your emergency contacts get a message and your location.</p></div></li>
-        <li data-reveal><span class="fi metro" aria-hidden="true"><i></i></span><div><p class="t">A guide for bystanders</p><p>Three steps, a call button and a CPR metronome at 110 a minute, like the one beating here, plus a note when there's an ICD.</p></div></li>
-        <li data-reveal><span class="fi"><svg class="ic" aria-hidden="true"><use href="#i-globe"/></svg></span><div><p class="t">Readable in 13 languages</p><p>Written in advance, never machine-guessed. Abroad, it switches to the local language and emergency number.</p></div></li>
-        <li data-reveal><span class="fi"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg></span><div><p class="t">Shared with a link, sealed on your phone</p><p>Cards and reports are end-to-end encrypted. Only someone holding the full link can read them.</p></div></li>
-      </ul>
+      <p class="sub" data-reveal>SOS and 112 come first. Then one big tile for whoever is helping you, and a medical card a paramedic, a pharmacist or a stranger on the tram can read in seconds. Try the languages.</p>
+    </div>
+    <div class="em-grid">
+      <div class="em-phone-col">
+        <div class="stage-glow" aria-hidden="true"></div>
+        <div class="device-sizer phone-sizer em-phone">
+          <div class="phone" role="img" aria-label="The Emergency tab: Start SOS and Call 112 tiles, a Show responder view tile, the medical card summary, the pharmacy card and nearby hospital, pharmacy and AED.">
+            <div class="screen">
+              <div class="status"><span>13:50</span><span>5G · 82%</span></div>
+              <div class="page-head"><p class="scr-title">Emergency</p><span class="round-btn"><svg class="ic" aria-hidden="true"><use href="#l-settings"/></svg></span></div>
+              <div class="sos-tiles">
+                <div class="sos-tile"><span class="caps-w">SOS</span><b>Start SOS</b><span>Countdown first, you can cancel</span></div>
+                <div class="call-tile"><span>Call</span><b>112</b></div>
+              </div>
+              <div class="resp-tile"><div><span class="caps-w dim">FOR THE PERSON HELPING ME</span><b>Show responder view</b><span>Big text, what to do, what to avoid</span></div><svg class="ic" aria-hidden="true"><use href="#l-chevron-right"/></svg></div>
+              <div class="card med-card">
+                <div class="row-between"><span class="caps-l coral">MEDICAL CARD</span><span class="link-coral">Open ›</span></div>
+                <b>Long QT syndrome, type 2</b>
+                <span>Nadolol 40 mg · No ICD · Avoid QT drugs</span>
+                <small>Inside: languages, read aloud, QR, share</small>
+              </div>
+              <p class="caps pad-x">NEARBY</p>
+              <div class="nearby"><span>Hospital</span><span>Pharmacy</span><span>AED</span></div>
+              <p class="test-sos">Test SOS (nothing is sent)</p>
+              <div class="tabbar">
+                <span><svg class="ic" aria-hidden="true"><use href="#l-house"/></svg>Today</span>
+                <span><svg class="ic" aria-hidden="true"><use href="#l-pill"/></svg>Medicines</span>
+                <span class="tab-orb"><span class="tab-disc"><span class="orb orb-56"></span></span>Talk</span>
+                <span><svg class="ic" aria-hidden="true"><use href="#l-heart"/></svg>Health</span>
+                <span class="sos on-sos"><i>SOS</i>Emergency</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="em-card-col">
+        <div class="card-tilt" id="cardTilt">
+          <article class="alert-card" aria-label="Example emergency card" aria-live="polite">
+            <span class="card-sheen" aria-hidden="true"></span>
+            <header class="alert-band">
+              <svg class="ic ic-fill" aria-hidden="true"><use href="#l-heart"/></svg>
+              <span id="cardTitle">MEDICAL ALERT</span>
+            </header>
+            <div class="alert-body">
+              <p class="alert-name">Ola Nowak</p>
+              <p class="alert-cond" id="cardCond">Long QT syndrome (LQTS) — inherited heart rhythm disorder</p>
+              <div class="alert-chips"><span>LQT2</span><span>ICD-10 I45.81</span></div>
+              <div class="avoid"><p id="cardAvoid">Do NOT give QT-prolonging drugs (e.g. ondansetron, macrolide or quinolone antibiotics, haloperidol, methadone). Check every drug at crediblemeds.org.</p></div>
+              <p class="alert-meds"><b id="cardMedsL">Current medicines</b> nadolol 40 mg daily</p>
+            </div>
+            <div class="alert-call"><svg class="ic" aria-hidden="true"><use href="#l-phone"/></svg>Call 112</div>
+          </article>
+        </div>
+        <div class="langs" id="langs" role="group" aria-label="Card language"></div>
+        <ul class="feature-list" role="list">
+          <li data-reveal><span class="fi metro" aria-hidden="true"><i></i></span><div><p class="t">A guide for bystanders</p><p>Three steps, a call button and a CPR metronome at 110 a minute, like the one beating here.</p></div></li>
+          <li data-reveal><span class="fi"><svg class="ic" aria-hidden="true"><use href="#l-lock"/></svg></span><div><p class="t">Shared with a link, sealed on your phone</p><p>Cards and reports are end-to-end encrypted. Only someone holding the full link can read them.</p></div></li>
+        </ul>
+      </div>
     </div>
   </div>
 </section>
 
 <!-- ================= DOCTOR ================= -->
 <section class="sec tint" id="doctor" aria-labelledby="doc-h">
-  <div class="wrap doc-grid">
-    <div class="doc-copy">
+  <div class="wrap">
+    <div class="sec-head sec-head-row">
       <h2 id="doc-h" class="h-2" data-split>Walk into the appointment with the facts.</h2>
-      <p class="sub" data-reveal>Before you see your cardiologist, your GP or your dentist, Celia puts together one page from your own records: medicines and their risk, interactions, your resting heart rate, alerts, symptoms and missed doses, plus the questions worth asking.</p>
-      <p class="sub sub-sm" data-reveal>Send it as a link that expires in 48 hours, or print it.</p>
+      <p class="sub" data-reveal>Pick who you're seeing and Celia builds the brief from your own records: heart rate, medicines and how you felt. The AI summary is labelled and sits apart; you check it before you share.</p>
     </div>
+    <div class="doc-grid">
+      <div class="doc-phone-col">
+        <div class="device-sizer phone-sizer doc-phone">
+          <div class="phone" role="img" aria-label="Doctor visit for cardiology: resting heart rate 64 average, one high reading at rest on 28 September, nadolol with one missed dose, Klacid checked and not started, dizzy once, and a labelled AI summary. Share with doctor is pinned at the bottom.">
+            <div class="screen">
+              <div class="status"><span>13:50</span><span>5G · 82%</span></div>
+              <div class="push-head"><svg class="ic" aria-hidden="true"><use href="#l-chevron-left"/></svg><b>Doctor visit</b></div>
+              <div class="spec-chips"><span class="on">Cardiology</span><span>GP</span><span>Pharmacist</span><span>ER</span></div>
+              <div class="card brief"><span class="caps-l">HEART RATE · 30 DAYS</span><b>Resting 64 avg (range 58–71). One high reading at rest, 165 bpm on 28 Sep.</b></div>
+              <div class="card brief"><span class="caps-l">MEDICINES</span><b>Nadolol 40 mg twice daily · 1 missed dose. Checked: Klacid (known risk, not started).</b></div>
+              <div class="card brief"><span class="caps-l">HOW I FELT</span><b>Dizzy once (28 Sep, 14:32). No fainting.</b></div>
+              <div class="ai-brief"><span class="mono-cap">AI SUMMARY · CHECK BEFORE SHARING</span><p>A calm month. Worth asking about the dizzy spell and an alternative to clarithromycin.</p></div>
+              <div class="pinned"><span class="pbtn brand wide">Share with doctor</span><span class="pbtn line">Copy</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-    <figure class="report" id="report" aria-label="Example doctor report">
-      <div class="report-head">
-        <p class="report-k">Long QT safety report</p>
-        <p class="report-name">Ola Nowak</p>
-        <p class="report-meta">Long QT syndrome · LQT2 · Prepared for a cardiologist</p>
-      </div>
-      <div class="report-tiles">
-        <div><b data-count="1">1</b><span>medicine with QT risk</span></div>
-        <div><b data-count="0">0</b><span>interactions</span></div>
-        <div><b data-count="3">3</b><span>heart alerts, 90 days</span></div>
-        <div><b data-count="2">2</b><span>symptoms logged</span></div>
-      </div>
-      <div class="report-chart">
-        <div class="report-chart-h"><span>Resting heart rate · 30 days</span><span class="mono-chip">SIMULATED</span></div>
-        <svg viewBox="0 0 520 150" role="img" aria-label="Resting heart rate trend, simulated example data, between 58 and 74 beats per minute.">
-          <line x1="34" x2="514" y1="22" y2="22" class="guide"/><text x="28" y="26" text-anchor="end">120</text>
-          <line x1="34" x2="514" y1="118" y2="118" class="guide"/><text x="28" y="122" text-anchor="end">60</text>
-          <path class="area" id="chartArea" d="M34 112 L50 108 L66 110 L82 104 L98 106 L114 100 L130 103 L146 98 L162 101 L178 95 L194 99 L210 104 L226 100 L242 96 L258 101 L274 93 L290 89 L306 94 L322 98 L338 97 L354 102 L370 99 L386 104 L402 100 L418 103 L434 106 L450 102 L466 105 L482 101 L498 104 L514 102 L514 130 L34 130 Z"/>
-          <polyline class="line" id="chartLine" pathLength="1" points="34,112 50,108 66,110 82,104 98,106 114,100 130,103 146,98 162,101 178,95 194,99 210,104 226,100 242,96 258,101 274,93 290,89 306,94 322,98 338,97 354,102 370,99 386,104 402,100 418,103 434,106 450,102 466,105 482,101 498,104 514,102"/>
-          <circle cx="514" cy="102" r="4.5" class="last" id="chartDot"/>
+      <figure class="hchart" id="report" aria-label="Resting heart rate chart, simulated example data">
+        <div class="hchart-h"><b>Resting heart rate</b><span class="mono-chip">SIMULATED</span></div>
+        <p class="hchart-read"><b>64</b> bpm <span>· 3 Oct</span></p>
+        <svg viewBox="0 0 520 230" class="hchart-svg" role="img" aria-label="Thirty days of resting heart rate between 58 and 71 beats per minute, with the usual range band, daily doses and one symptom.">
+          <rect x="34" y="64" width="480" height="48" class="band"/>
+          <line x1="34" x2="514" y1="22" y2="22" class="grid"/><text x="28" y="26" text-anchor="end">75</text>
+          <line x1="34" x2="514" y1="82" y2="82" class="grid"/><text x="28" y="86" text-anchor="end">65</text>
+          <line x1="34" x2="514" y1="142" y2="142" class="grid"/><text x="28" y="146" text-anchor="end">55</text>
+          <path class="area" id="chartArea" d="M50 88 L66 82 L82 94 L98 100 L114 88 L130 76 L146 82 L162 94 L178 100 L194 88 L210 82 L226 94 L242 88 L258 100 L274 124 L290 94 L306 82 L322 88 L338 94 L354 100 L370 88 L386 94 L402 82 L418 88 L434 46 L450 76 L466 88 L482 94 L498 100 L514 88 L514 142 L50 142 Z"/>
+          <polyline class="line" id="chartLine" pathLength="1" points="50,88 66,82 82,94 98,100 114,88 130,76 146,82 162,94 178,100 194,88 210,82 226,94 242,88 258,100 274,124 290,94 306,82 322,88 338,94 354,100 370,88 386,94 402,82 418,88 434,46 450,76 466,88 482,94 498,100 514,88"/>
+          <circle cx="514" cy="88" r="5" class="last" id="chartDot"/>
+          <text x="28" y="182" text-anchor="end" class="rowl">Dose</text>
+          <g id="doseRow"><rect x="46" y="174" width="8" height="8" rx="1.5" class="dose-ok"/><rect x="62" y="174" width="8" height="8" rx="1.5" class="dose-ok"/><rect x="78" y="174" width="8" height="8" rx="1.5" class="dose-ok"/><rect x="94" y="174" width="8" height="8" rx="1.5" class="dose-ok"/><rect x="110" y="174" width="8" height="8" rx="1.5" class="dose-ok"/><rect x="126" y="174" width="8" height="8" rx="1.5" class="dose-ok"/><rect x="142" y="174" width="8" height="8" rx="1.5" class="dose-ok"/><rect x="158" y="174" width="8" height="8" rx="1.5" class="dose-ok"/><rect x="174" y="174" width="8" height="8" rx="1.5" class="dose-ok"/><rect x="190" y="174" width="8" height="8" rx="1.5" class="dose-ok"/><rect x="206" y="174" width="8" height="8" rx="1.5" class="dose-ok"/><rect x="222" y="174" width="8" height="8" rx="1.5" class="dose-ok"/><rect x="238" y="174" width="8" height="8" rx="1.5" class="dose-ok"/><rect x="254" y="174" width="8" height="8" rx="1.5" class="dose-ok"/><rect x="270" y="174" width="8" height="8" rx="1.5" class="dose-ok"/><rect x="286" y="174" width="8" height="8" rx="1.5" class="dose-ok"/><rect x="302" y="174" width="8" height="8" rx="1.5" class="dose-ok"/><rect x="318" y="174" width="8" height="8" rx="1.5" class="dose-ok"/><rect x="334" y="174" width="8" height="8" rx="1.5" class="dose-ok"/><rect x="350" y="174" width="8" height="8" rx="1.5" class="dose-ok"/><rect x="366" y="174" width="8" height="8" rx="1.5" class="dose-ok"/><rect x="382" y="174" width="8" height="8" rx="1.5" class="dose-ok"/><rect x="398" y="174" width="8" height="8" rx="1.5" class="dose-ok"/><rect x="414" y="174" width="8" height="8" rx="1.5" class="dose-miss"/><rect x="430" y="174" width="8" height="8" rx="1.5" class="dose-ok"/><rect x="446" y="174" width="8" height="8" rx="1.5" class="dose-ok"/><rect x="462" y="174" width="8" height="8" rx="1.5" class="dose-ok"/><rect x="478" y="174" width="8" height="8" rx="1.5" class="dose-ok"/><rect x="494" y="174" width="8" height="8" rx="1.5" class="dose-ok"/><rect x="510" y="174" width="8" height="8" rx="1.5" class="dose-ok"/></g>
+          <text x="28" y="212" text-anchor="end" class="rowl">Symptom</text>
+          <circle cx="434" cy="208" r="4.5" class="sym"/>
         </svg>
-        <p class="report-cap">Heart rate only. This is not an ECG.</p>
-      </div>
-      <ul class="report-meds" role="list">
-        <li><span>Nadolol <small>40 mg · daily</small></span><span class="risk listed sm"><svg aria-hidden="true"><use href="#r-listed"/></svg>Not listed</span></li>
-        <li><span>Clarithromycin <small>checked 2 Oct</small></span><span class="risk known sm"><svg aria-hidden="true"><use href="#r-known"/></svg>Known risk</span></li>
-      </ul>
-    </figure>
+        <div class="hchart-foot"><span><i class="sw"></i>Your usual range: 60–68 bpm</span><span>Heart rate only. This is not an ECG.</span></div>
+        <div class="hstats">
+          <div><b data-count="64">64</b><span>Resting avg</span></div>
+          <div><b>-2</b><span>vs last 14 d</span></div>
+          <div><b>29/30</b><span>Days dosed</span></div>
+        </div>
+      </figure>
+    </div>
   </div>
 </section>
 
@@ -547,25 +631,10 @@
       <p class="sub" data-reveal>Recorded on the HarmonyOS emulator and a Huawei watch. Simulated heart data is labelled as simulated, on screen and here.</p>
     </div>
 
-    <!-- media/demo.mp4 (+ optional media/demo-poster.jpg) -->
     <div class="beam" data-reveal>
-      <figure class="slot slot-video" data-slot>
-        <video data-src="media/demo.mp4" data-poster="media/demo-poster.jpg" controls playsinline preload="none"></video>
-        <div class="slot-empty">
-          <span class="play-disc"><svg class="ic ic-28" aria-hidden="true"><use href="#i-play"/></svg></span>
-          <p class="slot-t">Demo video</p>
-          <p class="slot-file">media/demo.mp4</p>
-        </div>
+      <figure class="slot slot-video">
+        <video src="media/demo.mp4" poster="media/demo-poster.jpg" controls playsinline preload="metadata" aria-label="Celia.ai demo video"></video>
       </figure>
-    </div>
-
-    <!-- media/screen-1.png … screen-4.png (9:19.5 portrait), media/watch.jpg -->
-    <div class="gallery" id="gallery">
-      <figure class="shot" data-slot data-reveal><div class="shot-frame"><img data-src="media/screen-1.png" alt="Home screen with heart-rate ring and the agent card"><div class="slot-empty"><svg class="ic" aria-hidden="true"><use href="#i-image"/></svg><p class="slot-file">media/screen-1.png</p></div></div><figcaption>Home</figcaption></figure>
-      <figure class="shot" data-slot data-reveal><div class="shot-frame"><img data-src="media/screen-2.png" alt="Scanning a medicine box"><div class="slot-empty"><svg class="ic" aria-hidden="true"><use href="#i-image"/></svg><p class="slot-file">media/screen-2.png</p></div></div><figcaption>Scan a box</figcaption></figure>
-      <figure class="shot" data-slot data-reveal><div class="shot-frame"><img data-src="media/screen-3.png" alt="Medicines screen with risk badges"><div class="slot-empty"><svg class="ic" aria-hidden="true"><use href="#i-image"/></svg><p class="slot-file">media/screen-3.png</p></div></div><figcaption>My medicines</figcaption></figure>
-      <figure class="shot" data-slot data-reveal><div class="shot-frame"><img data-src="media/screen-4.png" alt="Emergency card"><div class="slot-empty"><svg class="ic" aria-hidden="true"><use href="#i-image"/></svg><p class="slot-file">media/screen-4.png</p></div></div><figcaption>Emergency card</figcaption></figure>
-      <figure class="shot shot-wide" data-slot data-reveal><div class="shot-frame"><img data-src="media/watch.jpg" alt="The Celia.ai watch app on a wrist"><div class="slot-empty"><svg class="ic" aria-hidden="true"><use href="#i-image"/></svg><p class="slot-file">media/watch.jpg</p></div></div><figcaption>On the wrist</figcaption></figure>
     </div>
   </div>
 </section>
@@ -589,10 +658,10 @@
         <div data-reveal><dt>Form Kit</dt><dd>“Can I take this?” and medical-alert widgets</dd></div>
       </dl>
       <ul class="trust" role="list">
-        <li class="spot" data-reveal><svg class="ic" aria-hidden="true"><use href="#i-device"/></svg><div><p class="t">Offline core</p><p>Medicine checks, the emergency card and your profile live on the phone, encrypted.</p></div></li>
-        <li class="spot" data-reveal><svg class="ic" aria-hidden="true"><use href="#i-list"/></svg><div><p class="t">A ledger of every request</p><p>Each time the phone goes online, it's listed on the phone for you to see.</p></div></li>
-        <li class="spot" data-reveal><svg class="ic" aria-hidden="true"><use href="#i-key"/></svg><div><p class="t">No keys on the phone</p><p>Model keys stay on the backend. Names and contacts are never uploaded in the clear.</p></div></li>
-        <li class="spot" data-reveal><svg class="ic" aria-hidden="true"><use href="#i-doc"/></svg><div><p class="t">Deterministic verdicts</p><p>The same medicine always gets the same answer, from data you can trace to a source.</p></div></li>
+        <li class="spot" data-reveal><svg class="ic" aria-hidden="true"><use href="#l-smartphone"/></svg><div><p class="t">Offline core</p><p>Medicine checks, the emergency card and your profile live on the phone, encrypted.</p></div></li>
+        <li class="spot" data-reveal><svg class="ic" aria-hidden="true"><use href="#l-list"/></svg><div><p class="t">A ledger of every request</p><p>Each time the phone goes online, it's listed on the phone for you to see.</p></div></li>
+        <li class="spot" data-reveal><svg class="ic" aria-hidden="true"><use href="#l-key-round"/></svg><div><p class="t">No keys on the phone</p><p>Model keys stay on the backend. Names and contacts are never uploaded in the clear.</p></div></li>
+        <li class="spot" data-reveal><svg class="ic" aria-hidden="true"><use href="#l-file-text"/></svg><div><p class="t">Deterministic verdicts</p><p>The same medicine always gets the same answer, from data you can trace to a source.</p></div></li>
       </ul>
     </div>
   </div>
@@ -601,26 +670,20 @@
 <!-- ================= TEAM ================= -->
 <section class="sec team-sec" id="team" aria-labelledby="team-h">
   <div class="wrap">
-    <div class="sec-head sec-head-row">
+    <div class="sec-head">
       <h2 id="team-h" class="h-2" data-split>Built in 24 hours at HackYeah 2026.</h2>
-      <p class="sub" data-reveal>For Huawei's “Imagine What's Next” challenge, in Kraków.</p>
     </div>
-    <!-- media/team-kaloyan.jpg, team-georgi.jpg, team-mark.jpg (square) -->
-    <ul class="team" role="list">
-      <li data-slot data-reveal><div class="portrait"><img data-src="media/team-kaloyan.jpg" alt="Kaloyan"><span class="slot-empty initials">K</span></div><p class="t">Kaloyan</p><p>The agent and voice</p></li>
-      <li data-slot data-reveal><div class="portrait"><img data-src="media/team-georgi.jpg" alt="Georgi"><span class="slot-empty initials">G</span></div><p class="t">Georgi</p><p>The app and emergency</p></li>
-      <li data-slot data-reveal><div class="portrait"><img data-src="media/team-mark.jpg" alt="Mark"><span class="slot-empty initials">M</span></div><p class="t">Mark</p><p>Data and the watch</p></li>
-    </ul>
+    <!-- media/team.jpg (landscape, about 16:9) -->
+    <figure class="team-photo" data-slot data-reveal><img data-src="media/team.jpg" alt="The Celia.ai team: Kaloyan, Georgi and Mark"><div class="slot-empty"><svg class="ic" aria-hidden="true"><use href="#l-image"/></svg><p class="slot-file">media/team.jpg</p></div></figure>
   </div>
 </section>
-
 <!-- ================= CLOSING ================= -->
 <section class="closing dark" data-theme="dark" aria-labelledby="close-h">
   <canvas class="field" id="closeField" aria-hidden="true"></canvas>
   <div class="wrap closing-inner">
-    <span class="orb orb-96" id="closeOrb" aria-hidden="true"></span>
+    <span class="close-orb" id="closeOrb" data-silk data-size="140" aria-hidden="true"></span>
     <h2 id="close-h" class="h-closing" data-split>Ask before you take&nbsp;it.</h2>
-    <a class="btn btn-brand btn-lg" href="#demo" data-reveal><svg class="ic" aria-hidden="true"><use href="#i-play"/></svg>Watch the demo</a>
+    <a class="btn btn-brand btn-lg" href="#demo" data-reveal><svg class="ic ic-fill" aria-hidden="true"><use href="#l-play"/></svg>Watch the demo</a>
   </div>
 </section>
 
@@ -630,20 +693,21 @@
   <div class="wrap foot-grid">
     <div>
       <a class="brand" href="#top"><span class="orb orb-24" aria-hidden="true"></span><span>Celia<span class="brand-dot">.ai</span></span></a>
-      <p class="foot-disc">Not a medical device. Always ask your doctor or pharmacist. Medicine categories are derived from the public CredibleMeds QTdrugs lists; this is a curated demo subset.</p>
+      <p class="foot-disc">Not a medical device. Always ask your doctor or pharmacist. Medicine categories are derived from the public CredibleMeds QTdrugs lists; this is a curated demo subset. People, records and heart data on this page are examples.</p>
     </div>
     <div class="foot-share">
       <p class="t">Got a shared card or report?</p>
       <p>Open the full link you were given. It's end-to-end encrypted on the owner's phone, so this site can't read it without that link.</p>
     </div>
   </div>
-  <div class="wrap foot-base"><span>HackYeah 2026 · Huawei “Imagine What's Next”</span><span>Celia is Huawei's HarmonyOS assistant. Celia.ai is an independent hackathon project.</span></div>
+  <div class="wrap foot-base"><span>HackYeah 2026 · Kraków</span><span>Celia is Huawei's HarmonyOS assistant. Celia.ai is an independent hackathon project. Icons: Lucide (ISC).</span></div>
 </footer>
 
 <script src="card/data.js"></script>
 <script src="assets/vendor/gsap.min.js"></script>
 <script src="assets/vendor/ScrollTrigger.min.js"></script>
 <script src="assets/vendor/lenis.min.js"></script>
+<script src="assets/silk-orb.js"></script>
 <script src="assets/landing.js"></script>
 </body>
 </html>
