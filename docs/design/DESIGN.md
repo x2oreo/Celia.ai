@@ -978,13 +978,37 @@ label in `label` `ink_3` with a "Show on card" switch (`brand_accent`) on the ri
 `radius_s`; single-choice chips 44 vp pill (selected = `ink` fill). Invalid date: one `risk_possible_text` caption
 (no red). Extra fields as label/value rows with a 48 vp delete target. Saved on change; caption "Saved on this phone".
 
-#### For first responders (route `responder`)
-Always light (`card_fixed_*`), no title bar. Header band `card_fixed_alert`: back 48 vp, card title in `label`,
-name `title-1`, condition `title-3`, chips (age, genotype) on `card_fixed_bg`, ICD line. Then on `card_fixed_bg`:
-"Do not give" panel (`card_fixed_alert_tint`, 6 vp alert rule on the left, `title-2` heading in alert colour, groups
-in `body` bold + `subtitle` names); "Use instead" groups; numbered care notes (28 vp ink circles); medicines with
-the compact risk badge (shape + word) and a tinted "Recent QT-risk medicine" box; details as caps label + `subtitle`
-value; contacts and cardiologist as 52 vp outlined call rows. Footer: source and "works offline" in `micro`.
+#### For first responders (route `responder`): the full emergency card (v3)
+One card, read in layers, so a stranger gets the point in 10 seconds and a clinician finds detail below. Always light
+(`card_fixed_*`), no title bar. Everything is fixed data (`emergency/LqtsFacts.ets`, `emergency/Responder.ets`, the
+QT dataset); no LLM text. Treatment lines name drugs only, never doses.
+
+1. **Glance.** Header band `card_fixed_alert`: back 48 vp, card title in `label`, then an identity row: initial
+   avatar (56 vp circle, `card_fixed_bg` fill, initial in `title-2` 800 `card_fixed_alert`; a heart icon when there
+   is no name) next to name `title-1` and condition `title-3`. Chips (age, genotype, ICD) on `card_fixed_bg`. Under
+   the band a 56 vp `danger` "Call {112}" button. Then the **Do not give** panel (`card_fixed_alert_tint`, 6 vp alert
+   rule on the left, `title-2` heading in alert colour, groups in `body` bold + `subtitle` names).
+2. **Critical.** Caps label "CRITICAL INFORMATION" in alert colour. Contacts first as 52 vp outlined call rows; the
+   cardiologist row is tinted `card_fixed_alert_tint` and sorted first. Medicines with the compact risk badge (shape +
+   word); when any is Known risk or avoid-in-congenital, a tinted banner "Takes a QT-prolonging medicine" above the
+   list; the "Recent QT-risk medicine" box when inside 72 h. Then details as caps label + `subtitle` value.
+3. **For clinicians.** One block with a 2 vp `card_fixed_alert` border, radius 16: alert header strip (warning icon,
+   "If unresponsive or collapsed" `title-3` on `on_accent`); numbered steps (28 vp ink circles, step in `body` bold +
+   detail in `small` `card_fixed_ink_2`); "Torsades de pointes" lettered list (A, B, C on 22 vp `card_fixed_alert_tint`
+   squares); "Do not use" list (x mark + `small` bold in alert colour); genotype notes for the person's type; "Use
+   instead" groups last.
+4. **About long QT.** Folded by default (a 48 vp row "About long QT syndrome" with a chevron). Inside: overview
+   paragraphs (`body` `card_fixed_ink_2`), then a "This person's type" card (`card_fixed_border`, radius 12): type name
+   `title-3`, gene and channel in `small`, caps rows Triggers (bullets), ECG pattern, Treatment. Unknown genotype shows
+   "General precautions" instead.
+
+Footer: source and "works offline" in `micro`. Card text follows the card language for the glance layer (13
+languages); layers 3 and 4 stay English until a checked translation exists.
+
+#### Emergency tab card
+The unfolded card on the Emergency tab is the glance layer of the same design: the identity row (initial avatar on
+the `card_fixed_alert` band), chips, the Do not give panel with the alert rule, treatment line, medicines with the
+compact risk badge, contacts and notes. Under it the "Open the full card" ink link goes to `responder`.
 
 ### Onboarding (S3, B3)
 
