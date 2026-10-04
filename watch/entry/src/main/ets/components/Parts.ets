@@ -333,8 +333,10 @@ export struct OkHelp {
 
   build() {
     Row({ space: 8 }) {
-      PillButton({ label: "I'm OK", pillWidth: 78, onTap: () => this.onOk() })
-      PillButton({ label: 'Need help', bg: Theme.ALERT, pillWidth: 94, onTap: () => this.onHelp() })
+      // Sized to sit inside the bezel ring at the bottom of the round screen (78 + 94 wide clipped the ring).
+      PillButton({ label: "I'm OK", pillWidth: 66, pillHeight: 32, fontSize: 13, onTap: () => this.onOk() })
+      PillButton({ label: 'Need help', bg: Theme.ALERT, pillWidth: 82, pillHeight: 32, fontSize: 13,
+        onTap: () => this.onHelp() })
     }
   }
 }

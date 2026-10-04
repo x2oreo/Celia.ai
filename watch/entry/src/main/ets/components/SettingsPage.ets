@@ -76,8 +76,9 @@ export struct SettingsPage {
   pairSub(): string {
     switch (this.ctrl.pairState) {
       case 'PAIRED':
-        return this.ctrl.syncState === 'OK' ? 'Your phone · synced' :
-          this.ctrl.syncState === 'PENDING' ? 'Your phone · syncing...' : 'Your phone · offline';
+        // syncState is this watch's own upload, not the phone; tapping pairs again (it replaces the old pairing).
+        return this.ctrl.syncState === 'OK' ? 'Synced · tap to pair again' :
+          this.ctrl.syncState === 'PENDING' ? 'Syncing... · tap to pair again' : 'Upload failing · tap to pair again';
       case 'NOT_PAIRED':
         return 'Opens pairing';
       case 'ERROR':
@@ -123,7 +124,7 @@ export struct SettingsPage {
       .autoScale(false)
       ArcListItem() {
         SettingRow({ label: 'Phone', value: this.pairValue(), sub: this.pairSub(), valueColor: this.pairColor(),
-          check: this.paired(), tappable: !this.paired(), onTap: () => {
+          check: this.paired(), tappable: true, onTap: () => {
             this.pair();
           } })
       }
