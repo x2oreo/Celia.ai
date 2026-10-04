@@ -43,18 +43,22 @@ export default function watchControllerTest() {
       expect(c.pending).assertEqual(1);
     });
 
-    it('"I\'m OK" without a fall only opens the check-in', 0, () => {
+    it('"I\'m OK" without a fall answers the phone at once and opens the check-in', 0, () => {
       const c = new WatchController();
       c.imOk();
       expect(c.checkInOpen).assertTrue();
-      expect(c.pending).assertEqual(0);
-      c.checkIn('dizziness');
+      expect(c.pending).assertEqual(1);        // 'fine' row: the phone's check-in and SOS timer stop
+      c.checkIn('dizziness');                  // a worse answer still follows
       expect(c.checkInOpen).assertFalse();
-      expect(c.pending).assertEqual(1);
+      expect(c.pending).assertEqual(2);
+      c.imOk();
+      expect(c.pending).assertEqual(3);
+      c.checkIn('fine');                       // same answer as the "I'm OK" just before: not logged twice
+      expect(c.pending).assertEqual(3);
       c.imOk();
       c.closeCheckIn();
       expect(c.checkInOpen).assertFalse();
-      expect(c.pending).assertEqual(1);
+      expect(c.pending).assertEqual(4);
     });
 
     it('taking the watch off and on logs both and sets the status', 0, () => {

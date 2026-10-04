@@ -61,6 +61,8 @@ const ANOMALY_FRAME_MS = 250;
 /** While an alert / check-in is open, check this often whether the phone answered "I'm fine". */
 const PHONE_ACK_POLL_MS = 3000;
 const PHONE_ACK_SKEW_MS = 5000;
+/** A check-in "Fine" this soon after "I'm OK" is the same answer. */
+const FINE_DEDUPE_MS = 120000;
 const SYNC_EVERY_MS = 3000;
 const CONTEXT_EVERY_MS = 60000;
 /**
@@ -156,6 +158,8 @@ export class WatchController implements RulesHost {
   private popupSinceMs: number = 0;
   private lastAckPollMs: number = 0;
   private anomalyTimer: number = -1;
+  /** When "I'm OK" on an alert sent a 'fine' answer (so the check-in's Fine isn't logged twice). */
+  private lastFineAnswerMs: number = 0;
   private lastContextMs: number = 0;
   private lastSampleMs: number = 0;
   private monitoringSinceMs: number = 0;
@@ -534,6 +538,11 @@ export class WatchController implements RulesHost {
   imOk(): void {
     if (this.fallCountdown > 0) {
       this.finishFall('ok');
+    } else {
+      // "I'm OK" on a heart-rate alert answers the phone's check-in right away (a 'fine' answer row), so its SOS
+      // timer stops; a Dizzy / Racing answer on the next screen still follows and replaces it.
+      this.logSymptom('fine');
+      this.lastFineAnswerMs = Date.now();
     }
     this.alertKind = 'NONE';
     this.checkInOpen = true;
@@ -551,7 +560,10 @@ export class WatchController implements RulesHost {
   }
 
   checkIn(kind: SymptomKind): void {
-    this.logSymptom(kind);
+    // "Fine" right after "I'm OK" was already sent; don't log it twice.
+    if (!(kind === 'fine' && Date.now() - this.lastFineAnswerMs < FINE_DEDUPE_MS)) {
+      this.logSymptom(kind);
+    }
     this.checkInOpen = false;
   }
 
