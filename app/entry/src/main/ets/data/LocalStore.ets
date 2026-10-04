@@ -261,6 +261,13 @@ export class LocalStore {
     this.changes.emit('settings');
   }
 
+  /** setSetting without the change event, for caches no screen listens to (data/HistoryCache.ets). */
+  async setSettingQuiet(key: string, value: string): Promise<void> {
+    await this.ready;
+    this.settings.set(key, value);
+    await this.putKv(`setting.${key}`, value);
+  }
+
   // ── Agent chats ──────────────────────────────────────────────────────────────────────────────
   // Most recently used first.
   async listChats(): Promise<ChatSummary[]> {

@@ -7,6 +7,7 @@ import { Config } from '../common/Config';
 import { getJson, NetResult, NetTarget } from '../common/Net';
 import { WatchSource } from '../vitals/WatchSource';
 import { Logger } from '../common/Logger';
+import { HistoryCache } from './HistoryCache';
 import {
   WatchDaySummary, WatchDose, WatchInsight, WatchInsightKind, WatchInsightSeverity, WatchStatus, WatchSymptom,
   WatchSymptomKind, WatchVitalsDay, WatchWearStatus
@@ -292,7 +293,8 @@ export class WatchDataClient {
     return body === undefined ? undefined : parseSymptoms(body);
   }
 
-  /** The last `days` days that have any watch data, newest first (doctor report, agent). */
+  /** The last `days` days that have any watch data, newest first (doctor report, agent). Merged with the days kept
+   *  on the phone (HistoryCache). */
   static async dailySummary(days: number, ledger: boolean = true,
     target?: NetTarget): Promise<WatchDaySummary[] | undefined> {
     const n: number = Math.max(1, Math.min(90, Math.round(days)));
@@ -300,7 +302,7 @@ export class WatchDataClient {
       `/rest/v1/watch_daily_summary?device_id=eq.${WatchDataClient.dev()}` +
         '&select=day,doses_taken,first_dose_at,symptoms,symptom_kinds,fine_check_ins,alerts,falls,sos,resting_bpm,' +
         `simulated&order=day.desc&limit=${n}`, ledger, target);
-    return body === undefined ? undefined : parseDailySummary(body);
+    return HistoryCache.merge<WatchDaySummary>('summary', body === undefined ? undefined : parseDailySummary(body), n);
   }
 
   /** Current fixed-rule insights, CRITICAL first. */
@@ -311,7 +313,8 @@ export class WatchDataClient {
     return body === undefined ? undefined : parseInsights(body);
   }
 
-  /** Daily vitals (heart rate range, HRV, oxygen, breathing, sleep, stress time, steps), newest first. */
+  /** Daily vitals (heart rate range, HRV, oxygen, breathing, sleep, stress time, steps), newest first. Merged with
+   *  the days kept on the phone (HistoryCache). */
   static async vitalsDaily(days: number, ledger: boolean = true,
     target?: NetTarget): Promise<WatchVitalsDay[] | undefined> {
     const n: number = Math.max(1, Math.min(90, Math.round(days)));
@@ -319,6 +322,6 @@ export class WatchDataClient {
       `/rest/v1/watch_vitals_daily?device_id=eq.${WatchDataClient.dev()}` +
         '&select=day,avg_bpm,min_bpm,max_bpm,hrv_ms,spo2,breathing_rate,sleep_minutes,stress_minutes,steps,' +
         `simulated&order=day.desc&limit=${n}`, ledger, target);
-    return body === undefined ? undefined : parseVitalsDaily(body);
+    return HistoryCache.merge<WatchVitalsDay>('vitals', body === undefined ? undefined : parseVitalsDaily(body), n);
   }
 }
