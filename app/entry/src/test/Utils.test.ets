@@ -111,7 +111,7 @@ export default function utilsTest() {
   describe('EmergencyData', () => {
     it('numbersByCountry', 0, () => {
       expect(emergencyFor('pl').ambulance).assertEqual('999');
-      expect(emergencyFor('BG').ambulance).assertEqual('150');
+      expect(emergencyFor('BG').ambulance).assertEqual('112');
       expect(emergencyFor('US').general).assertEqual('911');
       expect(emergencyFor('XX').ambulance).assertEqual('112');
       expect(emergencyFor(undefined).ambulance).assertEqual('112');
