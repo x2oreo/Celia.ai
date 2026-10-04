@@ -32,6 +32,7 @@ import accountTest from './Account.test';
 import sosContactsTest from './SosContacts.test';
 import emergencyProfileTest from './EmergencyProfile.test';
 import responderTest from './Responder.test';
+import lqtsFactsTest from './LqtsFacts.test';
 import cardPayloadTest from './CardPayload.test';
 import nfcCardTest from './NfcCard.test';
 import onboardingTest from './Onboarding.test';
@@ -74,6 +75,7 @@ export default function testsuite() {
   sosContactsTest();
   emergencyProfileTest();
   responderTest();
+  lqtsFactsTest();
   cardPayloadTest();
   nfcCardTest();
   onboardingTest();

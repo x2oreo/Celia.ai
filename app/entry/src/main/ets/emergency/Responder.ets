@@ -207,3 +207,14 @@ export function recentRiskyIntake(raw: string, now: number): IntakeRecord | unde
   }
   return undefined;
 }
+
+/** True when the patient takes a Known-risk or avoid-in-congenital medicine: the card shows a banner above them. */
+export function takesQtRiskMed(rows: MedRow[]): boolean {
+  return rows.some((r: MedRow) => r.risk === 'KNOWN_RISK' || r.avoidCongenital);
+}
+
+/** First letter of the name for the card's initial avatar, upper case; '' when there is no name to show. */
+export function nameInitial(name: string | undefined): string {
+  const n: string = (name ?? '').trim();
+  return n.length === 0 ? '' : n.charAt(0).toUpperCase();
+}
