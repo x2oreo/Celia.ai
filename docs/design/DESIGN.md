@@ -1013,3 +1013,24 @@ Replaces the "Onboarding" line in 10.2.
      check + "Allowed" in `ink_2`. Refused = caption "Not allowed. You can turn it on in the phone's Settings." No
      risk colours anywhere in onboarding.
   8. **Watch**: secondary `Pair a watch` (opens Pair watch), caption that it can be done later, privacy caption.
+
+### Home-screen widgets v2 (B-widgets)
+
+Form Kit service cards, built from the same tokens. Every card is a snapshot the app writes (`widget/WidgetModel.ets`,
+pure and unit-tested); the form extension only re-reads it and recomputes the dose state by the clock every 30 min.
+Nothing on a card comes from a model. Cards are `surface` + 1 vp `border` (light) unless stated, `radius_l` from the
+launcher, padding 14, caps labels 11 fp / 800, +0.06em, `ink-3`, and the `CELIA` caption only where the card has no
+other label. Whole card is a touch target; inner buttons are at least 36 vp tall (cards are small, 44 is not
+possible on a 2 × 2).
+
+| Card | Sizes | Says | Taps |
+|---|---|---|---|
+| **The agent** (default) | 2 × 2, 2 × 4 | Orb 36 + caps `THE AGENT`, the HomeBrief line (`body-sm` / 600, 3 lines on 2 × 2, 2 on 2 × 4). Coral `Talk` pill (mic). 2 × 4 adds quiet `Scan a box` and `Log how I feel` pills on `surface-alt`. | Card / `Talk`: agent stage. Pills: scan, feeling. |
+| **Next dose** | 2 × 2 | Caps `NEXT DOSE` + "2 of 3" today at right. Pill well 32 (`surface-alt`), name in `headline`, when-line in `caption` (`risk_possible_text` when missed). Dose dots for today: taken = 8 vp `ink` dot, not yet = 8 vp `border-strong` ring. Due / missed: ink `Taken` pill 36 high. Otherwise quiet `Reminders` pill. Done: "All done for today"; none: "No reminders yet". Neutral styling (6.9), never risk red. | `Taken`: opens the app and logs the due (else earliest missed) dose, exactly like the notification button. Else: Reminders. |
+| **Resting heart rate** | 2 × 2, 2 × 4 | Caps `RESTING · 7 DAYS` + `WATCH` / `SIMULATED` badge. Average in `title-2` / 800 + "bpm avg", change line in `caption` `ink-3` ("2 lower than last week"). Dot plot of the 7 days: 6 vp `brand` dots on the `surface-alt` usual-range band, last day 10 vp; a day without data has no dot (never bridged). 2 × 4 adds the status pill of 6.10 (word + shape, never red) and "Latest 72 bpm · 4 Oct 14:05". On the 2 × 2 the source badge sits right-aligned above the plot (too narrow beside the value). | Heart tab. |
+| **Can I take this?** | 2 × 2, 2 × 4 | Unchanged ink card with the orb corner and coral `Scan a box`. 2 × 4 adds a `surface` inset (radius 16) with caps `RECENTLY CHECKED` and up to three rows: risk shape 16 in its solid colour + name (`caption` / 700) + the verdict word in its §3 text colour. Empty: "Nothing checked yet". | Card / button: scan. Inset: history. |
+| **How are you feeling?** | 2 × 2, 2 × 4 | Question in `headline`, "Last: Good · Yesterday 20:14" in `caption` `ink-3`. 2 × 2: ink `Add entry` pill. 2 × 4: the five moods as chips (36 high, pill, `surface-alt`, `caption` / 700); moods are not verdicts, so no risk colours. | Chip: feeling page with that mood picked. Else: feeling page. |
+| Medical alert, Medical ID | as before | Unchanged (B6, B13). | as before |
+
+Privacy: a home-screen card is visible to anyone who sees the phone. The dose card shows a medicine name and the
+check card shows recent medicine names, as the Medical ID card already does; nothing else from the profile.
