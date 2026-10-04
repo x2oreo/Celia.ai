@@ -18,7 +18,9 @@ import { buildPayload, cardLink } from '../emergency/CardLink';
 import { ShareRecord, ShareService } from '../share/ShareService';
 import { dial } from '../common/Dialer';
 import { Routes, SosParam } from '../common/Routes';
-import { CapsLabel, QuietButton, ScreenHeader, SecondaryButton } from '../components/Common';
+import { CapsLabel, QuietButton, RiskBadge, ScreenHeader, SecondaryButton } from '../components/Common';
+import { AvoidPanel, CardIdentity } from '../components/EmergencyCardParts';
+import { MedRow, medRows, nameInitial } from '../emergency/Responder';
 import { toast } from '../common/Toast';
 import { copyText } from '../common/Clipboard';
 import { Logger } from '../common/Logger';
@@ -346,56 +348,70 @@ export struct EmergencyPage {
     .width('100%')
   }
 
+  private shownName(): string {
+    return shownOnCard(this.cardProfile(), CardField.NAME) ? (this.cardProfile().name ?? '').trim() : '';
+  }
+
+  // Glance layer of the emergency card (DESIGN.md §11 "Emergency tab card"). Always light, high-contrast colours:
+  // read by strangers, often outdoors. The full card is the responder view.
   @Builder
   card() {
-    // Always light, high-contrast colours: read by strangers, often outdoors.
     Column({ space: 14 }) {
-      Row({ space: 10 }) {
-        Image($r('app.media.ic_tab_heart')).width(26).height(26).fillColor($r('app.color.on_accent'))
-        Text(cardText(this.lang).title)
-          .fontSize($r('app.float.font_title_3'))
-          .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.on_accent'))
-          .layoutWeight(1)
+      Column({ space: 12 }) {
+        Row({ space: 8 }) {
+          Image($r('app.media.ic_heart_fill')).width(16).height(16).fillColor($r('app.color.card_fixed_alert'))
+          Text(cardText(this.lang).title)
+            .fontSize($r('app.float.font_caption'))
+            .fontWeight(FontWeight.Bold)
+            .letterSpacing(0.7)
+            .fontColor($r('app.color.card_fixed_alert'))
+        }
+        CardIdentity({
+          initial: nameInitial(this.shownName()),
+          name: this.shownName(),
+          condition: cardText(this.lang).condition,
+          chips: [`${cardText(this.lang).genotype}: ${this.cardProfile().genotype === 'UNKNOWN' ? '?' :
+            this.cardProfile().genotype}`,
+            this.cardProfile().hasIcd ? cardText(this.lang).icdYes : cardText(this.lang).icdNo]
+        })
       }
       .width('100%')
-      .padding(16)
-      .backgroundColor($r('app.color.card_fixed_alert'))
-      .borderRadius({ topLeft: 18, topRight: 18 })
+      .alignItems(HorizontalAlign.Start)
+      .padding({ left: 16, right: 16, top: 16 })
 
       Column({ space: 14 }) {
-        if ((this.cardProfile().name ?? '').length > 0 && shownOnCard(this.cardProfile(), CardField.NAME)) {
-          Text(this.cardProfile().name ?? '').fontSize($r('app.float.font_title')).fontWeight(FontWeight.Bold).fontColor($r('app.color.card_fixed_ink'))
-        }
-        Text(cardText(this.lang).condition)
-          .fontSize($r('app.float.font_title_3'))
-          .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.card_fixed_alert'))
-        Row({ space: 16 }) {
-          this.cardLine(cardText(this.lang).genotype, this.cardProfile().genotype === 'UNKNOWN' ? '?' : this.cardProfile().genotype)
-        }
-        .width('100%')
-        Text(this.cardProfile().hasIcd ? cardText(this.lang).icdYes : cardText(this.lang).icdNo)
-          .fontSize($r('app.float.font_subtitle'))
-          .fontWeight(this.cardProfile().hasIcd ? FontWeight.Bold : FontWeight.Normal)
-          .fontColor($r('app.color.card_fixed_ink'))
-        Text(cardText(this.lang).avoid)
-          .fontSize($r('app.float.font_subtitle'))
-          .fontWeight(FontWeight.Medium)
-          .fontColor($r('app.color.card_fixed_ink'))
-          .padding(12)
-          .backgroundColor($r('app.color.card_fixed_alert_tint'))
-          .borderRadius(12)
-          .width('100%')
+        AvoidPanel({ text: cardText(this.lang).avoid })
         Text(cardText(this.lang).treatment)
           .fontSize($r('app.float.font_body'))
           .fontColor($r('app.color.card_fixed_ink_2'))
+        // Medicines with the dataset risk, shape + word (never colour alone).
+        Column({ space: 6 }) {
+          Text(cardText(this.lang).meds.toUpperCase())
+            .fontSize($r('app.float.font_caption'))
+            .fontWeight(FontWeight.Bold)
+            .fontColor($r('app.color.card_fixed_ink_3'))
+          if (this.meds.length === 0) {
+            Text(cardText(this.lang).noMeds)
+              .fontSize($r('app.float.font_subtitle'))
+              .fontColor($r('app.color.card_fixed_ink'))
+          }
+          ForEach(medRows(this.meds), (m: MedRow, i: number) => {
+            Row({ space: 10 }) {
+              Text(m.line)
+                .fontSize($r('app.float.font_subtitle'))
+                .fontColor($r('app.color.card_fixed_ink'))
+                .layoutWeight(1)
+              RiskBadge({ risk: m.risk, compact: true })
+            }
+            .width('100%')
+          }, (m: MedRow, i: number) => `${i}-${m.line}`)
+        }
+        .alignItems(HorizontalAlign.Start)
+        .width('100%')
         // Emergency details (B4) in their fixed order; empty and switched-off fields are left out.
         ForEach(detailRows(this.cardProfile(), cardLabels(this.lang), Date.now()), (r: CardRow) => {
           this.cardLine(r.label, r.value)
         }, (r: CardRow, i: number) => `${i}-${r.id}-${r.label}-${r.value}`)
-        this.cardLine(cardText(this.lang).meds, this.meds.length === 0 ? cardText(this.lang).noMeds :
-          this.meds.map((m: Medication) => medLine(m)).join('\n'))
         if (this.cardProfile().contacts.length > 0 && shownOnCard(this.cardProfile(), CardField.CONTACTS)) {
           this.cardLine(cardText(this.lang).contacts,
             this.cardProfile().contacts.map((c: Contact) => `${c.name} (${c.relation}) ${c.phone}`).join('\n'))
@@ -403,15 +419,27 @@ export struct EmergencyPage {
         if (this.cardProfile().notes.length > 0 && shownOnCard(this.cardProfile(), CardField.NOTES)) {
           this.cardLine(cardText(this.lang).notes, this.cardProfile().notes)
         }
+        Row({ space: 6 }) {
+          Text($r('app.string.em_card_full'))
+            .fontSize($r('app.float.font_body'))
+            .fontWeight(FontWeight.Bold)
+            .fontColor($r('app.color.card_fixed_ink'))
+          Image($r('app.media.ic_chevron_right')).width(16).height(16).fillColor($r('app.color.card_fixed_ink'))
+        }
+        .height($r('app.float.touch_min'))
+        .accessibilityGroup(true)
+        .onClick(() => {
+          this.navStack.pushPathByName(Routes.RESPONDER, null);
+        })
       }
-      .padding({ left: 16, right: 16, bottom: 16 })
+      .padding({ left: 16, right: 16, bottom: 8 })
       .alignItems(HorizontalAlign.Start)
       .width('100%')
     }
     .width('100%')
     .backgroundColor($r('app.color.card_fixed_bg'))
     .borderRadius(20)
-    .border({ width: 2, color: $r('app.color.card_fixed_alert') })
+    .border({ width: 1.5, color: $r('app.color.card_fixed_alert_border') })
   }
 
   private conditionLine(): string {

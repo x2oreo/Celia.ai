@@ -193,6 +193,10 @@
       "value": "#FEE4E2"
     },
     {
+      "name": "card_fixed_alert_border",
+      "value": "#F4B5AF"
+    },
+    {
       "name": "chat_user_bg",
       "value": "#1F1A17"
     },

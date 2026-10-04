@@ -1,6 +1,7 @@
-// First-responder view (Workstream B5, route `responder`): a full-screen page for the person who arrives to help.
-// Order: who and what · do not give · use instead · immediate care · current medicines · details and contacts.
-// Always light (card_fixed_*), large type. Everything comes from data on this phone (emergency/Responder.ets,
+// First-responder view (Workstream B5, route `responder`): the full emergency card (DESIGN.md §11, v3), read in
+// layers: glance (who, call, do not give) · critical (contacts, medicines, details) · for clinicians (protocol,
+// torsades, do not use, genotype notes, use instead) · about long QT (folded). Always light (card_fixed_*), large
+// type. Everything comes from data on this phone (emergency/Responder.ets, emergency/LqtsFacts.ets,
 // emergency/EmergencyDetails.ets): no LLM text, and opening it makes no network request. Fields the user switched
 // off for the card are left out here too, because this page is reachable without unlocking the app.
 
@@ -11,8 +12,11 @@ import { CardText, cardLabels, cardText } from '../common/CardStrings';
 import { emergencyFor, systemCountry } from '../common/EmergencyNumbers';
 import { CardRow, detailRows, shownOnCard } from '../emergency/EmergencyDetails';
 import {
-  AvoidGroup, InsteadGroup, MedRow, ageYears, careNotes, doNotGive, medRows, recentRiskyIntake, useInstead
+  AvoidGroup, InsteadGroup, MedRow, ageYears, doNotGive, medRows, nameInitial, recentRiskyIntake, takesQtRiskMed,
+  useInstead
 } from '../emergency/Responder';
+import { DO_NOT_USE, TORSADES_INTRO, TORSADES_STEPS, genotypeFacts, protocolSteps } from '../emergency/LqtsFacts';
+import { AboutLqts, AvoidPanel, CardCaps, CardIdentity, ClinicianBlock } from '../components/EmergencyCardParts';
 import { IntakeRecord } from '../drugs/DrugIntake';
 import { RiskBadge } from '../components/Common';
 import { dateTime } from '../common/Format';
@@ -26,10 +30,12 @@ const RISKY_INTAKE_KEY: string = 'riskyIntakeLast';
 class CallTarget {
   label: string;
   phone: string;
+  cardiologist: boolean;
 
-  constructor(label: string, phone: string) {
+  constructor(label: string, phone: string, cardiologist: boolean) {
     this.label = label;
     this.phone = phone;
+    this.cardiologist = cardiologist;
   }
 }
 
@@ -78,6 +84,7 @@ export struct ResponderPage {
       chips.push(`${cardLabels(this.p().cardLanguage).age} ${age}`);
     }
     chips.push(`${this.t().genotype}: ${this.p().genotype === 'UNKNOWN' ? '?' : this.p().genotype}`);
+    chips.push(this.icdLine());
     return chips;
   }
 
@@ -101,20 +108,25 @@ export struct ResponderPage {
     return rows;
   }
 
+  // Cardiologist first: the person who knows this heart best.
   private callTargets(): CallTarget[] {
     const out: CallTarget[] = [];
-    if (shownOnCard(this.p(), CardField.CONTACTS)) {
-      this.p().contacts.forEach((c: Contact) => {
-        out.push(new CallTarget(c.relation === '' ? c.name : `${c.name} (${c.relation})`, c.phone));
-      });
-    }
     const cardioPhone: string = (this.p().cardiologistPhone ?? '').trim();
     if (cardioPhone.length > 0 && shownOnCard(this.p(), CardField.CARDIOLOGIST)) {
       const name: string = (this.p().cardiologistName ?? '').trim();
       out.push(new CallTarget(`${cardLabels(this.p().cardLanguage).cardiologist}${name === '' ? '' : ` ${name}`}`,
-        cardioPhone));
+        cardioPhone, true));
+    }
+    if (shownOnCard(this.p(), CardField.CONTACTS)) {
+      this.p().contacts.forEach((c: Contact) => {
+        out.push(new CallTarget(c.relation === '' ? c.name : `${c.name} (${c.relation})`, c.phone, false));
+      });
     }
     return out;
+  }
+
+  private shownName(): string {
+    return shownOnCard(this.p(), CardField.NAME) ? (this.p().name ?? '').trim() : '';
   }
 
   private async call(number: string): Promise<void> {
@@ -125,106 +137,56 @@ export struct ResponderPage {
 
   @Builder
   sectionTitle(title: Resource) {
-    Text(title)
-      .fontSize($r('app.float.font_title_3'))
-      .fontWeight(FontWeight.Bold)
-      .fontColor($r('app.color.card_fixed_ink'))
-      .margin({ top: 8 })
+    CardCaps({ text: title })
   }
 
   @Builder
   header() {
-    Column({ space: 10 }) {
+    Column({ space: 12 }) {
       Row({ space: 4 }) {
         Image($r('app.media.ic_chevron_left'))
           .width($r('app.float.touch_min'))
           .height($r('app.float.touch_min'))
           .padding(12)
-          .fillColor($r('app.color.on_accent'))
+          .margin({ left: -12 })
+          .fillColor($r('app.color.card_fixed_ink'))
           .accessibilityText('Back')
           .onClick(() => {
             this.navStack.pop();
           })
-        Text(this.t().title)
-          .fontSize($r('app.float.font_badge'))
-          .fontWeight(800)
-          .letterSpacing(0.8)
-          .fontColor($r('app.color.on_accent'))
-          .layoutWeight(1)
+        CardCaps({ text: this.t().title, alert: true })
       }
       .width('100%')
-      Column({ space: 10 }) {
-        if ((this.p().name ?? '').length > 0 && shownOnCard(this.p(), CardField.NAME)) {
-          Text(this.p().name ?? '')
-            .fontSize($r('app.float.font_title_1'))
-            .fontWeight(800)
-            .fontColor($r('app.color.on_accent'))
-        }
-        Text(this.t().condition)
-          .fontSize($r('app.float.font_title_3'))
-          .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.on_accent'))
-        Row({ space: 8 }) {
-          ForEach(this.whoChips(), (c: string) => {
-            Text(c)
-              .fontSize($r('app.float.font_small'))
-              .fontWeight(FontWeight.Bold)
-              .fontColor($r('app.color.card_fixed_alert'))
-              .backgroundColor($r('app.color.card_fixed_bg'))
-              .borderRadius(14)
-              .padding({ left: 12, right: 12, top: 6, bottom: 6 })
-          }, (c: string) => c)
-        }
-        Text(this.icdLine())
-          .fontSize($r('app.float.font_subtitle'))
-          .fontWeight(this.p().hasIcd ? FontWeight.Bold : FontWeight.Normal)
-          .fontColor($r('app.color.on_accent'))
-      }
-      .alignItems(HorizontalAlign.Start)
-      .padding({ left: 12 })
+      CardIdentity({
+        initial: nameInitial(this.shownName()),
+        name: this.shownName(),
+        condition: this.t().condition,
+        chips: this.whoChips()
+      })
     }
     .width('100%')
     .alignItems(HorizontalAlign.Start)
-    .padding({ left: 8, right: 20, top: 8, bottom: 20 })
-    .backgroundColor($r('app.color.card_fixed_alert'))
   }
 
   @Builder
-  avoidSection() {
-    Column({ space: 12 }) {
-      Text($r('app.string.em_resp_avoid'))
-        .fontSize($r('app.float.font_title'))
+  callButton() {
+    Row({ space: 10 }) {
+      Image($r('app.media.ic_phone')).width(24).height(24).fillColor($r('app.color.on_accent'))
+      Text($r('app.string.em_resp_call_number', this.ambulance()))
+        .fontSize($r('app.float.font_title_3'))
         .fontWeight(800)
-        .fontColor($r('app.color.card_fixed_alert'))
-      Text($r('app.string.em_resp_avoid_sub'))
-        .fontSize($r('app.float.font_small'))
-        .fontColor($r('app.color.card_fixed_ink_2'))
-      ForEach(this.avoid, (g: AvoidGroup) => {
-        Column({ space: 2 }) {
-          Text(g.title)
-            .fontSize($r('app.float.font_body'))
-            .fontWeight(FontWeight.Bold)
-            .fontColor($r('app.color.card_fixed_ink'))
-          Text(g.drugs.join(', '))
-            .fontSize($r('app.float.font_subtitle'))
-            .fontColor($r('app.color.card_fixed_ink'))
-          if (g.note.length > 0) {
-            Text(g.note)
-              .fontSize($r('app.float.font_small'))
-              .fontWeight(FontWeight.Bold)
-              .fontColor($r('app.color.card_fixed_alert'))
-          }
-        }
-        .alignItems(HorizontalAlign.Start)
-        .width('100%')
-      }, (g: AvoidGroup) => g.title)
+        .fontColor($r('app.color.on_accent'))
     }
     .width('100%')
-    .alignItems(HorizontalAlign.Start)
-    .padding(16)
-    .backgroundColor($r('app.color.card_fixed_alert_tint'))
-    .border({ width: { left: 6 }, color: $r('app.color.card_fixed_alert') })
-    .borderRadius(12)
+    .height(56)
+    .justifyContent(FlexAlign.Center)
+    .backgroundColor($r('app.color.danger'))
+    .borderRadius($r('app.float.radius_btn'))
+    .clickEffect({ level: ClickEffectLevel.LIGHT, scale: 0.97 })
+    .accessibilityGroup(true)
+    .onClick(() => {
+      this.call(this.ambulance());
+    })
   }
 
   @Builder
@@ -257,37 +219,25 @@ export struct ResponderPage {
   }
 
   @Builder
-  careSection() {
+  medsSection() {
     Column({ space: 10 }) {
-      this.sectionTitle($r('app.string.em_resp_care'))
-      ForEach(careNotes(this.p(), this.meds, this.ambulance()), (n: string, i: number) => {
-        Row({ space: 10 }) {
-          Text(`${i + 1}`)
-            .fontSize($r('app.float.font_body'))
-            .fontWeight(800)
-            .fontColor($r('app.color.card_fixed_bg'))
-            .textAlign(TextAlign.Center)
-            .width(28)
-            .height(28)
-            .borderRadius(14)
-            .backgroundColor($r('app.color.card_fixed_ink'))
-          Text(n)
-            .fontSize($r('app.float.font_subtitle'))
+      this.sectionTitle($r('app.string.em_resp_meds'))
+      if (takesQtRiskMed(medRows(this.meds))) {
+        Row({ space: 8 }) {
+          Image($r('app.media.ic_risk_known')).width(18).height(18).fillColor($r('app.color.card_fixed_alert'))
+          Text($r('app.string.em_resp_qt_banner'))
+            .fontSize($r('app.float.font_small'))
+            .fontWeight(FontWeight.Bold)
             .fontColor($r('app.color.card_fixed_ink'))
             .layoutWeight(1)
         }
         .alignItems(VerticalAlign.Top)
         .width('100%')
-      }, (n: string, i: number) => `${i}-${n}`)
-    }
-    .width('100%')
-    .alignItems(HorizontalAlign.Start)
-  }
-
-  @Builder
-  medsSection() {
-    Column({ space: 10 }) {
-      this.sectionTitle($r('app.string.em_resp_meds'))
+        .padding(12)
+        .backgroundColor($r('app.color.card_fixed_alert_tint'))
+        .border({ width: 1, color: $r('app.color.card_fixed_alert_border') })
+        .borderRadius(16)
+      }
       if (this.intake !== undefined) {
         Column({ space: 2 }) {
           Text($r('app.string.em_resp_last_risky_label'))
@@ -370,7 +320,7 @@ export struct ResponderPage {
         .width('100%')
         .constraintSize({ minHeight: $r('app.float.button_height_sheet') })
         .padding({ left: 16, right: 16, top: 8, bottom: 8 })
-        .border({ width: 1.5, color: $r('app.color.card_fixed_border') })
+        .border({ width: 1, color: $r('app.color.card_fixed_border') })
         .borderRadius($r('app.float.radius_btn'))
         .accessibilityGroup(true)
         .accessibilityText(`Call ${c.label}, ${c.phone}`)
@@ -387,18 +337,31 @@ export struct ResponderPage {
     NavDestination() {
       Scroll() {
         Column({ space: 20 }) {
-          this.header()
           Column({ space: 20 }) {
-            this.avoidSection()
-            this.insteadSection()
-            this.careSection()
+            // 1 · Glance
+            this.header()
+            this.callButton()
+            AvoidPanel({ title: $r('app.string.em_resp_avoid'), sub: $r('app.string.em_resp_avoid_sub'), groups: this.avoid, firstGroups: 4 })
+            // 2 · Critical
+            if (this.callTargets().length > 0) {
+              this.contactsSection()
+            }
             this.medsSection()
             if (this.details().length > 0) {
               this.detailsSection()
             }
-            if (this.callTargets().length > 0) {
-              this.contactsSection()
-            }
+            // 3 · For clinicians
+            ClinicianBlock({
+              steps: protocolSteps(this.ambulance(), this.p().hasIcd),
+              torsadesIntro: TORSADES_INTRO,
+              torsades: TORSADES_STEPS,
+              doNotUse: DO_NOT_USE,
+              typeTitle: $r('app.string.em_clin_type_notes', this.p().genotype === 'UNKNOWN' ? 'unknown type' : this.p().genotype),
+              typeNotes: genotypeFacts(this.p().genotype).emergencyNotes
+            })
+            this.insteadSection()
+            // 4 · About long QT (folded)
+            AboutLqts({ facts: genotypeFacts(this.p().genotype) })
             Text($r('app.string.em_resp_source'))
               .fontSize($r('app.float.font_micro'))
               .fontColor($r('app.color.card_fixed_ink_3'))
@@ -406,7 +369,7 @@ export struct ResponderPage {
               .fontSize($r('app.float.font_micro'))
               .fontColor($r('app.color.card_fixed_ink_3'))
           }
-          .padding({ left: $r('app.float.space_screen'), right: $r('app.float.space_screen'), bottom: 32 })
+          .padding({ left: $r('app.float.space_screen'), right: $r('app.float.space_screen'), top: 8, bottom: 32 })
           .width('100%')
           .alignItems(HorizontalAlign.Start)
         }
