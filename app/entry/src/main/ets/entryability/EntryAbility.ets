@@ -19,6 +19,7 @@ import { PushToken } from '../account/PushToken';
 import { SosController } from '../emergency/SosController';
 import { ReminderService } from '../reminders/ReminderService';
 import { HeartOkRequest } from '../common/HeartOkRequest';
+import { FeelingPrefill } from '../diary/FeelingPrefill';
 
 const log: Logger = new Logger('EntryAbility');
 
@@ -117,8 +118,19 @@ export default class EntryAbility extends UIAbility {
       RouteRequest.open(Routes.SCAN);
     } else if (target === 'bystander') {
       RouteRequest.open(Routes.BYSTANDER);
-    } else if (target === 'feeling') {
+    } else if (target === 'feeling' || target.startsWith('feeling:')) {
+      FeelingPrefill.set(target.slice('feeling:'.length));
       RouteRequest.open(Routes.FEELING);
+    } else if (target === 'agent') {
+      RouteRequest.open(Routes.AGENT_CHAT);
+    } else if (target === 'take') {
+      this.takeFromCard();
+    } else if (target === 'reminders') {
+      RouteRequest.open(Routes.REMINDERS);
+    } else if (target === 'history') {
+      RouteRequest.open(Routes.HISTORY);
+    } else if (target === 'heart') {
+      TabRequest.open(TabIndex.HEART);
     } else if (target === 'responder') {
       RouteRequest.open(Routes.RESPONDER);
     } else if (target === 'emergency' || target === 'call' || target === 'ice') {
@@ -127,6 +139,17 @@ export default class EntryAbility extends UIAbility {
         this.dialFromCard(target === 'ice');
       }
     }
+  }
+
+  // "Taken" on the Next dose card: log the due (else missed) dose, then show Today with the dose ticked off. A card
+  // that was a little behind the clock logs nothing; Today then shows what is really due.
+  private async takeFromCard(): Promise<void> {
+    try {
+      await ReminderService.takeDue(Date.now());
+    } catch (e) {
+      log.warn(`card Taken failed: ${JSON.stringify(e)}`);
+    }
+    TabRequest.open(TabIndex.HOME);
   }
 
   // Opens the dialer with the number filled in; the user still confirms the call.

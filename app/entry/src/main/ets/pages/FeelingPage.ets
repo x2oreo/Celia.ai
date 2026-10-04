@@ -5,6 +5,7 @@
 import { AppEvent } from '../model/AppEvent';
 import { FEELING_NOTE_MAX, FeelingEntry, isLowMood, Mood, MOODS, moodLabel, parseFeeling } from '../diary/Diary';
 import { DiaryStore } from '../diary/DiaryStore';
+import { FeelingPrefill } from '../diary/FeelingPrefill';
 import { Routes } from '../common/Routes';
 import { dateTime } from '../common/Format';
 import { toast } from '../common/Toast';
@@ -18,9 +19,20 @@ export struct FeelingPage {
   @Local recent: AppEvent[] = [];
   @Local loaded: boolean = false;
   private saving: boolean = false;
+  private offPrefill: () => void = () => {
+  };
 
   aboutToAppear(): void {
+    // A mood tapped on the home-screen card arrives picked; saving stays the user's tap.
+    this.mood = FeelingPrefill.take() ?? this.mood;
+    this.offPrefill = FeelingPrefill.onSet((m: Mood) => {
+      this.mood = m;
+    });
     this.load();
+  }
+
+  aboutToDisappear(): void {
+    this.offPrefill();
   }
 
   private async load(): Promise<void> {

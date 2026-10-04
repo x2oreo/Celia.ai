@@ -3,7 +3,7 @@
 
 import { reminderAgentManager } from '@kit.BackgroundTasksKit';
 import { LocalStore } from '../data/LocalStore';
-import { DoseLog, DoseReminder, dayKey, doseStatus, takeableFromNotification } from './DoseSchedule';
+import { DoseLog, DoseReminder, dayKey, doseStatus, nextDoseToTake, takeableFromNotification } from './DoseSchedule';
 import { KEY_ACTION, KEY_KIND } from '../common/NotifyAction';
 import { cancelNotify, doseNotifyId, notify, notifyText } from '../common/Notify';
 import { Logger } from '../common/Logger';
@@ -69,6 +69,20 @@ export class ReminderService {
     await ReminderService.mark(r, 'TAKEN');
     log.info(`dose ${r.medName} marked taken from the notification`);
     return true;
+  }
+
+  // "Taken" on the home-screen Next dose card: the dose due now, else the earliest missed one today (never an
+  // upcoming one, same rule as the notification). Returns the medicine name, or '' when nothing was recorded.
+  static async takeDue(now: number): Promise<string> {
+    const r: DoseReminder | undefined = nextDoseToTake(await ReminderService.list(), await ReminderService.doseLog(),
+      now);
+    if (r === undefined) {
+      return '';
+    }
+    await cancelNotify(doseNotifyId(r.id));
+    await ReminderService.mark(r, 'TAKEN');
+    log.info(`dose ${r.medName} marked taken from the home-screen card`);
+    return r.medName;
   }
 
   // Fallback while the app runs (system reminders need an AppGallery Connect quota; without it the system
