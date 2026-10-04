@@ -1240,3 +1240,25 @@ The tap-to-talk fallback is also untested end to end.
   simulated source without the user picking it; not reproduced.
 - **Lessons:** another session's staged files rode along in one plain `git commit`; it was undone and redone with
   `git commit -- <paths>`. Builder arguments by value bit three times in one night.
+
+### 2026-10-04 - Kaloyan + Claude Code: 60 days of simulated watch history (branch `kaloyan/agent-home`)
+
+- **Asked:** two months of believable test data for everything the Health tab shows (resting heart rate, heart rate,
+  HRV, oxygen, breathing, sleep, steps, stress), ending today, with no UI changes.
+- **What the AI did:** planned first; the owner approved, minus a 60-day chart option. `data/demo_history.py` (seeded,
+  deterministic) is the single source. It writes `vitals/DemoHistoryData.ets` for the phone's built-in demo and
+  migration `20261004120000_demo_history.sql` for the backend, so both paths show the same story. Days are stored as
+  "days ago", so the history always ends today, and there is one variant per weekday of today, so weekend habits fall
+  on real weekends. Smooth day-to-day noise; short nights lower HRV and raise resting heart rate the next day; a cold
+  (days 38-33), a two-day trip, three days with no watch, one missed dose, and the existing two missed nadolol doses
+  at the end, so the missed beta-blocker question still fires. The three old demo generators (Trends,
+  RestingHistory, MetricHistory) now read it.
+- **Backend:** demo days come from a template table joined to `demo_history_on` (demo-watch-1 starts on;
+  `seed_demo_history` turns it on or off for a watch with its secret). `watch_vitals_daily`, `watch_resting_daily`
+  and `watch_daily_summary` now include those days, which take the place of real rows on the same date; today stays live.
+  No 170k raw rows, and the watch's 7-day insert window is untouched.
+- **Validated:** 394 phone tests (5 new in `DemoHistory.test.ets`, including the missed-dose question on every
+  weekday); all migrations applied to a throwaway Postgres with `tests/run-rls.sh` passing; queried the views as
+  anon: 56 demo days plus today's live row, on/off works, other devices refused without the secret.
+- **Not validated:** the charts on the emulator (another session's watch alarm scenario held the shared phone
+  emulator); the migration is not applied to the live project yet.
