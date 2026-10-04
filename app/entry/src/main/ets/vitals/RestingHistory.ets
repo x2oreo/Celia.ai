@@ -6,13 +6,12 @@ import { Config } from '../common/Config';
 import { getJson, NetResult, NetTarget } from '../common/Net';
 import { WatchSource } from './WatchSource';
 import { Logger } from '../common/Logger';
-import { dayKey } from '../reminders/DoseSchedule';
 import { DailyResting } from './RestingTrend';
+import { demoRestingDays } from './DemoHistory';
 
 const log: Logger = new Logger('RestingHistory');
 
 const DAYS_TO_LOAD: number = 21;
-const DAY_MS: number = 24 * 3600 * 1000;
 
 interface RestingRow {
   day: string;
@@ -38,18 +37,9 @@ function toDaily(raw: string): DailyResting[] {
   return out;
 }
 
-// 14 steady days around 58 bpm (on a beta-blocker), then the last two days around 70 bpm.
-const DEMO_BASELINE: number[] = [58, 57, 59, 58, 56, 58, 60, 57, 58, 59, 57, 58, 56, 59];
-const DEMO_RAISED: number[] = [71, 69];
-
+/** The built-in demo history (DemoHistory), newest first, every day labelled `simulated`. */
 export function demoHistory(now: number): DailyResting[] {
-  const out: DailyResting[] = [];
-  const all: number[] = DEMO_RAISED.concat(DEMO_BASELINE);
-  for (let i = 0; i < all.length; i++) {
-    const d: DailyResting = { day: dayKey(now - (i + 1) * DAY_MS), bpm: all[i], restMinutes: 420, simulated: true };
-    out.push(d);
-  }
-  return out;
+  return demoRestingDays(now);
 }
 
 export async function loadRestingHistory(now: number): Promise<DailyResting[]> {

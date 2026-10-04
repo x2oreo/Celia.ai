@@ -23,6 +23,7 @@ import drugCheckClientTest from './DrugCheckClient.test';
 import boxIdentifyTest from './BoxIdentify.test';
 import trendsTest from './Trends.test';
 import metricsTest from './Metrics.test';
+import demoHistoryTest from './DemoHistory.test';
 import visitsTest from './Visits.test';
 import diaryTest from './Diary.test';
 import notifySosTest from './NotifySos.test';
@@ -42,6 +43,7 @@ export default function testsuite() {
   contractSmokeTest();
   trendsTest();
   metricsTest();
+  demoHistoryTest();
   agentSafetyTest();
   agentCoreTest();
   agentLogicTest();

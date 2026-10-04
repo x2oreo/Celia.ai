@@ -4,8 +4,7 @@
 import { dayKey } from '../reminders/DoseSchedule';
 import { WatchDataClient } from '../data/WatchDataClient';
 import { WatchDaySummary, WatchInsight } from '../model/WatchData';
-import { DailyResting } from './RestingTrend';
-import { demoHistory } from './RestingHistory';
+import { demoTrendDays } from './DemoHistory';
 import { NetTarget } from '../common/Net';
 import { trendsRoute, TrendsRoute, WatchSource } from './WatchSource';
 
@@ -129,28 +128,12 @@ export function trendPoints(days: TrendDay[], width: number, height: number): Tr
   return out;
 }
 
-// Demo story, labelled SIMULATED: steady on a beta-blocker, then two days without a logged dose, a raised resting
-// heart rate and a symptom.
-function demoDays(now: number): TrendDay[] {
-  const resting: DailyResting[] = demoHistory(now);
-  const out: TrendDay[] = [];
-  for (let i = 0; i < resting.length; i++) {
-    const raised: boolean = i < 2;   // demoHistory is newest first
-    const d: TrendDay = {
-      day: resting[i].day, restingBpm: resting[i].bpm, doses: raised ? 0 : 1, symptoms: i === 0 ? 1 : 0,
-      alerts: i === 0 ? 1 : 0
-    };
-    out.push(d);
-  }
-  return out;
-}
-
 // The watch's history when the watch is the picked source and its project can be reached (WatchSource); otherwise
 // the built-in demo history, labelled SIMULATED.
 export async function loadTrends(now: number, span: number): Promise<TrendData> {
   const target: NetTarget | undefined = WatchSource.activeTarget();
   if (target === undefined) {
-    const demo: TrendData = { days: fillDays(demoDays(now), now, span), insights: [], source: 'DEMO', simulated: true };
+    const demo: TrendData = { days: fillDays(demoTrendDays(now), now, span), insights: [], source: 'DEMO', simulated: true };
     return demo;
   }
   const rows: WatchDaySummary[] | undefined = await WatchDataClient.dailySummary(span, true, target);

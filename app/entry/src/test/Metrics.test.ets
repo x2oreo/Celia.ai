@@ -164,10 +164,10 @@ export default function metricsTest() {
 
     it('demo vitals are labelled simulated and tell the raised-days story', 0, () => {
       const demo: WatchVitalsDay[] = demoVitals(new Date(2026, 9, 3, 12, 0, 0).getTime());
-      expect(demo.length).assertEqual(16);
+      expect(demo.length > 50).assertTrue();
       expect(demo.every((d: WatchVitalsDay) => d.simulated)).assertTrue();
-      expect(demo[0].hrvMs < demo[5].hrvMs).assertTrue();
-      expect(demo[0].avgBpm > demo[5].avgBpm).assertTrue();
+      expect(demo[1].hrvMs < demo[5].hrvMs).assertTrue();   // demo[0] is today so far
+      expect(demo[1].avgBpm > demo[5].avgBpm).assertTrue();
       expect(demo.every((d: WatchVitalsDay) => d.minBpm < d.avgBpm && d.avgBpm < d.maxBpm)).assertTrue();
     });
 
